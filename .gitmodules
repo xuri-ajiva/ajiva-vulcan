@@ -1,0 +1,3 @@
+[submodule "SharpVk"]
+	path = SharpVk
+	url = git@github.com:xuri02/SharpVk.git
