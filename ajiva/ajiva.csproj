@@ -1,8 +1,58 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
+        <RootNamespace>ajiva</RootNamespace>
         <OutputType>Exe</OutputType>
-        <TargetFramework>net5.0</TargetFramework>
+        <TargetFramework>net5.0-windows</TargetFramework>
+        <UseWindowsForms>true</UseWindowsForms>
+        <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+        <Nullable>enable</Nullable>
+        <IsPackable>false</IsPackable>
     </PropertyGroup>
 
+    <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
+      <PlatformTarget>x64</PlatformTarget>
+      <DebugType>full</DebugType>
+    </PropertyGroup>
+
+    <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
+      <PlatformTarget>x64</PlatformTarget>
+      <DebugType>none</DebugType>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="GlmSharp" Version="0.9.8.0" />
+        <PackageReference Include="System.Drawing.Common" Version="5.0.0" />
+        <PackageReference Include="System.Linq.Async" Version="4.0.0" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <None Update="glfw3.dll">
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      </None>
+      <None Update="Shaders\shader.vert">
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      </None>
+      <None Update="Shaders\shader.frag">
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      </None>       
+        <None Update="logo.png">
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>       
+        <None Update="Shaders\frag.spv">
+          <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </None>       
+        <None Update="Shaders\vert.spv">
+          <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </None>
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\SharpVk\src\SharpVk.Emit\SharpVk.Emit.csproj" />
+        <ProjectReference Include="..\SharpVk\src\SharpVk.Glfw\SharpVk.Glfw.csproj" />
+        <ProjectReference Include="..\SharpVk\src\SharpVk.Shanq.GlmSharp\SharpVk.Shanq.GlmSharp.csproj" />
+        <ProjectReference Include="..\SharpVk\src\SharpVk.Shanq.Numerics\SharpVk.Shanq.Numerics.csproj" />
+        <ProjectReference Include="..\SharpVk\src\SharpVk.Shanq\SharpVk.Shanq.csproj" />
+        <ProjectReference Include="..\SharpVk\src\SharpVk\SharpVk.csproj" />
+    </ItemGroup>
 </Project>
