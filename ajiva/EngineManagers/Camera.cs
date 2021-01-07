@@ -1,9 +1,8 @@
 ﻿using System;
 using ajiva.Entitys;
 using GlmSharp;
-using vulcan_01.Entitys;
 
-namespace vulcan_01.Render
+namespace ajiva.EngineManagers
 {
     public static class Cameras
     {
