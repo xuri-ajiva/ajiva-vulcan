@@ -1,6 +1,4 @@
-﻿//#define WIN_32
-
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using ajiva.Engine;
@@ -10,13 +8,6 @@ using SharpVk.Glfw;
 using SharpVk.Khronos;
 using Glfw3 = SharpVk.Glfw.Glfw3;
 using Key = SharpVk.Glfw.Key;
-
-#if WIN_32
-using System.Diagnostics;
-using System.Windows.Forms;
-#else
-
-#endif
 
 namespace ajiva.EngineManagers
 {
@@ -36,83 +27,11 @@ namespace ajiva.EngineManagers
             this.engine = engine;
         }
 
-#if WIN_32
-        private Form window;
-
-        public void CreateSurface(Instance instance)
-        {
-            Surface = instance.CreateWin32Surface(IntPtr.Zero, window.Handle);
-        }
-
-        public IEnumerable<string> GetRequiredInstanceExtensions()
-        {
-            return new[]
-            {
-                "VK_KHR_surface", "VK_KHR_win32_surface"
-            };
-        }
-
-        public void InitWindow(int surfaceWidth, int surfaceHeight)
-        {
-            window = new()
-            {
-                Text = "Vulkan",
-                ClientSize = new(surfaceWidth, surfaceHeight),
-                MinimumSize = new(surfaceWidth / 2, surfaceHeight / 2),
-                MaximumSize = new(surfaceWidth * 2, surfaceHeight * 2),
-            };
-
-            window.ClientSizeChanged += (x, y) => OnResize(this, y);
-            window.KeyDown += delegate(object? sender, System.Windows.Forms.KeyEventArgs args)
-            {
-                OnKeyDown(this, new KeyEventArgs(args.KeyData));
-            };
-            window.KeyUp += delegate(object? sender, System.Windows.Forms.KeyEventArgs args)
-            {
-                OnKeyUp(this, new KeyEventArgs(args.KeyData));
-            };
-            window.MouseMove += (sender, args) =>
-            {
-                vec2 mousePos = new vec2(args.X, args.Y);
-
-                if (mousePos == previousPosition)
-                    return;
-
-                OnMouseMove.Invoke(this, PreviousMousePosition - mousePos);
-                PreviousMousePosition = mousePos;
-            };
-        }
-
-        public void MainLoop()
-        {
-            window.Show();
-            TimeSpan delta = TimeSpan.Zero;
-            var now = Stopwatch.GetTimestamp();
-            while (!window.IsDisposed)
-            {
-                OnFrame?.Invoke(this, delta);
-
-                Application.DoEvents();
-
-                var end = Stopwatch.GetTimestamp();
-                delta = new(end - now);
-
-                now = end;
-            }
-        }
-
-        public void CloseWindow()
-        {
-            window.Close();
-            window.Dispose();
-        }
-
-#else
         private WindowHandle window;
 
-        public void CreateSurface(Instance instance)
+        public void CreateSurface()
         {
-            Surface = instance.CreateGlfw3Surface(window);
+            Surface = engine.Instance.CreateGlfw3Surface(window);
         }
 
         public void InitWindow(int surfaceWidth, int surfaceHeight)
@@ -215,7 +134,6 @@ namespace ajiva.EngineManagers
         {
             return Glfw3.GetRequiredInstanceExtensions();
         }
-#endif
 
         private void Dispose(bool disposing)
         {
@@ -241,7 +159,7 @@ namespace ajiva.EngineManagers
     {
         public void InitWindow(int surfaceWidth, int surfaceHeight);
         public IEnumerable<string> GetRequiredInstanceExtensions();
-        public void CreateSurface(Instance instance);
+        public void CreateSurface();
         public void MainLoop();
         public void CloseWindow();
         public event PlatformEventHandler OnFrame;
