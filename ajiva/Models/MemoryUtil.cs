@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Runtime.InteropServices;
 
-namespace vulcan_01
+namespace ajiva.Models
 {
     public static class MemoryUtil
     {

@@ -1,6 +1,4 @@
 ﻿
-using vulcan_01.Entitys;
-
 namespace ajiva.Entitys
 {
     public class AEntity

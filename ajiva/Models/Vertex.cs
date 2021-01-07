@@ -5,7 +5,7 @@ using SharpVk.Shanq;
 
 namespace ajiva.Models
 {
-    internal struct Vertex
+    public struct Vertex
     {
         public Vertex(vec3 position, vec3 colour, vec2 textCoord)
         {

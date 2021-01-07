@@ -1,6 +1,6 @@
 ﻿using GlmSharp;
 
-namespace vulcan_01.Entitys
+namespace ajiva.Entitys
 {
     public struct Transform3d
     {
@@ -19,5 +19,10 @@ namespace vulcan_01.Entitys
         public vec3 Scale;
         
         public static readonly Transform3d Default = new(vec3.Zero, vec3.Zero, vec3.Ones);
+
+        public override string ToString()
+        {
+            return $"{nameof(Position)}: {Position}, {nameof(Rotation)}: {Rotation}, {nameof(Scale)}: {Scale}";
+        }
     }
 }
