@@ -27,9 +27,6 @@
     </ItemGroup>
 
     <ItemGroup>
-      <None Update="glfw3.dll">
-        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      </None>
       <None Update="Shaders\shader.vert">
         <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       </None>
