@@ -1,11 +1,6 @@
 ﻿using System;
 using System.Diagnostics;
-using System.IO;
-using System.Linq;
-using ajiva.EngineManagers;
-using ajiva.Models;
 using SharpVk;
-using SharpVk.Khronos;
 using SharpVk.Multivendor;
 
 namespace ajiva

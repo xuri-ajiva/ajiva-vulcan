@@ -1,6 +1,4 @@
-﻿using System;
-using System.Threading.Tasks;
-using ajiva.Models;
+﻿using ajiva.Models;
 using GlmSharp;
 
 namespace ajiva

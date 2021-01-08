@@ -1,15 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Drawing;
-using System.Drawing.Imaging;
 using System.Linq;
-using System.Runtime.CompilerServices;
-using ajiva.Models;
 using SharpVk;
-using SharpVk.Khronos;
 using SharpVk.Multivendor;
-using Buffer = SharpVk.Buffer;
-using Image = SharpVk.Image;
 
 namespace ajiva
 {
