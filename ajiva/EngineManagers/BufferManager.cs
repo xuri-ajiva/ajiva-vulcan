@@ -61,14 +61,13 @@ namespace ajiva.EngineManagers
         {
             lock (BufferLock)
             {
-                foreach (var (vertexBuffer, _, _, indexBuffer, _, indicesLength) in Buffers)
+                foreach (var mesh in Buffers)
                 {
-                    commandBuffer.BindVertexBuffers(0, vertexBuffer, 0);
-                    commandBuffer.BindIndexBuffer(indexBuffer, 0, IndexType.Uint16);
+                    mesh.Bind(commandBuffer);
 
-                    commandBuffer.BindDescriptorSets(PipelineBindPoint.Graphics, Program.GraphicsManager.PipelineLayout, 0, Program.GraphicsManager.DescriptorSet, null);
+                    commandBuffer.BindDescriptorSets(PipelineBindPoint.Graphics, engine.GraphicsManager.PipelineLayout, 0, engine.GraphicsManager.DescriptorSet, null);
 
-                    commandBuffer.DrawIndexed(indicesLength, 1, 0, 0, 0);
+                    mesh.DrawIndexed(commandBuffer);
                 }
             }
         }
