@@ -28,9 +28,7 @@ namespace ajiva.EngineManagers
         {
             lock (BufferLock)
             {
-                CreateVertexBuffers(vertices, out var vertexBuffer, out var vertexBufferMemory);
-                CreateIndexBuffer(indices, out var indexBuffer, out var indexBufferMemory);
-                Buffers.Add(new(vertexBuffer, vertexBufferMemory, (uint)vertices.Length, indexBuffer, indexBufferMemory, (uint)indices.Length));
+                Buffers.Add(new(engine.DeviceManager, vertices, indices));
             }
         }
 
