@@ -13,7 +13,7 @@ namespace ajiva.EngineManagers
 
         public ManagedImage DepthImage { get; set; }
 
-        public List<ManagedImage> Images { get; set; }
+        public List<ManagedImage> Images { get; }
 
         public ImageManager(IEngine engine)
         {
@@ -34,29 +34,34 @@ namespace ajiva.EngineManagers
                 LayerCount = 1,
             });
         }
-
-        public void CreateImage(uint width, uint height, Format format, ImageTiling tiling, ImageUsageFlags usage, MemoryPropertyFlags properties, out Image image, out DeviceMemory imageMemory)
+        
+        public ManagedImage CreateImageAndView(uint width, uint height, Format format, ImageTiling tiling, ImageUsageFlags usage, MemoryPropertyFlags properties, ImageAspectFlags aspectFlags)
         {
+            var managed = new ManagedImage();
             var device = engine.DeviceManager.Device;
 
-            image = device.CreateImage(ImageType.Image2d, format, new Extent3D(width, height, 1), 1, 1, SampleCountFlags.SampleCount1, tiling, usage, SharingMode.Exclusive, ArrayProxy<uint>.Null, ImageLayout.Undefined);
+            managed.Image = device.CreateImage(ImageType.Image2d, format, new Extent3D(width, height, 1), 1, 1, SampleCountFlags.SampleCount1, tiling, usage, SharingMode.Exclusive, ArrayProxy<uint>.Null, ImageLayout.Undefined);
 
             var memRequirements = device.GetImageMemoryRequirements2(new()
             {
-                Image = image
+                Image = managed.Image
             });
 
-            imageMemory = device.AllocateMemory(memRequirements.MemoryRequirements.Size, engine.DeviceManager.FindMemoryType(memRequirements.MemoryRequirements.MemoryTypeBits, properties), new()
+            managed.Memory = device.AllocateMemory(memRequirements.MemoryRequirements.Size, engine.DeviceManager.FindMemoryType(memRequirements.MemoryRequirements.MemoryTypeBits, properties), new()
             {
-                Image = image,
+                Image = managed.Image,
             });
 
             device.BindImageMemory2(new BindImageMemoryInfo
             {
-                Image = image,
-                Memory = imageMemory,
+                Image = managed.Image,
+                Memory = managed.Memory,
                 MemoryOffset = 0,
             });
+
+            managed.View = CreateImageView(managed.Image, format, aspectFlags);
+
+            return managed;
         }
 
         public Format FindDepthFormat()
@@ -107,10 +112,7 @@ namespace ajiva.EngineManagers
 
         private ManagedImage CreateManagedImage(Format format, ImageAspectFlags aspectFlags)
         {
-            var managed = new ManagedImage();
-
-            CreateImage(engine.SwapChainManager.SwapChainExtent.Width, engine.SwapChainManager.SwapChainExtent.Height, format, ImageTiling.Optimal, ImageUsageFlags.DepthStencilAttachment, MemoryPropertyFlags.DeviceLocal, out managed.Image, out managed.Memory);
-            managed.View = CreateImageView(managed.Image, format, aspectFlags);
+            var managed = CreateImageAndView(engine.SwapChainManager.SwapChainExtent.Width, engine.SwapChainManager.SwapChainExtent.Height, format, ImageTiling.Optimal, ImageUsageFlags.DepthStencilAttachment, MemoryPropertyFlags.DeviceLocal, aspectFlags);
 
             TransitionImageLayout(managed.Image, format, ImageLayout.Undefined, ImageLayout.DepthStencilAttachmentOptimal);
             return managed;
