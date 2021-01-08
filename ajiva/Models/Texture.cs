@@ -5,9 +5,9 @@ namespace ajiva.Models
 {
     public class Texture : IDisposable
     {
-        public Sampler Sampler;
+        public Sampler Sampler { get; set; } = null!;
 
-        public ManagedImage Image;
+        public ManagedImage Image { get; set; } = null!;
 
         /// <inheritdoc />
         public void Dispose()

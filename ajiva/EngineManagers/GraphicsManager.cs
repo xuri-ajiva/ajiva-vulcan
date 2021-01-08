@@ -22,6 +22,12 @@ namespace ajiva.EngineManagers
         public GraphicsManager(IEngine engine)
         {
             this.engine = engine;
+            PipelineLayout = null!;
+            RenderPass = null!;
+            Pipeline = null!;
+            DescriptorPool = null!;
+            DescriptorSetLayout = null!;
+            DescriptorSet = null!;
         }
 
         public void CreateGraphicsPipeline()

@@ -1,8 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
-using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
 using ajiva.Engine;
 using ajiva.Models;
 using SharpVk;
@@ -62,9 +60,9 @@ namespace ajiva.EngineManagers
                 null,
                 KhrExtensions.Swapchain);
 
-            GraphicsQueue = Device.GetQueue(queueFamilies.GraphicsFamily.Value, 0);
-            PresentQueue = Device.GetQueue(queueFamilies.PresentFamily.Value, 0);
-            TransferQueue = Device.GetQueue(queueFamilies.TransferFamily.Value, 0);
+            GraphicsQueue = Device.GetQueue(queueFamilies.GraphicsFamily!.Value, 0);
+            PresentQueue = Device.GetQueue(queueFamilies.PresentFamily!.Value, 0);
+            TransferQueue = Device.GetQueue(queueFamilies.TransferFamily!.Value, 0);
         }
 
         public QueueFamilyIndices FindQueueFamilies(PhysicalDevice device)
@@ -144,7 +142,7 @@ namespace ajiva.EngineManagers
 
         public void Dispose()
         {
-            Device?.Dispose();
+            Device.Dispose();
         }
 
         public void Submit(CommandBuffer[] commandBuffers, PipelineStageFlags[] waitDestinationStageMask)
@@ -170,24 +168,6 @@ namespace ajiva.EngineManagers
         }
 
         #region BufferAndMemory
-
-        public uint CreateCopyBuffer<T>(ref T[] value, out Buffer stagingBuffer, out DeviceMemory stagingBufferMemory)
-        {
-            var size = Unsafe.SizeOf<T>();
-            var bufferSize = (uint)(size * value.Length);
-
-            CreateBuffer(bufferSize, BufferUsageFlags.TransferSource, MemoryPropertyFlags.HostVisible | MemoryPropertyFlags.HostCoherent, out stagingBuffer, out stagingBufferMemory);
-
-            var memoryBuffer = stagingBufferMemory.Map(0, bufferSize, MemoryMapFlags.None);
-
-            for (var index = 0; index < value.Length; index++)
-            {
-                Marshal.StructureToPtr(value[index], memoryBuffer + (size * index), false);
-            }
-
-            stagingBufferMemory.Unmap();
-            return bufferSize;
-        }
 
         public void CreateBuffer(ulong size, BufferUsageFlags usage, MemoryPropertyFlags properties, out Buffer buffer, out DeviceMemory bufferMemory)
         {
@@ -238,32 +218,6 @@ namespace ajiva.EngineManagers
             throw new("No compatible memory type.");
         }
 
-        public void CreateVertexBuffers(Vertex[] val, out Buffer vertexBuffer, out DeviceMemory vertexBufferMemory)
-        {
-            var bufferSize = CreateCopyBuffer(ref val, out var stagingBuffer, out var stagingBufferMemory);
-
-            stagingBufferMemory.Unmap();
-
-            CreateBuffer(bufferSize, BufferUsageFlags.TransferDestination | BufferUsageFlags.VertexBuffer, MemoryPropertyFlags.DeviceLocal, out vertexBuffer, out vertexBufferMemory);
-
-            CopyBuffer(stagingBuffer, vertexBuffer, bufferSize);
-
-            stagingBuffer.Dispose();
-            stagingBufferMemory.Free();
-        }
-
-        public void CreateIndexBuffer(ushort[] val, out Buffer indexBuffers, out DeviceMemory indexBufferMemory)
-        {
-            var bufferSize = CreateCopyBuffer(ref val, out var stagingBuffer, out var stagingBufferMemory);
-
-            CreateBuffer(bufferSize, BufferUsageFlags.TransferDestination | BufferUsageFlags.IndexBuffer, MemoryPropertyFlags.DeviceLocal, out indexBuffers, out indexBufferMemory);
-
-            CopyBuffer(stagingBuffer, indexBuffers, bufferSize);
-
-            stagingBuffer.Dispose();
-            stagingBufferMemory.Free();
-        }
-
         #endregion
 
         #region CommandPool
@@ -276,9 +230,9 @@ namespace ajiva.EngineManagers
         {
             var queueFamilies = FindQueueFamilies(PhysicalDevice);
 
-            TransientCommandPool = Device.CreateCommandPool(queueFamilies.TransferFamily.Value, CommandPoolCreateFlags.Transient);
+            TransientCommandPool = Device.CreateCommandPool(queueFamilies.TransferFamily!.Value, CommandPoolCreateFlags.Transient);
 
-            CommandPool = Device.CreateCommandPool(queueFamilies.GraphicsFamily.Value);
+            CommandPool = Device.CreateCommandPool(queueFamilies.GraphicsFamily!.Value);
         }
 
         public void CreateCommandBuffers()

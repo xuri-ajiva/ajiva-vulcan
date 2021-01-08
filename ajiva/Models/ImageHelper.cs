@@ -1,6 +1,6 @@
 ﻿using System.Runtime.InteropServices;
 
-namespace ajiva
+namespace ajiva.Models
 {
     internal static class ImageHelper
     {
@@ -21,7 +21,7 @@ namespace ajiva
             public byte a;
         }
         [StructLayout(LayoutKind.Sequential)]
-        public struct Argb32R
+        public readonly struct Argb32R
         {
             public readonly byte b;
             public readonly byte g;

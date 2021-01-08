@@ -19,11 +19,18 @@ namespace ajiva.EngineManagers
         public event EventHandler<vec2> OnMouseMove;
         public Surface Surface { get; private set; }
 
-        public vec2 PreviousMousePosition = vec2.Zero;
+        public vec2 PreviousMousePosition { get; private set; }
 
         public PlatformWindow(IEngine engine)
         {
             this.engine = engine;
+            OnFrame = null!;
+            OnKeyEvent = null!;
+            OnResize = null!;
+            OnMouseMove = null!;
+            Surface = null!;
+            PreviousMousePosition = vec2.Zero;
+            mouseMotion = true;
         }
 
         private WindowHandle window;
@@ -42,7 +49,7 @@ namespace ajiva.EngineManagers
 
             Glfw3.WindowHint(WindowAttribute.ClientApi, 0);
             window = Glfw3.CreateWindow(surfaceWidth, surfaceHeight, "First test", MonitorHandle.Zero, WindowHandle.Zero);
-            Glfw3.SetWindowSizeCallback(window, (a, w, h) =>
+            Glfw3.SetWindowSizeCallback(window, (_, w, h) =>
             {
                 Height = h;
                 Width = w;
@@ -76,7 +83,7 @@ namespace ajiva.EngineManagers
             PreviousMousePosition = mousePos;
         }
 
-        private bool mouseMotion = true;
+        private bool mouseMotion;
 
         private void KeyCallback(WindowHandle windowHandle, Key key, int scancode, InputAction inputAction, Modifier modifiers)
         {

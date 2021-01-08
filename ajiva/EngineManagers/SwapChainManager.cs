@@ -14,6 +14,9 @@ namespace ajiva.EngineManagers
         public SwapChainManager(IEngine engine)
         {
             this.engine = engine;
+            SwapChain = null!;
+            SwapChainImage = null!;
+            FrameBuffers = null!;
         }
 
         public Swapchain SwapChain { get; private set; }
@@ -38,7 +41,7 @@ namespace ajiva.EngineManagers
             }
             return new()
             {
-                Width = Math.Max(capabilities.MinImageExtent.Width, Math.Min(capabilities.MaxImageExtent.Width, engine.Window.SurfaceHeight)),
+                Width = Math.Max(capabilities.MinImageExtent.Width, Math.Min(capabilities.MaxImageExtent.Width, engine.Window.SurfaceWidth)),
                 Height = Math.Max(capabilities.MinImageExtent.Height, Math.Min(capabilities.MaxImageExtent.Height, engine.Window.SurfaceHeight))
             };
         }

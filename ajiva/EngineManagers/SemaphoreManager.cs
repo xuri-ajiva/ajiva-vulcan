@@ -13,6 +13,8 @@ namespace ajiva.EngineManagers
         public SemaphoreManager(IEngine engine)
         {
             this.engine = engine;
+            RenderFinished = null!;
+            ImageAvailable = null!;
         }
         public void CreateSemaphores()
         {

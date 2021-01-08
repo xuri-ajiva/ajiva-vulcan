@@ -15,7 +15,9 @@ namespace ajiva
 {
     public partial class Program
     {
-        private static async Task Main(string[] args)
+#pragma warning disable 1998
+        private static async Task Main()
+#pragma warning restore 1998
         {
             var pg = new Program();
 
@@ -46,7 +48,7 @@ namespace ajiva
                 RecreateSwapChain();
             };
 
-            Window.OnKeyEvent += delegate(object? sender, Key key, int scancode, InputAction action, Modifier modifiers)
+            Window.OnKeyEvent += delegate(object? _, Key key, int _, InputAction action, Modifier _)
             {
                 var down = action != InputAction.Release;
 
@@ -67,7 +69,7 @@ namespace ajiva
                 }
             };
 
-            Window.OnMouseMove += delegate(object? sender, vec2 vec2)
+            Window.OnMouseMove += delegate(object? _, vec2 vec2)
             {
                 camera.OnMouseMoved(vec2.x, vec2.y);
             };
@@ -119,7 +121,7 @@ namespace ajiva
 
             var ubo = new UniformBufferObject
             {
-                Model = mat4.Identity, //mat4.Rotate((float)Math.Sin(totalTime) * (float)Math.PI, vec3.UnitZ),
+                Model = mat4.Rotate((float)Math.Sin(totalTime) * (float)Math.PI, vec3.UnitZ),
                 View = camera.View, //mat4.LookAt(new(2), vec3.Zero, vec3.UnitZ),
                 Proj = camera.Projection //mat4.Perspective((float)Math.PI / 4f, swapChainExtent.Width / (float)swapChainExtent.Height, 0.1f, 10)
             };

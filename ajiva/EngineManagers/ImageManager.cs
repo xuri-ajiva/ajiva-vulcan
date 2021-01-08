@@ -18,6 +18,8 @@ namespace ajiva.EngineManagers
         public ImageManager(IEngine engine)
         {
             this.engine = engine;
+            DepthImage = null!;
+            Images = null!;
         }
 
         public ImageView CreateImageView(Image image, Format format, ImageAspectFlags aspectFlags)

@@ -5,9 +5,9 @@ namespace ajiva.Models
 {
     public class ManagedImage : IDisposable
     {
-        public ImageView View;
-        public Image Image;
-        public DeviceMemory Memory;
+        public ImageView View { get; set; } = null!;
+        public Image Image { get; set; } = null!;
+        public DeviceMemory Memory { get; set; } = null!;
 
         /// <inheritdoc />
         public void Dispose()
@@ -15,6 +15,7 @@ namespace ajiva.Models
             View.Dispose();
             Image.Dispose();
             Memory.Free();
+            GC.SuppressFinalize(this);
         }
     }
 }
