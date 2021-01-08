@@ -34,7 +34,7 @@ namespace ajiva.EngineManagers
                 LayerCount = 1,
             });
         }
-        
+
         public AImage CreateImageAndView(uint width, uint height, Format format, ImageTiling tiling, ImageUsageFlags usage, MemoryPropertyFlags properties, ImageAspectFlags aspectFlags)
         {
             var aImage = new AImage();
@@ -127,7 +127,7 @@ namespace ajiva.EngineManagers
 
         public void CopyBufferToImage(Buffer buffer, Image image, uint width, uint height)
         {
-            engine.DeviceManager.SingleTimeCommand(command =>
+            engine.DeviceManager.SingleTimeCommand(x => x.GraphicsQueue, command =>
             {
                 command.CopyBufferToImage(buffer, image, ImageLayout.TransferDestinationOptimal, new BufferImageCopy()
                 {
@@ -228,7 +228,7 @@ namespace ajiva.EngineManagers
                     throw new ArgumentException("unsupported layout transition!");
             }
 
-            engine.DeviceManager.SingleTimeCommand(command => command.PipelineBarrier(sourceStage, destinationStage, ArrayProxy<MemoryBarrier>.Null, ArrayProxy<BufferMemoryBarrier>.Null, barrier));
+            engine.DeviceManager.SingleTimeCommand(x => x.GraphicsQueue, command => command.PipelineBarrier(sourceStage, destinationStage, ArrayProxy<MemoryBarrier>.Null, ArrayProxy<BufferMemoryBarrier>.Null, barrier));
         }
 
         /// <inheritdoc />

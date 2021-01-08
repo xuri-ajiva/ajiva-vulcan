@@ -5,7 +5,7 @@ using SharpVk.Multivendor;
 
 namespace ajiva
 {
-    public partial class Program
+    public partial class Program : IDisposable
     {
         #region Vars
 
@@ -27,55 +27,25 @@ namespace ajiva
 
         private void Cleanup()
         {
-            /*
-                    device?.WaitIdle();
-                    CleanupSwapChain();
-        
-                    textureSampler.Dispose();
-                    textureImageView.Dispose();
-        
-                    textureImage.Dispose();
-                    textureImageMemory.Free();
-        
-                    descriptorSetLayout?.Dispose();
-                    descriptorSetLayout = null;
-        
-                    bufferManager.Dispose();
-        
-                    renderFinished?.Dispose();
-                    renderFinished = null;
-        
-                    imageAvailable?.Dispose();
-                    imageAvailable = null;
-        
-                    descriptorPool?.Dispose();
-                    descriptorPool = null;
-                    descriptorSet = null;
-        
-                    commandPool?.Dispose();
-                    commandPool = null;
-                    commandBuffers = null;
-        
-                    fragShader?.Dispose();
-                    fragShader = null;
-        
-                    vertShader?.Dispose();
-                    vertShader = null;
-        
-                    device?.Dispose();
-                    device = null;
-        
-                    window?.Dispose();
-                    window = null;
-        
-                    Instance?.Dispose();
-                    Instance = null;
-        
-                    window.CloseWindow();      */
+            Dispose();
         }
 
         private void CleanupSwapChain()
         {
+            ImageManager.DepthImage.Dispose();
+
+            SwapChainManager.CleanupSwapChain();
+
+            DeviceManager.FreeCommandBuffers();
+
+            GraphicsManager.Pipeline.Dispose();
+
+            GraphicsManager.PipelineLayout.Dispose();
+
+            GraphicsManager.RenderPass.Dispose();
+
+            GraphicsManager.DescriptorPool.Dispose();
+
             /*     depthImageView.Dispose();
                  depthImage.Dispose();
                  depthImageMemory.Free();
@@ -109,19 +79,35 @@ namespace ajiva
 
         private void RecreateSwapChain()
         {
-            /*device?.WaitIdle();
+            DeviceManager.WaitIdle();
             CleanupSwapChain();
 
-            CreateSwapChain();
-            CreateImageViews();
-            CreateRenderPass();
-            CreateGraphicsPipeline();
-            CreateDepthResources();
-            CreateFrameBuffers();
+            SwapChainManager.CreateSwapChain();
+            SwapChainManager.CreateImageViews();
+            GraphicsManager.CreateRenderPass();
+            GraphicsManager.CreateGraphicsPipeline();
+            ImageManager.CreateDepthResources();
+            SwapChainManager.CreateFrameBuffers();
             //bufferManager.CreateUniformBuffer();   free in cleanup swapchain if created here
-            CreateDescriptorPool();
-            CreateDescriptorSet();
-            CreateCommandBuffers();  */
+            GraphicsManager.CreateDescriptorPool();
+            GraphicsManager.CreateDescriptorSet();
+            DeviceManager.CreateCommandBuffers();
+        }
+
+        /// <inheritdoc />
+        public void Dispose()
+        {
+            SwapChainManager.Dispose();
+            Window.Dispose();
+            ImageManager.Dispose();
+            GraphicsManager.Dispose();
+            ShaderManager.Dispose();
+            BufferManager.Dispose();
+            SemaphoreManager.Dispose();
+            TextureManager.Dispose();
+            DeviceManager.Dispose();
+            Instance?.Dispose();
+            GC.SuppressFinalize(this);
         }
     }
 }

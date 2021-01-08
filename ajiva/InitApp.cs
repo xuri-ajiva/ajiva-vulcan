@@ -88,6 +88,7 @@ namespace ajiva
 
         private void DrawFrame()
         {
+            Throw.Assert(SwapChainManager.SwapChain != null, "SwapChainManager.SwapChain != null");
             var nextImage = SwapChainManager.SwapChain.AcquireNextImage(uint.MaxValue, SemaphoreManager.ImageAvailable, null);
 
             DeviceManager.GraphicsQueue.Submit(new SubmitInfo

@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using ajiva.Engine;
 using ajiva.Models;
@@ -15,18 +17,18 @@ namespace ajiva.EngineManagers
         {
             this.engine = engine;
             SwapChain = null!;
-            SwapChainImage = null!;
-            FrameBuffers = null!;
+            SwapChainImage = Array.Empty<AImage>();
+            FrameBuffers = Array.Empty<Framebuffer>();
         }
 
-        public Swapchain SwapChain { get; private set; }
+        public Swapchain? SwapChain { get; private set; }
         public Format SwapChainFormat { get; private set; }
         public Extent2D SwapChainExtent { get; private set; }
         public AImage[] SwapChainImage { get; private set; }
 
         public Framebuffer[] FrameBuffers { get; private set; }
 
-        public PresentMode ChooseSwapPresentMode(PresentMode[] availablePresentModes)
+        public PresentMode ChooseSwapPresentMode(IEnumerable<PresentMode> availablePresentModes)
         {
             return availablePresentModes.Contains(PresentMode.Mailbox)
                 ? PresentMode.Mailbox
@@ -87,8 +89,7 @@ namespace ajiva.EngineManagers
 
         public uint AcquireNextImage()
         {
-            engine.NotNull(() => SwapChain);
-
+            Throw.Assert(SwapChain != null, nameof(SwapChain) + " != null");
             return SwapChain.AcquireNextImage(uint.MaxValue, engine.SemaphoreManager.ImageAvailable, null);
         }
 
@@ -157,47 +158,35 @@ namespace ajiva.EngineManagers
             FrameBuffers = SwapChainImage.Select(x => Create(x.View)).ToArray();
         }
 
-        public void CreateCommandBuffers(ref CommandBuffer[]? commandBuffers)
-        {
-            commandBuffers = engine.DeviceManager.Device.AllocateCommandBuffers(engine.DeviceManager.CommandPool, CommandBufferLevel.Primary, (uint)FrameBuffers.Length);
-            for (var index = 0; index < FrameBuffers.Length; index++)
-            {
-                var commandBuffer = commandBuffers[index];
-
-                commandBuffer.Begin(CommandBufferUsageFlags.SimultaneousUse);
-
-                commandBuffer.BeginRenderPass(engine.GraphicsManager.RenderPass,
-                    FrameBuffers[index],
-                    new(new(), SwapChainExtent),
-                    new ClearValue[]
-                    {
-                        new ClearColorValue(.1f, .1f, .1f, 1), new ClearDepthStencilValue(1, 0)
-                    },
-                    SubpassContents.Inline);
-
-                commandBuffer.BindPipeline(PipelineBindPoint.Graphics, engine.GraphicsManager.Pipeline);
-
-                engine.BufferManager.BindAllAndDraw(commandBuffer);
-
-                commandBuffer.EndRenderPass();
-
-                commandBuffer.End();
-            }
-        }
-
         /// <inheritdoc />
         public void Dispose()
         {
-            SwapChain.Dispose();
-            foreach (var frameBuffer in this.FrameBuffers)
+            SwapChain?.Dispose();
+            foreach (var frameBuffer in FrameBuffers)
             {
                 frameBuffer.Dispose();
             }
-            foreach (var image in this.SwapChainImage)
+            foreach (var image in SwapChainImage)
             {
                 image.Dispose();
             }
             GC.SuppressFinalize(this);
+        }
+
+        public void CleanupSwapChain()
+        {
+            foreach (var frameBuffer in FrameBuffers)
+                frameBuffer.Dispose();
+            FrameBuffers = Array.Empty<Framebuffer>();
+
+            foreach (var aImage in SwapChainImage)
+            {
+                aImage.Dispose();
+            }
+            SwapChainImage = Array.Empty<AImage>();
+
+            SwapChain?.Dispose();
+            SwapChain = null;
         }
     }
 }

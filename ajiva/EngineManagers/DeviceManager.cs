@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Diagnostics;
 using System.Linq;
 using ajiva.Engine;
 using ajiva.Models;
@@ -39,6 +38,7 @@ namespace ajiva.EngineManagers
 
         private void PickPhysicalDevice()
         {
+            Throw.Assert(engine.Instance != null, "engine.Instance != null");
             var availableDevices = engine.Instance.EnumeratePhysicalDevices();
 
             PhysicalDevice = availableDevices.First(IsSuitableDevice);
@@ -233,7 +233,7 @@ namespace ajiva.EngineManagers
             }
         }
 
-        public void SingleTimeCommand(Action<CommandBuffer> action)
+        public void SingleTimeCommand(Func<DeviceManager, Queue> queueSelector, Action<CommandBuffer> action)
         {
             var commandBuffer = Device.AllocateCommandBuffer(CommandPool, CommandBufferLevel.Primary);
             commandBuffer.Begin(CommandBufferUsageFlags.OneTimeSubmit);
@@ -278,5 +278,10 @@ namespace ajiva.EngineManagers
         }
 
   #endregion
+
+        public void FreeCommandBuffers()
+        {
+            CommandPool?.FreeCommandBuffers(CommandBuffers);
+        }
     }
 }
