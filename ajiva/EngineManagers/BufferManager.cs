@@ -8,26 +8,20 @@ using Buffer = SharpVk.Buffer;
 
 namespace ajiva.EngineManagers
 {
-    public record BufferPack(Buffer VertexBuffer, DeviceMemory VertexBufferMemory, uint VerticesLength, Buffer IndexBuffer, DeviceMemory IndexBufferMemory, uint IndicesLength);
-
     public class BufferManager : IDisposable
     {
+        private readonly IEngine engine;
         public Buffer UniformStagingBuffer;
         public Buffer UniformBuffer;
         public DeviceMemory UniformStagingBufferMemory;
         public DeviceMemory UniformBufferMemory;
-        public Program Program { get; private set; }
-        private Device Device => Program.DeviceManager.Device;
-        private PhysicalDevice PhysicalDevice => Program.DeviceManager.PhysicalDevice;
-        private Queue TransferQueue => Program.DeviceManager.TransferQueue;
-        private CommandPool TransientCommandPool => Program.DeviceManager.TransientCommandPool;
 
         public object BufferLock { get; } = new();
-        public List<BufferPack> Buffers { get; } = new();
+        public List<Mesh> Buffers { get; } = new();
 
-        public BufferManager(Program program)
+        public BufferManager(IEngine engine)
         {
-            Program = program;
+            this.engine = engine;
         }
 
         public void AddBuffer(Vertex[] vertices, ushort[] indices)
