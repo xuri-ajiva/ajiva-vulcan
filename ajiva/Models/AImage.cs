@@ -3,7 +3,7 @@ using SharpVk;
 
 namespace ajiva.Models
 {
-    public class ManagedImage : IDisposable
+    public class AImage : IDisposable
     {
         public ImageView View { get; set; } = null!;
         public Image Image { get; set; } = null!;

@@ -22,7 +22,7 @@ namespace ajiva.EngineManagers
         public Swapchain SwapChain { get; private set; }
         public Format SwapChainFormat { get; private set; }
         public Extent2D SwapChainExtent { get; private set; }
-        public ManagedImage[] SwapChainImage { get; private set; }
+        public AImage[] SwapChainImage { get; private set; }
 
         public Framebuffer[] FrameBuffers { get; private set; }
 
@@ -127,7 +127,7 @@ namespace ajiva.EngineManagers
                 true,
                 SwapChain);
 
-            SwapChainImage = SwapChain.GetImages().Select(x => new ManagedImage
+            SwapChainImage = SwapChain.GetImages().Select(x => new AImage
             {
                 Image = x
             }).ToArray();

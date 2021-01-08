@@ -19,9 +19,9 @@ namespace ajiva.EngineManagers
 
         public Texture Logo { get; private set; }
 
-        private ManagedImage CreateTextureImageFromFile(string fileName)
+        private AImage CreateTextureImageFromFile(string fileName)
         {
-            ManagedImage managedImage;
+            AImage aImage;
             unsafe
             {
                 var img = System.Drawing.Image.FromFile(fileName);
@@ -45,17 +45,17 @@ namespace ajiva.EngineManagers
 
                 stagingBufferMemory.Unmap();
 
-                managedImage = engine.ImageManager.CreateImageAndView(texWidth, texHeight, Format.R8G8B8A8Srgb, ImageTiling.Optimal, ImageUsageFlags.TransferDestination | ImageUsageFlags.Sampled, MemoryPropertyFlags.DeviceLocal, ImageAspectFlags.Color);
+                aImage = engine.ImageManager.CreateImageAndView(texWidth, texHeight, Format.R8G8B8A8Srgb, ImageTiling.Optimal, ImageUsageFlags.TransferDestination | ImageUsageFlags.Sampled, MemoryPropertyFlags.DeviceLocal, ImageAspectFlags.Color);
 
-                engine.ImageManager.TransitionImageLayout(managedImage.Image, Format.R8G8B8A8Srgb, ImageLayout.Undefined, ImageLayout.TransferDestinationOptimal);
-                engine.ImageManager.CopyBufferToImage(stagingBuffer, managedImage.Image, texWidth, texHeight);
-                engine.ImageManager.TransitionImageLayout(managedImage.Image, Format.R8G8B8A8Srgb, ImageLayout.TransferDestinationOptimal, ImageLayout.ShaderReadOnlyOptimal);
+                engine.ImageManager.TransitionImageLayout(aImage.Image, Format.R8G8B8A8Srgb, ImageLayout.Undefined, ImageLayout.TransferDestinationOptimal);
+                engine.ImageManager.CopyBufferToImage(stagingBuffer, aImage.Image, texWidth, texHeight);
+                engine.ImageManager.TransitionImageLayout(aImage.Image, Format.R8G8B8A8Srgb, ImageLayout.TransferDestinationOptimal, ImageLayout.ShaderReadOnlyOptimal);
 
                 stagingBuffer.Destroy();
                 stagingBufferMemory.Free();
             }
 
-            return managedImage;
+            return aImage;
         }
 
         private Sampler CreateTextureSampler()
