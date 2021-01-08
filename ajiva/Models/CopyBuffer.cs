@@ -13,7 +13,6 @@ namespace ajiva.Models
         {
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveOptimization)]
         public void CopyValueToBuffer()
         {
             Throw.Assert(Memory != null, nameof(Memory) + " != null");
@@ -38,29 +37,15 @@ namespace ajiva.Models
 
         public void CopyTo(BufferOfT<T> aBuffer, DeviceManager manager)
         {
-            var transferBuffers = manager.Device.AllocateCommandBuffer(manager.TransientCommandPool, CommandBufferLevel.Primary);
-
-            transferBuffers.Begin(CommandBufferUsageFlags.OneTimeSubmit);
-
             if (aBuffer.Size < Size) throw new ArgumentException("The Destination Buffer is smaller than the Source Buffer", nameof(aBuffer));
 
-            transferBuffers.CopyBuffer(Buffer, aBuffer.Buffer, new BufferCopy
+            manager.SingleTimeCommand(x => x.TransferQueue, command =>
             {
-                Size = Size
-            });
-
-            transferBuffers.End();
-
-            manager.TransferQueue.Submit(new SubmitInfo
-            {
-                CommandBuffers = new[]
+                command.CopyBuffer(Buffer, aBuffer.Buffer, new BufferCopy
                 {
-                    transferBuffers
-                }
-            }, null);
-            manager.TransferQueue.WaitIdle();
-
-            manager.TransientCommandPool.FreeCommandBuffers(transferBuffers);
+                    Size = Size
+                });
+            });
         }
     }
 }
