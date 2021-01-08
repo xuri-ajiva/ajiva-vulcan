@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using ajiva.Engine;
 using ajiva.Models;
 using SharpVk;
 using Buffer = SharpVk.Buffer;
@@ -163,13 +164,19 @@ namespace ajiva.EngineManagers
 
         public void Dispose()
         {
-            ReleaseUnmanagedResources();
-            GC.SuppressFinalize(this);
-        }
+            lock (BufferLock)
+            {
+                foreach (var mesh in Buffers)
+                {
+                    mesh.Dispose();
+                }
 
-        ~BufferManager()
-        {
-            ReleaseUnmanagedResources();
+                UniformBuffer.Dispose();
+                UniformStagingBuffer.Dispose();
+                UniformBufferMemory.Free();
+                UniformStagingBufferMemory.Free();
+            }
+            GC.SuppressFinalize(this);
         }
 
         public void BindAllAndDraw(CommandBuffer commandBuffer)

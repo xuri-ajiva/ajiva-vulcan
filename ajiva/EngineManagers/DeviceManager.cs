@@ -269,8 +269,8 @@ namespace ajiva.EngineManagers
         #region CommandPool
 
         internal CommandPool TransientCommandPool;
-        public CommandPool? CommandPool;
-        public CommandBuffer[]? CommandBuffers;
+        public CommandPool CommandPool;
+        public CommandBuffer[] CommandBuffers;
 
         public void CreateCommandPools()
         {

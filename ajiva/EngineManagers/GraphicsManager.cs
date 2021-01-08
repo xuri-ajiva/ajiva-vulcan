@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using ajiva.Engine;
@@ -291,6 +290,18 @@ namespace ajiva.EngineManagers
                         DescriptorType = DescriptorType.CombinedImageSampler,
                     }
                 }, null);
+        }
+
+        /// <inheritdoc />
+        public void Dispose()
+        {
+            PipelineLayout.Dispose();
+            RenderPass.Dispose();
+            Pipeline.Dispose();
+            DescriptorPool.Dispose();
+            DescriptorSetLayout.Dispose();
+            
+            GC.SuppressFinalize(this);
         }
     }
 }

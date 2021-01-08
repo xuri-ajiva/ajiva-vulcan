@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using ajiva.Engine;
 using GlmSharp;
-using SharpVk;
 using SharpVk.Glfw;
 using SharpVk.Khronos;
 using Glfw3 = SharpVk.Glfw.Glfw3;

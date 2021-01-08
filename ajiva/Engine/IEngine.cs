@@ -1,9 +1,7 @@
 ﻿using System;
 using System.Linq.Expressions;
 using ajiva.EngineManagers;
-using ajiva.Models;
 using SharpVk;
-using SharpVk.Khronos;
 
 namespace ajiva.Engine
 {

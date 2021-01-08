@@ -59,5 +59,12 @@ namespace ajiva.EngineManagers
                       Colour = colour
                   });*/
         }
+
+        /// <inheritdoc />
+        public void Dispose()
+        {
+            FragShader?.Dispose();
+            VertShader?.Dispose();
+        }
     }
 }

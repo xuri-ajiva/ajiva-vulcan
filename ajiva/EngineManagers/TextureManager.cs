@@ -2,10 +2,8 @@
 using System.Drawing;
 using System.Drawing.Imaging;
 using ajiva.Engine;
-using ajiva.Entitys;
+using ajiva.Models;
 using SharpVk;
-using Buffer = SharpVk.Buffer;
-using Image = SharpVk.Image;
 
 namespace ajiva.EngineManagers
 {
@@ -75,6 +73,14 @@ namespace ajiva.EngineManagers
             Logo = new();
             Logo.Image = CreateTextureImageFromFile("logo.png");
             Logo.Sampler = CreateTextureSampler();
+        }
+
+        /// <inheritdoc />
+        public void Dispose()
+        {
+            Logo.Dispose();
+
+            GC.SuppressFinalize(this);
         }
     }
 

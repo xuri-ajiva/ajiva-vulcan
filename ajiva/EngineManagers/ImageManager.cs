@@ -12,6 +12,8 @@ namespace ajiva.EngineManagers
 
         public ManagedImage DepthImage { get; set; }
 
+        public List<ManagedImage> Images { get; set; }
+
         public ImageManager(IEngine engine)
         {
             this.engine = engine;
@@ -222,6 +224,16 @@ namespace ajiva.EngineManagers
             }
 
             engine.DeviceManager.SingleTimeCommand(command => command.PipelineBarrier(sourceStage, destinationStage, ArrayProxy<MemoryBarrier>.Null, ArrayProxy<BufferMemoryBarrier>.Null, barrier));
+        }
+
+        /// <inheritdoc />
+        public void Dispose()
+        {
+            DepthImage.Dispose();
+            foreach (var managedImage in Images)
+            {
+                managedImage.Dispose();
+            }
         }
 
   #endregion

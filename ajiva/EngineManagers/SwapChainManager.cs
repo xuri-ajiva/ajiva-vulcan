@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Linq;
 using ajiva.Engine;
+using ajiva.Models;
 using SharpVk;
 using SharpVk.Khronos;
 
@@ -19,7 +20,7 @@ namespace ajiva.EngineManagers
         public Format SwapChainFormat { get; private set; }
         public Extent2D SwapChainExtent { get; private set; }
         public ManagedImage[] SwapChainImage { get; private set; }
-        
+
         public Framebuffer[] FrameBuffers { get; private set; }
 
         public PresentMode ChooseSwapPresentMode(PresentMode[] availablePresentModes)
@@ -79,15 +80,6 @@ namespace ajiva.EngineManagers
             public SurfaceCapabilities Capabilities;
             public SurfaceFormat[] Formats;
             public PresentMode[] PresentModes;
-        }
-
-        public void Dispose()
-        {
-            /*
-                     if (swapChainImageViews != null)
-                         foreach (var imageView in swapChainImageViews)
-                             imageView.Dispose();
-                     swapChainImageViews = null; */
         }
 
         public uint AcquireNextImage()
@@ -188,6 +180,21 @@ namespace ajiva.EngineManagers
 
                 commandBuffer.End();
             }
+        }
+
+        /// <inheritdoc />
+        public void Dispose()
+        {
+            SwapChain.Dispose();
+            foreach (var frameBuffer in this.FrameBuffers)
+            {
+                frameBuffer.Dispose();
+            }
+            foreach (var image in this.SwapChainImage)
+            {
+                image.Dispose();
+            }
+            GC.SuppressFinalize(this);
         }
     }
 }

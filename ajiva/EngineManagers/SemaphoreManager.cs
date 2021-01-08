@@ -19,5 +19,12 @@ namespace ajiva.EngineManagers
             ImageAvailable = engine.DeviceManager.Device.CreateSemaphore();
             RenderFinished = engine.DeviceManager.Device.CreateSemaphore();
         }
+
+        /// <inheritdoc />
+        public void Dispose()
+        {
+            ImageAvailable.Dispose();
+            RenderFinished.Dispose();
+        }
     }
 }
