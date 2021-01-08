@@ -14,22 +14,23 @@ namespace ajiva.EngineManagers
         public TextureManager(IEngine engine)
         {
             this.engine = engine;
+            Logo = null!;
         }
 
         public Texture Logo { get; private set; }
 
         private ManagedImage CreateTextureImageFromFile(string fileName)
         {
-            var managedImage = new ManagedImage();
+            ManagedImage managedImage;
             unsafe
             {
                 var img = System.Drawing.Image.FromFile(fileName);
                 var bm = new Bitmap(img);
                 var scp0 = bm.LockBits(new(0, 0, bm.Width, bm.Height), ImageLockMode.ReadWrite, PixelFormat.Format32bppPArgb);
 
-                uint texWidth = (uint)bm.Width;
-                uint texHeight = (uint)bm.Height;
-                uint imageSize = (uint)(texWidth * texHeight * 4);
+                var texWidth = (uint)bm.Width;
+                var texHeight = (uint)bm.Height;
+                var imageSize = texWidth * texHeight * 4u;
 
                 engine.DeviceManager.CreateBuffer(imageSize, BufferUsageFlags.TransferSource, MemoryPropertyFlags.HostVisible | MemoryPropertyFlags.HostCached, out var stagingBuffer, out var stagingBufferMemory);
 
@@ -44,7 +45,7 @@ namespace ajiva.EngineManagers
 
                 stagingBufferMemory.Unmap();
 
-                engine.ImageManager.CreateImage(texWidth, texHeight, Format.R8G8B8A8Srgb, ImageTiling.Optimal, ImageUsageFlags.TransferDestination | ImageUsageFlags.Sampled, MemoryPropertyFlags.DeviceLocal, out managedImage.Image, out managedImage.Memory);
+                managedImage = engine.ImageManager.CreateImageAndView(texWidth, texHeight, Format.R8G8B8A8Srgb, ImageTiling.Optimal, ImageUsageFlags.TransferDestination | ImageUsageFlags.Sampled, MemoryPropertyFlags.DeviceLocal, ImageAspectFlags.Color);
 
                 engine.ImageManager.TransitionImageLayout(managedImage.Image, Format.R8G8B8A8Srgb, ImageLayout.Undefined, ImageLayout.TransferDestinationOptimal);
                 engine.ImageManager.CopyBufferToImage(stagingBuffer, managedImage.Image, texWidth, texHeight);
@@ -53,7 +54,6 @@ namespace ajiva.EngineManagers
                 stagingBuffer.Destroy();
                 stagingBufferMemory.Free();
             }
-            managedImage.View = engine.ImageManager.CreateImageView(managedImage.Image, Format.R8G8B8A8Srgb, ImageAspectFlags.Color);
 
             return managedImage;
         }
