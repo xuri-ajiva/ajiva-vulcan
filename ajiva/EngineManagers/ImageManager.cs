@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using ajiva.Engine;
+using ajiva.Models;
 using SharpVk;
 using Buffer = SharpVk.Buffer;
 
@@ -237,12 +238,5 @@ namespace ajiva.EngineManagers
         }
 
   #endregion
-    }
-
-    public class ManagedImage
-    {
-        public ImageView View;
-        public Image Image;
-        public DeviceMemory Memory;
     }
 }

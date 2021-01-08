@@ -83,11 +83,4 @@ namespace ajiva.EngineManagers
             GC.SuppressFinalize(this);
         }
     }
-
-    public class Texture
-    {
-        public Sampler Sampler;
-
-        public ManagedImage Image;
-    }
 }
