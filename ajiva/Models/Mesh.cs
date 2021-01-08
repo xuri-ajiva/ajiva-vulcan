@@ -1,8 +1,8 @@
 ﻿using System;
-using ajiva.Models;
+using ajiva.EngineManagers;
 using SharpVk;
 
-namespace ajiva.EngineManagers
+namespace ajiva.Models
 {
     public class Mesh : IDisposable
     {
