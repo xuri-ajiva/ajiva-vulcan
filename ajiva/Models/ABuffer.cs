@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using ajiva.EngineManagers;
 using SharpVk;
@@ -18,10 +17,11 @@ namespace ajiva.Models
             Size = size;
         }
 
-        public delegate uint MemoryTypeIndexDelegate(uint typeFilter);
-
         public void Create(DeviceManager manager, BufferUsageFlags usage, MemoryPropertyFlags flags)
         {
+            ATrace.LogCreated(typeof(ABuffer));
+            ATrace.LogCreated(GetType());
+            
             Buffer = manager.Device.CreateBuffer(Size, usage, SharingMode.Exclusive, null);
 
             var memRequirements = Buffer.GetMemoryRequirements();
@@ -33,6 +33,8 @@ namespace ajiva.Models
         /// <inheritdoc />
         public virtual void Dispose()
         {
+            ATrace.LogDeconstructed(typeof(ABuffer));
+            ATrace.LogDeconstructed(GetType());
             Buffer?.Dispose();
             Memory?.Free();
             GC.SuppressFinalize(this);
