@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq.Expressions;
 using ajiva.EngineManagers;
 using SharpVk;
@@ -7,6 +8,8 @@ namespace ajiva.Engine
 {
     public interface IEngine
     {
+        public bool Runing { get; }
+
         Instance? Instance { get; }
         DeviceManager DeviceManager { get; }
 

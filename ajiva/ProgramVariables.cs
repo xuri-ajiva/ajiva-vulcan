@@ -5,7 +5,7 @@ using SharpVk.Multivendor;
 
 namespace ajiva
 {
-    public partial class Program : IDisposable
+    public partial class Program
     {
         #region Vars
 
@@ -45,36 +45,6 @@ namespace ajiva
             GraphicsManager.RenderPass.Dispose();
 
             GraphicsManager.DescriptorPool.Dispose();
-
-            /*     depthImageView.Dispose();
-                 depthImage.Dispose();
-                 depthImageMemory.Free();
-     
-                 if (frameBuffers != null)
-                     foreach (var frameBuffer in frameBuffers)
-                         frameBuffer.Dispose();
-                 frameBuffers = null;
-     
-                 commandPool?.FreeCommandBuffers(commandBuffers);
-     
-                 pipeline?.Dispose();
-                 pipeline = null;
-     
-                 pipelineLayout?.Dispose();
-                 pipelineLayout = null;
-     
-                 renderPass?.Dispose();
-                 renderPass = null;
-     
-                 swapChain?.Dispose();
-                 swapChain = null;
-     
-                 if (swapChainImageViews != null)
-                     foreach (var imageView in swapChainImageViews)
-                         imageView.Dispose();
-                 swapChainImageViews = null;
-     
-                 descriptorPool?.Dispose();        */
         }
 
         private void RecreateSwapChain()
@@ -97,8 +67,13 @@ namespace ajiva
         /// <inheritdoc />
         public void Dispose()
         {
+            GC.SuppressFinalize(this);
+            if (!Runing) return;
+            Runing = false;
+
+            DeviceManager.WaitIdle();
+            
             SwapChainManager.Dispose();
-            Window.Dispose();
             ImageManager.Dispose();
             GraphicsManager.Dispose();
             ShaderManager.Dispose();
@@ -106,8 +81,9 @@ namespace ajiva
             SemaphoreManager.Dispose();
             TextureManager.Dispose();
             DeviceManager.Dispose();
+            Window.Dispose();
             Instance?.Dispose();
-            GC.SuppressFinalize(this);
+            Runing = false;
         }
     }
 }

@@ -1,10 +1,11 @@
-﻿using ajiva.Engine;
+﻿using System;
+using ajiva.Engine;
 using ajiva.EngineManagers;
 using SharpVk;
 
 namespace ajiva
 {
-    public partial class Program : IEngine
+    public partial class Program : IEngine, IDisposable
     {
         public Program()
         {
@@ -19,15 +20,28 @@ namespace ajiva
             TextureManager = new(this);
         }
 
+        //public static Instance? Instance { get; set; }
+        /// <inheritdoc />
+        public bool Runing { get; set; }
+        /// <inheritdoc />
         public Instance? Instance { get; set; }
+        /// <inheritdoc />
         public DeviceManager DeviceManager { get; }
+        /// <inheritdoc />
         public SwapChainManager SwapChainManager { get; }
+        /// <inheritdoc />
         public IPlatformWindow Window { get; }
+        /// <inheritdoc />
         public ImageManager ImageManager { get; }
+        /// <inheritdoc />
         public GraphicsManager GraphicsManager { get; }
+        /// <inheritdoc />
         public ShaderManager ShaderManager { get; }
+        /// <inheritdoc />
         public BufferManager BufferManager { get; }
+        /// <inheritdoc />
         public SemaphoreManager SemaphoreManager { get; }
+        /// <inheritdoc />
         public TextureManager TextureManager { get; }
     }
 }
