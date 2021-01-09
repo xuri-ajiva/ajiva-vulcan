@@ -289,7 +289,7 @@ namespace ajiva.EngineManagers
         /// <inheritdoc />
         public void Dispose()
         {
-            TransientCommandPool.FreeCommandBuffers(CommandBuffers);
+            CommandPool.FreeCommandBuffers(CommandBuffers);
             CommandBuffers = Array.Empty<CommandBuffer>();
             TransientCommandPool.Dispose();
             CommandPool.Dispose();
