@@ -19,8 +19,7 @@ namespace ajiva
 
         private static Bool32 DebugReport(DebugReportFlags flags, DebugReportObjectType objectType, ulong @object, HostSize location, int messageCode, string layerPrefix, string message, IntPtr userData)
         {
-            Debug.WriteLine(message);
-            Console.WriteLine(message);
+            Console.WriteLine($"[{flags}] ({objectType}) {layerPrefix}:\n{message}");
 
             return false;
         }
