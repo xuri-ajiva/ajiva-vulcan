@@ -46,6 +46,15 @@ namespace ajiva.Models
                     Size = Size
                 });
             });
+        }      
+        public void CopyRegions(BufferOfT<T> aBuffer, ArrayProxy<BufferCopy> regions, DeviceManager manager)
+        {
+            if (aBuffer.Size < Size) throw new ArgumentException("The Destination Buffer is smaller than the Source Buffer", nameof(aBuffer));
+
+            manager.SingleTimeCommand(x => x.GraphicsQueue, command =>
+            {
+                command.CopyBuffer(Buffer, aBuffer.Buffer, regions);
+            });
         }
     }
 }
