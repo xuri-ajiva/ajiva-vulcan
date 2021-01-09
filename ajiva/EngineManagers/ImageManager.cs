@@ -134,7 +134,7 @@ namespace ajiva.EngineManagers
                     BufferRowLength = 0,
                     BufferImageHeight = 0,
                     ImageOffset = new(),
-                    ImageExtent = new(width, height, 0),
+                    ImageExtent = new(width, height, 1),
                     ImageSubresource = new()
                     {
                         AspectMask = ImageAspectFlags.Color,
@@ -152,7 +152,7 @@ namespace ajiva.EngineManagers
                 BufferRowLength = 0,
                 BufferImageHeight = 0,
                 ImageOffset = new(),
-                ImageExtent = new(width, height, 0),
+                ImageExtent = new(width, height, 1),
                 ImageSubresource = new()
                 {
                     AspectMask = ImageAspectFlags.Color,
