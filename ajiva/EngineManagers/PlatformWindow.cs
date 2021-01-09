@@ -86,17 +86,19 @@ namespace ajiva.EngineManagers
 
         private void KeyCallback(WindowHandle windowHandle, Key key, int scancode, InputAction inputAction, Modifier modifiers)
         {
-            if (key == Key.Escape) //todo dev only
+            switch (key)
             {
-                Environment.Exit(0);
+                //todo dev only
+                case Key.Escape:
+                    Environment.Exit(0);
+                    break;
+                case Key.Tab when inputAction == InputAction.Press:
+                    mouseMotion = !mouseMotion;
+                    UpdateCursor();
+                    Console.WriteLine($"mouseMotion: {mouseMotion}");
+                    break;
             }
 
-            if (key == Key.Escape && inputAction == InputAction.Release)
-            {
-                mouseMotion = !mouseMotion;
-                UpdateCursor();
-                Console.WriteLine($"mouseMotion: {mouseMotion}");
-            }
             OnKeyEvent.Invoke(this, key, scancode, inputAction, modifiers);
         }
 
