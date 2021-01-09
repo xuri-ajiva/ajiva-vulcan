@@ -241,7 +241,10 @@ namespace ajiva.EngineManagers
             action.Invoke(commandBuffer);
 
             commandBuffer.End();
-            GraphicsQueue.Submit(new SubmitInfo()
+
+            var queue = queueSelector(this);
+
+            queue.Submit(new SubmitInfo()
             {
                 CommandBuffers = new[]
                 {
@@ -249,7 +252,7 @@ namespace ajiva.EngineManagers
                 },
             }, null);
 
-            GraphicsQueue.WaitIdle();
+            queue.WaitIdle();
             CommandPool.FreeCommandBuffers(commandBuffer);
         }
 
