@@ -14,6 +14,7 @@
     <option name="PROJECT_KIND" value="DotNetCore" />
     <option name="PROJECT_TFM" value="net5.0-windows7.0" />
     <method v="2">
+      <option name="RunConfigurationTask" enabled="true" run_configuration_name="shader-compile" run_configuration_type="RunNativeExe" />
       <option name="Build" />
     </method>
   </configuration>
