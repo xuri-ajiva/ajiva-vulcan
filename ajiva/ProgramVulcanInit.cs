@@ -29,9 +29,9 @@ namespace ajiva
                 Window.GetRequiredInstanceExtensions().Append(ExtExtensions.DebugReport).ToArray(),
                 applicationInfo: new ApplicationInfo
                 {
-                    ApplicationName = "vc-01",
-                    ApplicationVersion = new(0, 1, 0),
-                    EngineName = "xaphante",
+                    ApplicationName = "ajiva",
+                    ApplicationVersion = new(0, 0, 1),
+                    EngineName = "ajiva-engine",
                     EngineVersion = new(0, 0, 1),
                     ApiVersion = new(1, 0, 0)
                 });
