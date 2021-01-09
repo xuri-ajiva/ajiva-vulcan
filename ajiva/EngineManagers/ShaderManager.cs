@@ -1,4 +1,5 @@
-﻿using System.Linq;
+﻿using System;
+using System.Linq;
 using ajiva.Engine;
 using ajiva.Models;
 using GlmSharp;
@@ -58,6 +59,9 @@ namespace ajiva.EngineManagers
         public void Dispose()
         {
             Main.Dispose();
+            UniformModels.Dispose();
+            ViewProj.Dispose();
+            GC.SuppressFinalize(this);
         }
 
         public void CreateUniformBuffer()
