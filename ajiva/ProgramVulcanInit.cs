@@ -10,6 +10,8 @@ namespace ajiva
     {
         private void CreateInstance()
         {
+            if (Instance != null) return;
+
             var enabledLayers = new List<string>();
 
             //VK_LAYER_LUNARG_api_dump
