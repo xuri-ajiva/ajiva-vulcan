@@ -136,39 +136,6 @@ namespace ajiva.EngineManagers
 
         #region BufferAndMemory
 
-        public void CreateBuffer(ulong size, BufferUsageFlags usage, MemoryPropertyFlags properties, out Buffer buffer, out DeviceMemory bufferMemory)
-        {
-            buffer = Device.CreateBuffer(size, usage, SharingMode.Exclusive, null);
-
-            var memRequirements = buffer.GetMemoryRequirements();
-
-            bufferMemory = Device.AllocateMemory(memRequirements.Size, FindMemoryType(memRequirements.MemoryTypeBits, properties));
-
-            buffer.BindMemory(bufferMemory, 0);
-        }
-
-        public void CopyBuffer(Buffer sourceBuffer, Buffer destinationBuffer, ulong size)
-        {
-            var transferBuffers = Device.AllocateCommandBuffers(TransientCommandPool, CommandBufferLevel.Primary, 1);
-
-            transferBuffers[0].Begin(CommandBufferUsageFlags.OneTimeSubmit);
-
-            transferBuffers[0].CopyBuffer(sourceBuffer, destinationBuffer, new BufferCopy
-            {
-                Size = size
-            });
-
-            transferBuffers[0].End();
-
-            TransferQueue.Submit(new SubmitInfo
-            {
-                CommandBuffers = transferBuffers
-            }, null);
-            TransferQueue.WaitIdle();
-
-            TransientCommandPool.FreeCommandBuffers(transferBuffers);
-        }
-
         public uint FindMemoryType(uint typeFilter, MemoryPropertyFlags flags)
         {
             var memoryProperties = PhysicalDevice.GetMemoryProperties();
