@@ -8,19 +8,23 @@ namespace ajiva.Models
     public class UniformBuffer<T> : IDisposable where T : struct
     {
         private readonly DeviceManager manager;
-        //private const int ItemCount = 1;
+        private const int ItemCount = 1;
         public WritableCopyBuffer<T> Staging { get; }
         public BufferOfT<T> Uniform { get; }
 
-        public UniformBuffer(DeviceManager manager, int itemCount)
+        public UniformBuffer(DeviceManager manager)
         {
-            var value = new T[itemCount];
+            var value = new T[ItemCount];
 
             this.manager = manager;
 
             Staging = new(value);
             Uniform = new(value); //Uniform = new((uint)Unsafe.SizeOf<T>() * ItemCount);
 
+        }
+
+        public void Create()
+        {
             Staging.Create(manager.Device, BufferUsageFlags.TransferSource, x => manager.FindMemoryType(x, MemoryPropertyFlags.HostVisible | MemoryPropertyFlags.HostCoherent));
             Uniform.Create(manager.Device, BufferUsageFlags.TransferDestination | BufferUsageFlags.UniformBuffer, x => manager.FindMemoryType(x, MemoryPropertyFlags.DeviceLocal));
         }
