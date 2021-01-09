@@ -124,13 +124,13 @@ namespace ajiva.EngineManagers
                         new PipelineShaderStageCreateInfo
                         {
                             Stage = ShaderStageFlags.Vertex,
-                            Module = engine.ShaderManager.VertShader,
+                            Module = engine.ShaderManager.Main.VertShader,
                             Name = "main"
                         },
                         new PipelineShaderStageCreateInfo
                         {
                             Stage = ShaderStageFlags.Fragment,
-                            Module = engine.ShaderManager.FragShader,
+                            Module = engine.ShaderManager.Main.FragShader,
                             Name = "main"
                         }
                     },
@@ -264,9 +264,9 @@ namespace ajiva.EngineManagers
                         {
                             new DescriptorBufferInfo
                             {
-                                Buffer = engine.BufferManager.UniformBuffer,
+                                Buffer = engine.ShaderManager.Uniform.Uniform.Buffer,
                                 Offset = 0,
-                                Range = (ulong)Unsafe.SizeOf<UniformBufferObject>()
+                                Range = (ulong)Unsafe.SizeOf<UniformBufferData>()
                             }
                         },
                         DescriptorCount = 1,
@@ -306,7 +306,7 @@ namespace ajiva.EngineManagers
             Pipeline.Dispose();
             DescriptorPool.Dispose();
             DescriptorSetLayout.Dispose();
-            
+
             GC.SuppressFinalize(this);
         }
     }

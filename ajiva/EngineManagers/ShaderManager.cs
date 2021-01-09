@@ -1,7 +1,7 @@
-﻿using System;
-using System.IO;
+﻿using System.Linq;
 using ajiva.Engine;
-using SharpVk;
+using ajiva.Models;
+using GlmSharp;
 
 namespace ajiva.EngineManagers
 {
@@ -9,62 +9,63 @@ namespace ajiva.EngineManagers
     {
         private readonly IEngine engine;
 
-        public ShaderModule? FragShader { get; private set; }
-        public ShaderModule? VertShader { get; private set; }
+        public Shader Main { get; set; }
+
+        //public UniformBuffer<UniformViewProj> ViewProj; 
+        //public UniformBuffer<UniformModel> UniformModels; 
+        public UniformBuffer<UniformBufferData> Uniform; 
 
         public ShaderManager(IEngine engine)
         {
             this.engine = engine;
-        }
-
-        private static uint[] LoadShaderData(string filePath, out int codeSize)
-        {
-            var fileBytes = File.ReadAllBytes(filePath);
-            var shaderData = new uint[(int)MathF.Ceiling(fileBytes.Length / 4f)];
-
-            System.Buffer.BlockCopy(fileBytes, 0, shaderData, 0, fileBytes.Length);
-
-            codeSize = fileBytes.Length;
-
-            return shaderData;
-        }
-
-        ShaderModule? CreateShader(string path)
-        {
-            var shaderData = LoadShaderData(path, out var codeSize);
-
-            return engine.DeviceManager.Device.CreateShaderModule(codeSize, shaderData);
+            Main = new(engine.DeviceManager);
+            Uniform = new(engine.DeviceManager);
         }
 
         public void CreateShaderModules()
         {
-            VertShader = CreateShader(@".\Shaders\vert.spv");
+            Main.CreateShaderModules("./Shaders");
+           /* Main.CreateShaderModules(shank => from input in shank.GetInput<Vertex>()
+                from viewProj in shank.GetBinding<UniformViewProj>(0)
+                from model in shank.GetBinding<UniformModel>(1)
+                let transform = viewProj.Proj * viewProj.View * model.Model
+                select new VertexOutput
+                {
+                    Position = transform * new vec4(input.Position, 1),
+                    Colour = input.Colour
+                }, shank => from input in shank.GetInput<FragmentInput>()
+                from sampler in shank.GetSampler2d<vec4, vec2>(1, 1)
+                let colour = sampler.Sample(input.Position.xy) //new vec4(input.Color,1)
+                select new FragmentOutput
+                {
+                    Colour = colour
+                });             */
+        }
 
-            FragShader = CreateShader(@".\Shaders\frag.spv");
-            /*        
-              vertShader = device.CreateVertexModule(shank => from input in shank.GetInput<Vertex>()
-                  from ubo in shank.GetBinding<UniformBufferObject>(0)
-                  let transform = ubo.Proj * ubo.View * ubo.Model
-                  select new VertexOutput
-                  {
-                      Position = transform * new vec4(input.Position, 1),
-                      Colour = input.Colour
-                  });
-  
-              fragShader = device.CreateFragmentModule(shank => from input in shank.GetInput<FragmentInput>()
-                  from sampler in shank.GetSampler2d<vec4,vec2>(1,1) 
-                  let colour = sampler.Sample(input.Position.xy)//new vec4(input.Color,1)
-                  select new FragmentOutput
-                  {
-                      Colour = colour
-                  });*/
+        public void UpdateViewProj(UniformViewProj data)
+        {
+            //ViewProj.Update(new []{data});
+            //ViewProj.Copy();
+        }  
+        public void UpdateModel(UniformModel data, uint id)
+        {
+           // UniformModels.UpdateCopyOne(data, id);
         }
 
         /// <inheritdoc />
         public void Dispose()
         {
-            FragShader?.Dispose();
-            VertShader?.Dispose();
+            Main.Dispose();
+        }
+
+        public void CreateUniformBuffer()
+        {
+            //ViewProj = new(engine.DeviceManager,1);
+           // UniformModels = new(engine.DeviceManager,1000);
+            
+             Uniform.Create();
+            
+            //Main.CreateUniformBuffer();
         }
     }
 }

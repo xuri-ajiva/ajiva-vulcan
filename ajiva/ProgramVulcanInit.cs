@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using SharpVk;
 using SharpVk.Multivendor;
@@ -72,7 +71,7 @@ namespace ajiva
             SwapChainManager.CreateFrameBuffers();
             TextureManager.CreateLogo();
             BufferManager.AddBuffer(vertices, indices);
-            BufferManager.CreateUniformBuffer();
+            ShaderManager.CreateUniformBuffer();
             GraphicsManager.CreateDescriptorPool();
             GraphicsManager.CreateDescriptorSet();
             DeviceManager.CreateCommandBuffers();

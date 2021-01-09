@@ -148,7 +148,7 @@ namespace ajiva
             si = new();
         }
 
-        UniformBufferObject ubo;
+        UniformBufferData ubo;
 
         private void UpdateUniformBuffer()
         {
@@ -165,7 +165,7 @@ namespace ajiva
 
             ubo.Proj[1, 1] *= -1;
 
-            uint uboSize = (uint)Unsafe.SizeOf<UniformBufferObject>();
+            /*uint uboSize = (uint)Unsafe.SizeOf<UniformBufferObject>();
 
             IntPtr memoryBuffer = BufferManager.UniformStagingBufferMemory.Map(0, uboSize, MemoryMapFlags.None);
 
@@ -173,7 +173,9 @@ namespace ajiva
 
             BufferManager.UniformStagingBufferMemory.Unmap();
 
-            DeviceManager.CopyBuffer(BufferManager.UniformStagingBuffer, BufferManager.UniformBuffer, uboSize);
+            DeviceManager.CopyBuffer(BufferManager.UniformStagingBuffer, BufferManager.UniformBuffer, uboSize);*/
+            ShaderManager.Uniform.Update(new []{ubo});
+            ShaderManager.Uniform.Copy();
         }
 
         private readonly Queue<Action> applicationQueue = new();

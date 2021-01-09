@@ -24,7 +24,6 @@ namespace ajiva.EngineManagers
 
         public ImageView CreateImageView(Image image, Format format, ImageAspectFlags aspectFlags)
         {
-            engine.Dependent(engine.DeviceManager.Device, nameof(engine.DeviceManager.Device));
             return engine.DeviceManager.Device.CreateImageView(image, ImageViewType.ImageView2d, format, ComponentMapping.Identity, new()
             {
                 AspectMask = aspectFlags,
