@@ -37,6 +37,45 @@ namespace ajiva.Models
             Memory?.Free();
             GC.SuppressFinalize(this);
         }
+
+        public IntPtr Map()
+        {
+            Throw.Assert(Memory != null, nameof(Memory) + " != null");
+            return Memory.Map(0, Size, MemoryMapFlags.None);
+        }
+
+        public void Unmap()
+        {
+            Memory?.Unmap();
+        }
+
+        public DisposablePointer MapDisposer()
+        {
+            return new(Memory!, Size);
+        }
+
+        public class DisposablePointer : IDisposable
+        {
+            private readonly DeviceMemory memory;
+            public IntPtr Ptr { get; }
+
+            public DisposablePointer(DeviceMemory memory, ulong size)
+            {
+                this.memory = memory;
+                Ptr = memory.Map(0, size, MemoryMapFlags.None);
+            }
+
+            /// <inheritdoc />
+            public void Dispose()
+            {
+                memory.Unmap();
+            }
+
+            public unsafe void* ToPointer()
+            {
+                return Ptr.ToPointer();
+            }
+        }
     }
     public class BufferOfT<T> : ABuffer where T : notnull
     {
