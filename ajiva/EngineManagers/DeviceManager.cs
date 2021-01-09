@@ -11,11 +11,7 @@ namespace ajiva.EngineManagers
     public class DeviceManager : IEngineManager
     {
         private readonly IEngine engine;
-
-        public DeviceManager(IEngine engine)
-        {
-            this.engine = engine;
-        }
+        
 
         internal PhysicalDevice PhysicalDevice { get; private set; }
         internal Device Device { get; private set; }
@@ -24,6 +20,19 @@ namespace ajiva.EngineManagers
         internal Queue PresentQueue { get; private set; }
         internal Queue TransferQueue { get; private set; }
 
+        public DeviceManager(IEngine engine)
+        {
+            this.engine = engine;
+            PhysicalDevice = null!;
+            Device = null!;
+            GraphicsQueue = null!;
+            PresentQueue = null!;
+            TransferQueue = null!;
+            TransientCommandPool = null!;
+            CommandPool = null!;
+            CommandBuffers = null!;
+        }
+        
         public void CreateDevice()
         {
             PickPhysicalDevice();
@@ -285,6 +294,7 @@ namespace ajiva.EngineManagers
             TransientCommandPool.Dispose();
             CommandPool.Dispose();
             Device.Dispose();
+            GC.SuppressFinalize(this);
         }
     }
 }
