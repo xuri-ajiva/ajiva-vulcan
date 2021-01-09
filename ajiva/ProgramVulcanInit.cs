@@ -7,16 +7,14 @@ namespace ajiva
 {
     public partial class Program
     {
-        private void CreateInstance()
+        private static (Instance instance, DebugReportCallback debugReportCallback) CreateInstance(IEnumerable<string> enabledExtensionNames)
         {
-            if (Instance != null) return;
+            //if (Instance != null) return;
 
             List<string> enabledLayers = new();
 
-            //VK_LAYER_LUNARG_api_dump
-            //VK_LAYER_LUNARG_standard_validation
-
             var props = Instance.EnumerateLayerProperties();
+
             void AddAvailableLayer(string layerName)
             {
                 if (props.Any(x => x.LayerName == layerName))
@@ -34,9 +32,9 @@ namespace ajiva
             AddAvailableLayer("VK_LAYER_LUNARG_swapchain");
             AddAvailableLayer("VK_LAYER_GOOGLE_threading");
 
-            Instance = Instance.Create(
+            var instance = Instance.Create(
                 enabledLayers.ToArray(),
-                Window.GetRequiredInstanceExtensions().Append(ExtExtensions.DebugReport).ToArray(),
+                enabledExtensionNames.Append(ExtExtensions.DebugReport).ToArray(),
                 applicationInfo: new ApplicationInfo
                 {
                     ApplicationName = "ajiva",
@@ -46,18 +44,19 @@ namespace ajiva
                     ApiVersion = new(1, 0, 0)
                 });
 
-            Instance.CreateDebugReportCallback(DebugReportDelegate, DebugReportFlags.Error | DebugReportFlags.Warning | DebugReportFlags.PerformanceWarning);
-
+            var debugReportCallback = instance.CreateDebugReportCallback(DebugReportDelegate, DebugReportFlags.Error | DebugReportFlags.Warning | DebugReportFlags.PerformanceWarning);
+            
             //foreach (var extension in SharpVk.Instance.EnumerateExtensionProperties())
             //    Console.WriteLine($"Extension available: {extension.ExtensionName}");
             //
             //foreach (var layer in SharpVk.Instance.EnumerateLayerProperties())
             //    Console.WriteLine($"Layer available: {layer.LayerName}, {layer.Description}");
+
+            return (instance,debugReportCallback);
         }
 
         private void InitVulkan()
         {
-            CreateInstance();
             Window.CreateSurface();
             DeviceManager.CreateDevice();
             SwapChainManager.CreateSwapChain();

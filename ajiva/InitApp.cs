@@ -2,8 +2,6 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
 using ajiva.EngineManagers;
@@ -12,6 +10,7 @@ using GlmSharp;
 using SharpVk;
 using SharpVk.Glfw;
 using SharpVk.Khronos;
+using SharpVk.Multivendor;
 using Semaphore = SharpVk.Semaphore;
 
 namespace ajiva
@@ -25,25 +24,29 @@ namespace ajiva
             Glfw3.Init();
             ATrace.Log.Add(typeof(ABuffer));
 
+            (Instance instance, DebugReportCallback debugReportCallback) = CreateInstance(Glfw3.GetRequiredInstanceExtensions());
 #if TEST_MODE
             for (var i = 0; i < 50; i++)
             {
                 var i1 = i;
                 var tr = new Thread(() =>
                 {
-                    Thread.Sleep(i1 * 300);
-                    var pg = new Program();
+                    Thread.Sleep(i1 * 500);
+                    var pg = new Program(instance);
                     pg.Run(TimeSpan.FromMilliseconds(1000));
                 });
                 tr.SetApartmentState(ApartmentState.STA);
                 tr.Start();
             }
-#endif
-
-            var pg = new Program();
-            pg.Run(TimeSpan.MaxValue);
 
             await Task.Delay(-1);
+#else
+            var pg = new Program(instance);
+            pg.Run(TimeSpan.MaxValue);
+#endif
+
+            debugReportCallback.Dispose();
+            instance.Dispose();
 
             Glfw3.Terminate();
             Environment.Exit(0);
@@ -116,7 +119,7 @@ namespace ajiva
 
         private void DrawFrame()
         {
-            Throw.Assert(SwapChainManager.SwapChain != null, "SwapChainManager.SwapChain != null");
+            ATrace.Assert(SwapChainManager.SwapChain != null, "SwapChainManager.SwapChain != null");
             var nextImage = SwapChainManager.SwapChain.AcquireNextImage(uint.MaxValue, SemaphoreManager.ImageAvailable, null);
 
             SubmitInfo si = new SubmitInfo

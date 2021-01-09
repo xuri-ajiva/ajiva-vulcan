@@ -7,8 +7,9 @@ namespace ajiva
 {
     public partial class Program : IEngine, IDisposable
     {
-        public Program()
+        public Program(Instance instance)
         {
+            Instance = instance;
             DeviceManager = new(this);
             SwapChainManager = new(this);
             ImageManager = new(this);

@@ -79,9 +79,8 @@ namespace ajiva
             BufferManager.Dispose();
             SemaphoreManager.Dispose();
             TextureManager.Dispose();
-            DeviceManager.Dispose();
             Window.Dispose();
-            Instance?.Dispose();
+            DeviceManager.Dispose();
             Runing = false;
         }
     }
