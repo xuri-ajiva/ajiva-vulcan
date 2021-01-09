@@ -38,11 +38,11 @@ namespace ajiva
 
             Instance.CreateDebugReportCallback(DebugReportDelegate, DebugReportFlags.Error | DebugReportFlags.Warning | DebugReportFlags.Information | DebugReportFlags.PerformanceWarning);
 
-            foreach (var extension in SharpVk.Instance.EnumerateExtensionProperties())
-                Console.WriteLine($"Extension available: {extension.ExtensionName}");
-
-            foreach (var layer in SharpVk.Instance.EnumerateLayerProperties())
-                Console.WriteLine($"Layer available: {layer.LayerName}, {layer.Description}");
+            //foreach (var extension in SharpVk.Instance.EnumerateExtensionProperties())
+            //    Console.WriteLine($"Extension available: {extension.ExtensionName}");
+            //
+            //foreach (var layer in SharpVk.Instance.EnumerateLayerProperties())
+            //    Console.WriteLine($"Layer available: {layer.LayerName}, {layer.Description}");
         }
 
         private void InitVulkan()
