@@ -88,7 +88,7 @@ namespace ajiva.EngineManagers
 
         public uint AcquireNextImage()
         {
-            Throw.Assert(SwapChain != null, nameof(SwapChain) + " != null");
+            ATrace.Assert(SwapChain != null, nameof(SwapChain) + " != null");
             return SwapChain.AcquireNextImage(uint.MaxValue, engine.SemaphoreManager.ImageAvailable, null);
         }
 

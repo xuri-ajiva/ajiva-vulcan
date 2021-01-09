@@ -40,7 +40,7 @@ namespace ajiva.Models
 
         public IntPtr Map()
         {
-            Throw.Assert(Memory != null, nameof(Memory) + " != null");
+            ATrace.Assert(Memory != null, nameof(Memory) + " != null");
             return Memory.Map(0, Size, MemoryMapFlags.None);
         }
 

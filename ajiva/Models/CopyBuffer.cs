@@ -15,7 +15,7 @@ namespace ajiva.Models
 
         public void CopyValueToBuffer()
         {
-            Throw.Assert(Memory != null, nameof(Memory) + " != null");
+            ATrace.Assert(Memory != null, nameof(Memory) + " != null");
             var memPtr = Memory.Map(0, Size, MemoryMapFlags.None);
 
             for (var index = 0; index < Value.Length; index++)

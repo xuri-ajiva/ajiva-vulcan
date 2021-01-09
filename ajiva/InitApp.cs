@@ -23,6 +23,7 @@ namespace ajiva
 #pragma warning restore 1998
         {
             Glfw3.Init();
+            ATrace.Log.Add(typeof(ABuffer));
 
 #if TEST_MODE
             for (var i = 0; i < 50; i++)

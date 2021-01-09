@@ -40,7 +40,7 @@ namespace ajiva.EngineManagers
 
         private void PickPhysicalDevice()
         {
-            Throw.Assert(engine.Instance != null, "engine.Instance != null");
+            ATrace.Assert(engine.Instance != null, "engine.Instance != null");
             var availableDevices = engine.Instance.EnumeratePhysicalDevices();
 
             PhysicalDevice = availableDevices.First(IsSuitableDevice);
