@@ -6,9 +6,9 @@ namespace ajiva.Entitys
     {
         public Transform3d(vec3 position, vec3 rotation, vec3 scale)
         {
-            this.Position = position;
-            this.Rotation = rotation;
-            this.Scale = scale;
+            Position = position;
+            Rotation = rotation;
+            Scale = scale;
         }
 
         public Transform3d(vec3 position, vec3 rotation) : this(position, rotation, Default.Scale) { }

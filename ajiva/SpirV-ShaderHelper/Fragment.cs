@@ -8,7 +8,7 @@ namespace ajiva
         [Location(0)] public vec3 Colour;
         [Location(1)] public vec4 Position;
     }
-    internal struct FragmentOutput
+    public struct FragmentOutput
     {
         [Location(0)] public vec4 Colour;
     }
