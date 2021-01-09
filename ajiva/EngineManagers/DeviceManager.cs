@@ -24,12 +24,6 @@ namespace ajiva.EngineManagers
         internal Queue PresentQueue { get; private set; }
         internal Queue TransferQueue { get; private set; }
 
-        /*
-                 internal CommandPool transientCommandPool;
-        public CommandPool? commandPool;
-        public CommandBuffer[]? commandBuffers;
-*/
-
         public void CreateDevice()
         {
             PickPhysicalDevice();
@@ -106,12 +100,7 @@ namespace ajiva.EngineManagers
         {
             Device.WaitIdle();
         }
-
-        public void Dispose()
-        {
-            Device.Dispose();
-        }
-
+        
         public void Submit(CommandBuffer[] commandBuffers, PipelineStageFlags[] waitDestinationStageMask)
         {
             GraphicsQueue.Submit(new SubmitInfo
@@ -254,6 +243,7 @@ namespace ajiva.EngineManagers
 
             queue.WaitIdle();
             CommandPool.FreeCommandBuffers(commandBuffer);
+            commandBuffer = null;
         }
 
         public CommandBuffer BeginSingleTimeCommands()
@@ -285,6 +275,16 @@ namespace ajiva.EngineManagers
         public void FreeCommandBuffers()
         {
             CommandPool?.FreeCommandBuffers(CommandBuffers);
+        }
+
+        /// <inheritdoc />
+        public void Dispose()
+        {
+            TransientCommandPool.FreeCommandBuffers(CommandBuffers);
+            CommandBuffers = Array.Empty<CommandBuffer>();
+            TransientCommandPool.Dispose();
+            CommandPool.Dispose();
+            Device.Dispose();
         }
     }
 }

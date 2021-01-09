@@ -1,4 +1,5 @@
-﻿using ajiva.Engine;
+﻿using System;
+using ajiva.Engine;
 using SharpVk;
 
 namespace ajiva.EngineManagers
@@ -27,6 +28,9 @@ namespace ajiva.EngineManagers
         {
             ImageAvailable.Dispose();
             RenderFinished.Dispose();
+            ImageAvailable = null!;
+            RenderFinished = null!;
+            GC.SuppressFinalize(this);
         }
     }
 }
