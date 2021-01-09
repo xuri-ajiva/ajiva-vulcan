@@ -5,16 +5,23 @@ namespace ajiva.Models
 {
     public class AImage : IDisposable
     {
+        private readonly bool disposeImage;
         public ImageView View { get; set; } = null!;
         public Image Image { get; set; } = null!;
-        public DeviceMemory Memory { get; set; } = null!;
+        public DeviceMemory? Memory { get; set; } = null!;
+
+        public AImage(bool disposeImage)
+        {
+            this.disposeImage = disposeImage;
+        }
 
         /// <inheritdoc />
         public void Dispose()
         {
+            if (disposeImage)
+                Image.Dispose();
             View.Dispose();
-            Image.Dispose();
-            Memory.Free();
+            Memory?.Free();
             GC.SuppressFinalize(this);
         }
     }
