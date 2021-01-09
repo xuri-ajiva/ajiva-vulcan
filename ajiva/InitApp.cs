@@ -1,8 +1,10 @@
-﻿using System;
+﻿//#define TEST_MODE
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using System.Threading;
 using System.Threading.Tasks;
 using ajiva.EngineManagers;
 using ajiva.Models;
@@ -10,6 +12,7 @@ using GlmSharp;
 using SharpVk;
 using SharpVk.Glfw;
 using SharpVk.Khronos;
+using Semaphore = SharpVk.Semaphore;
 
 namespace ajiva
 {
@@ -19,23 +22,46 @@ namespace ajiva
         private static async Task Main()
 #pragma warning restore 1998
         {
-            var pg = new Program();
+            Glfw3.Init();
 
-            pg.Run();
+#if TEST_MODE
+            for (var i = 0; i < 50; i++)
+            {
+                var i1 = i;
+                var tr = new Thread(() =>
+                {
+                    Thread.Sleep(i1 * 300);
+                    var pg = new Program();
+                    pg.Run(TimeSpan.FromMilliseconds(1000));
+                });
+                tr.SetApartmentState(ApartmentState.STA);
+                tr.Start();
+            }
+#endif
+
+            var pg = new Program();
+            pg.Run(TimeSpan.MaxValue);
+
+            await Task.Delay(-1);
+
+            Glfw3.Terminate();
             Environment.Exit(0);
         }
 
         private readonly Cameras.FpsCamera camera = new(90, SurfaceWidth, SurfaceHeight);
 
-        private void Run()
+        private void Run(TimeSpan timeToRun)
         {
             InitWindow();
+            Thread.Sleep(200);
             InitVulkan();
-
+            Thread.Sleep(200);
             camera.MovementSpeed = .1f;
             camera.Transform.Position.z -= 1;
             initialTimestamp = Stopwatch.GetTimestamp();
-            Window.MainLoop();
+            Runing = true;
+            Thread.Sleep(200);
+            Window.MainLoop(timeToRun);
             Cleanup();
         }
 
@@ -44,6 +70,7 @@ namespace ajiva
             Window.InitWindow(SurfaceWidth, SurfaceHeight);
             Window.OnFrame += OnFrame;
             Window.OnResize += delegate
+
             {
                 RecreateSwapChain();
             };

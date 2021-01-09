@@ -30,7 +30,7 @@ namespace ajiva.EngineManagers
             OnMouseMove = null!;
             Surface = null!;
             PreviousMousePosition = vec2.Zero;
-            mouseMotion = true;
+            mouseMotion = false;
         }
 
         private WindowHandle window;
@@ -45,7 +45,6 @@ namespace ajiva.EngineManagers
             Width = surfaceWidth;
             Height = surfaceHeight;
 
-            Glfw3.Init();
 
             Glfw3.WindowHint(WindowAttribute.ClientApi, 0);
             window = Glfw3.CreateWindow(surfaceWidth, surfaceHeight, "First test", MonitorHandle.Zero, WindowHandle.Zero);
@@ -106,16 +105,30 @@ namespace ajiva.EngineManagers
             Glfw3.SetInputMode(window, Glfw3Enum.GLFW_CURSOR, mouseMotion ? Glfw3Enum.GLFW_CURSOR_DISABLED : Glfw3Enum.GLFW_CURSOR_NORMAL);
         }
 
-        public void MainLoop()
+        public void MainLoop(TimeSpan timeToRun)
         {
+            var frames = 0;
+            var start = DateTime.Now;
+            
             var delta = TimeSpan.Zero;
             var now = Stopwatch.GetTimestamp();
-            while (!Glfw3.WindowShouldClose(window))
+            while (engine.Runing && !Glfw3.WindowShouldClose(window))
             {
                 OnFrame.Invoke(this, delta);
 
-                Glfw3.PollEvents();
+                frames++;
 
+                if (frames%10 == 0)
+                {
+                    if (DateTime.Now - start > timeToRun)
+                    {
+                        return;
+                    }
+                }  
+                
+                
+                Glfw3.PollEvents();
+                
                 if (mouseMotion)
                 {
                     Glfw3.SetCursorPosition(window, Width / 2f, Height / 2f);
@@ -132,8 +145,6 @@ namespace ajiva.EngineManagers
         public void CloseWindow()
         {
             Glfw3.DestroyWindow(window);
-
-            Glfw3.Terminate();
         }
 
         public IEnumerable<string> GetRequiredInstanceExtensions()
@@ -166,7 +177,7 @@ namespace ajiva.EngineManagers
         public void InitWindow(int surfaceWidth, int surfaceHeight);
         public IEnumerable<string> GetRequiredInstanceExtensions();
         public void CreateSurface();
-        public void MainLoop();
+        public void MainLoop(TimeSpan timeToRun);
         public void CloseWindow();
         public event PlatformEventHandler OnFrame;
         public event KeyEventHandler OnKeyEvent;
