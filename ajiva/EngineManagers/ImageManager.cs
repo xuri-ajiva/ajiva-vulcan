@@ -19,7 +19,7 @@ namespace ajiva.EngineManagers
         {
             this.engine = engine;
             DepthImage = null!;
-            Images = null!;
+            Images = new();
         }
 
         public ImageView CreateImageView(Image image, Format format, ImageAspectFlags aspectFlags)
@@ -37,7 +37,7 @@ namespace ajiva.EngineManagers
 
         public AImage CreateImageAndView(uint width, uint height, Format format, ImageTiling tiling, ImageUsageFlags usage, MemoryPropertyFlags properties, ImageAspectFlags aspectFlags)
         {
-            var aImage = new AImage();
+            var aImage = new AImage(true);
             var device = engine.DeviceManager.Device;
 
             aImage.Image = device.CreateImage(ImageType.Image2d, format, new Extent3D(width, height, 1), 1, 1, SampleCountFlags.SampleCount1, tiling, usage, SharingMode.Exclusive, ArrayProxy<uint>.Null, ImageLayout.Undefined);

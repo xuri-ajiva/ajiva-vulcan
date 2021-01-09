@@ -39,7 +39,7 @@ namespace ajiva.Models
         {
             if (aBuffer.Size < Size) throw new ArgumentException("The Destination Buffer is smaller than the Source Buffer", nameof(aBuffer));
 
-            manager.SingleTimeCommand(x => x.TransferQueue, command =>
+            manager.SingleTimeCommand(x => x.GraphicsQueue, command =>
             {
                 command.CopyBuffer(Buffer, aBuffer.Buffer, new BufferCopy
                 {

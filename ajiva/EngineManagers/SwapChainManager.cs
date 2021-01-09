@@ -128,7 +128,7 @@ namespace ajiva.EngineManagers
                 true,
                 SwapChain);
 
-            SwapChainImage = SwapChain.GetImages().Select(x => new AImage
+            SwapChainImage = SwapChain.GetImages().Select(x => new AImage(false)
             {
                 Image = x
             }).ToArray();
