@@ -118,7 +118,7 @@ namespace ajiva
             Throw.Assert(SwapChainManager.SwapChain != null, "SwapChainManager.SwapChain != null");
             var nextImage = SwapChainManager.SwapChain.AcquireNextImage(uint.MaxValue, SemaphoreManager.ImageAvailable, null);
 
-            DeviceManager.GraphicsQueue.Submit(new SubmitInfo
+            SubmitInfo si = new SubmitInfo
             {
                 CommandBuffers = new[]
                 {
@@ -136,18 +136,27 @@ namespace ajiva
                 {
                     SemaphoreManager.ImageAvailable
                 }
-            }, null);
-
-            DeviceManager.PresentQueue.Present(SemaphoreManager.RenderFinished, SwapChainManager.SwapChain, nextImage, new Result[1]);
+            };
+            DeviceManager.GraphicsQueue.Submit(si, null);
+            var result = new Result[1];
+            DeviceManager.PresentQueue.Present(SemaphoreManager.RenderFinished, SwapChainManager.SwapChain, nextImage, result);
+            si.SignalSemaphores = Array.Empty<Semaphore>();
+            si.WaitSemaphores = Array.Empty<Semaphore>();
+            si.WaitDestinationStageMask = Array.Empty<PipelineStageFlags>();
+            si.CommandBuffers = Array.Empty<CommandBuffer>();
+            result = Array.Empty<Result>();
+            si = new();
         }
+
+        UniformBufferObject ubo;
 
         private void UpdateUniformBuffer()
         {
-            long currentTimestamp = Stopwatch.GetTimestamp();
+            var currentTimestamp = Stopwatch.GetTimestamp();
 
             var totalTime = (currentTimestamp - initialTimestamp) / (float)Stopwatch.Frequency;
 
-            var ubo = new UniformBufferObject
+            ubo = new()
             {
                 Model = mat4.Rotate((float)Math.Sin(totalTime) * (float)Math.PI, vec3.UnitZ),
                 View = camera.View, //mat4.LookAt(new(2), vec3.Zero, vec3.UnitZ),
