@@ -8,7 +8,6 @@ namespace ajiva.EngineManagers
     public interface IPlatformWindow : IDisposable
     {
         public void InitWindow(int surfaceWidth, int surfaceHeight);
-        public IEnumerable<string> GetRequiredInstanceExtensions();
         public void CreateSurface();
         public void MainLoop(TimeSpan timeToRun);
         public void CloseWindow();

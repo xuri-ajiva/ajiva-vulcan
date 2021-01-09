@@ -45,7 +45,6 @@ namespace ajiva.EngineManagers
             Width = surfaceWidth;
             Height = surfaceHeight;
 
-
             Glfw3.WindowHint(WindowAttribute.ClientApi, 0);
             window = Glfw3.CreateWindow(surfaceWidth, surfaceHeight, "First test", MonitorHandle.Zero, WindowHandle.Zero);
             Glfw3.SetWindowSizeCallback(window, (_, w, h) =>
@@ -111,7 +110,7 @@ namespace ajiva.EngineManagers
         {
             var frames = 0;
             var start = DateTime.Now;
-            
+
             var delta = TimeSpan.Zero;
             var now = Stopwatch.GetTimestamp();
             while (engine.Runing && !Glfw3.WindowShouldClose(window))
@@ -120,17 +119,16 @@ namespace ajiva.EngineManagers
 
                 frames++;
 
-                if (frames%10 == 0)
+                if (frames % 10 == 0)
                 {
                     if (DateTime.Now - start > timeToRun)
                     {
                         return;
                     }
-                }  
-                
-                
+                }
+
                 Glfw3.PollEvents();
-                
+
                 if (mouseMotion)
                 {
                     Glfw3.SetCursorPosition(window, Width / 2f, Height / 2f);
@@ -147,11 +145,6 @@ namespace ajiva.EngineManagers
         public void CloseWindow()
         {
             Glfw3.DestroyWindow(window);
-        }
-
-        public IEnumerable<string> GetRequiredInstanceExtensions()
-        {
-            return Glfw3.GetRequiredInstanceExtensions();
         }
 
         private void Dispose(bool disposing)
