@@ -11,7 +11,6 @@ namespace ajiva.EngineManagers
     public class DeviceManager : IEngineManager
     {
         private readonly IEngine engine;
-        
 
         internal PhysicalDevice PhysicalDevice { get; private set; }
         internal Device Device { get; private set; }
@@ -32,7 +31,7 @@ namespace ajiva.EngineManagers
             CommandPool = null!;
             CommandBuffers = null!;
         }
-        
+
         public void CreateDevice()
         {
             PickPhysicalDevice();
@@ -58,10 +57,13 @@ namespace ajiva.EngineManagers
                         QueuePriorities = new[]
                         {
                             1f
-                        }
+                        },
                     }).ToArray(),
                 null,
-                KhrExtensions.Swapchain);
+                KhrExtensions.Swapchain, DeviceCreateFlags.None, new PhysicalDeviceFeatures()
+                {
+                    SamplerAnisotropy = true,
+                });
 
             GraphicsQueue = Device.GetQueue(queueFamilies.GraphicsFamily!.Value, 0);
             PresentQueue = Device.GetQueue(queueFamilies.PresentFamily!.Value, 0);
@@ -109,7 +111,7 @@ namespace ajiva.EngineManagers
         {
             Device.WaitIdle();
         }
-        
+
         public void Submit(CommandBuffer[] commandBuffers, PipelineStageFlags[] waitDestinationStageMask)
         {
             GraphicsQueue.Submit(new SubmitInfo
