@@ -21,46 +21,42 @@ namespace ajiva.EngineManagers
 
         private AImage CreateTextureImageFromFile(string fileName)
         {
-            AImage aImage;
+            var img = System.Drawing.Image.FromFile(fileName);
+            var bm = new Bitmap(img);
+
+            var texWidth = (uint)bm.Width;
+            var texHeight = (uint)bm.Height;
+            var imageSize = texWidth * texHeight * 4u;
+
+            using ABuffer aBuffer = new(imageSize);
+            aBuffer.Create(engine.DeviceManager, BufferUsageFlags.TransferSource, MemoryPropertyFlags.HostVisible | MemoryPropertyFlags.HostCached);
+
             unsafe
             {
-                var img = System.Drawing.Image.FromFile(fileName);
-                var bm = new Bitmap(img);
                 var scp0 = bm.LockBits(new(0, 0, bm.Width, bm.Height), ImageLockMode.ReadWrite, PixelFormat.Format32bppPArgb);
 
-                var texWidth = (uint)bm.Width;
-                var texHeight = (uint)bm.Height;
-                var imageSize = texWidth * texHeight * 4u;
+                using (var map = aBuffer.MapDisposer())
+                {
+                    ImageHelper.ArgbCopyMap((ImageHelper.Argb32R*)scp0.Scan0.ToPointer(), (ImageHelper.Rgba32*)map.ToPointer(), texWidth * texHeight);
+                    //ImageHelper.ArgbCopyMap((byte*)scp0.Scan0.ToPointer(), (byte*)map.ToPointer(), texWidth * texHeight);
+                    //System.Buffer.MemoryCopy(scp0.Scan0.ToPointer(), map.ToPointer(), imageSize, imageSize);
 
-                engine.DeviceManager.CreateBuffer(imageSize, BufferUsageFlags.TransferSource, MemoryPropertyFlags.HostVisible | MemoryPropertyFlags.HostCached, out var stagingBuffer, out var stagingBufferMemory);
-
-                var map = stagingBufferMemory.Map(0, imageSize, MemoryMapFlags.None);
-
-                ImageHelper.ArgbCopyMap((ImageHelper.Argb32R*)scp0.Scan0.ToPointer(), (ImageHelper.Rgba32*)map.ToPointer(), texWidth * texHeight);
-                //ImageHelper.ArgbCopyMap((byte*)scp0.Scan0.ToPointer(), (byte*)map.ToPointer(), texWidth * texHeight);
-                //System.Buffer.MemoryCopy(scp0.Scan0.ToPointer(), map.ToPointer(), imageSize, imageSize);
-
-                stagingBufferMemory.Unmap();
-                bm.UnlockBits(scp0);
-
-                stagingBufferMemory.Unmap();
-
-                aImage = engine.ImageManager.CreateImageAndView(texWidth, texHeight, Format.R8G8B8A8Srgb, ImageTiling.Optimal, ImageUsageFlags.TransferDestination | ImageUsageFlags.Sampled, MemoryPropertyFlags.DeviceLocal, ImageAspectFlags.Color);
-
-                engine.ImageManager.TransitionImageLayout(aImage.Image, Format.R8G8B8A8Srgb, ImageLayout.Undefined, ImageLayout.TransferDestinationOptimal);
-                engine.ImageManager.CopyBufferToImage(stagingBuffer, aImage.Image, texWidth, texHeight);
-                engine.ImageManager.TransitionImageLayout(aImage.Image, Format.R8G8B8A8Srgb, ImageLayout.TransferDestinationOptimal, ImageLayout.ShaderReadOnlyOptimal);
-
-                stagingBuffer.Destroy();
-                stagingBufferMemory.Free();
+                    bm.UnlockBits(scp0);
+                }
             }
+
+            AImage aImage = engine.ImageManager.CreateImageAndView(texWidth, texHeight, Format.R8G8B8A8Srgb, ImageTiling.Optimal, ImageUsageFlags.TransferDestination | ImageUsageFlags.Sampled, MemoryPropertyFlags.DeviceLocal, ImageAspectFlags.Color);
+
+            engine.ImageManager.TransitionImageLayout(aImage.Image, Format.R8G8B8A8Srgb, ImageLayout.Undefined, ImageLayout.TransferDestinationOptimal);
+            engine.ImageManager.CopyBufferToImage(aBuffer.Buffer!, aImage.Image, texWidth, texHeight);
+            engine.ImageManager.TransitionImageLayout(aImage.Image, Format.R8G8B8A8Srgb, ImageLayout.TransferDestinationOptimal, ImageLayout.ShaderReadOnlyOptimal);
 
             return aImage;
         }
 
         private Sampler CreateTextureSampler()
         {
-            PhysicalDeviceProperties properties = engine.DeviceManager.PhysicalDevice.GetProperties();
+            var properties = engine.DeviceManager.PhysicalDevice.GetProperties();
 
             var textureSampler = engine.DeviceManager.Device.CreateSampler(Filter.Linear, Filter.Linear, SamplerMipmapMode.Linear, SamplerAddressMode.Repeat,
                 SamplerAddressMode.Repeat, SamplerAddressMode.Repeat, default, true, properties.Limits.MaxSamplerAnisotropy,
