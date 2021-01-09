@@ -165,6 +165,27 @@ namespace ajiva
 
             ubo.Proj[1, 1] *= -1;
 
+            var ubx = new UniformViewProj()
+            {
+                View = camera.View, //mat4.LookAt(new(2), vec3.Zero, vec3.UnitZ),
+                Proj = camera.Projection //mat4.Perspective((float)Math.PI / 4f, swapChainExtent.Width / (float)swapChainExtent.Height, 0.1f, 10)
+            };
+            ubx.Proj[1, 1] *= -1;
+
+            ShaderManager.UniformModels.Update(new[]
+            {
+                new UniformModel()
+                {
+                    Model = mat4.Rotate((float)Math.Sin(totalTime) * (float)Math.PI, vec3.UnitZ)
+                }
+            });
+            ShaderManager.UniformModels.Copy();
+            ShaderManager.ViewProj.Update(new[]
+            {
+                ubx
+            });
+            ShaderManager.ViewProj.Copy();
+
             /*uint uboSize = (uint)Unsafe.SizeOf<UniformBufferObject>();
 
             IntPtr memoryBuffer = BufferManager.UniformStagingBufferMemory.Map(0, uboSize, MemoryMapFlags.None);
@@ -174,8 +195,8 @@ namespace ajiva
             BufferManager.UniformStagingBufferMemory.Unmap();
 
             DeviceManager.CopyBuffer(BufferManager.UniformStagingBuffer, BufferManager.UniformBuffer, uboSize);*/
-            ShaderManager.Uniform.Update(new []{ubo});
-            ShaderManager.Uniform.Copy();
+            //ShaderManager.Uniform.Update(new []{ubo});
+            //ShaderManager.Uniform.Copy();
         }
 
         private readonly Queue<Action> applicationQueue = new();

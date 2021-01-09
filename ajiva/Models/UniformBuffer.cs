@@ -25,8 +25,8 @@ namespace ajiva.Models
 
         public void Create()
         {
-            Staging.Create(manager.Device, BufferUsageFlags.TransferSource, x => manager.FindMemoryType(x, MemoryPropertyFlags.HostVisible | MemoryPropertyFlags.HostCoherent));
-            Uniform.Create(manager.Device, BufferUsageFlags.TransferDestination | BufferUsageFlags.UniformBuffer, x => manager.FindMemoryType(x, MemoryPropertyFlags.DeviceLocal));
+            Staging.Create(manager, BufferUsageFlags.TransferSource, MemoryPropertyFlags.HostVisible | MemoryPropertyFlags.HostCoherent);
+            Uniform.Create(manager, BufferUsageFlags.TransferDestination | BufferUsageFlags.UniformBuffer,  MemoryPropertyFlags.DeviceLocal);
         }
 
         public void Update(T[] toUpdate)

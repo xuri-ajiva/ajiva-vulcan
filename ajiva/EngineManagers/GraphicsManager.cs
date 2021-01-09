@@ -225,6 +225,13 @@ namespace ajiva.EngineManagers
                     new()
                     {
                         Binding = 1,
+                        DescriptorType = DescriptorType.UniformBuffer,
+                        StageFlags = ShaderStageFlags.Vertex,
+                        DescriptorCount = 1
+                    },
+                    new()
+                    {
+                        Binding = 2,
                         DescriptorCount = 1,
                         DescriptorType = DescriptorType.CombinedImageSampler,
                         StageFlags = ShaderStageFlags.Fragment,
@@ -240,7 +247,7 @@ namespace ajiva.EngineManagers
                 {
                     new()
                     {
-                        DescriptorCount = 1,
+                        DescriptorCount = 2,
                         Type = DescriptorType.UniformBuffer
                     },
                     new()
@@ -264,14 +271,31 @@ namespace ajiva.EngineManagers
                         {
                             new DescriptorBufferInfo
                             {
-                                Buffer = engine.ShaderManager.Uniform.Uniform.Buffer,
+                                Buffer = engine.ShaderManager.ViewProj.Uniform.Buffer,
                                 Offset = 0,
-                                Range = (ulong)Unsafe.SizeOf<UniformBufferData>()
+                                Range = (ulong)Unsafe.SizeOf<UniformViewProj>()
                             }
                         },
                         DescriptorCount = 1,
                         DestinationSet = DescriptorSet,
                         DestinationBinding = 0,
+                        DestinationArrayElement = 0,
+                        DescriptorType = DescriptorType.UniformBuffer
+                    },
+                    new()
+                    {
+                        BufferInfo = new[]
+                        {
+                            new DescriptorBufferInfo
+                            {
+                                Buffer = engine.ShaderManager.UniformModels.Uniform.Buffer,
+                                Offset = 0,
+                                Range = (ulong)Unsafe.SizeOf<UniformModel>()
+                            }
+                        },
+                        DescriptorCount = 1,
+                        DestinationSet = DescriptorSet,
+                        DestinationBinding = 1,
                         DestinationArrayElement = 0,
                         DescriptorType = DescriptorType.UniformBuffer
                     },
@@ -291,7 +315,7 @@ namespace ajiva.EngineManagers
                         },
                         DescriptorCount = 1,
                         DestinationSet = DescriptorSet,
-                        DestinationBinding = 1,
+                        DestinationBinding = 2,
                         DestinationArrayElement = 0,
                         DescriptorType = DescriptorType.CombinedImageSampler,
                     }
