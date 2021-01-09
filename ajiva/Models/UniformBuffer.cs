@@ -19,14 +19,13 @@ namespace ajiva.Models
             this.manager = manager;
 
             Staging = new(value);
-            Uniform = new(value); //Uniform = new((uint)Unsafe.SizeOf<T>() * ItemCount);
-
+            Uniform = new(value);
         }
 
         public void Create()
         {
             Staging.Create(manager, BufferUsageFlags.TransferSource, MemoryPropertyFlags.HostVisible | MemoryPropertyFlags.HostCoherent);
-            Uniform.Create(manager, BufferUsageFlags.TransferDestination | BufferUsageFlags.UniformBuffer,  MemoryPropertyFlags.DeviceLocal);
+            Uniform.Create(manager, BufferUsageFlags.TransferDestination | BufferUsageFlags.UniformBuffer, MemoryPropertyFlags.DeviceLocal);
         }
 
         public void Update(T[] toUpdate)
