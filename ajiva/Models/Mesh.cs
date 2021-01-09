@@ -22,7 +22,7 @@ namespace ajiva.Models
             BufferOfT<T> aBuffer = new(val);
             var copyBuffer = CopyBuffer<T>.CreateCopyBufferOnDevice(val, manager);
 
-            aBuffer.Create(manager.Device, BufferUsageFlags.TransferDestination | bufferUsage, type => manager.FindMemoryType(type, MemoryPropertyFlags.DeviceLocal));
+            aBuffer.Create(manager, BufferUsageFlags.TransferDestination | bufferUsage,  MemoryPropertyFlags.DeviceLocal);
 
             copyBuffer.CopyTo(aBuffer, manager);
             copyBuffer.Dispose();

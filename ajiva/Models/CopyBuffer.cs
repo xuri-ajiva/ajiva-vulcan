@@ -30,7 +30,7 @@ namespace ajiva.Models
         {
             var copyBuffer = new CopyBuffer<T>(val);
 
-            copyBuffer.Create(manager.Device, BufferUsageFlags.TransferSource, typeFilter => manager.FindMemoryType(typeFilter, MemoryPropertyFlags.HostVisible | MemoryPropertyFlags.HostCoherent));
+            copyBuffer.Create(manager, BufferUsageFlags.TransferSource, MemoryPropertyFlags.HostVisible | MemoryPropertyFlags.HostCoherent);
             copyBuffer.CopyValueToBuffer();
             return copyBuffer;
         }

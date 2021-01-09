@@ -1,11 +1,13 @@
 ﻿using System;
+using System.Diagnostics;
 using System.Runtime.CompilerServices;
+using ajiva.EngineManagers;
 using SharpVk;
 using Buffer = SharpVk.Buffer;
 
 namespace ajiva.Models
 {
-    public abstract class ABuffer : IDisposable
+    public class ABuffer : IDisposable
     {
         public Buffer? Buffer;
         public DeviceMemory? Memory;
@@ -18,13 +20,13 @@ namespace ajiva.Models
 
         public delegate uint MemoryTypeIndexDelegate(uint typeFilter);
 
-        public void Create(Device device, BufferUsageFlags usage, MemoryTypeIndexDelegate memoryTypeIndex)
+        public void Create(DeviceManager manager, BufferUsageFlags usage, MemoryPropertyFlags flags)
         {
-            Buffer = device.CreateBuffer(Size, usage, SharingMode.Exclusive, null);
+            Buffer = manager.Device.CreateBuffer(Size, usage, SharingMode.Exclusive, null);
 
             var memRequirements = Buffer.GetMemoryRequirements();
 
-            Memory = device.AllocateMemory(memRequirements.Size, memoryTypeIndex(memRequirements.MemoryTypeBits));
+            Memory = manager.Device.AllocateMemory(memRequirements.Size, manager.FindMemoryType(memRequirements.MemoryTypeBits, flags));
             Buffer.BindMemory(Memory, 0);
         }
 
