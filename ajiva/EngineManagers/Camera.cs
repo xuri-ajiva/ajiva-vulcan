@@ -24,7 +24,7 @@ namespace ajiva.EngineManagers
 
             public __Keys keys = new();
 
-            public Camera(float fov, float width, float height) : base(Transform3d.Default)
+            public Camera(float fov, float width, float height) : base(Transform3d.Default, Mesh.Empty)
             {
                 Projection = mat4.Perspective(fov / 2.0F, width / height, .1F, 1000.0F);
                 View = mat4.Identity;
