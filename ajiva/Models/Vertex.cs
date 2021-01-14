@@ -14,20 +14,6 @@ namespace ajiva.Models
             TextCoord = textCoord;
         }
 
-        public Vertex(vec2 position, vec3 colour, vec2 textCoord)
-        {
-            Position = new(position, 0);
-            Colour = colour;
-            TextCoord = textCoord;
-        }
-
-        public Vertex(vec2 position, vec3 colour)
-        {
-            Position = new(position, 0);
-            Colour = colour;
-            TextCoord = position;
-        }
-
         public Vertex(vec3 position, vec3 colour)
         {
             Position = position;
