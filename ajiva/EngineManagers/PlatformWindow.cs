@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading.Tasks;
 using ajiva.Engine;
@@ -39,7 +38,7 @@ namespace ajiva.EngineManagers
             Surface = RenderEngine.Instance.CreateGlfw3Surface(window);
         }
 
-        public void InitWindow(int surfaceWidth, int surfaceHeight)
+        public Task InitWindow(int surfaceWidth, int surfaceHeight)
         {
             Width = surfaceWidth;
             Height = surfaceHeight;
@@ -54,11 +53,19 @@ namespace ajiva.EngineManagers
                 OnResize.Invoke(this, EventArgs.Empty);
             });
 
-            //glfw3.Glfw3.Public.SetWindowSizeLimits_0(window.RawHandle, surfaceWidth / 2, surfaceHeight / 2, 0, 0);
-            Glfw3.SetKeyCallback(window, KeyCallback);
-            Glfw3.SetCursorPosCallback(window, MouseCallback);
+            SharpVk.Glfw.extras.Glfw3.Public.SetWindowSizeLimits_0(window.RawHandle, surfaceWidth / 2, surfaceHeight / 2, Glfw3Enum.GLFW_DONT_CARE, Glfw3Enum.GLFW_DONT_CARE);
+            keyDelegate = KeyCallback;
+            cursorPosDelegate = MouseCallback;
+            Glfw3.SetKeyCallback(window, keyDelegate);
+            Glfw3.SetCursorPosCallback(window, cursorPosDelegate);
             UpdateCursor();
+
+            return Task.CompletedTask;
         }
+
+        //force NO gc on these delegates by keeping an refrence
+        private KeyDelegate keyDelegate;
+        private CursorPosDelegate cursorPosDelegate;
 
         public int Width { get; set; }
 
@@ -112,9 +119,10 @@ namespace ajiva.EngineManagers
 
             var delta = TimeSpan.Zero;
             var now = Stopwatch.GetTimestamp();
-            while (engine.Runing && !Glfw3.WindowShouldClose(window))
+            while (RenderEngine.Runing && !Glfw3.WindowShouldClose(window))
             {
-                OnFrame.Invoke(this, delta);
+                lock (RenderEngine.Lock)
+                    OnFrame.Invoke(this, delta);
 
                 frames++;
 

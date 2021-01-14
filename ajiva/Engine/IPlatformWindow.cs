@@ -1,13 +1,14 @@
 ﻿using System;
-using System.Collections.Generic;
+using System.Threading.Tasks;
+using ajiva.EngineManagers;
 using GlmSharp;
 using SharpVk.Khronos;
 
-namespace ajiva.EngineManagers
+namespace ajiva.Engine
 {
     public interface IPlatformWindow : IDisposable
     {
-        public void InitWindow(int surfaceWidth, int surfaceHeight);
+        public Task InitWindow(int surfaceWidth, int surfaceHeight);
         public void CreateSurface();
         public void MainLoop(TimeSpan timeToRun);
         public void CloseWindow();
