@@ -26,20 +26,20 @@ namespace ajiva.Models
             Memory.Unmap();
         }
 
-        public static CopyBuffer<T> CreateCopyBufferOnDevice(T[] val, DeviceManager manager)
+        public static CopyBuffer<T> CreateCopyBufferOnDevice(T[] val, DeviceComponent component)
         {
             var copyBuffer = new CopyBuffer<T>(val);
 
-            copyBuffer.Create(manager, BufferUsageFlags.TransferSource, MemoryPropertyFlags.HostVisible | MemoryPropertyFlags.HostCoherent);
+            copyBuffer.Create(component, BufferUsageFlags.TransferSource, MemoryPropertyFlags.HostVisible | MemoryPropertyFlags.HostCoherent);
             copyBuffer.CopyValueToBuffer();
             return copyBuffer;
         }
 
-        public void CopyTo(BufferOfT<T> aBuffer, DeviceManager manager)
+        public void CopyTo(BufferOfT<T> aBuffer, DeviceComponent component)
         {
             if (aBuffer.Size < Size) throw new ArgumentException("The Destination Buffer is smaller than the Source Buffer", nameof(aBuffer));
 
-            manager.SingleTimeCommand(x => x.GraphicsQueue, command =>
+            component.SingleTimeCommand(x => x.GraphicsQueue, command =>
             {
                 command.CopyBuffer(Buffer, aBuffer.Buffer, new BufferCopy
                 {
@@ -47,11 +47,11 @@ namespace ajiva.Models
                 });
             });
         }      
-        public void CopyRegions(BufferOfT<T> aBuffer, ArrayProxy<BufferCopy> regions, DeviceManager manager)
+        public void CopyRegions(BufferOfT<T> aBuffer, ArrayProxy<BufferCopy> regions, DeviceComponent component)
         {
             if (aBuffer.Size < Size) throw new ArgumentException("The Destination Buffer is smaller than the Source Buffer", nameof(aBuffer));
 
-            manager.SingleTimeCommand(x => x.GraphicsQueue, command =>
+            component.SingleTimeCommand(x => x.GraphicsQueue, command =>
             {
                 command.CopyBuffer(Buffer, aBuffer.Buffer, regions);
             });

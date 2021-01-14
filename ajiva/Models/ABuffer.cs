@@ -1,12 +1,13 @@
 ﻿using System;
 using System.Runtime.CompilerServices;
+using ajiva.Engine;
 using ajiva.EngineManagers;
 using SharpVk;
 using Buffer = SharpVk.Buffer;
 
 namespace ajiva.Models
 {
-    public class ABuffer : IDisposable
+    public class ABuffer : DisposingLogger
     {
         public Buffer? Buffer;
         public DeviceMemory? Memory;
@@ -17,27 +18,21 @@ namespace ajiva.Models
             Size = size;
         }
 
-        public void Create(DeviceManager manager, BufferUsageFlags usage, MemoryPropertyFlags flags)
+        public void Create(DeviceComponent component, BufferUsageFlags usage, MemoryPropertyFlags flags)
         {
-            ATrace.LogCreated(typeof(ABuffer));
-            ATrace.LogCreated(GetType());
-            
-            Buffer = manager.Device.CreateBuffer(Size, usage, SharingMode.Exclusive, null);
+            Buffer = component.Device.CreateBuffer(Size, usage, SharingMode.Exclusive, null);
 
             var memRequirements = Buffer.GetMemoryRequirements();
 
-            Memory = manager.Device.AllocateMemory(memRequirements.Size, manager.FindMemoryType(memRequirements.MemoryTypeBits, flags));
+            Memory = component.Device.AllocateMemory(memRequirements.Size, component.FindMemoryType(memRequirements.MemoryTypeBits, flags));
             Buffer.BindMemory(Memory, 0);
         }
 
         /// <inheritdoc />
-        public virtual void Dispose()
+        protected override void ReleaseUnmanagedResources()
         {
-            ATrace.LogDeconstructed(typeof(ABuffer));
-            ATrace.LogDeconstructed(GetType());
             Buffer?.Dispose();
             Memory?.Free();
-            GC.SuppressFinalize(this);
         }
 
         public IntPtr Map()
@@ -71,6 +66,7 @@ namespace ajiva.Models
             public void Dispose()
             {
                 memory.Unmap();
+                GC.SuppressFinalize(this);
             }
 
             public unsafe void* ToPointer()
@@ -99,10 +95,10 @@ namespace ajiva.Models
         }
 
         /// <inheritdoc />
-        public override void Dispose()
+        protected override void ReleaseUnmanagedResources()
         {
-            base.Dispose();
             ClearT();
+            base.ReleaseUnmanagedResources();
         }
     }
 }

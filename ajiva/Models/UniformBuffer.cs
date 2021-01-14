@@ -1,22 +1,23 @@
 ﻿using System;
 using System.Runtime.CompilerServices;
+using ajiva.Engine;
 using ajiva.EngineManagers;
 using SharpVk;
 
 namespace ajiva.Models
 {
-    public class UniformBuffer<T> : IDisposable where T : struct
+    public class UniformBuffer<T> : DisposingLogger where T : struct
     {
-        private readonly DeviceManager manager;
+        private readonly DeviceComponent component;
         private const int ItemCount = 1;
         public WritableCopyBuffer<T> Staging { get; }
         public BufferOfT<T> Uniform { get; }
 
-        public UniformBuffer(DeviceManager manager)
+        public UniformBuffer(DeviceComponent component)
         {
             var value = new T[ItemCount];
 
-            this.manager = manager;
+            this.component = component;
 
             Staging = new(value);
             Uniform = new(value);
@@ -24,8 +25,8 @@ namespace ajiva.Models
 
         public void Create()
         {
-            Staging.Create(manager, BufferUsageFlags.TransferSource, MemoryPropertyFlags.HostVisible | MemoryPropertyFlags.HostCoherent);
-            Uniform.Create(manager, BufferUsageFlags.TransferDestination | BufferUsageFlags.UniformBuffer, MemoryPropertyFlags.DeviceLocal);
+            Staging.Create(component, BufferUsageFlags.TransferSource, MemoryPropertyFlags.HostVisible | MemoryPropertyFlags.HostCoherent);
+            Uniform.Create(component, BufferUsageFlags.TransferDestination | BufferUsageFlags.UniformBuffer, MemoryPropertyFlags.DeviceLocal);
         }
 
         public void Update(T[] toUpdate)
@@ -35,15 +36,7 @@ namespace ajiva.Models
 
         public void Copy()
         {
-            Staging.CopyTo(Uniform, manager);
-        }
-
-        /// <inheritdoc />
-        public void Dispose()
-        {
-            Staging.Dispose();
-            Uniform.Dispose();
-            GC.SuppressFinalize(this);
+            Staging.CopyTo(Uniform, component);
         }
 
         public void UpdateCopyOne(T data, uint id)
@@ -54,7 +47,14 @@ namespace ajiva.Models
                 Size = Uniform.SizeOfT,
                 DestinationOffset = Uniform.SizeOfT * id,
                 SourceOffset = Uniform.SizeOfT * id
-            }, manager);
+            }, component);
+        }
+
+        /// <inheritdoc />
+        protected override void ReleaseUnmanagedResources()
+        {
+            Staging.Dispose();
+            Uniform.Dispose();
         }
     }
 }

@@ -1,20 +1,20 @@
 ﻿using System;
+using ajiva.Engine;
 using SharpVk;
 
 namespace ajiva.Models
 {
-    public class Texture : IDisposable
+    public class Texture : DisposingLogger
     {
         public Sampler Sampler { get; set; } = null!;
 
         public AImage Image { get; set; } = null!;
 
         /// <inheritdoc />
-        public void Dispose()
+        protected override void ReleaseUnmanagedResources()
         {
             Sampler.Dispose();
             Image.Dispose();
-            GC.SuppressFinalize(this);
         }
     }
 }

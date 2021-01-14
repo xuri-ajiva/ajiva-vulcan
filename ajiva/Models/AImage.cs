@@ -1,9 +1,11 @@
 ﻿using System;
+using System.Diagnostics;
+using ajiva.Engine;
 using SharpVk;
 
 namespace ajiva.Models
 {
-    public class AImage : IDisposable
+    public class AImage : DisposingLogger
     {
         private readonly bool disposeImage;
         public ImageView View { get; set; } = null!;
@@ -16,13 +18,12 @@ namespace ajiva.Models
         }
 
         /// <inheritdoc />
-        public void Dispose()
+        protected override void ReleaseUnmanagedResources()
         {
             if (disposeImage)
                 Image.Dispose();
             View.Dispose();
             Memory?.Free();
-            GC.SuppressFinalize(this);
         }
     }
 }

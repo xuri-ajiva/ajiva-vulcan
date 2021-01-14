@@ -1,17 +1,18 @@
 ﻿using System;
 using System.IO;
 using System.Linq;
-using ajiva.Models;
+using ajiva.Engine;
+using ajiva.EngineManagers;
 using GlmSharp;
 using SharpVk;
 using SharpVk.Shanq;
 using SharpVk.Shanq.GlmSharp;
 
-namespace ajiva.EngineManagers
+namespace ajiva.Models
 {
-    public class Shader : IDisposable
+    public class Shader : DisposingLogger
     {
-        private readonly DeviceManager manager;
+        private readonly DeviceComponent component;
         public bool Created { get; private set; }
         private object creatingLock = new();
         public ShaderModule? FragShader { get; private set; }
@@ -19,14 +20,14 @@ namespace ajiva.EngineManagers
 
         //public UniformBuffer<UniformBufferData> Uniform;
 
-        public Shader(DeviceManager manager)
+        public Shader(DeviceComponent component)
         {
-            this.manager = manager;
+            this.component = component;
         }
 
         //public void CreateUniformBuffer()
         //{
-        //    Uniform = new(manager, 1);
+        //    Uniform = new(component, 1);
         //}
 
         private static uint[] LoadShaderData(string filePath, out int codeSize)
@@ -45,7 +46,7 @@ namespace ajiva.EngineManagers
         {
             var shaderData = LoadShaderData(path, out var codeSize);
 
-            return manager.Device.CreateShaderModule(codeSize, shaderData);
+            return component.Device.CreateShaderModule(codeSize, shaderData);
         }
 
         public const string DefaultVertexShaderName = "vert.spv";
@@ -80,32 +81,32 @@ namespace ajiva.EngineManagers
             lock (creatingLock)
             {
                 if (Created) return;
-                VertShader = manager.Device.CreateVertexModule(vertexShaderFunc);
+                VertShader = component.Device.CreateVertexModule(vertexShaderFunc);
 
-                FragShader = manager.Device.CreateFragmentModule(fragmentShaderFunc);
+                FragShader = component.Device.CreateFragmentModule(fragmentShaderFunc);
                 Created = true;
             }
         }
 
-        public static Shader CreateShaderFrom(string dir, DeviceManager manager)
+        public static Shader CreateShaderFrom(string dir, DeviceComponent component)
         {
-            var sh = new Shader(manager);
+            var sh = new Shader(component);
             sh.CreateShaderModules(dir);
             //sh.CreateUniformBuffer();
 
             return sh;
         }
 
-        public static Shader CreateShaderFrom<TV, TF>(Func<IShanqFactory, IQueryable<TV>> vertexShaderFunc, Func<IShanqFactory, IQueryable<TF>> fragmentShaderFunc, DeviceManager manager)
+        public static Shader CreateShaderFrom<TV, TF>(Func<IShanqFactory, IQueryable<TV>> vertexShaderFunc, Func<IShanqFactory, IQueryable<TF>> fragmentShaderFunc, DeviceComponent component)
         {
-            var sh = new Shader(manager);
+            var sh = new Shader(component);
             sh.CreateShaderModules(vertexShaderFunc, fragmentShaderFunc);
             //sh.CreateUniformBuffer();
 
             return sh;
         }
 
-        public static Shader DefaultShader(DeviceManager manager)
+        public static Shader DefaultShader(DeviceComponent component)
         {
             return CreateShaderFrom(shank => from input in shank.GetInput<Vertex>()
                 from ubo in shank.GetBinding<UniformBufferData>(0)
@@ -120,11 +121,11 @@ namespace ajiva.EngineManagers
                 select new FragmentOutput
                 {
                     Colour = colour
-                }, manager);
+                }, component);
         }
 
         /// <inheritdoc />
-        public void Dispose()
+        protected override void ReleaseUnmanagedResources()
         {
             //Uniform?.Dispose();
             FragShader?.Dispose();
