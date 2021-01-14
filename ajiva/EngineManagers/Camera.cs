@@ -1,5 +1,6 @@
 ﻿using System;
 using ajiva.Entitys;
+using ajiva.Models;
 using GlmSharp;
 
 namespace ajiva.EngineManagers
@@ -44,7 +45,7 @@ namespace ajiva.EngineManagers
                 View += mat4.Translate(v * -1.0F);
             }
 
-            public mat4 Projection { get; private protected set; }
+            public mat4 Projection { get; protected set; }
             public mat4 View { get; private protected set; }
             public mat4 ViewProj { get; private protected set; }
             public float MovementSpeed { get; set; } = 1;
@@ -105,7 +106,7 @@ namespace ajiva.EngineManagers
             public void MoveFront(float amount)
             {
                 //								//// not move up and down
-                Translate((!FreeCam ? ((new vec3(1.0f, 0.0f, 1.0f) * LockAt).Normalized) : LockAt) * amount);
+                Translate((!FreeCam ? ((vec3.UnitX * LockAt).Normalized) : LockAt) * amount);
 
                 UpdateMatrices();
             }
