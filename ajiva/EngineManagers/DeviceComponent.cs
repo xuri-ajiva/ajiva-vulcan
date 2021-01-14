@@ -4,13 +4,11 @@ using ajiva.Engine;
 using ajiva.Models;
 using SharpVk;
 using SharpVk.Khronos;
-using Buffer = SharpVk.Buffer;
 
 namespace ajiva.EngineManagers
 {
-    public class DeviceManager : IEngineManager
+    public class DeviceComponent : RenderEngineComponent
     {
-        private readonly IEngine engine;
 
         internal PhysicalDevice PhysicalDevice { get; private set; }
         internal Device Device { get; private set; }
@@ -19,9 +17,8 @@ namespace ajiva.EngineManagers
         internal Queue PresentQueue { get; private set; }
         internal Queue TransferQueue { get; private set; }
 
-        public DeviceManager(IEngine engine)
+        public DeviceComponent(IRenderEngine renderEngine) : base(renderEngine)
         {
-            this.engine = engine;
             PhysicalDevice = null!;
             Device = null!;
             GraphicsQueue = null!;
@@ -40,8 +37,8 @@ namespace ajiva.EngineManagers
 
         private void PickPhysicalDevice()
         {
-            ATrace.Assert(engine.Instance != null, "engine.Instance != null");
-            var availableDevices = engine.Instance.EnumeratePhysicalDevices();
+            ATrace.Assert(RenderEngine.Instance != null, "renderEngine.Instance != null");
+            var availableDevices = RenderEngine.Instance.EnumeratePhysicalDevices();
 
             PhysicalDevice = availableDevices.First(IsSuitableDevice);
         }
@@ -83,7 +80,7 @@ namespace ajiva.EngineManagers
                     indices.GraphicsFamily = index;
                 }
 
-                if (device.GetSurfaceSupport(index, engine.Window.Surface))
+                if (device.GetSurfaceSupport(index, RenderEngine.Window.Surface))
                 {
                     indices.PresentFamily = index;
                 }
@@ -119,19 +116,19 @@ namespace ajiva.EngineManagers
                 CommandBuffers = commandBuffers,
                 SignalSemaphores = new[]
                 {
-                    engine.SemaphoreManager.RenderFinished
+                    RenderEngine.SemaphoreComponent.RenderFinished
                 },
                 WaitDestinationStageMask = waitDestinationStageMask,
                 WaitSemaphores = new[]
                 {
-                    engine.SemaphoreManager.ImageAvailable
+                    RenderEngine.SemaphoreComponent.ImageAvailable
                 }
             }, null);
         }
 
         public void Present(in uint nextImage)
         {
-            PresentQueue.Present(engine.SemaphoreManager.RenderFinished, engine.SwapChainManager.SwapChain, nextImage, new Result[1]);
+            PresentQueue.Present(RenderEngine.SemaphoreComponent.RenderFinished, RenderEngine.SwapChainComponent.SwapChain, nextImage, new Result[1]);
         }
 
         #region BufferAndMemory
@@ -173,26 +170,26 @@ namespace ajiva.EngineManagers
         {
             CommandPool.Reset(CommandPoolResetFlags.ReleaseResources);
 
-            CommandBuffers = Device.AllocateCommandBuffers(CommandPool, CommandBufferLevel.Primary, (uint)engine.SwapChainManager.FrameBuffers.Length);
+            CommandBuffers = Device.AllocateCommandBuffers(CommandPool, CommandBufferLevel.Primary, (uint)RenderEngine.SwapChainComponent.FrameBuffers.Length);
 
-            for (var index = 0; index < engine.SwapChainManager.FrameBuffers.Length; index++)
+            for (var index = 0; index < RenderEngine.SwapChainComponent.FrameBuffers.Length; index++)
             {
                 var commandBuffer = CommandBuffers[index];
 
                 commandBuffer.Begin(CommandBufferUsageFlags.SimultaneousUse);
 
-                commandBuffer.BeginRenderPass(engine.GraphicsManager.RenderPass,
-                    engine.SwapChainManager.FrameBuffers[index],
-                    new(new(), engine.SwapChainManager.SwapChainExtent),
+                commandBuffer.BeginRenderPass(RenderEngine.GraphicsComponent.RenderPass,
+                    RenderEngine.SwapChainComponent.FrameBuffers[index],
+                    new(new(), RenderEngine.SwapChainComponent.SwapChainExtent),
                     new ClearValue[]
                     {
                         new ClearColorValue(.1f, .1f, .1f, 1), new ClearDepthStencilValue(1, 0)
                     },
                     SubpassContents.Inline);
 
-                commandBuffer.BindPipeline(PipelineBindPoint.Graphics, engine.GraphicsManager.Pipeline);
+                commandBuffer.BindPipeline(PipelineBindPoint.Graphics, RenderEngine.GraphicsComponent.Pipeline);
 
-                engine.BufferManager.BindAllAndDraw(commandBuffer);
+                RenderEngine.AEnittyComponent.BindAllAndDraw(commandBuffer);
 
                 commandBuffer.EndRenderPass();
 
@@ -200,7 +197,7 @@ namespace ajiva.EngineManagers
             }
         }
 
-        public void SingleTimeCommand(Func<DeviceManager, Queue> queueSelector, Action<CommandBuffer> action)
+        public void SingleTimeCommand(Func<DeviceComponent, Queue> queueSelector, Action<CommandBuffer> action)
         {
             var commandBuffer = Device.AllocateCommandBuffer(CommandPool, CommandBufferLevel.Primary);
             commandBuffer.Begin(CommandBufferUsageFlags.OneTimeSubmit);
@@ -256,14 +253,13 @@ namespace ajiva.EngineManagers
         }
 
         /// <inheritdoc />
-        public void Dispose()
+        protected override void ReleaseUnmanagedResources()
         {
             CommandPool.FreeCommandBuffers(CommandBuffers);
             CommandBuffers = Array.Empty<CommandBuffer>();
             TransientCommandPool.Dispose();
             CommandPool.Dispose();
             Device.Dispose();
-            GC.SuppressFinalize(this);
         }
     }
 }

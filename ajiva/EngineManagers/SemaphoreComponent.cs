@@ -1,36 +1,32 @@
-﻿using System;
-using ajiva.Engine;
+﻿using ajiva.Engine;
 using SharpVk;
 
 namespace ajiva.EngineManagers
 {
-    public class SemaphoreManager : IEngineManager
+    public class SemaphoreComponent : RenderEngineComponent
     {
-        private readonly IEngine engine;
-
         public Semaphore ImageAvailable { get; private set; }
         public Semaphore RenderFinished { get; private set; }
 
-        public SemaphoreManager(IEngine engine)
+        public SemaphoreComponent(IRenderEngine renderEngine) : base(renderEngine)
         {
-            this.engine = engine;
             RenderFinished = null!;
             ImageAvailable = null!;
         }
+
         public void CreateSemaphores()
         {
-            ImageAvailable = engine.DeviceManager.Device.CreateSemaphore();
-            RenderFinished = engine.DeviceManager.Device.CreateSemaphore();
+            ImageAvailable = RenderEngine.DeviceComponent.Device.CreateSemaphore();
+            RenderFinished = RenderEngine.DeviceComponent.Device.CreateSemaphore();
         }
 
         /// <inheritdoc />
-        public void Dispose()
+        protected override void ReleaseUnmanagedResources()
         {
             ImageAvailable.Dispose();
             RenderFinished.Dispose();
             ImageAvailable = null!;
             RenderFinished = null!;
-            GC.SuppressFinalize(this);
         }
     }
 }

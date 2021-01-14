@@ -1,24 +1,29 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Linq;
 using ajiva.Engine;
 using ajiva.EngineManagers;
+using ajiva.Entitys;
 using SharpVk;
+using SharpVk.Multivendor;
 
 namespace ajiva
 {
-    public partial class Program : IEngine, IDisposable
+    public class AjivaRenderEngine : IRenderEngine, IDisposable
     {
-        public Program(Instance instance)
+        public AjivaRenderEngine(Instance instance)
         {
             Instance = instance;
-            DeviceManager = new(this);
-            SwapChainManager = new(this);
-            ImageManager = new(this);
-            Window = new PlatformWindow(this);
-            GraphicsManager = new(this);
-            ShaderManager = new(this);
-            BufferManager = new(this);
-            SemaphoreManager = new(this);
-            TextureManager = new(this);
+            DeviceComponent = new(this);
+            SwapChainComponent = new(this);
+            ImageComponent = new(this);
+            Window = new(this);
+            GraphicsComponent = new(this);
+            ShaderComponent = new(this);
+            AEnittyComponent = new(this);
+            SemaphoreComponent = new(this);
+            TextureComponent = new(this);
         }
 
         //public static Instance? Instance { get; set; }
@@ -27,25 +32,24 @@ namespace ajiva
         /// <inheritdoc />
         public Instance? Instance { get; set; }
         /// <inheritdoc />
-        public DeviceManager DeviceManager { get; }
+        public DeviceComponent DeviceComponent { get; }
         /// <inheritdoc />
-        public SwapChainManager SwapChainManager { get; }
+        public SwapChainComponent SwapChainComponent { get; }
         /// <inheritdoc />
-        public IPlatformWindow Window { get; }
+        public PlatformWindow Window { get; }
         /// <inheritdoc />
-        public ImageManager ImageManager { get; }
+        public ImageComponent ImageComponent { get; }
         /// <inheritdoc />
-        public GraphicsManager GraphicsManager { get; }
+        public GraphicsComponent GraphicsComponent { get; }
         /// <inheritdoc />
-        public ShaderManager ShaderManager { get; }
+        public ShaderComponent ShaderComponent { get; }
         /// <inheritdoc />
-        public BufferManager BufferManager { get; }
+        public AEnittyComponent AEnittyComponent { get; }
         /// <inheritdoc />
-        public SemaphoreManager SemaphoreManager { get; }
+        public SemaphoreComponent SemaphoreComponent { get; }
         /// <inheritdoc />
         public TextureComponent TextureComponent { get; }
-        
-       
+
         /// <inheritdoc />
         public object Lock { get; } = new();
 

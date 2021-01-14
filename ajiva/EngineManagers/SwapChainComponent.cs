@@ -8,13 +8,11 @@ using SharpVk.Khronos;
 
 namespace ajiva.EngineManagers
 {
-    public class SwapChainManager : IEngineManager
+    public class SwapChainComponent : RenderEngineComponent
     {
-        private readonly IEngine engine;
 
-        public SwapChainManager(IEngine engine)
+        public SwapChainComponent(IRenderEngine renderEngine) : base(renderEngine)
         {
-            this.engine = engine;
             SwapChain = null!;
             SwapChainImage = Array.Empty<AImage>();
             FrameBuffers = Array.Empty<Framebuffer>();
@@ -42,8 +40,8 @@ namespace ajiva.EngineManagers
             }
             return new()
             {
-                Width = Math.Max(capabilities.MinImageExtent.Width, Math.Min(capabilities.MaxImageExtent.Width, engine.Window.SurfaceWidth)),
-                Height = Math.Max(capabilities.MinImageExtent.Height, Math.Min(capabilities.MaxImageExtent.Height, engine.Window.SurfaceHeight))
+                Width = Math.Max(capabilities.MinImageExtent.Width, Math.Min(capabilities.MaxImageExtent.Width, RenderEngine.Window.SurfaceWidth)),
+                Height = Math.Max(capabilities.MinImageExtent.Height, Math.Min(capabilities.MaxImageExtent.Height, RenderEngine.Window.SurfaceHeight))
             };
         }
 
@@ -51,9 +49,9 @@ namespace ajiva.EngineManagers
         {
             return new()
             {
-                Capabilities = device.GetSurfaceCapabilities(engine.Window.Surface),
-                Formats = device.GetSurfaceFormats(engine.Window.Surface),
-                PresentModes = device.GetSurfacePresentModes(engine.Window.Surface)
+                Capabilities = device.GetSurfaceCapabilities(RenderEngine.Window.Surface),
+                Formats = device.GetSurfaceFormats(RenderEngine.Window.Surface),
+                PresentModes = device.GetSurfacePresentModes(RenderEngine.Window.Surface)
             };
         }
 
@@ -89,12 +87,12 @@ namespace ajiva.EngineManagers
         public uint AcquireNextImage()
         {
             ATrace.Assert(SwapChain != null, nameof(SwapChain) + " != null");
-            return SwapChain.AcquireNextImage(uint.MaxValue, engine.SemaphoreManager.ImageAvailable, null);
+            return SwapChain.AcquireNextImage(uint.MaxValue, RenderEngine.SemaphoreComponent.ImageAvailable, null);
         }
 
         public void CreateSwapChain()
         {
-            var swapChainSupport = QuerySwapChainSupport(engine.DeviceManager.PhysicalDevice);
+            var swapChainSupport = QuerySwapChainSupport(RenderEngine.DeviceComponent.PhysicalDevice);
 
             var imageCount = swapChainSupport.Capabilities.MinImageCount + 1;
             if (swapChainSupport.Capabilities.MaxImageCount > 0 && imageCount > swapChainSupport.Capabilities.MaxImageCount)
@@ -104,13 +102,13 @@ namespace ajiva.EngineManagers
 
             var surfaceFormat = ChooseSwapSurfaceFormat(swapChainSupport.Formats);
 
-            var queueFamilies = engine.DeviceManager.FindQueueFamilies(engine.DeviceManager.PhysicalDevice);
+            var queueFamilies = RenderEngine.DeviceComponent.FindQueueFamilies(RenderEngine.DeviceComponent.PhysicalDevice);
 
             var queueFamilyIndices = queueFamilies.Indices.ToArray();
 
             var extent = ChooseSwapExtent(swapChainSupport.Capabilities);
 
-            SwapChain = engine.DeviceManager.Device.CreateSwapchain(engine.Window.Surface,
+            SwapChain = RenderEngine.DeviceComponent.Device.CreateSwapchain(RenderEngine.Window.Surface,
                 imageCount,
                 surfaceFormat.Format,
                 surfaceFormat.ColorSpace,
@@ -139,16 +137,16 @@ namespace ajiva.EngineManagers
         {
             foreach (var image in SwapChainImage)
             {
-                image.View = engine.ImageManager.CreateImageView(image.Image, SwapChainFormat, ImageAspectFlags.Color);
+                image.View = RenderEngine.ImageComponent.CreateImageView(image.Image, SwapChainFormat, ImageAspectFlags.Color);
             }
         }
 
         public void CreateFrameBuffers()
         {
-            Framebuffer Create(ImageView imageView) => engine.DeviceManager.Device.CreateFramebuffer(engine.GraphicsManager.RenderPass,
+            Framebuffer Create(ImageView imageView) => RenderEngine.DeviceComponent.Device.CreateFramebuffer(RenderEngine.GraphicsComponent.RenderPass,
                 new[]
                 {
-                    imageView, engine.ImageManager.DepthImage.View
+                    imageView, RenderEngine.ImageComponent.DepthImage.View
                 },
                 SwapChainExtent.Width,
                 SwapChainExtent.Height,
@@ -158,7 +156,7 @@ namespace ajiva.EngineManagers
         }
 
         /// <inheritdoc />
-        public void Dispose()
+        protected override void ReleaseUnmanagedResources()
         {
             SwapChain?.Dispose();
             foreach (var frameBuffer in FrameBuffers)
@@ -169,7 +167,6 @@ namespace ajiva.EngineManagers
             {
                 image.Dispose();
             }
-            GC.SuppressFinalize(this);
         }
 
         public void CleanupSwapChain()

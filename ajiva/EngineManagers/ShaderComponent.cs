@@ -1,27 +1,22 @@
-﻿using System;
-using System.Linq;
-using ajiva.Engine;
+﻿using ajiva.Engine;
 using ajiva.Models;
-using GlmSharp;
 
 namespace ajiva.EngineManagers
 {
-    public class ShaderManager : IEngineManager
+    public class ShaderComponent : RenderEngineComponent
     {
-        private readonly IEngine engine;
 
         public Shader Main { get; set; }
 
         public UniformBuffer<UniformViewProj> ViewProj;
         public UniformBuffer<UniformModel> UniformModels;
 
-        public ShaderManager(IEngine engine)
+        public ShaderComponent(IRenderEngine renderEngine) : base(renderEngine)
         {
-            this.engine = engine;
-            ViewProj = new(engine.DeviceManager);
-            UniformModels = new(engine.DeviceManager);
-            Main = new(engine.DeviceManager);
-            //Uniform = new(engine.DeviceManager);
+            ViewProj = new(renderEngine.DeviceComponent);
+            UniformModels = new(renderEngine.DeviceComponent);
+            Main = new(renderEngine.DeviceComponent);
+            //Uniform = new(renderEngine.DeviceComponent);
         }
 
         public void CreateShaderModules()
@@ -56,18 +51,17 @@ namespace ajiva.EngineManagers
         }
 
         /// <inheritdoc />
-        public void Dispose()
+        protected override void ReleaseUnmanagedResources()
         {
             Main.Dispose();
             UniformModels.Dispose();
             ViewProj.Dispose();
-            GC.SuppressFinalize(this);
         }
 
         public void CreateUniformBuffer()
         {
-            //ViewProj = new(engine.DeviceManager,1);
-            // UniformModels = new(engine.DeviceManager,1000);
+            //ViewProj = new(renderEngine.DeviceComponent,1);
+            // UniformModels = new(renderEngine.DeviceComponent,1000);
 
             ViewProj.Create();
             UniformModels.Create();

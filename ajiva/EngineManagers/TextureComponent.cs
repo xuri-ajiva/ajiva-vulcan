@@ -1,5 +1,4 @@
-﻿using System;
-using System.Drawing;
+﻿using System.Drawing;
 using System.Drawing.Imaging;
 using ajiva.Engine;
 using ajiva.Models;
@@ -7,13 +6,11 @@ using SharpVk;
 
 namespace ajiva.EngineManagers
 {
-    public class TextureManager : IEngineManager
+    public class TextureComponent : RenderEngineComponent
     {
-        private readonly IEngine engine;
 
-        public TextureManager(IEngine engine)
+        public TextureComponent(IRenderEngine renderEngine) : base(renderEngine)
         {
-            this.engine = engine;
             Logo = null!;
         }
 
@@ -29,7 +26,7 @@ namespace ajiva.EngineManagers
             var imageSize = texWidth * texHeight * 4u;
 
             using ABuffer aBuffer = new(imageSize);
-            aBuffer.Create(engine.DeviceManager, BufferUsageFlags.TransferSource, MemoryPropertyFlags.HostVisible | MemoryPropertyFlags.HostCached);
+            aBuffer.Create(RenderEngine.DeviceComponent, BufferUsageFlags.TransferSource, MemoryPropertyFlags.HostVisible | MemoryPropertyFlags.HostCached);
 
             unsafe
             {
@@ -45,20 +42,20 @@ namespace ajiva.EngineManagers
                 }
             }
 
-            AImage aImage = engine.ImageManager.CreateImageAndView(texWidth, texHeight, Format.R8G8B8A8Srgb, ImageTiling.Optimal, ImageUsageFlags.TransferDestination | ImageUsageFlags.Sampled, MemoryPropertyFlags.DeviceLocal, ImageAspectFlags.Color);
+            AImage aImage = RenderEngine.ImageComponent.CreateImageAndView(texWidth, texHeight, Format.R8G8B8A8Srgb, ImageTiling.Optimal, ImageUsageFlags.TransferDestination | ImageUsageFlags.Sampled, MemoryPropertyFlags.DeviceLocal, ImageAspectFlags.Color);
 
-            engine.ImageManager.TransitionImageLayout(aImage.Image, Format.R8G8B8A8Srgb, ImageLayout.Undefined, ImageLayout.TransferDestinationOptimal);
-            engine.ImageManager.CopyBufferToImage(aBuffer.Buffer!, aImage.Image, texWidth, texHeight);
-            engine.ImageManager.TransitionImageLayout(aImage.Image, Format.R8G8B8A8Srgb, ImageLayout.TransferDestinationOptimal, ImageLayout.ShaderReadOnlyOptimal);
+            RenderEngine.ImageComponent.TransitionImageLayout(aImage.Image, Format.R8G8B8A8Srgb, ImageLayout.Undefined, ImageLayout.TransferDestinationOptimal);
+            RenderEngine.ImageComponent.CopyBufferToImage(aBuffer.Buffer!, aImage.Image, texWidth, texHeight);
+            RenderEngine.ImageComponent.TransitionImageLayout(aImage.Image, Format.R8G8B8A8Srgb, ImageLayout.TransferDestinationOptimal, ImageLayout.ShaderReadOnlyOptimal);
 
             return aImage;
         }
 
         private Sampler CreateTextureSampler()
         {
-            var properties = engine.DeviceManager.PhysicalDevice.GetProperties();
+            var properties = RenderEngine.DeviceComponent.PhysicalDevice.GetProperties();
 
-            var textureSampler = engine.DeviceManager.Device.CreateSampler(Filter.Linear, Filter.Linear, SamplerMipmapMode.Linear, SamplerAddressMode.Repeat,
+            var textureSampler = RenderEngine.DeviceComponent.Device.CreateSampler(Filter.Linear, Filter.Linear, SamplerMipmapMode.Linear, SamplerAddressMode.Repeat,
                 SamplerAddressMode.Repeat, SamplerAddressMode.Repeat, default, true, properties.Limits.MaxSamplerAnisotropy,
                 false, CompareOp.Always, default, default, BorderColor.IntOpaqueBlack, false);
             return textureSampler;
@@ -72,11 +69,9 @@ namespace ajiva.EngineManagers
         }
 
         /// <inheritdoc />
-        public void Dispose()
+        protected override void ReleaseUnmanagedResources()
         {
             Logo.Dispose();
-
-            GC.SuppressFinalize(this);
         }
     }
 }

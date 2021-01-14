@@ -1,5 +1,4 @@
-﻿using System;
-using System.Linq;
+﻿using System.Linq;
 using System.Runtime.CompilerServices;
 using ajiva.Engine;
 using ajiva.Models;
@@ -7,10 +6,8 @@ using SharpVk;
 
 namespace ajiva.EngineManagers
 {
-    public class GraphicsManager : IEngineManager
+    public class GraphicsComponent : RenderEngineComponent
     {
-        private readonly IEngine engine;
-
         public PipelineLayout PipelineLayout { get; private set; }
         public RenderPass RenderPass { get; private set; }
         public Pipeline Pipeline { get; private set; }
@@ -19,9 +16,8 @@ namespace ajiva.EngineManagers
         public DescriptorSetLayout DescriptorSetLayout { get; private set; }
         public DescriptorSet DescriptorSet { get; private set; }
 
-        public GraphicsManager(IEngine engine)
+        public GraphicsComponent(IRenderEngine renderEngine) : base(renderEngine)
         {
-            this.engine = engine;
             PipelineLayout = null!;
             RenderPass = null!;
             Pipeline = null!;
@@ -35,9 +31,9 @@ namespace ajiva.EngineManagers
             var bindingDescription = Vertex.GetBindingDescription();
             var attributeDescriptions = Vertex.GetAttributeDescriptions();
 
-            PipelineLayout = engine.DeviceManager.Device.CreatePipelineLayout(engine.GraphicsManager.DescriptorSetLayout, null);
+            PipelineLayout = RenderEngine.DeviceComponent.Device.CreatePipelineLayout(RenderEngine.GraphicsComponent.DescriptorSetLayout, null);
 
-            Pipeline = engine.DeviceManager.Device.CreateGraphicsPipelines(null, new[]
+            Pipeline = RenderEngine.DeviceComponent.Device.CreateGraphicsPipelines(null, new[]
             {
                 new GraphicsPipelineCreateInfo
                 {
@@ -65,8 +61,8 @@ namespace ajiva.EngineManagers
                             {
                                 X = 0f,
                                 Y = 0f,
-                                Width = engine.SwapChainManager.SwapChainExtent.Width,
-                                Height = engine.SwapChainManager.SwapChainExtent.Height,
+                                Width = RenderEngine.SwapChainComponent.SwapChainExtent.Width,
+                                Height = RenderEngine.SwapChainComponent.SwapChainExtent.Height,
                                 MaxDepth = 1,
                                 MinDepth = 0,
                             }
@@ -76,7 +72,7 @@ namespace ajiva.EngineManagers
                             new Rect2D
                             {
                                 Offset = new Offset2D(),
-                                Extent = engine.SwapChainManager.SwapChainExtent
+                                Extent = RenderEngine.SwapChainComponent.SwapChainExtent
                             }
                         }
                     },
@@ -124,13 +120,13 @@ namespace ajiva.EngineManagers
                         new PipelineShaderStageCreateInfo
                         {
                             Stage = ShaderStageFlags.Vertex,
-                            Module = engine.ShaderManager.Main.VertShader,
+                            Module = RenderEngine.ShaderComponent.Main.VertShader,
                             Name = "main"
                         },
                         new PipelineShaderStageCreateInfo
                         {
                             Stage = ShaderStageFlags.Fragment,
-                            Module = engine.ShaderManager.Main.FragShader,
+                            Module = RenderEngine.ShaderComponent.Main.FragShader,
                             Name = "main"
                         }
                     },
@@ -152,12 +148,12 @@ namespace ajiva.EngineManagers
 
         public void CreateRenderPass()
         {
-            RenderPass = engine.DeviceManager.Device.CreateRenderPass(
+            RenderPass = RenderEngine.DeviceComponent.Device.CreateRenderPass(
                 new AttachmentDescription[]
                 {
                     new()
                     {
-                        Format = engine.SwapChainManager.SwapChainFormat,
+                        Format = RenderEngine.SwapChainComponent.SwapChainFormat,
                         Samples = SampleCountFlags.SampleCount1,
                         LoadOp = AttachmentLoadOp.Clear,
                         StoreOp = AttachmentStoreOp.Store,
@@ -168,7 +164,7 @@ namespace ajiva.EngineManagers
                     },
                     new()
                     {
-                        Format = engine.ImageManager.FindDepthFormat(),
+                        Format = RenderEngine.ImageComponent.FindDepthFormat(),
                         Samples = SampleCountFlags.SampleCount1,
                         LoadOp = AttachmentLoadOp.Clear,
                         StoreOp = AttachmentStoreOp.DontCare,
@@ -212,7 +208,7 @@ namespace ajiva.EngineManagers
 
         public void CreateDescriptorSetLayout()
         {
-            DescriptorSetLayout = engine.DeviceManager.Device.CreateDescriptorSetLayout(
+            DescriptorSetLayout = RenderEngine.DeviceComponent.Device.CreateDescriptorSetLayout(
                 new DescriptorSetLayoutBinding[]
                 {
                     new()
@@ -241,7 +237,7 @@ namespace ajiva.EngineManagers
 
         public void CreateDescriptorPool()
         {
-            DescriptorPool = engine.DeviceManager.Device.CreateDescriptorPool(
+            DescriptorPool = RenderEngine.DeviceComponent.Device.CreateDescriptorPool(
                 1,
                 new DescriptorPoolSize[]
                 {
@@ -260,9 +256,9 @@ namespace ajiva.EngineManagers
 
         public void CreateDescriptorSet()
         {
-            DescriptorSet = engine.DeviceManager.Device.AllocateDescriptorSets(DescriptorPool, DescriptorSetLayout).Single();
+            DescriptorSet = RenderEngine.DeviceComponent.Device.AllocateDescriptorSets(DescriptorPool, DescriptorSetLayout).Single();
 
-            engine.DeviceManager.Device.UpdateDescriptorSets(
+            RenderEngine.DeviceComponent.Device.UpdateDescriptorSets(
                 new WriteDescriptorSet[]
                 {
                     new()
@@ -271,7 +267,7 @@ namespace ajiva.EngineManagers
                         {
                             new DescriptorBufferInfo
                             {
-                                Buffer = engine.ShaderManager.ViewProj.Uniform.Buffer,
+                                Buffer = RenderEngine.ShaderComponent.ViewProj.Uniform.Buffer,
                                 Offset = 0,
                                 Range = (ulong)Unsafe.SizeOf<UniformViewProj>()
                             }
@@ -288,7 +284,7 @@ namespace ajiva.EngineManagers
                         {
                             new DescriptorBufferInfo
                             {
-                                Buffer = engine.ShaderManager.UniformModels.Uniform.Buffer,
+                                Buffer = RenderEngine.ShaderComponent.UniformModels.Uniform.Buffer,
                                 Offset = 0,
                                 Range = (ulong)Unsafe.SizeOf<UniformModel>()
                             }
@@ -305,11 +301,11 @@ namespace ajiva.EngineManagers
                         {
                             new DescriptorImageInfo // todo make modular
                             {
-                                Sampler = engine.TextureManager.Logo.Sampler,
-                                ImageView = engine.TextureManager.Logo.Image.View,
+                                Sampler = RenderEngine.TextureComponent.Logo.Sampler,
+                                ImageView = RenderEngine.TextureComponent.Logo.Image.View,
 
-                                //Sampler = engine.textureSampler,
-                                //ImageView = engine.textureImageView,
+                                //Sampler = renderEngine.textureSampler,
+                                //ImageView = renderEngine.textureImageView,
                                 ImageLayout = ImageLayout.ShaderReadOnlyOptimal
                             }
                         },
@@ -323,15 +319,13 @@ namespace ajiva.EngineManagers
         }
 
         /// <inheritdoc />
-        public void Dispose()
+        protected override void ReleaseUnmanagedResources()
         {
             PipelineLayout.Dispose();
             RenderPass.Dispose();
             Pipeline.Dispose();
             DescriptorPool.Dispose();
             DescriptorSetLayout.Dispose();
-
-            GC.SuppressFinalize(this);
         }
     }
 }

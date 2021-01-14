@@ -7,24 +7,25 @@ using SharpVk;
 
 namespace ajiva.Engine
 {
-    public interface IEngine
+    public interface IRenderEngine
     {
         public bool Runing { get; }
 
         Instance? Instance { get; }
-        DeviceManager DeviceManager { get; }
-        SwapChainManager SwapChainManager { get; }
-        IPlatformWindow Window { get; }
-        ImageManager ImageManager { get; }
-        GraphicsManager GraphicsManager { get; }
-        ShaderManager ShaderManager { get; }
-        BufferManager BufferManager { get; }
-        SemaphoreManager SemaphoreManager { get; }
-        TextureManager TextureManager { get; }
+        DeviceComponent DeviceComponent { get; }
+        SwapChainComponent SwapChainComponent { get; }
+        PlatformWindow Window { get; }
+        ImageComponent ImageComponent { get; }
+        GraphicsComponent GraphicsComponent { get; }
+        ShaderComponent ShaderComponent { get; }
+        AEnittyComponent AEnittyComponent { get; }
+        SemaphoreComponent SemaphoreComponent { get; }
+        TextureComponent TextureComponent { get; }
+        public object Lock { get; }
 
 #pragma warning disable 8763
         [DoesNotReturn, MethodImpl(MethodImplOptions.AggressiveOptimization)]
-        public IEngine Reacquiring<T>(Expression<Func<T?>> path, bool required)
+        public IRenderEngine Reacquiring<T>(Expression<Func<T?>> path, bool required)
         {
             var expression = (MemberExpression)path.Body;
             string name = expression.Member.Name;

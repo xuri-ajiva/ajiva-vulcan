@@ -7,24 +7,21 @@ using Buffer = SharpVk.Buffer;
 
 namespace ajiva.EngineManagers
 {
-    public class ImageManager : IEngineManager
+    public class ImageComponent : RenderEngineComponent
     {
-        private readonly IEngine engine;
-
         public AImage DepthImage { get; set; }
 
         public List<AImage> Images { get; }
 
-        public ImageManager(IEngine engine)
+        public ImageComponent(IRenderEngine renderEngine) : base(renderEngine)
         {
-            this.engine = engine;
             DepthImage = null!;
             Images = new();
         }
 
         public ImageView CreateImageView(Image image, Format format, ImageAspectFlags aspectFlags)
         {
-            return engine.DeviceManager.Device.CreateImageView(image, ImageViewType.ImageView2d, format, ComponentMapping.Identity, new()
+            return RenderEngine.DeviceComponent.Device.CreateImageView(image, ImageViewType.ImageView2d, format, ComponentMapping.Identity, new()
             {
                 AspectMask = aspectFlags,
                 BaseMipLevel = 0,
@@ -37,7 +34,7 @@ namespace ajiva.EngineManagers
         public AImage CreateImageAndView(uint width, uint height, Format format, ImageTiling tiling, ImageUsageFlags usage, MemoryPropertyFlags properties, ImageAspectFlags aspectFlags)
         {
             var aImage = new AImage(true);
-            var device = engine.DeviceManager.Device;
+            var device = RenderEngine.DeviceComponent.Device;
 
             aImage.Image = device.CreateImage(ImageType.Image2d, format, new Extent3D(width, height, 1), 1, 1, SampleCountFlags.SampleCount1, tiling, usage, SharingMode.Exclusive, ArrayProxy<uint>.Null, ImageLayout.Undefined);
 
@@ -46,7 +43,7 @@ namespace ajiva.EngineManagers
                 Image = aImage.Image
             });
 
-            aImage.Memory = device.AllocateMemory(memRequirements.MemoryRequirements.Size, engine.DeviceManager.FindMemoryType(memRequirements.MemoryRequirements.MemoryTypeBits, properties), new()
+            aImage.Memory = device.AllocateMemory(memRequirements.MemoryRequirements.Size, RenderEngine.DeviceComponent.FindMemoryType(memRequirements.MemoryRequirements.MemoryTypeBits, properties), new()
             {
                 Image = aImage.Image,
             });
@@ -79,7 +76,7 @@ namespace ajiva.EngineManagers
         {
             foreach (var format in candidates)
             {
-                var props = engine.DeviceManager.PhysicalDevice.GetFormatProperties(format);
+                var props = RenderEngine.DeviceComponent.PhysicalDevice.GetFormatProperties(format);
 
                 switch (tiling)
                 {
@@ -102,7 +99,7 @@ namespace ajiva.EngineManagers
             /*
             var depthFormat =;
 
-            ImageManager.CreateImage(engine.SwapChainManager.swapChainExtent.Width, engine.SwapChainManager.swapChainExtent.Height, depthFormat, ImageTiling.Optimal, ImageUsageFlags.DepthStencilAttachment, MemoryPropertyFlags.DeviceLocal, out depthImage, out depthImageMemory);
+            ImageComponent.CreateImage(renderEngine.SwapChainComponent.swapChainExtent.Width, renderEngine.SwapChainComponent.swapChainExtent.Height, depthFormat, ImageTiling.Optimal, ImageUsageFlags.DepthStencilAttachment, MemoryPropertyFlags.DeviceLocal, out depthImage, out depthImageMemory);
             depthImageView = CreateImageView(depthImage, depthFormat, ImageAspectFlags.Depth);
 
             TransitionImageLayout(depthImage, depthFormat, ImageLayout.Undefined, ImageLayout.DepthStencilAttachmentOptimal);
@@ -111,7 +108,7 @@ namespace ajiva.EngineManagers
 
         private AImage CreateManagedImage(Format format, ImageAspectFlags aspectFlags)
         {
-            var aImage = CreateImageAndView(engine.SwapChainManager.SwapChainExtent.Width, engine.SwapChainManager.SwapChainExtent.Height, format, ImageTiling.Optimal, ImageUsageFlags.DepthStencilAttachment, MemoryPropertyFlags.DeviceLocal, aspectFlags);
+            var aImage = CreateImageAndView(RenderEngine.SwapChainComponent.SwapChainExtent.Width, RenderEngine.SwapChainComponent.SwapChainExtent.Height, format, ImageTiling.Optimal, ImageUsageFlags.DepthStencilAttachment, MemoryPropertyFlags.DeviceLocal, aspectFlags);
 
             TransitionImageLayout(aImage.Image, format, ImageLayout.Undefined, ImageLayout.DepthStencilAttachmentOptimal);
             return aImage;
@@ -126,7 +123,7 @@ namespace ajiva.EngineManagers
 
         public void CopyBufferToImage(Buffer buffer, Image image, uint width, uint height)
         {
-            engine.DeviceManager.SingleTimeCommand(x => x.GraphicsQueue, command =>
+            RenderEngine.DeviceComponent.SingleTimeCommand(x => x.GraphicsQueue, command =>
             {
                 command.CopyBufferToImage(buffer, image, ImageLayout.TransferDestinationOptimal, new BufferImageCopy()
                 {
@@ -144,7 +141,7 @@ namespace ajiva.EngineManagers
                     }
                 });
             });
-            var commandBuffer = engine.DeviceManager.BeginSingleTimeCommands();
+            var commandBuffer = RenderEngine.DeviceComponent.BeginSingleTimeCommands();
 
             commandBuffer.CopyBufferToImage(buffer, image, ImageLayout.TransferDestinationOptimal, new BufferImageCopy()
             {
@@ -162,7 +159,7 @@ namespace ajiva.EngineManagers
                 }
             });
 
-            engine.DeviceManager.EndSingleTimeCommands(commandBuffer);
+            RenderEngine.DeviceComponent.EndSingleTimeCommands(commandBuffer);
         }
 
         public void TransitionImageLayout(Image image, Format format, ImageLayout oldLayout, ImageLayout newLayout)
@@ -227,11 +224,11 @@ namespace ajiva.EngineManagers
                     throw new ArgumentException("unsupported layout transition!");
             }
 
-            engine.DeviceManager.SingleTimeCommand(x => x.GraphicsQueue, command => command.PipelineBarrier(sourceStage, destinationStage, ArrayProxy<MemoryBarrier>.Null, ArrayProxy<BufferMemoryBarrier>.Null, barrier));
+            RenderEngine.DeviceComponent.SingleTimeCommand(x => x.GraphicsQueue, command => command.PipelineBarrier(sourceStage, destinationStage, ArrayProxy<MemoryBarrier>.Null, ArrayProxy<BufferMemoryBarrier>.Null, barrier));
         }
 
         /// <inheritdoc />
-        public void Dispose()
+        protected override void ReleaseUnmanagedResources()
         {
             DepthImage.Dispose();
             foreach (var managedImage in Images)

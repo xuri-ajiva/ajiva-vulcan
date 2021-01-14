@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Threading.Tasks;
 using ajiva.Engine;
 using GlmSharp;
 using SharpVk.Glfw;
@@ -10,9 +11,8 @@ using Key = SharpVk.Glfw.Key;
 
 namespace ajiva.EngineManagers
 {
-    public class PlatformWindow : IPlatformWindow, IEngineManager
+    public class PlatformWindow : RenderEngineComponent, IPlatformWindow
     {
-        private readonly IEngine engine;
         public event PlatformEventHandler OnFrame;
         public event KeyEventHandler OnKeyEvent;
         public event EventHandler OnResize;
@@ -21,9 +21,8 @@ namespace ajiva.EngineManagers
 
         public vec2 PreviousMousePosition { get; private set; }
 
-        public PlatformWindow(IEngine engine)
+        public PlatformWindow(IRenderEngine renderEngine) : base(renderEngine)
         {
-            this.engine = engine;
             OnFrame = null!;
             OnKeyEvent = null!;
             OnResize = null!;
@@ -37,7 +36,7 @@ namespace ajiva.EngineManagers
 
         public void CreateSurface()
         {
-            Surface = engine.Instance.CreateGlfw3Surface(window);
+            Surface = RenderEngine.Instance.CreateGlfw3Surface(window);
         }
 
         public void InitWindow(int surfaceWidth, int surfaceHeight)
@@ -147,24 +146,10 @@ namespace ajiva.EngineManagers
             Glfw3.DestroyWindow(window);
         }
 
-        private void Dispose(bool disposing)
+        protected override void ReleaseUnmanagedResources()
         {
+            Surface.Dispose();
             CloseWindow();
-            if (disposing)
-            {
-                Surface.Dispose();
-            }
-        }
-
-        public void Dispose()
-        {
-            Dispose(true);
-            GC.SuppressFinalize(this);
-        }
-
-        ~PlatformWindow()
-        {
-            Dispose(false);
         }
     }
 
