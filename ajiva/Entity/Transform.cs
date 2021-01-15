@@ -17,8 +17,14 @@ namespace ajiva.Entity
         public vec3 Position;
         public vec3 Rotation;
         public vec3 Scale;
-        
-        public static readonly Transform3d Default = new(vec3.Zero, vec3.Zero, vec3.Ones);
+
+        public static Transform3d Default => new(vec3.Zero, vec3.Zero, vec3.Ones);
+
+        public mat4 ScaleMat => mat4.Scale(Scale);
+        public mat4 RotationMat => mat4.RotateX(glm.Radians(Rotation.x)) * mat4.RotateY(glm.Radians(Rotation.y)) * mat4.RotateZ(glm.Radians(Rotation.z));
+        public mat4 PositionMat => mat4.Translate(Position);
+
+        public mat4 ModelMat => PositionMat * RotationMat * ScaleMat; 
 
         public override string ToString()
         {
