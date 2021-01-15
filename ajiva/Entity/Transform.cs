@@ -24,7 +24,7 @@ namespace ajiva.Entity
         public mat4 RotationMat => mat4.RotateX(glm.Radians(Rotation.x)) * mat4.RotateY(glm.Radians(Rotation.y)) * mat4.RotateZ(glm.Radians(Rotation.z));
         public mat4 PositionMat => mat4.Translate(Position);
 
-        public mat4 ModelMat => PositionMat * RotationMat * ScaleMat; 
+        public mat4 ModelMat => PositionMat * RotationMat * ScaleMat;
 
         public override string ToString()
         {
