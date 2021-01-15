@@ -4,7 +4,7 @@ using System.Diagnostics;
 using System.Linq;
 using ajiva.Engine;
 using ajiva.EngineManagers;
-using ajiva.Entitys;
+using ajiva.Entity;
 using SharpVk;
 using SharpVk.Multivendor;
 
@@ -21,7 +21,7 @@ namespace ajiva
             Window = new(this);
             GraphicsComponent = new(this);
             ShaderComponent = new(this);
-            AEnittyComponent = new(this);
+            AEntityComponent = new(this);
             SemaphoreComponent = new(this);
             TextureComponent = new(this);
         }
@@ -44,7 +44,7 @@ namespace ajiva
         /// <inheritdoc />
         public ShaderComponent ShaderComponent { get; }
         /// <inheritdoc />
-        public AEnittyComponent AEnittyComponent { get; }
+        public AEntityComponent AEntityComponent { get; }
         /// <inheritdoc />
         public SemaphoreComponent SemaphoreComponent { get; }
         /// <inheritdoc />
@@ -125,7 +125,7 @@ namespace ajiva
             ImageComponent.Dispose();
             GraphicsComponent.Dispose();
             ShaderComponent.Dispose();
-            AEnittyComponent.Dispose();
+            AEntityComponent.Dispose();
             SemaphoreComponent.Dispose();
             TextureComponent.Dispose();
             Window.Dispose();
@@ -202,8 +202,8 @@ namespace ajiva
                 TextureComponent.CreateLogo();
                 foreach (var entity in Entities)
                 {
-                    entity.RenewAble.Create(this);
-                    AEnittyComponent.Entities.Add(entity);
+                    entity.RenderAble.Create(this);
+                    AEntityComponent.Entities.Add(entity);
                 }
                 ShaderComponent.CreateUniformBuffer();
                 GraphicsComponent.CreateDescriptorPool();

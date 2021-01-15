@@ -13,7 +13,7 @@ namespace ajiva.Models
         {
             if (newData.Length > Value.Length)
             {
-                throw new ArgumentException("Curently you can only update the data, not add some", nameof(newData));
+                throw new ArgumentException("Currently you can only update the data, not add some", nameof(newData));
             }
 
             Value = newData;

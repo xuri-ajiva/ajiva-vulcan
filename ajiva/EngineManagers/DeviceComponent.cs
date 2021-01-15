@@ -189,7 +189,7 @@ namespace ajiva.EngineManagers
 
                 commandBuffer.BindPipeline(PipelineBindPoint.Graphics, RenderEngine.GraphicsComponent.Pipeline);
 
-                RenderEngine.AEnittyComponent.BindAllAndDraw(commandBuffer);
+                RenderEngine.AEntityComponent.BindAllAndDraw(commandBuffer);
 
                 commandBuffer.EndRenderPass();
 

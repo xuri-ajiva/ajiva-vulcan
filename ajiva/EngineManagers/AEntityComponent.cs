@@ -1,19 +1,19 @@
 ﻿using System.Collections.Generic;
 using ajiva.Engine;
-using ajiva.Entitys;
+using ajiva.Entity;
 using ajiva.Models;
 using SharpVk;
 
 namespace ajiva.EngineManagers
 {
-    public class AEnittyComponent : RenderEngineComponent
+    public class AEntityComponent : RenderEngineComponent
     {
         private readonly IRenderEngine renderEngine;
 
         public object EntityLock { get; } = new();
         public List<AEntity> Entities { get; } = new();
 
-        public AEnittyComponent(IRenderEngine renderEngine) : base(renderEngine)
+        public AEntityComponent(IRenderEngine renderEngine) : base(renderEngine)
         {
             this.renderEngine = renderEngine;
         }
@@ -35,7 +35,7 @@ namespace ajiva.EngineManagers
             {
                 foreach (var mesh in Entities)
                 {
-                    mesh.RenewAble.BindAndDraw(commandBuffer);
+                    mesh.RenderAble.BindAndDraw(commandBuffer);
                 }
             }
         }

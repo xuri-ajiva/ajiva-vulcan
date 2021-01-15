@@ -18,7 +18,7 @@ namespace ajiva.Engine
         ImageComponent ImageComponent { get; }
         GraphicsComponent GraphicsComponent { get; }
         ShaderComponent ShaderComponent { get; }
-        AEnittyComponent AEnittyComponent { get; }
+        AEntityComponent AEntityComponent { get; }
         SemaphoreComponent SemaphoreComponent { get; }
         TextureComponent TextureComponent { get; }
         public object Lock { get; }

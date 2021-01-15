@@ -1,5 +1,5 @@
 ﻿using System;
-using ajiva.Entitys;
+using ajiva.Entity;
 using ajiva.Models;
 using GlmSharp;
 
@@ -24,7 +24,7 @@ namespace ajiva.EngineManagers
 
             public __Keys keys = new();
 
-            public Camera(float fov, float width, float height) : base(Transform3d.Default, Mesh.Empty)
+            public Camera(float fov, float width, float height) : base(Transform3d.Default, new ARenderAble(Mesh.Empty, ARenderAble.DoNotRenderId))
             {
                 Projection = mat4.Perspective(fov / 2.0F, width / height, .1F, 1000.0F);
                 View = mat4.Identity;

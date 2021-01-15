@@ -1,16 +1,20 @@
-﻿using System.Diagnostics;
+﻿using System;
+using System.Diagnostics;
+using System.Runtime.CompilerServices;
 using ajiva.Engine;
 using ajiva.Models;
 using SharpVk;
 
-namespace ajiva.Entitys
+namespace ajiva.Entity
 {
-    public class ARenewAble : DisposingLogger
+    public class ARenderAble : DisposingLogger
     {
         private IRenderEngine? render;
         public Mesh? Mesh { get; private set; }
 
-        public ARenewAble(Mesh? mesh)
+        public static int NextId() => currentMaxId++;
+
+        public ARenderAble(Mesh? mesh, int id)
         {
             Mesh = mesh;
         }

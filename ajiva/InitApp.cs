@@ -7,7 +7,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using ajiva.Engine;
 using ajiva.EngineManagers;
-using ajiva.Entitys;
+using ajiva.Entity;
 using ajiva.Models;
 using GlmSharp;
 using SharpVk;
@@ -72,7 +72,7 @@ namespace ajiva
                     verts[j].Position.z += rz;
                 }
 
-                RenderEngine.Entities.Add(new(Transform3d.Default, new Mesh(verts, inds)));
+                renderEngine.Entities.Add(new(Transform3d.Default, new Mesh(verts, inds)));
             }
 
             var app = new Program(RenderEngine);
@@ -240,13 +240,13 @@ namespace ajiva
 
             /*uint uboSize = (uint)Unsafe.SizeOf<UniformBufferObject>();
 
-            IntPtr memoryBuffer = AEnittyComponent.UniformStagingBufferMemory.Map(0, uboSize, MemoryMapFlags.None);
+            IntPtr memoryBuffer = AEntityComponent.UniformStagingBufferMemory.Map(0, uboSize, MemoryMapFlags.None);
 
             Marshal.StructureToPtr(ubo, memoryBuffer, false);
 
-            AEnittyComponent.UniformStagingBufferMemory.Unmap();
+            AEntityComponent.UniformStagingBufferMemory.Unmap();
 
-            DeviceComponent.CopyBuffer(AEnittyComponent.UniformStagingBuffer, AEnittyComponent.UniformBuffer, uboSize);*/
+            DeviceComponent.CopyBuffer(AEntityComponent.UniformStagingBuffer, AEntityComponent.UniformBuffer, uboSize);*/
             //ShaderComponent.Uniform.Update(new []{ubo});
             //ShaderComponent.Uniform.Copy();
         }

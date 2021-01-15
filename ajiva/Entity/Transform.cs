@@ -1,8 +1,8 @@
 ﻿using GlmSharp;
 
-namespace ajiva.Entitys
+namespace ajiva.Entity
 {
-    public struct Transform3d
+    public class Transform3d
     {
         public Transform3d(vec3 position, vec3 rotation, vec3 scale)
         {
