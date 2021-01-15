@@ -61,5 +61,16 @@ namespace ajiva.Models
         {
             Uniform.Value[id] = data;
         }
+
+        public delegate void BufferValueUpdateDelegate(int index, ref T value);
+
+        public void UpdateExpresion(BufferValueUpdateDelegate updateFunc)
+        {
+            for (int i = 0; i < Staging.Length; i++)
+            {
+                updateFunc(i, ref Staging.Value[i]);
+            }
+            Staging.CopyValueToBuffer();
+        }
     }
 }
