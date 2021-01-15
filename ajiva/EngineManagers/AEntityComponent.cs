@@ -1,7 +1,6 @@
 ﻿using System.Collections.Generic;
 using ajiva.Engine;
 using ajiva.Entity;
-using ajiva.Models;
 using SharpVk;
 
 namespace ajiva.EngineManagers

@@ -1,6 +1,4 @@
-﻿using SharpVk.Glfw.extras;
-
-namespace ajiva.Engine
+﻿namespace ajiva.Engine
 {
     public abstract class RenderEngineComponent : DisposingLogger
     {

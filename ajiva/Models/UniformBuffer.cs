@@ -1,6 +1,4 @@
-﻿using System;
-using System.Runtime.CompilerServices;
-using ajiva.Engine;
+﻿using ajiva.Engine;
 using ajiva.EngineManagers;
 using SharpVk;
 

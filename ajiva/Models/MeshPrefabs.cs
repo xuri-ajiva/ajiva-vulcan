@@ -1,5 +1,4 @@
 ﻿using ajiva.Entity;
-using GlmSharp;
 
 namespace ajiva.Models
 {

@@ -1,6 +1,4 @@
-﻿using System;
-using System.Diagnostics;
-using ajiva.Engine;
+﻿using ajiva.Engine;
 using SharpVk;
 
 namespace ajiva.Models

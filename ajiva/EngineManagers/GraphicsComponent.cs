@@ -1,5 +1,4 @@
 ﻿using System.Linq;
-using System.Runtime.CompilerServices;
 using ajiva.Engine;
 using ajiva.Models;
 using SharpVk;
