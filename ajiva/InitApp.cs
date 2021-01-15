@@ -28,7 +28,7 @@ namespace ajiva
         private static async Task Main()
 #pragma warning restore 1998
         {
-            AjivaRenderEngine RenderEngine = null;
+            AjivaRenderEngine renderEngine = null!;
             Glfw3.Init();
 
             (Instance instance, DebugReportCallback debugReportCallback) = AjivaRenderEngine.CreateInstance(Glfw3.GetRequiredInstanceExtensions());
@@ -52,11 +52,12 @@ namespace ajiva
 
             await Task.Delay(-1);
 #else
-            RenderEngine = new(instance);
+            renderEngine = new(instance);
             var meshPref = Mesh.Cube;
             var r = new Random();
 
-            for (var i = 0; i < 100; i++)
+            /*
+            for (var i = 0; i < 10; i++)
             {
                 var verts = meshPref.VerticesData.ToArray();
                 var inds = meshPref.IndicesData.ToArray();
@@ -74,23 +75,38 @@ namespace ajiva
 
                 renderEngine.Entities.Add(new(Transform3d.Default, new Mesh(verts, inds)));
             }
-
-            var app = new Program(RenderEngine);
-     /*       
-            new Thread(() =>
+            */
+            const int size = 1000;
+            const int sizeHalf = size/2;
+            const int sizeHundrets = size/100;
+            for (var i = 0; i < size; i++)
             {
-                while (true)
-                {
-                    Thread.Sleep(100);
-                    if (RenderEngine == null) continue;
-                    if (!RenderEngine.Runing) continue;
-                    if (app.applicationQueue.Count > 1000) continue;
-                    app.applicationQueue.Enqueue(() =>
-                    {
-                        RenderEngine.RecreateSwapChain();
-                    });
-                }
-            }).Start(); */
+                var verts = meshPref.VerticesData.ToArray();
+                var inds = meshPref.IndicesData.ToArray();
+
+                renderEngine.Entities.Add(new(new(
+                        new(r.Next(-sizeHalf, sizeHalf), r.Next(-sizeHalf, sizeHalf),r.Next(-sizeHalf, sizeHalf)), new(r.Next(0, 100), r.Next(0, 100), r.Next(0, 100)),
+                        new((float)(r.NextDouble() * sizeHundrets))
+                        ),
+                    new Mesh(verts, inds)));
+            }
+
+            var app = new Program(renderEngine);
+            /*       
+                   new Thread(() =>
+                   {
+                       while (true)
+                       {
+                           Thread.Sleep(100);
+                           if (RenderEngine == null) continue;
+                           if (!RenderEngine.Runing) continue;
+                           if (app.applicationQueue.Count > 1000) continue;
+                           app.applicationQueue.Enqueue(() =>
+                           {
+                               RenderEngine.RecreateSwapChain();
+                           });
+                       }
+                   }).Start(); */
 
             await app.Run(TimeSpan.MaxValue);
 #endif
@@ -159,7 +175,15 @@ namespace ajiva
             camera.Update((float)delta.TotalMilliseconds);
             //Console.WriteLine(camera.Position);
             //Console.WriteLine(camera.Rotation);
-
+            /*
+                 var (left, top) = Console.GetCursorPosition();
+                 foreach (var aEntity in engine.Entities.Where(aEntity => aEntity.RenderAble.Render))
+                 {
+                     Console.WriteLine(aEntity.RenderAble.Id.ToString("X2") + ": " + aEntity.Transform);
+                 }
+                 Console.WriteLine(camera.RenderAble.Id.ToString("X2") + ": " + camera.Transform);
+                 Console.SetCursorPosition(left, top);
+                          */
             UpdateApplication();
             UpdateUniformBuffer();
             DrawFrame();
@@ -202,6 +226,8 @@ namespace ajiva
 
         UniformBufferData ubo;
 
+        private Random r = new Random();
+
         private void UpdateUniformBuffer()
         {
             var currentTimestamp = Stopwatch.GetTimestamp();
@@ -224,19 +250,28 @@ namespace ajiva
             };
             ubx.Proj[1, 1] *= -1;
 
-            engine.ShaderComponent.UniformModels.Update(new[]
-            {
-                new UniformModel()
-                {
-                    Model = mat4.Identity //mat4.Rotate((float)Math.Sin(totalTime) * (float)Math.PI, vec3.UnitZ)
-                }
-            });
-            engine.ShaderComponent.UniformModels.Copy();
             engine.ShaderComponent.ViewProj.Update(new[]
             {
                 ubx
             });
             engine.ShaderComponent.ViewProj.Copy();
+
+            foreach (var aEntity in engine.Entities.Where(aEntity => aEntity.RenderAble.Render))
+            {
+                /*new UniformModel()
+                    {
+                        Model = mat4.Identity //mat4.Rotate((float)Math.Sin(totalTime) * (float)Math.PI, vec3.UnitZ)
+                    }*/
+
+                //aEntity.Transform.Rotation = new(r.Next(0, 100), r.Next(0, 100), r.Next(0, 100));
+                //aEntity.Transform.Position.x += MathF.Sin(totalTime);
+
+                engine.ShaderComponent.UniformModels.Staging.Value[aEntity.RenderAble.Id] = new() {Model = aEntity.Transform.ModelMat};
+            }
+
+            //engine.ShaderComponent.UniformModels.Update(mats);
+            engine.ShaderComponent.UniformModels.Staging.CopyValueToBuffer();
+            engine.ShaderComponent.UniformModels.Copy();
 
             /*uint uboSize = (uint)Unsafe.SizeOf<UniformBufferObject>();
 
