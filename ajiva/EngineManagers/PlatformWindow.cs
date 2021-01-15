@@ -45,27 +45,31 @@ namespace ajiva.EngineManagers
 
             Glfw3.WindowHint(WindowAttribute.ClientApi, 0);
             window = Glfw3.CreateWindow(surfaceWidth, surfaceHeight, "First test", MonitorHandle.Zero, WindowHandle.Zero);
-            Glfw3.SetWindowSizeCallback(window, (_, w, h) =>
-            {
-                Height = h;
-                Width = w;
-
-                OnResize.Invoke(this, EventArgs.Empty);
-            });
 
             SharpVk.Glfw.extras.Glfw3.Public.SetWindowSizeLimits_0(window.RawHandle, surfaceWidth / 2, surfaceHeight / 2, Glfw3Enum.GLFW_DONT_CARE, Glfw3Enum.GLFW_DONT_CARE);
             keyDelegate = KeyCallback;
             cursorPosDelegate = MouseCallback;
+            sizeDelegate = SizeCallback;
             Glfw3.SetKeyCallback(window, keyDelegate);
             Glfw3.SetCursorPosCallback(window, cursorPosDelegate);
+            Glfw3.SetWindowSizeCallback(window, sizeDelegate);
             UpdateCursor();
 
             return Task.CompletedTask;
         }
 
-        //force NO gc on these delegates by keeping an refrence
+        private void SizeCallback(WindowHandle windowHandle, int width, int height)
+        {
+            Height = height;
+            Width = width;
+
+            OnResize.Invoke(this, EventArgs.Empty);
+        }
+
+        //force NO gc on these delegates by keeping an reference
         private KeyDelegate keyDelegate;
         private CursorPosDelegate cursorPosDelegate;
+        private  WindowSizeDelegate sizeDelegate;
 
         public int Width { get; set; }
 
