@@ -77,17 +77,17 @@ namespace ajiva
             }
             */
             const int size = 1000;
-            const int sizeHalf = size/2;
-            const int sizeHundrets = size/100;
+            const int sizeHalf = size / 2;
+            const int sizeHundrets = size / 100;
             for (var i = 0; i < size; i++)
             {
                 var verts = meshPref.VerticesData.ToArray();
                 var inds = meshPref.IndicesData.ToArray();
 
                 renderEngine.Entities.Add(new(new(
-                        new(r.Next(-sizeHalf, sizeHalf), r.Next(-sizeHalf, sizeHalf),r.Next(-sizeHalf, sizeHalf)), new(r.Next(0, 100), r.Next(0, 100), r.Next(0, 100)),
+                        new(r.Next(-sizeHalf, sizeHalf), r.Next(-sizeHalf, sizeHalf), r.Next(-sizeHalf, sizeHalf)), new(r.Next(0, 100), r.Next(0, 100), r.Next(0, 100)),
                         new((float)(r.NextDouble() * sizeHundrets))
-                        ),
+                    ),
                     new Mesh(verts, inds)));
             }
 
@@ -224,8 +224,6 @@ namespace ajiva
             si = new();
         }
 
-        UniformBufferData ubo;
-
         private Random r = new Random();
 
         private void UpdateUniformBuffer()
@@ -234,56 +232,26 @@ namespace ajiva
 
             var totalTime = (currentTimestamp - engine.InitialTimestamp) / (float)Stopwatch.Frequency;
 
-            ubo = new()
+            engine.ShaderComponent.ViewProj.UpdateExpresion(delegate(int index, ref UniformViewProj value)
             {
-                Model = mat4.Identity, //mat4.Rotate((float)Math.Sin(totalTime) * (float)Math.PI, vec3.UnitZ),
-                View = camera.View, //mat4.LookAt(new(2), vec3.Zero, vec3.UnitZ),
-                Proj = camera.Projection //mat4.Perspective((float)Math.PI / 4f, swapChainExtent.Width / (float)swapChainExtent.Height, 0.1f, 10)
-            };
+                if (index != 0) return;
 
-            ubo.Proj[1, 1] *= -1;
-
-            var ubx = new UniformViewProj()
-            {
-                View = camera.View, //mat4.LookAt(new(2), vec3.Zero, vec3.UnitZ),
-                Proj = camera.Projection //mat4.Perspective((float)Math.PI / 4f, swapChainExtent.Width / (float)swapChainExtent.Height, 0.1f, 10)
-            };
-            ubx.Proj[1, 1] *= -1;
-
-            engine.ShaderComponent.ViewProj.Update(new[]
-            {
-                ubx
+                value.View = camera.View;
+                value.Proj = camera.Projection;
+                value.Proj[1, 1] *= -1;
             });
             engine.ShaderComponent.ViewProj.Copy();
 
             foreach (var aEntity in engine.Entities.Where(aEntity => aEntity.RenderAble.Render))
             {
-                /*new UniformModel()
-                    {
-                        Model = mat4.Identity //mat4.Rotate((float)Math.Sin(totalTime) * (float)Math.PI, vec3.UnitZ)
-                    }*/
-
                 //aEntity.Transform.Rotation = new(r.Next(0, 100), r.Next(0, 100), r.Next(0, 100));
                 //aEntity.Transform.Position.x += MathF.Sin(totalTime);
 
                 engine.ShaderComponent.UniformModels.Staging.Value[aEntity.RenderAble.Id] = new() {Model = aEntity.Transform.ModelMat};
             }
 
-            //engine.ShaderComponent.UniformModels.Update(mats);
             engine.ShaderComponent.UniformModels.Staging.CopyValueToBuffer();
             engine.ShaderComponent.UniformModels.Copy();
-
-            /*uint uboSize = (uint)Unsafe.SizeOf<UniformBufferObject>();
-
-            IntPtr memoryBuffer = AEntityComponent.UniformStagingBufferMemory.Map(0, uboSize, MemoryMapFlags.None);
-
-            Marshal.StructureToPtr(ubo, memoryBuffer, false);
-
-            AEntityComponent.UniformStagingBufferMemory.Unmap();
-
-            DeviceComponent.CopyBuffer(AEntityComponent.UniformStagingBuffer, AEntityComponent.UniformBuffer, uboSize);*/
-            //ShaderComponent.Uniform.Update(new []{ubo});
-            //ShaderComponent.Uniform.Copy();
         }
 
         private readonly Queue<Action> applicationQueue = new();
