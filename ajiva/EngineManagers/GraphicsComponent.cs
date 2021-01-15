@@ -221,7 +221,7 @@ namespace ajiva.EngineManagers
                     new()
                     {
                         Binding = 1,
-                        DescriptorType = DescriptorType.UniformBuffer,
+                        DescriptorType = DescriptorType.UniformBufferDynamic,
                         StageFlags = ShaderStageFlags.Vertex,
                         DescriptorCount = 1
                     },
@@ -238,13 +238,18 @@ namespace ajiva.EngineManagers
         public void CreateDescriptorPool()
         {
             DescriptorPool = RenderEngine.DeviceComponent.Device.CreateDescriptorPool(
-                1,
+                10000,
                 new DescriptorPoolSize[]
                 {
                     new()
                     {
-                        DescriptorCount = 2,
+                        DescriptorCount = 1,
                         Type = DescriptorType.UniformBuffer
+                    },
+                    new()
+                    {
+                        DescriptorCount = 1,
+                        Type = DescriptorType.UniformBufferDynamic
                     },
                     new()
                     {
@@ -269,7 +274,7 @@ namespace ajiva.EngineManagers
                             {
                                 Buffer = RenderEngine.ShaderComponent.ViewProj.Uniform.Buffer,
                                 Offset = 0,
-                                Range = (ulong)Unsafe.SizeOf<UniformViewProj>()
+                                Range = RenderEngine.ShaderComponent.ViewProj.Uniform.SizeOfT
                             }
                         },
                         DescriptorCount = 1,
@@ -286,14 +291,14 @@ namespace ajiva.EngineManagers
                             {
                                 Buffer = RenderEngine.ShaderComponent.UniformModels.Uniform.Buffer,
                                 Offset = 0,
-                                Range = (ulong)Unsafe.SizeOf<UniformModel>()
+                                Range = RenderEngine.ShaderComponent.UniformModels.Uniform.SizeOfT
                             }
                         },
                         DescriptorCount = 1,
                         DestinationSet = DescriptorSet,
                         DestinationBinding = 1,
                         DestinationArrayElement = 0,
-                        DescriptorType = DescriptorType.UniformBuffer
+                        DescriptorType = DescriptorType.UniformBufferDynamic
                     },
                     new()
                     {
