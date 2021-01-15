@@ -9,13 +9,13 @@ namespace ajiva.Models
     public class UniformBuffer<T> : DisposingLogger where T : struct
     {
         private readonly DeviceComponent component;
-        private const int ItemCount = 1;
+        //private const int ItemCount = 1;
         public WritableCopyBuffer<T> Staging { get; }
         public BufferOfT<T> Uniform { get; }
 
-        public UniformBuffer(DeviceComponent component)
+        public UniformBuffer(DeviceComponent component, int itemCount)
         {
-            var value = new T[ItemCount];
+            var value = new T[itemCount];
 
             this.component = component;
 
