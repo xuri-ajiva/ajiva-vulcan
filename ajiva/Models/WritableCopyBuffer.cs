@@ -16,7 +16,11 @@ namespace ajiva.Models
                 throw new ArgumentException("Currently you can only update the data, not add some", nameof(newData));
             }
 
-            Value = newData;
+            for (int i = 0; i < newData.Length; i++)
+            {
+                Value[i] = newData[i];
+            }
+            //Value = newData;
             CopyValueToBuffer();
         }
     }

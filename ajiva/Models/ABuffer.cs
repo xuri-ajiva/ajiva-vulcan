@@ -11,7 +11,7 @@ namespace ajiva.Models
     {
         public Buffer? Buffer;
         public DeviceMemory? Memory;
-        public readonly uint Size;
+        public uint Size { get; }
 
         public ABuffer(uint size)
         {

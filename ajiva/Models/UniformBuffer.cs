@@ -56,5 +56,10 @@ namespace ajiva.Models
             Staging.Dispose();
             Uniform.Dispose();
         }
+
+        public void UpdateOne(T data, uint id)
+        {
+            Uniform.Value[id] = data;
+        }
     }
 }
