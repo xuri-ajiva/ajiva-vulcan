@@ -12,6 +12,7 @@ using SharpVk;
 using SharpVk.Glfw;
 using SharpVk.Khronos;
 using SharpVk.Multivendor;
+using Semaphore = SharpVk.Semaphore;
 
 namespace ajiva
 {
@@ -75,9 +76,10 @@ namespace ajiva
                 mainCamara = value;
             }
         }
-
         /// <inheritdoc />
-        public object Lock { get; } = new();
+        public object RenderLock { get; } = new();
+        /// <inheritdoc />
+        public object UpdateLock { get; } = new();
 
         #region Public
 
@@ -98,7 +100,6 @@ namespace ajiva
 
         public async Task Cleanup()
         {
-            await Task.Delay(0);
             Dispose();
         }
 
@@ -121,7 +122,8 @@ namespace ajiva
 
         public void RecreateSwapChain()
         {
-            lock (Lock)
+            lock (UpdateLock)
+            lock (RenderLock)
             {
                 DeviceComponent.WaitIdle();
                 CleanupSwapChain();
@@ -143,24 +145,27 @@ namespace ajiva
         /// <inheritdoc />
         public void Dispose()
         {
-            GC.SuppressFinalize(this);
             if (!Runing) return;
             Runing = false;
 
-            DeviceComponent.WaitIdle();
+            lock (UpdateLock)
+            lock (RenderLock)
+            {
+                DeviceComponent.WaitIdle();
 
-            SwapChainComponent.Dispose();
-            ImageComponent.Dispose();
-            GraphicsComponent.Dispose();
-            ShaderComponent.Dispose();
-            AEntityComponent.Dispose();
-            SemaphoreComponent.Dispose();
-            TextureComponent.Dispose();
-            Window.Dispose();
-            DeviceComponent.Dispose();
-            MainCamara.Dispose();
-            Runing = false;
-            GC.Collect();
+                SwapChainComponent.Dispose();
+                ImageComponent.Dispose();
+                GraphicsComponent.Dispose();
+                ShaderComponent.Dispose();
+                AEntityComponent.Dispose();
+                SemaphoreComponent.Dispose();
+                TextureComponent.Dispose();
+                Window.Dispose();
+                DeviceComponent.Dispose();
+                MainCamara.Dispose();
+                GC.SuppressFinalize(this);
+                GC.Collect();
+            }
         }
 
   #endregion
@@ -215,7 +220,7 @@ namespace ajiva
 
         public async Task InitVulkan()
         {
-            lock (Lock)
+            lock (RenderLock)
             {
                 Window.CreateSurface();
                 DeviceComponent.CreateDevice();

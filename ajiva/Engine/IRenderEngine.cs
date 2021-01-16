@@ -24,13 +24,15 @@ namespace ajiva.Engine
         TextureComponent TextureComponent { get; }
         
         event PlatformEventHandler OnFrame;
+        event PlatformEventHandler OnUpdate;
         event KeyEventHandler OnKeyEvent;
         event EventHandler OnResize;
         event EventHandler<vec2> OnMouseMove;
         
         Cameras.Camera MainCamara { get; set; }
-        
-        public object Lock { get; }
+
+        public object RenderLock { get; }
+        public object UpdateLock { get; }
 
 #pragma warning disable 8763
         [DoesNotReturn, MethodImpl(MethodImplOptions.AggressiveOptimization)]

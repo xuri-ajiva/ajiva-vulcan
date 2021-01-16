@@ -169,7 +169,8 @@ namespace ajiva
             }
 
             engine.ShaderComponent.UniformModels.Staging.CopyValueToBuffer();
-            engine.ShaderComponent.UniformModels.Copy();
+            lock (engine.RenderLock)
+                engine.ShaderComponent.UniformModels.Copy();
         }
 
         private readonly Queue<Action> applicationQueue = new();
