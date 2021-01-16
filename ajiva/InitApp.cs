@@ -116,24 +116,18 @@ namespace ajiva
 
         private void InitEvents()
         {
-            engine.OnFrame += OnFrame;
+            engine.OnUpdate += OnUpdate;
+        }
+
+        private void OnUpdate(object sender, TimeSpan delta)
+        {
+            UpdateApplication();
+
+            UpdateUniformBuffer(delta);
         }
 
         private void OnFrame(object sender, TimeSpan delta)
         {
-            //Console.WriteLine(camera.Position);
-            //Console.WriteLine(camera.Rotation);
-            /*
-                 var (left, top) = Console.GetCursorPosition();
-                 foreach (var aEntity in engine.Entities.Where(aEntity => aEntity.RenderAble.Render))
-                 {
-                     Console.WriteLine(aEntity.RenderAble.Id.ToString("X2") + ": " + aEntity.Transform);
-                 }
-                 Console.WriteLine(camera.RenderAble.Id.ToString("X2") + ": " + camera.Transform);
-                 Console.SetCursorPosition(left, top);
-                          */
-            UpdateApplication();
-            UpdateUniformBuffer();
         }
 
         private Random r = new Random();
