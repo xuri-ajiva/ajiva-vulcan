@@ -116,34 +116,25 @@ namespace ajiva.EngineManagers
             Glfw3.SetInputMode(window, Glfw3Enum.GLFW_CURSOR, mouseMotion ? Glfw3Enum.GLFW_CURSOR_DISABLED : Glfw3Enum.GLFW_CURSOR_NORMAL);
         }
 
-        public void MainLoop(TimeSpan timeToRun)
+        private async Task RunDelta(PlatformEventHandler action, Func<bool> condition, TimeSpan maxToRun)
         {
-            var frames = 0;
+            var iteration = 0u;
             var start = DateTime.Now;
 
             var delta = TimeSpan.Zero;
             var now = Stopwatch.GetTimestamp();
-            while (RenderEngine.Runing && !Glfw3.WindowShouldClose(window))
+            while (condition())
             {
-                lock (RenderEngine.Lock)
-                    OnFrame.Invoke(this, delta);
+                action?.Invoke(this, delta);
 
-                frames++;
+                iteration++;
 
-                if (frames % 10 == 0)
+                if (iteration % 10 == 0)
                 {
-                    if (DateTime.Now - start > timeToRun)
+                    if (DateTime.Now - start > maxToRun)
                     {
                         return;
                     }
-                }
-
-                Glfw3.PollEvents();
-
-                if (mouseMotion)
-                {
-                    Glfw3.SetCursorPosition(window, Width / 2f, Height / 2f);
-                    PreviousMousePosition = new(Width / 2f, Height / 2f);
                 }
 
                 var end = Stopwatch.GetTimestamp();
@@ -151,6 +142,16 @@ namespace ajiva.EngineManagers
 
                 now = end;
             }
+        }
+
+        public async Task RenderLoop(TimeSpan timeToRun)
+        {
+            await RunDelta(delegate(object sender, TimeSpan delta)
+            {
+                lock (RenderEngine.RenderLock)
+                    OnFrame.Invoke(this, delta);
+                Glfw3.PollEvents();
+            }, () => RenderEngine.Runing && !Glfw3.WindowShouldClose(window), timeToRun);
         }
 
         public void CloseWindow()
