@@ -132,19 +132,23 @@ namespace ajiva
 
         private Random r = new Random();
 
-        private void UpdateUniformBuffer()
+        private void UpdateUniformBuffer(TimeSpan timeSpan)
         {
             var currentTimestamp = Stopwatch.GetTimestamp();
-
             var totalTime = (currentTimestamp - engine.InitialTimestamp) / (float)Stopwatch.Frequency;
 
+            var delta = (float)timeSpan.TotalMilliseconds;
+            var translate = MathF.Sin(totalTime) / 100f;
 
             foreach (var aEntity in engine.Entities.Where(e => e.RenderAble != null && e.RenderAble.Render))
             {
                 //aEntity.Transform.Rotation = new(r.Next(0, 100), r.Next(0, 100), r.Next(0, 100));
-                //aEntity.Transform.Position.x += MathF.Sin(totalTime);
-
-                engine.ShaderComponent.UniformModels.Staging.Value[aEntity.RenderAble.Id] = new() {Model = aEntity.Transform.ModelMat};
+                aEntity.Transform.Position.x += translate;
+                aEntity.Transform.Rotation.x += delta;
+                if (engine.ShaderComponent.UniformModels.Staging.Value.Length > aEntity.RenderAble!.Id)
+                {
+                    engine.ShaderComponent.UniformModels.Staging.Value[aEntity.RenderAble!.Id] = new() {Model = aEntity.Transform.ModelMat};
+                }
             }
 
             engine.ShaderComponent.UniformModels.Staging.CopyValueToBuffer();
