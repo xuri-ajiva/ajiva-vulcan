@@ -10,7 +10,7 @@ using Key = SharpVk.Glfw.Key;
 
 namespace ajiva.EngineManagers
 {
-    public class PlatformWindow : RenderEngineComponent, IPlatformWindow
+    public class PlatformWindow : RenderEngineComponent
     {
         public event PlatformEventHandler OnFrame;
         public event KeyEventHandler OnKeyEvent;
