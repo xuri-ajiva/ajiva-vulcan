@@ -263,20 +263,18 @@ namespace ajiva
         {
             await Window.InitWindow(surfaceWidth, surfaceHeight);
 
-            Window.OnResize += delegate(object _, EventArgs eventArgs)
+            Window.OnResize += (_, eventArgs) =>
             {
                 RecreateSwapChain();
                 OnResize?.Invoke(this, eventArgs);
             };
-            Window.OnFrame += (sender, delta) =>
+            Window.OnUpdate += (_, delta) =>
             {
-                ATrace.LockInline($"Update Delta: {delta:G}\n");
-                OnFrame?.Invoke(this, delta);
+                OnUpdate?.Invoke(this, delta);
             };
 
-            Window.OnFrame += (sender, delta) =>
+            Window.OnFrame += (_, delta) =>
             {
-                ATrace.LockInline($"Frame Delta: {delta:G}\n");
                 MainCamara.Update((float)delta.TotalMilliseconds);
                 OnFrame?.Invoke(this, delta);
                 UpdateCamaraProjView();
