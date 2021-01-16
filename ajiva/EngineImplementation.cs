@@ -58,6 +58,8 @@ namespace ajiva
         /// <inheritdoc />
         public event PlatformEventHandler OnFrame;
         /// <inheritdoc />
+        public event PlatformEventHandler OnUpdate;
+        /// <inheritdoc />
         public event KeyEventHandler OnKeyEvent;
         /// <inheritdoc />
         public event EventHandler OnResize;
@@ -247,8 +249,9 @@ namespace ajiva
         {
             InitialTimestamp = Stopwatch.GetTimestamp();
             Runing = true;
-            await Task.Delay(0);
-            Window.MainLoop(maxValue);
+
+            Task[] tasks = {Window.RenderLoop(maxValue), Window.UpdateLoop(maxValue)};
+            Task.WaitAll(tasks);
         }
 
         public async Task InitWindow(int surfaceWidth, int surfaceHeight)
@@ -260,9 +263,15 @@ namespace ajiva
                 RecreateSwapChain();
                 OnResize?.Invoke(this, eventArgs);
             };
+            Window.OnFrame += (sender, delta) =>
+            {
+                ATrace.LockInline($"Update Delta: {delta:G}\n");
+                OnFrame?.Invoke(this, delta);
+            };
 
             Window.OnFrame += (sender, delta) =>
             {
+                ATrace.LockInline($"Frame Delta: {delta:G}\n");
                 MainCamara.Update((float)delta.TotalMilliseconds);
                 OnFrame?.Invoke(this, delta);
                 UpdateCamaraProjView();

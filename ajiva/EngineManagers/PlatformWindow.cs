@@ -12,6 +12,7 @@ namespace ajiva.EngineManagers
 {
     public class PlatformWindow : RenderEngineComponent
     {
+        event PlatformEventHandler OnUpdate;
         public event PlatformEventHandler OnFrame;
         public event KeyEventHandler OnKeyEvent;
         public event EventHandler OnResize;
@@ -22,6 +23,7 @@ namespace ajiva.EngineManagers
 
         public PlatformWindow(IRenderEngine renderEngine) : base(renderEngine)
         {
+            OnUpdate = null!;
             OnFrame = null!;
             OnKeyEvent = null!;
             OnResize = null!;
@@ -151,6 +153,15 @@ namespace ajiva.EngineManagers
                 lock (RenderEngine.RenderLock)
                     OnFrame.Invoke(this, delta);
                 Glfw3.PollEvents();
+            }, () => RenderEngine.Runing && !Glfw3.WindowShouldClose(window), timeToRun);
+        }
+
+        public async Task UpdateLoop(TimeSpan timeToRun)
+        {
+            await RunDelta(delegate(object sender, TimeSpan delta)
+            {
+                lock (RenderEngine.UpdateLock)
+                    OnUpdate?.Invoke(this, delta);
             }, () => RenderEngine.Runing && !Glfw3.WindowShouldClose(window), timeToRun);
         }
 
