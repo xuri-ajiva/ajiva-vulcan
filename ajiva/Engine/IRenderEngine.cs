@@ -3,6 +3,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.Linq.Expressions;
 using System.Runtime.CompilerServices;
 using ajiva.EngineManagers;
+using GlmSharp;
 using SharpVk;
 
 namespace ajiva.Engine
@@ -21,6 +22,14 @@ namespace ajiva.Engine
         AEntityComponent AEntityComponent { get; }
         SemaphoreComponent SemaphoreComponent { get; }
         TextureComponent TextureComponent { get; }
+        
+        event PlatformEventHandler OnFrame;
+        event KeyEventHandler OnKeyEvent;
+        event EventHandler OnResize;
+        event EventHandler<vec2> OnMouseMove;
+        
+        Cameras.Camera MainCamara { get; set; }
+        
         public object Lock { get; }
 
 #pragma warning disable 8763

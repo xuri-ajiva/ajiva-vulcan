@@ -2,10 +2,15 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Threading.Tasks;
 using ajiva.Engine;
 using ajiva.EngineManagers;
 using ajiva.Entity;
+using ajiva.Models;
+using GlmSharp;
 using SharpVk;
+using SharpVk.Glfw;
+using SharpVk.Khronos;
 using SharpVk.Multivendor;
 
 namespace ajiva
@@ -49,6 +54,25 @@ namespace ajiva
         public SemaphoreComponent SemaphoreComponent { get; }
         /// <inheritdoc />
         public TextureComponent TextureComponent { get; }
+
+        /// <inheritdoc />
+        public event PlatformEventHandler OnFrame;
+        /// <inheritdoc />
+        public event KeyEventHandler OnKeyEvent;
+        /// <inheritdoc />
+        public event EventHandler OnResize;
+        /// <inheritdoc />
+        public event EventHandler<vec2> OnMouseMove;
+        /// <inheritdoc />
+        public Cameras.Camera MainCamara
+        {
+            get => mainCamara;
+            set
+            {
+                MainCamara?.Dispose();
+                mainCamara = value;
+            }
+        }
 
         /// <inheritdoc />
         public object Lock { get; } = new();
