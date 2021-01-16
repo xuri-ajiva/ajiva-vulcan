@@ -56,40 +56,24 @@ namespace ajiva
             var meshPref = Mesh.Cube;
             var r = new Random();
 
-            /*
-            for (var i = 0; i < 10; i++)
-            {
-                var verts = meshPref.VerticesData.ToArray();
-                var inds = meshPref.IndicesData.ToArray();
+            const int size = 30000;
+            const int posRange = 100;
+            const float scale = 0.5f;
 
-                var rx = r.Next(0, 100);
-                var ry = r.Next(0, 100);
-                var rz = r.Next(0, 100);
-
-                for (int j = 0; j < verts.Length; j++)
-                {
-                    verts[j].Position.x += rx;
-                    verts[j].Position.y += ry;
-                    verts[j].Position.z += rz;
-                }
-
-                renderEngine.Entities.Add(new(Transform3d.Default, new Mesh(verts, inds)));
-            }
-            */
-            const int size = 300;
-            const int sizeHalf = size / 2;
-            const int sizeHundrets = size / 100;
             for (var i = 0; i < size; i++)
             {
                 var verts = meshPref.VerticesData.ToArray();
                 var inds = meshPref.IndicesData.ToArray();
 
+                //var mesh = new Mesh(verts, inds);
+
                 renderEngine.Entities.Add(new(new(
-                        new(r.Next(-sizeHalf, sizeHalf), r.Next(-sizeHalf, sizeHalf), r.Next(-sizeHalf, sizeHalf)), new(r.Next(0, 100), r.Next(0, 100), r.Next(0, 100)),
-                        new((float)(r.NextDouble() * sizeHundrets))
-                    ),
-                    new Mesh(verts, inds)));
+                        new(r.Next(-posRange, posRange), r.Next(-posRange, posRange), r.Next(-posRange, posRange)), new(r.Next(0, 100), r.Next(0, 100), r.Next(0, 100)),
+                        new((float)(r.NextDouble() * scale))
+                    ), meshPref
+                ));
             }
+            Console.WriteLine();
 
             var app = new Program(renderEngine);
             /*       
@@ -113,7 +97,7 @@ namespace ajiva
 
             debugReportCallback.Dispose();
             instance.Dispose();
-            
+
             Glfw3.Terminate();
             Console.WriteLine("Finished, press any Key to continue.");
             Console.ReadKey();
@@ -125,6 +109,7 @@ namespace ajiva
             await engine.InitWindow(SurfaceWidth, SurfaceHeight);
             InitEvents();
             await engine.InitVulkan();
+            UpdateUniformBuffer(TimeSpan.Zero);
             await engine.MainLoop(maxValue);
             await engine.Cleanup();
         }
