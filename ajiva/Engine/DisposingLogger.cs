@@ -5,8 +5,10 @@ namespace ajiva.Engine
 {
     public abstract class DisposingLogger : IDisposable
     {
-#if LOGGING_TRUE
+        protected readonly object disposeLock = new();
+        protected bool disposed { get; private set; }
 
+#if LOGGING_TRUE
         public DisposingLogger()
         {
             Console.WriteLine($"Created: {GetType()}");
@@ -18,9 +20,11 @@ namespace ajiva.Engine
 
         protected virtual void Dispose(bool disposing)
         {
-            ReleaseUnmanagedResources();
-            if (disposing)
+            lock (disposeLock)
             {
+                if (disposed) return;
+                ReleaseUnmanagedResources();
+                disposed = true;
             }
         }
 
