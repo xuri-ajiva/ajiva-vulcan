@@ -41,8 +41,8 @@ namespace ajiva.EngineManagers
 
         public void UpdateViewProj(UniformViewProj data)
         {
-            //ViewProj.Update(new []{data});
-            //ViewProj.Copy();
+            //ProjView.Update(new []{data});
+            //ProjView.Copy();
         }
 
         public void UpdateModel(UniformModel data, uint id)
@@ -60,7 +60,7 @@ namespace ajiva.EngineManagers
 
         public void CreateUniformBuffer()
         {
-            //ViewProj = new(renderEngine.DeviceComponent,1);
+            //ProjView = new(renderEngine.DeviceComponent,1);
             // UniformModels = new(renderEngine.DeviceComponent,1000);
 
             ViewProj.Create();

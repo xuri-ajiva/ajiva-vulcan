@@ -69,7 +69,7 @@ namespace ajiva.EngineManagers
         //force NO gc on these delegates by keeping an reference
         private KeyDelegate keyDelegate;
         private CursorPosDelegate cursorPosDelegate;
-        private  WindowSizeDelegate sizeDelegate;
+        private WindowSizeDelegate sizeDelegate;
 
         public int Width { get; set; }
 
