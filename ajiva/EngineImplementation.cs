@@ -236,7 +236,7 @@ namespace ajiva
                 TextureComponent.CreateLogo();
                 foreach (var entity in Entities)
                 {
-                    entity.RenderAble.Create(this);
+                    entity.RenderAble?.Create(this);
                     AEntityComponent.Entities.Add(entity);
                 }
                 ShaderComponent.CreateUniformBuffer();
