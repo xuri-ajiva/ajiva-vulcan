@@ -20,6 +20,7 @@ namespace ajiva.Models
 
         public void Create(DeviceComponent component)
         {
+            if (deviceComponent != null) return; // if we have an deviceComponent we are created!
             this.deviceComponent = component;
             Vertices = CreateShaderBuffer(VerticesData, BufferUsageFlags.VertexBuffer);
             Indeces = CreateShaderBuffer(IndicesData, BufferUsageFlags.IndexBuffer);
