@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using ajiva.Engine;
 using ajiva.Models;
@@ -25,12 +26,12 @@ namespace ajiva.Entity
             {
                 Id = (uint)id;
                 Render = true;
-                Console.WriteLine($"Creating ARenderAble with id {Id}");
+                ATrace.LockInline($"Creating ARenderAble with id {Id}");
             }
             else
             {
                 Render = false;
-                Console.WriteLine("Creating ARenderAble but nor Rendering");
+                ATrace.LockInline("Creating ARenderAble but nor Rendering");
             }
         }
 

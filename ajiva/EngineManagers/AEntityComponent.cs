@@ -34,7 +34,7 @@ namespace ajiva.EngineManagers
             {
                 foreach (var mesh in Entities)
                 {
-                    mesh.RenderAble.BindAndDraw(commandBuffer);
+                    mesh.RenderAble?.BindAndDraw(commandBuffer);
                 }
             }
         }
