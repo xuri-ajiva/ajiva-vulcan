@@ -139,7 +139,7 @@ namespace ajiva
             var totalTime = (currentTimestamp - engine.InitialTimestamp) / (float)Stopwatch.Frequency;
 
 
-            foreach (var aEntity in engine.Entities.Where(aEntity => aEntity.RenderAble.Render))
+            foreach (var aEntity in engine.Entities.Where(e => e.RenderAble != null && e.RenderAble.Render))
             {
                 //aEntity.Transform.Rotation = new(r.Next(0, 100), r.Next(0, 100), r.Next(0, 100));
                 //aEntity.Transform.Position.x += MathF.Sin(totalTime);
