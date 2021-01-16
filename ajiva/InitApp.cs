@@ -56,10 +56,12 @@ namespace ajiva
             var meshPref = Mesh.Cube;
             var r = new Random();
 
-            const int size = 30000;
+            const int size = 100;
             const int posRange = 100;
             const float scale = 0.5f;
 
+            renderEngine.Entities.Capacity = size+10;
+            
             for (var i = 0; i < size; i++)
             {
                 var verts = meshPref.VerticesData.ToArray();
@@ -138,13 +140,13 @@ namespace ajiva
             var totalTime = (currentTimestamp - engine.InitialTimestamp) / (float)Stopwatch.Frequency;
 
             var delta = (float)timeSpan.TotalMilliseconds;
-            var translate = MathF.Sin(totalTime) / 100f;
+            var translate = MathF.Sin(totalTime) / 10f;
 
             foreach (var aEntity in engine.Entities.Where(e => e.RenderAble != null && e.RenderAble.Render))
             {
                 //aEntity.Transform.Rotation = new(r.Next(0, 100), r.Next(0, 100), r.Next(0, 100));
-                aEntity.Transform.Position.x += translate;
-                aEntity.Transform.Rotation.x += delta;
+                //aEntity.Transform.Position.x += translate;
+                //aEntity.Transform.Rotation.x += delta;
                 if (engine.ShaderComponent.UniformModels.Staging.Value.Length > aEntity.RenderAble!.Id)
                 {
                     engine.ShaderComponent.UniformModels.Staging.Value[aEntity.RenderAble!.Id] = new() {Model = aEntity.Transform.ModelMat};
