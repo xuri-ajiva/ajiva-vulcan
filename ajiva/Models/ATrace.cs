@@ -52,5 +52,13 @@ namespace ajiva.Models
         public static string GetStack(int skip = 2) => string.Join("", new StackTrace(true).GetFrames().Skip(skip).Select(x => x.ToString()));
 
         public static void PrintStack() => Console.Write(GetStack());
+
+        public static void LockInline(string value)
+        {
+            var (left, top) = Console.GetCursorPosition();
+            Console.Write(value );
+            Console.Write("                     ");
+            Console.SetCursorPosition(left, top);
+        }
     }
 }
