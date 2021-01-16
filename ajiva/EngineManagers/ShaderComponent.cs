@@ -14,7 +14,7 @@ namespace ajiva.EngineManagers
         public ShaderComponent(IRenderEngine renderEngine) : base(renderEngine)
         {
             ViewProj = new(renderEngine.DeviceComponent,1);
-            UniformModels = new(renderEngine.DeviceComponent, 2000);
+            UniformModels = new(renderEngine.DeviceComponent, 200000);
             Main = new(renderEngine.DeviceComponent);
             //Uniform = new(renderEngine.DeviceComponent);
         }
