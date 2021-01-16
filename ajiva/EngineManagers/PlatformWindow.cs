@@ -1,5 +1,7 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics;
+using System.Threading;
 using System.Threading.Tasks;
 using ajiva.Engine;
 using GlmSharp;
@@ -12,25 +14,58 @@ namespace ajiva.EngineManagers
 {
     public class PlatformWindow : RenderEngineComponent
     {
-        event PlatformEventHandler OnUpdate;
-        public event PlatformEventHandler OnFrame;
-        public event KeyEventHandler OnKeyEvent;
-        public event EventHandler OnResize;
-        public event EventHandler<vec2> OnMouseMove;
-        public Surface Surface { get; private set; }
+        public event PlatformEventHandler OnUpdate = null!;
+        public event PlatformEventHandler OnFrame = null!;
+        public event KeyEventHandler OnKeyEvent = null!;
+        public event EventHandler OnResize = null!;
+        public event EventHandler<vec2> OnMouseMove = null!;
+        public Surface? Surface { get; private set; }
 
         public vec2 PreviousMousePosition { get; private set; }
 
+        public Thread WindowThread { get; private set; }
+        public Queue<Action> WindowThreadQueue { get; } = new();
+        public bool WindowReady { get; private set; } = false;
+
         public PlatformWindow(IRenderEngine renderEngine) : base(renderEngine)
         {
-            OnUpdate = null!;
-            OnFrame = null!;
-            OnKeyEvent = null!;
-            OnResize = null!;
-            OnMouseMove = null!;
-            Surface = null!;
+            keyDelegate = KeyCallback;
+            cursorPosDelegate = MouseCallback;
+            sizeDelegate = SizeCallback;
+
             PreviousMousePosition = vec2.Zero;
             mouseMotion = false;
+            WindowThread = new(WindowStartup);
+        }
+
+        private void WindowStartup()
+        {
+            Glfw3.WindowHint(WindowAttribute.ClientApi, 0);
+            window = Glfw3.CreateWindow(Width, Height, "First test", MonitorHandle.Zero, WindowHandle.Zero);
+
+            SharpVk.Glfw.extras.Glfw3.Public.SetWindowSizeLimits_0(window.RawHandle, Width / 2, Height / 2, Glfw3Enum.GLFW_DONT_CARE, Glfw3Enum.GLFW_DONT_CARE);
+            Glfw3.SetKeyCallback(window, keyDelegate);
+            Glfw3.SetCursorPosCallback(window, cursorPosDelegate);
+            Glfw3.SetWindowSizeCallback(window, sizeDelegate);
+            UpdateCursor();
+
+            WindowReady = true;
+            while (!Glfw3.WindowShouldClose(window))
+            {
+                Thread.Sleep(1);
+                while (WindowThreadQueue.TryDequeue(out var action))
+                {
+                    try
+                    {
+                        action?.Invoke();
+                    }
+                    catch (Exception e)
+                    {
+                        Console.WriteLine(e);
+                    }
+                }
+                Glfw3.PollEvents();
+            }
         }
 
         private WindowHandle window;
@@ -44,19 +79,12 @@ namespace ajiva.EngineManagers
         {
             Width = surfaceWidth;
             Height = surfaceHeight;
+            WindowThread.Start();
 
-            Glfw3.WindowHint(WindowAttribute.ClientApi, 0);
-            window = Glfw3.CreateWindow(surfaceWidth, surfaceHeight, "First test", MonitorHandle.Zero, WindowHandle.Zero);
-
-            SharpVk.Glfw.extras.Glfw3.Public.SetWindowSizeLimits_0(window.RawHandle, surfaceWidth / 2, surfaceHeight / 2, Glfw3Enum.GLFW_DONT_CARE, Glfw3Enum.GLFW_DONT_CARE);
-            keyDelegate = KeyCallback;
-            cursorPosDelegate = MouseCallback;
-            sizeDelegate = SizeCallback;
-            Glfw3.SetKeyCallback(window, keyDelegate);
-            Glfw3.SetCursorPosCallback(window, cursorPosDelegate);
-            Glfw3.SetWindowSizeCallback(window, sizeDelegate);
-            UpdateCursor();
-
+            while (!WindowReady)
+            {
+                Task.Delay(1);
+            }
             return Task.CompletedTask;
         }
 
@@ -74,7 +102,6 @@ namespace ajiva.EngineManagers
         private WindowSizeDelegate sizeDelegate;
 
         public int Width { get; set; }
-
         public int Height { get; set; }
 
         public uint SurfaceWidth => (uint)Width;
@@ -118,7 +145,7 @@ namespace ajiva.EngineManagers
             Glfw3.SetInputMode(window, Glfw3Enum.GLFW_CURSOR, mouseMotion ? Glfw3Enum.GLFW_CURSOR_DISABLED : Glfw3Enum.GLFW_CURSOR_NORMAL);
         }
 
-        private async Task RunDelta(PlatformEventHandler action, Func<bool> condition, TimeSpan maxToRun)
+        private static async Task RunDelta(Action<TimeSpan> action, Func<bool> condition, TimeSpan maxToRun)
         {
             var iteration = 0u;
             var start = DateTime.Now;
@@ -127,7 +154,9 @@ namespace ajiva.EngineManagers
             var now = Stopwatch.GetTimestamp();
             while (condition())
             {
-                action?.Invoke(this, delta);
+                await Task.Delay(5);
+
+                action?.Invoke(delta);
 
                 iteration++;
 
@@ -138,7 +167,6 @@ namespace ajiva.EngineManagers
                         return;
                     }
                 }
-
                 var end = Stopwatch.GetTimestamp();
                 delta = new(end - now);
 
@@ -148,17 +176,18 @@ namespace ajiva.EngineManagers
 
         public async Task RenderLoop(TimeSpan timeToRun)
         {
-            await RunDelta(delegate(object sender, TimeSpan delta)
+            await RunDelta(delegate(TimeSpan delta)
             {
                 lock (RenderEngine.RenderLock)
                     OnFrame.Invoke(this, delta);
+
                 Glfw3.PollEvents();
             }, () => RenderEngine.Runing && !Glfw3.WindowShouldClose(window), timeToRun);
         }
 
         public async Task UpdateLoop(TimeSpan timeToRun)
         {
-            await RunDelta(delegate(object sender, TimeSpan delta)
+            await RunDelta(delegate(TimeSpan delta)
             {
                 lock (RenderEngine.UpdateLock)
                     OnUpdate?.Invoke(this, delta);
@@ -172,7 +201,7 @@ namespace ajiva.EngineManagers
 
         protected override void ReleaseUnmanagedResources()
         {
-            Surface.Dispose();
+            Surface?.Dispose();
             CloseWindow();
         }
     }
