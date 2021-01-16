@@ -94,8 +94,9 @@ namespace ajiva
             return false;
         }
 
-        public void Cleanup()
+        public async Task Cleanup()
         {
+            await Task.Delay(0);
             Dispose();
         }
 
@@ -123,6 +124,7 @@ namespace ajiva
                 DeviceComponent.WaitIdle();
                 CleanupSwapChain();
 
+                MainCamara.UpdatePerspective(mainCamara.Fov, Window.Width, Window.Height);
                 SwapChainComponent.CreateSwapChain();
                 SwapChainComponent.CreateImageViews();
                 ImageComponent.CreateDepthResources();
@@ -154,6 +156,7 @@ namespace ajiva
             TextureComponent.Dispose();
             Window.Dispose();
             DeviceComponent.Dispose();
+            MainCamara.Dispose();
             Runing = false;
             GC.Collect();
         }
@@ -208,7 +211,7 @@ namespace ajiva
             return (instance, debugReportCallback);
         }
 
-        public void InitVulkan()
+        public async Task InitVulkan()
         {
             lock (Lock)
             {
@@ -238,13 +241,109 @@ namespace ajiva
         }
 
         public List<AEntity> Entities = new();
+        private Cameras.Camera mainCamara;
 
-        public void MainLoop(TimeSpan maxValue)
+        public async Task MainLoop(TimeSpan maxValue)
         {
             InitialTimestamp = Stopwatch.GetTimestamp();
             Runing = true;
-
+            await Task.Delay(0);
             Window.MainLoop(maxValue);
+        }
+
+        public async Task InitWindow(int surfaceWidth, int surfaceHeight)
+        {
+            await Window.InitWindow(surfaceWidth, surfaceHeight);
+
+            Window.OnResize += delegate(object _, EventArgs eventArgs)
+            {
+                RecreateSwapChain();
+                OnResize?.Invoke(this, eventArgs);
+            };
+
+            Window.OnFrame += (sender, delta) =>
+            {
+                MainCamara.Update((float)delta.TotalMilliseconds);
+                OnFrame?.Invoke(this, delta);
+                UpdateCamaraProjView();
+                DrawFrame();
+            };
+            Window.OnKeyEvent += delegate(object? _, Key key, int scancode, InputAction action, Modifier modifier)
+            {
+                var down = action != InputAction.Release;
+
+                switch (key)
+                {
+                    case Key.W:
+                        MainCamara.Keys.up = down;
+                        break;
+                    case Key.D:
+                        MainCamara.Keys.right = down;
+                        break;
+                    case Key.S:
+                        MainCamara.Keys.down = down;
+                        break;
+                    case Key.A:
+                        MainCamara.Keys.left = down;
+                        break;
+                }
+
+                OnKeyEvent?.Invoke(this, key, scancode, action, modifier);
+            };
+
+            Window.OnMouseMove += delegate(object? _, vec2 vec2)
+            {
+                MainCamara.OnMouseMoved(vec2.x, vec2.y);
+                OnMouseMove?.Invoke(this, vec2);
+            };
+        }
+
+        private void UpdateCamaraProjView()
+        {
+            ShaderComponent.ViewProj.UpdateExpresion(delegate(int index, ref UniformViewProj value)
+            {
+                if (index != 0) return;
+
+                value.View = MainCamara.View;
+                value.Proj = MainCamara.Projection;
+                value.Proj[1, 1] *= -1;
+            });
+            ShaderComponent.ViewProj.Copy();
+        }
+
+        private void DrawFrame()
+        {
+            ATrace.Assert(SwapChainComponent.SwapChain != null, "SwapChainComponent.SwapChain != null");
+            var nextImage = SwapChainComponent.SwapChain.AcquireNextImage(uint.MaxValue, SemaphoreComponent.ImageAvailable, null);
+
+            var si = new SubmitInfo
+            {
+                CommandBuffers = new[]
+                {
+                    DeviceComponent.CommandBuffers[nextImage]
+                },
+                SignalSemaphores = new[]
+                {
+                    SemaphoreComponent.RenderFinished
+                },
+                WaitDestinationStageMask = new[]
+                {
+                    PipelineStageFlags.ColorAttachmentOutput
+                },
+                WaitSemaphores = new[]
+                {
+                    SemaphoreComponent.ImageAvailable
+                }
+            };
+            DeviceComponent.GraphicsQueue.Submit(si, null);
+            var result = new Result[1];
+            DeviceComponent.PresentQueue.Present(SemaphoreComponent.RenderFinished, SwapChainComponent.SwapChain, nextImage, result);
+            si.SignalSemaphores = Array.Empty<Semaphore>();
+            si.WaitSemaphores = Array.Empty<Semaphore>();
+            si.WaitDestinationStageMask = Array.Empty<PipelineStageFlags>();
+            si.CommandBuffers = Array.Empty<CommandBuffer>();
+            result = Array.Empty<Result>();
+            si = new();
         }
     }
 }

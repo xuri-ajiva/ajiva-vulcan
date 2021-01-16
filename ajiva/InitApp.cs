@@ -52,6 +52,7 @@ namespace ajiva
             await Task.Delay(-1);
 #else
             renderEngine = new(instance);
+            renderEngine.MainCamara = new Cameras.FpsCamera(90, SurfaceWidth, SurfaceHeight) {MovementSpeed = .1f};
             var meshPref = Mesh.Cube;
             var r = new Random();
 
@@ -75,7 +76,7 @@ namespace ajiva
                 renderEngine.Entities.Add(new(Transform3d.Default, new Mesh(verts, inds)));
             }
             */
-            const int size = 1000;
+            const int size = 300;
             const int sizeHalf = size / 2;
             const int sizeHundrets = size / 100;
             for (var i = 0; i < size; i++)
@@ -112,66 +113,29 @@ namespace ajiva
 
             debugReportCallback.Dispose();
             instance.Dispose();
-
+            
             Glfw3.Terminate();
+            Console.WriteLine("Finished, press any Key to continue.");
+            Console.ReadKey();
             Environment.Exit(0);
         }
 
         private async Task Run(TimeSpan maxValue)
         {
-            await InitWindow(engine);
-            Thread.Sleep(200);
-            engine.InitVulkan();
-            Thread.Sleep(200);
-            camera.MovementSpeed = .1f;
-            camera.Transform.Position.z -= 1;
-            Thread.Sleep(200);
-            engine.MainLoop(maxValue);
-            engine.Cleanup();
+            await engine.InitWindow(SurfaceWidth, SurfaceHeight);
+            InitEvents();
+            await engine.InitVulkan();
+            await engine.MainLoop(maxValue);
+            await engine.Cleanup();
         }
 
-        private readonly Cameras.FpsCamera camera = new(90, SurfaceWidth, SurfaceHeight);
-
-        private async Task InitWindow(AjivaRenderEngine engine)
+        private void InitEvents()
         {
-            await engine.Window.InitWindow(SurfaceWidth, SurfaceHeight);
-            engine.Window.OnFrame += OnFrame;
-            engine.Window.OnResize += delegate
-
-            {
-                engine.RecreateSwapChain();
-            };
-
-            engine.Window.OnKeyEvent += delegate(object? _, Key key, int _, InputAction action, Modifier _)
-            {
-                var down = action != InputAction.Release;
-
-                switch (key)
-                {
-                    case Key.W:
-                        camera.keys.up = down;
-                        break;
-                    case Key.D:
-                        camera.keys.right = down;
-                        break;
-                    case Key.S:
-                        camera.keys.down = down;
-                        break;
-                    case Key.A:
-                        camera.keys.left = down;
-                        break;
-                }
-            };
-
-            engine.Window.OnMouseMove += delegate(object? _, vec2 vec2)
-            {
-                camera.OnMouseMoved(vec2.x, vec2.y);
-            };
+            engine.OnFrame += OnFrame;
         }
 
         private void OnFrame(object sender, TimeSpan delta)
         {
-            camera.Update((float)delta.TotalMilliseconds);
             //Console.WriteLine(camera.Position);
             //Console.WriteLine(camera.Rotation);
             /*
@@ -185,42 +149,6 @@ namespace ajiva
                           */
             UpdateApplication();
             UpdateUniformBuffer();
-            DrawFrame();
-        }
-
-        private void DrawFrame()
-        {
-            ATrace.Assert(engine.SwapChainComponent.SwapChain != null, "SwapChainComponent.SwapChain != null");
-            var nextImage = engine.SwapChainComponent.SwapChain.AcquireNextImage(uint.MaxValue, engine.SemaphoreComponent.ImageAvailable, null);
-
-            var si = new SubmitInfo
-            {
-                CommandBuffers = new[]
-                {
-                    engine.DeviceComponent.CommandBuffers[nextImage]
-                },
-                SignalSemaphores = new[]
-                {
-                    engine.SemaphoreComponent.RenderFinished
-                },
-                WaitDestinationStageMask = new[]
-                {
-                    PipelineStageFlags.ColorAttachmentOutput
-                },
-                WaitSemaphores = new[]
-                {
-                    engine.SemaphoreComponent.ImageAvailable
-                }
-            };
-            engine.DeviceComponent.GraphicsQueue.Submit(si, null);
-            var result = new Result[1];
-            engine.DeviceComponent.PresentQueue.Present(engine.SemaphoreComponent.RenderFinished, engine.SwapChainComponent.SwapChain, nextImage, result);
-            si.SignalSemaphores = Array.Empty<Semaphore>();
-            si.WaitSemaphores = Array.Empty<Semaphore>();
-            si.WaitDestinationStageMask = Array.Empty<PipelineStageFlags>();
-            si.CommandBuffers = Array.Empty<CommandBuffer>();
-            result = Array.Empty<Result>();
-            si = new();
         }
 
         private Random r = new Random();
@@ -231,15 +159,6 @@ namespace ajiva
 
             var totalTime = (currentTimestamp - engine.InitialTimestamp) / (float)Stopwatch.Frequency;
 
-            engine.ShaderComponent.ViewProj.UpdateExpresion(delegate(int index, ref UniformViewProj value)
-            {
-                if (index != 0) return;
-
-                value.View = camera.View;
-                value.Proj = camera.Projection;
-                value.Proj[1, 1] *= -1;
-            });
-            engine.ShaderComponent.ViewProj.Copy();
 
             foreach (var aEntity in engine.Entities.Where(aEntity => aEntity.RenderAble.Render))
             {
@@ -269,7 +188,6 @@ namespace ajiva
         /// <inheritdoc />
         protected override void ReleaseUnmanagedResources()
         {
-            camera.Dispose();
         }
     }
 }
