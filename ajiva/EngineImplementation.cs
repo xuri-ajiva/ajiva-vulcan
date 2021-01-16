@@ -255,7 +255,7 @@ namespace ajiva
             InitialTimestamp = Stopwatch.GetTimestamp();
             Runing = true;
 
-            Task[] tasks = {Window.RenderLoop(maxValue), Window.UpdateLoop(maxValue)};
+            Task[] tasks = {Task.Run(() => Window.RenderLoop(maxValue)), Task.Run(() => Window.UpdateLoop(maxValue))};
             Task.WaitAll(tasks);
         }
 
