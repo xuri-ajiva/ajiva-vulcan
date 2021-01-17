@@ -1,5 +1,9 @@
-﻿using System.Drawing;
+﻿using System;
+using System.Collections.Generic;
+using System.Drawing;
 using System.Drawing.Imaging;
+using System.Linq;
+using System.Runtime.InteropServices.ComTypes;
 using ajiva.Engine;
 using ajiva.Models;
 using SharpVk;
@@ -8,13 +12,16 @@ namespace ajiva.EngineManagers
 {
     public class TextureComponent : RenderEngineComponent
     {
+        public const int MAX_TEXTURE_SAMPLERS_IN_SHADER = 128;
 
         public TextureComponent(IRenderEngine renderEngine) : base(renderEngine)
         {
-            Logo = null!;
+            TextureSamplerImageViews = new DescriptorImageInfo[MAX_TEXTURE_SAMPLERS_IN_SHADER];
+            Textures = new();
         }
 
-        public Texture Logo { get; private set; }
+        private List<Texture> Textures { get; }
+        public DescriptorImageInfo[] TextureSamplerImageViews { get; }
 
         private AImage CreateTextureImageFromFile(string fileName)
         {
@@ -61,17 +68,48 @@ namespace ajiva.EngineManagers
             return textureSampler;
         }
 
-        public void CreateLogo()
+        public void AddAndMapTextureToDescriptor(Texture texture)
         {
-            Logo = new();
-            Logo.Image = CreateTextureImageFromFile("logo.png");
-            Logo.Sampler = CreateTextureSampler();
+            MapTextureToDescriptor(texture);
+            Textures.Add(texture);
         }
 
+        public void MapTextureToDescriptor(Texture texture)
+        {
+            if (MAX_TEXTURE_SAMPLERS_IN_SHADER <= texture.TextureId) throw new ArgumentException($"{nameof(texture.TextureId)} is more then {nameof(MAX_TEXTURE_SAMPLERS_IN_SHADER)}", nameof(IBindCtx));
+
+            TextureSamplerImageViews[texture.TextureId] = texture.DescriptorImageInfo;
+        }
+        
         /// <inheritdoc />
         protected override void ReleaseUnmanagedResources()
         {
-            Logo.Dispose();
+            for (var i = 0; i < MAX_TEXTURE_SAMPLERS_IN_SHADER; i++)
+            {
+                TextureSamplerImageViews[i] = default;
+            }
+            foreach (var texture in Textures)
+            {
+                texture.Dispose();
+            }
+        }
+
+        public void CreateDefaultImages()
+        {
+            AddAndMapTextureToDescriptor(new(0)
+            {
+                Image = CreateTextureImageFromFile("logo.png"),
+                Sampler = CreateTextureSampler()
+            });
+            for (var i = 0; i < MAX_TEXTURE_SAMPLERS_IN_SHADER; i++)
+            {
+                TextureSamplerImageViews[i] = Textures.First().DescriptorImageInfo;
+            }
+            AddAndMapTextureToDescriptor(new(1)
+            {
+                Image = CreateTextureImageFromFile("logo2.png"),
+                Sampler = CreateTextureSampler()
+            });
         }
     }
 }
