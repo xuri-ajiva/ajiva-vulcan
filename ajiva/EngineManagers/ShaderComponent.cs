@@ -38,18 +38,7 @@ namespace ajiva.EngineManagers
                      Colour = colour
                  });             */
         }
-
-        public void UpdateViewProj(UniformViewProj data)
-        {
-            //ProjView.Update(new []{data});
-            //ProjView.Copy();
-        }
-
-        public void UpdateModel(UniformModel data, uint id)
-        {
-            // UniformModels.UpdateCopyOne(data, id);
-        }
-
+        
         /// <inheritdoc />
         protected override void ReleaseUnmanagedResources()
         {
