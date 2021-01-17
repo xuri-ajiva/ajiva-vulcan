@@ -233,7 +233,7 @@ namespace ajiva
                 DeviceComponent.CreateCommandPools();
                 ImageComponent.CreateDepthResources();
                 SwapChainComponent.CreateFrameBuffers();
-                TextureComponent.CreateLogo();
+                TextureComponent.CreateDefaultImages();
                 foreach (var entity in Entities)
                 {
                     entity.RenderAble?.Create(this);
