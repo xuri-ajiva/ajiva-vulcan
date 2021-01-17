@@ -11,6 +11,10 @@ namespace ajiva.Models
     public struct UniformModel
     {
         public mat4 Model;
+        public uint TextureSamplerId;
+        public int TextureSamplerId2;
+        public int TextureSamplerId3;
+        public int TextureSamplerId4;
     };
     public struct UniformViewProj
     {
