@@ -227,7 +227,7 @@ namespace ajiva.EngineManagers
                     new()
                     {
                         Binding = 2,
-                        DescriptorCount = 1,
+                        DescriptorCount = TextureComponent.MAX_TEXTURE_SAMPLERS_IN_SHADER,
                         DescriptorType = DescriptorType.CombinedImageSampler,
                         StageFlags = ShaderStageFlags.Fragment,
                     }
@@ -252,7 +252,7 @@ namespace ajiva.EngineManagers
                     },
                     new()
                     {
-                        DescriptorCount = 1,
+                        DescriptorCount = TextureComponent.MAX_TEXTURE_SAMPLERS_IN_SHADER,
                         Type = DescriptorType.CombinedImageSampler
                     }
                 });
@@ -301,19 +301,8 @@ namespace ajiva.EngineManagers
                     },
                     new()
                     {
-                        ImageInfo = new[]
-                        {
-                            new DescriptorImageInfo // todo make modular
-                            {
-                                Sampler = RenderEngine.TextureComponent.Logo.Sampler,
-                                ImageView = RenderEngine.TextureComponent.Logo.Image.View,
-
-                                //Sampler = renderEngine.textureSampler,
-                                //ImageView = renderEngine.textureImageView,
-                                ImageLayout = ImageLayout.ShaderReadOnlyOptimal
-                            }
-                        },
-                        DescriptorCount = 1,
+                        ImageInfo = RenderEngine.TextureComponent.TextureSamplerImageViews,
+                        DescriptorCount = TextureComponent.MAX_TEXTURE_SAMPLERS_IN_SHADER,
                         DestinationSet = DescriptorSet,
                         DestinationBinding = 2,
                         DestinationArrayElement = 0,
