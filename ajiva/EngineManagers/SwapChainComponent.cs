@@ -176,18 +176,7 @@ namespace ajiva.EngineManagers
         /// <inheritdoc />
         protected override void ReleaseUnmanagedResources()
         {
-            SwapChain?.Dispose();
-            if (FrameBuffers != null)
-                foreach (var frameBuffer in FrameBuffers)
-                {
-                    frameBuffer.Dispose();
-                }
-
-            if (SwapChainImage != null)
-                foreach (var image in SwapChainImage)
-                {
-                    image.Dispose();
-                }
+            EnsureSwapChainDeletion();
         }
 
         public void EnsureSwapChainDeletion()
