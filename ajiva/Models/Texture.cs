@@ -29,6 +29,7 @@ namespace ajiva.Models
         {
             Sampler.Dispose();
             Image.Dispose();
+            //currentMaxId--; //bug gets duplicate ids
         }
 
         public DescriptorImageInfo DescriptorImageInfo => new() {Sampler = Sampler, ImageView = Image.View, ImageLayout = ImageLayout.ShaderReadOnlyOptimal};

@@ -2,6 +2,7 @@
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using ajiva.Engine;
+using ajiva.Helpers;
 using ajiva.Models;
 using SharpVk;
 
@@ -56,7 +57,7 @@ namespace ajiva.Entity
         /// <inheritdoc />
         protected override void ReleaseUnmanagedResources()
         {
-            currentMaxId--;
+            currentMaxId--; //bug gets duplicate ids
             Mesh?.Dispose();
         }
     }
