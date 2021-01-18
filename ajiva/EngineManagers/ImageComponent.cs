@@ -9,7 +9,7 @@ namespace ajiva.EngineManagers
 {
     public class ImageComponent : RenderEngineComponent
     {
-        public AImage DepthImage { get; set; }
+        public AImage? DepthImage { get; set; }
 
         public List<AImage> Images { get; }
 
@@ -21,7 +21,7 @@ namespace ajiva.EngineManagers
 
         public ImageView CreateImageView(Image image, Format format, ImageAspectFlags aspectFlags)
         {
-            return RenderEngine.DeviceComponent.Device.CreateImageView(image, ImageViewType.ImageView2d, format, ComponentMapping.Identity, new()
+            return RenderEngine.DeviceComponent.Device!.CreateImageView(image, ImageViewType.ImageView2d, format, ComponentMapping.Identity, new()
             {
                 AspectMask = aspectFlags,
                 BaseMipLevel = 0,
@@ -33,10 +33,12 @@ namespace ajiva.EngineManagers
 
         public AImage CreateImageAndView(uint width, uint height, Format format, ImageTiling tiling, ImageUsageFlags usage, MemoryPropertyFlags properties, ImageAspectFlags aspectFlags)
         {
-            var aImage = new AImage(true);
-            var device = RenderEngine.DeviceComponent.Device;
+            RenderEngine.DeviceComponent.EnsureDevicesExist();
 
-            aImage.Image = device.CreateImage(ImageType.Image2d, format, new Extent3D(width, height, 1), 1, 1, SampleCountFlags.SampleCount1, tiling, usage, SharingMode.Exclusive, ArrayProxy<uint>.Null, ImageLayout.Undefined);
+            var aImage = new AImage(true);
+            var device = RenderEngine.DeviceComponent.Device!;
+
+            aImage.Image = device.CreateImage(ImageType.Image2d, format, new(width, height, 1), 1, 1, SampleCountFlags.SampleCount1, tiling, usage, SharingMode.Exclusive, ArrayProxy<uint>.Null, ImageLayout.Undefined);
 
             var memRequirements = device.GetImageMemoryRequirements2(new()
             {
@@ -76,7 +78,7 @@ namespace ajiva.EngineManagers
         {
             foreach (var format in candidates)
             {
-                var props = RenderEngine.DeviceComponent.PhysicalDevice.GetFormatProperties(format);
+                var props = RenderEngine.DeviceComponent.PhysicalDevice!.GetFormatProperties(format);
 
                 switch (tiling)
                 {
@@ -92,9 +94,11 @@ namespace ajiva.EngineManagers
             throw new ArgumentOutOfRangeException(nameof(candidates), candidates, "failed to find supported format!");
         }
 
-        public void CreateDepthResources()
+        public void EnsureDepthResourcesExits()
         {
-            DepthImage = CreateManagedImage(FindDepthFormat(), ImageAspectFlags.Depth);
+            RenderEngine.DeviceComponent.EnsureDevicesExist();
+
+            DepthImage ??= CreateManagedImage(FindDepthFormat(), ImageAspectFlags.Depth);
 
             /*
             var depthFormat =;
@@ -106,9 +110,15 @@ namespace ajiva.EngineManagers
         */
         }
 
+        public void EnsureDepthResourcesDeletion()
+        {
+            DepthImage?.Dispose();
+        }
+
         private AImage CreateManagedImage(Format format, ImageAspectFlags aspectFlags)
         {
-            var aImage = CreateImageAndView(RenderEngine.SwapChainComponent.SwapChainExtent.Width, RenderEngine.SwapChainComponent.SwapChainExtent.Height, format, ImageTiling.Optimal, ImageUsageFlags.DepthStencilAttachment, MemoryPropertyFlags.DeviceLocal, aspectFlags);
+            if (!RenderEngine.SwapChainComponent.SwapChainExtent.HasValue) RenderEngine.SwapChainComponent.EnsureSwapChainExists();
+            var aImage = CreateImageAndView(RenderEngine.SwapChainComponent.SwapChainExtent!.Value.Width, RenderEngine.SwapChainComponent.SwapChainExtent!.Value.Height, format, ImageTiling.Optimal, ImageUsageFlags.DepthStencilAttachment, MemoryPropertyFlags.DeviceLocal, aspectFlags);
 
             TransitionImageLayout(aImage.Image, format, ImageLayout.Undefined, ImageLayout.DepthStencilAttachmentOptimal);
             return aImage;
@@ -116,14 +126,16 @@ namespace ajiva.EngineManagers
 
         #region imageHelp
 
-        bool HasStencilComponent(Format format)
+        private static bool HasStencilComponent(Format format)
         {
             return format == Format.D32SFloatS8UInt || format == Format.D24UNormS8UInt;
         }
 
         public void CopyBufferToImage(Buffer buffer, Image image, uint width, uint height)
         {
-            RenderEngine.DeviceComponent.SingleTimeCommand(x => x.GraphicsQueue, command =>
+            RenderEngine.DeviceComponent.EnsureDevicesExist();
+            
+            RenderEngine.DeviceComponent.SingleTimeCommand(x => x.GraphicsQueue!, command =>
             {
                 command.CopyBufferToImage(buffer, image, ImageLayout.TransferDestinationOptimal, new BufferImageCopy()
                 {
@@ -164,6 +176,8 @@ namespace ajiva.EngineManagers
 
         public void TransitionImageLayout(Image image, Format format, ImageLayout oldLayout, ImageLayout newLayout)
         {
+            RenderEngine.DeviceComponent.EnsureDevicesExist();
+            
             ImageSubresourceRange subresourceRange = new()
             {
                 BaseMipLevel = 0,
@@ -224,13 +238,13 @@ namespace ajiva.EngineManagers
                     throw new ArgumentException("unsupported layout transition!");
             }
 
-            RenderEngine.DeviceComponent.SingleTimeCommand(x => x.GraphicsQueue, command => command.PipelineBarrier(sourceStage, destinationStage, ArrayProxy<MemoryBarrier>.Null, ArrayProxy<BufferMemoryBarrier>.Null, barrier));
+            RenderEngine.DeviceComponent.SingleTimeCommand(x => x.GraphicsQueue!, command => command.PipelineBarrier(sourceStage, destinationStage, ArrayProxy<MemoryBarrier>.Null, ArrayProxy<BufferMemoryBarrier>.Null, barrier));
         }
 
         /// <inheritdoc />
         protected override void ReleaseUnmanagedResources()
         {
-            DepthImage.Dispose();
+            DepthImage?.Dispose();
             foreach (var managedImage in Images)
             {
                 managedImage.Dispose();
