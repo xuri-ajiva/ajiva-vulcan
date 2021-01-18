@@ -220,31 +220,7 @@ namespace ajiva.EngineManagers
             CommandPool.FreeCommandBuffers(commandBuffer);
             commandBuffer = null;
         }
-
-        public CommandBuffer BeginSingleTimeCommands()
-        {
-            var commandBuffer = Device.AllocateCommandBuffers(CommandPool, CommandBufferLevel.Primary, 1);
-            commandBuffer[0].Begin(CommandBufferUsageFlags.OneTimeSubmit);
-
-            return commandBuffer[0];
-        }
-
-        public void EndSingleTimeCommands(CommandBuffer commandBuffer)
-        {
-            commandBuffer.End();
-
-            GraphicsQueue.Submit(new SubmitInfo()
-            {
-                CommandBuffers = new[]
-                {
-                    commandBuffer
-                },
-            }, null);
-
-            GraphicsQueue.WaitIdle();
-            CommandPool.FreeCommandBuffers(commandBuffer);
-        }
-
+        
   #endregion
 
         public void FreeCommandBuffers()
