@@ -1,19 +1,10 @@
-﻿using System.Linq;
-using ajiva.Engine;
-using ajiva.Models;
-using SharpVk;
+﻿using ajiva.Engine;
 
 namespace ajiva.EngineManagers
 {
     public class GraphicsComponent : RenderEngineComponent
     {
-        public PipelineLayout PipelineLayout { get; private set; }
-        public RenderPass RenderPass { get; private set; }
-        public Pipeline Pipeline { get; private set; }
-
-        public DescriptorPool DescriptorPool { get; private set; }
-        public DescriptorSetLayout DescriptorSetLayout { get; private set; }
-        public DescriptorSet DescriptorSet { get; private set; }
+        public GraphicsLayout? Current { get; private set; }
 
         public GraphicsComponent(IRenderEngine renderEngine) : base(renderEngine)
         {
@@ -314,11 +305,17 @@ namespace ajiva.EngineManagers
         /// <inheritdoc />
         protected override void ReleaseUnmanagedResources()
         {
-            PipelineLayout.Dispose();
-            RenderPass.Dispose();
-            Pipeline.Dispose();
-            DescriptorPool.Dispose();
-            DescriptorSetLayout.Dispose();
+            EnsureGraphicsLayoutDeletion();
+        }
+
+        public void EnsureGraphicsLayoutExists()
+        {
+            Current ??= new(RenderEngine);
+        }
+
+        public void EnsureGraphicsLayoutDeletion()
+        {
+            Current?.Dispose();
         }
     }
 }
