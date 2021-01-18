@@ -1,13 +1,22 @@
-﻿using ajiva.Engine;
+﻿using System.Drawing;
+using System.Drawing.Imaging;
+using System.Runtime.CompilerServices;
+using ajiva.Engine;
+using ajiva.EngineManagers;
 using SharpVk;
 
 namespace ajiva.Models
 {
-    public class Texture : DisposingLogger
+    public partial class Texture : DisposingLogger
     {
-        public Texture(int textureId)
+        private static int currentMaxId = 0;
+
+        [MethodImpl(MethodImplOptions.Synchronized)]
+        public static int NextId() => currentMaxId++;
+
+        public Texture()
         {
-            TextureId = textureId;
+            TextureId = NextId();
         }
 
         public int TextureId { get; }
