@@ -5,7 +5,7 @@ using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 
-namespace ajiva.Models
+namespace ajiva.Helpers
 {
     public static class ATrace
     {

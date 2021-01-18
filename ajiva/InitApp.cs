@@ -7,6 +7,8 @@ using System.Threading;
 using System.Threading.Tasks;
 using ajiva.Engine;
 using ajiva.EngineManagers;
+using ajiva.Entity;
+using ajiva.Helpers;
 using ajiva.Models;
 using GlmSharp;
 using SharpVk;
