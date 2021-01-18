@@ -108,6 +108,20 @@ namespace ajiva
             Environment.Exit(0);
         }
 
+        private async void Menu()
+        {
+            ConsoleMenu m = new();
+            await m.ShowMenu("Actions: ", new ConsoleMenuItem[] {new("Load Texture", LoadTexture)});
+        }
+
+        private void LoadTexture()
+        {
+            Console.WriteLine("Path:");
+            var path = Console.ReadLine()!;
+            engine.TextureComponent.AddAndMapTextureToDescriptor(Texture.FromFile(engine, path));
+            Menu();
+        }
+
         private async Task Run(TimeSpan maxValue)
         {
             await engine.InitWindow(SurfaceWidth, SurfaceHeight);
