@@ -5,24 +5,26 @@ namespace ajiva.EngineManagers
 {
     public class ShaderComponent : RenderEngineComponent
     {
+        public Shader? Main { get; set; }
 
-        public Shader Main { get; set; }
-
-        public UniformBuffer<UniformViewProj> ViewProj;
-        public UniformBuffer<UniformModel> UniformModels;
+        public readonly UniformBuffer<UniformViewProj> ViewProj;
+        public readonly UniformBuffer<UniformModel> UniformModels;
 
         public ShaderComponent(IRenderEngine renderEngine) : base(renderEngine)
         {
-            ViewProj = new(renderEngine.DeviceComponent,1);
+            ViewProj = new(renderEngine.DeviceComponent, 1);
             UniformModels = new(renderEngine.DeviceComponent, 200000);
-            Main = new(renderEngine.DeviceComponent);
+
             //Uniform = new(renderEngine.DeviceComponent);
         }
 
-        public void CreateShaderModules()
+        public void EnsureShaderModulesExists()
         {
+            if (Main != null) return;
+            
+            Main = new(RenderEngine.DeviceComponent);
             Main.CreateShaderModules("./Shaders");
-            /* Main.CreateShaderModules(shank => from input in shank.GetInput<Vertex>()
+            /* Main.EnsureShaderModulesExists(shank => from input in shank.GetInput<Vertex>()
                  from viewProj in shank.GetBinding<UniformViewProj>(0)
                  from model in shank.GetBinding<UniformModel>(1)
                  let transform = viewProj.Proj * viewProj.View * model.Model
@@ -38,24 +40,24 @@ namespace ajiva.EngineManagers
                      Colour = colour
                  });             */
         }
-        
+
         /// <inheritdoc />
         protected override void ReleaseUnmanagedResources()
         {
-            Main.Dispose();
+            Main?.Dispose();
             UniformModels.Dispose();
             ViewProj.Dispose();
         }
 
-        public void CreateUniformBuffer()
+        public void EnsureCreateUniformBufferExists()
         {
             //ProjView = new(renderEngine.DeviceComponent,1);
             // UniformModels = new(renderEngine.DeviceComponent,1000);
 
-            ViewProj.Create();
-            UniformModels.Create();
+            ViewProj.EnsureExists();
+            UniformModels.EnsureExists();
 
-            //Main.CreateUniformBuffer();
+            //Main.EnsureCreateUniformBufferExists();
         }
     }
 }
