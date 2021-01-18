@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using ajiva.Engine;
+using ajiva.Helpers;
 using ajiva.Models;
 using SharpVk;
 using SharpVk.Khronos;
@@ -205,6 +206,9 @@ namespace ajiva.EngineManagers
 
             SwapChain?.Dispose();
             SwapChain = null;
+
+            SwapChainExtent = null;
+            SwapChainFormat = null;
         }
     }
 }

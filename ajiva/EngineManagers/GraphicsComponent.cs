@@ -25,6 +25,7 @@ namespace ajiva.EngineManagers
         public void EnsureGraphicsLayoutDeletion()
         {
             Current?.Dispose();
+            Current = null;
         }
     }
 }

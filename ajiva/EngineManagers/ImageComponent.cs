@@ -113,6 +113,7 @@ namespace ajiva.EngineManagers
         public void EnsureDepthResourcesDeletion()
         {
             DepthImage?.Dispose();
+            DepthImage = null;
         }
 
         private AImage CreateManagedImage(Format format, ImageAspectFlags aspectFlags)
