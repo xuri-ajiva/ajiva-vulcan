@@ -30,6 +30,29 @@ namespace ajiva.EngineManagers
                 : PresentMode.Fifo;
         }
 
+        public static SurfaceFormat ChooseSwapSurfaceFormat(SurfaceFormat[] availableFormats)
+        {
+            if (availableFormats.Length == 1 && availableFormats[0].Format == Format.Undefined)
+            {
+                return new()
+                {
+                    Format = Format.B8G8R8A8UNorm,
+                    ColorSpace = ColorSpace.SrgbNonlinear
+                };
+            }
+
+            foreach (var format in availableFormats)
+            {
+                if (format.Format == Format.B8G8R8A8UNorm && format.ColorSpace == ColorSpace.SrgbNonlinear)
+                {
+                    return format;
+                }
+            }
+
+            return availableFormats[0];
+        }
+
+  #endregion
         public Extent2D ChooseSwapExtent(SurfaceCapabilities capabilities)
         {
             if (capabilities.CurrentExtent.Width != uint.MaxValue)
@@ -51,28 +74,6 @@ namespace ajiva.EngineManagers
                 Formats = device.GetSurfaceFormats(RenderEngine.Window.Surface),
                 PresentModes = device.GetSurfacePresentModes(RenderEngine.Window.Surface)
             };
-        }
-
-        public SurfaceFormat ChooseSwapSurfaceFormat(SurfaceFormat[] availableFormats)
-        {
-            if (availableFormats.Length == 1 && availableFormats[0].Format == Format.Undefined)
-            {
-                return new()
-                {
-                    Format = Format.B8G8R8A8UNorm,
-                    ColorSpace = ColorSpace.SrgbNonlinear
-                };
-            }
-
-            foreach (var format in availableFormats)
-            {
-                if (format.Format == Format.B8G8R8A8UNorm && format.ColorSpace == ColorSpace.SrgbNonlinear)
-                {
-                    return format;
-                }
-            }
-
-            return availableFormats[0];
         }
 
         public struct SwapChainSupportDetails
