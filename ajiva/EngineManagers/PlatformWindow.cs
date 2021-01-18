@@ -65,6 +65,10 @@ namespace ajiva.EngineManagers
                     }
                 }
                 Glfw3.PollEvents();
+                
+                if (WindowReady) continue;
+                Glfw3.DestroyWindow(window);
+                return;
             }
         }
 
@@ -196,7 +200,7 @@ namespace ajiva.EngineManagers
 
         public void CloseWindow()
         {
-            Glfw3.DestroyWindow(window);
+            WindowReady = false;
         }
 
         protected override void ReleaseUnmanagedResources()
