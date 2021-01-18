@@ -9,30 +9,22 @@ namespace ajiva.EngineManagers
 {
     public class DeviceComponent : RenderEngineComponent
     {
+        internal PhysicalDevice? PhysicalDevice { get; private set; }
+        internal Device? Device { get; private set; }
 
-        internal PhysicalDevice PhysicalDevice { get; private set; }
-        internal Device Device { get; private set; }
-
-        internal Queue GraphicsQueue { get; private set; }
-        internal Queue PresentQueue { get; private set; }
-        internal Queue TransferQueue { get; private set; }
+        internal Queue? GraphicsQueue { get; private set; }
+        internal Queue? PresentQueue { get; private set; }
+        internal Queue? TransferQueue { get; private set; }
 
         public DeviceComponent(IRenderEngine renderEngine) : base(renderEngine)
         {
-            PhysicalDevice = null!;
-            Device = null!;
-            GraphicsQueue = null!;
-            PresentQueue = null!;
-            TransferQueue = null!;
-            TransientCommandPool = null!;
-            CommandPool = null!;
-            CommandBuffers = null!;
         }
 
-        public void CreateDevice()
+        public void EnsureDevicesExist()
         {
-            PickPhysicalDevice();
-            CreateLogicalDevice();
+            RenderEngine.Window.EnsureSurfaceExists();
+            if (RenderEngine.DeviceComponent.PhysicalDevice == null) PickPhysicalDevice();
+            if (RenderEngine.DeviceComponent.Device == null) CreateLogicalDevice();
         }
 
         private void PickPhysicalDevice()
@@ -106,7 +98,7 @@ namespace ajiva.EngineManagers
 
         public void WaitIdle()
         {
-            Device.WaitIdle();
+            Device?.WaitIdle();
         }
 
         public void Submit(CommandBuffer[] commandBuffers, PipelineStageFlags[] waitDestinationStageMask)
@@ -135,7 +127,7 @@ namespace ajiva.EngineManagers
 
         public uint FindMemoryType(uint typeFilter, MemoryPropertyFlags flags)
         {
-            var memoryProperties = PhysicalDevice.GetMemoryProperties();
+            var memoryProperties = PhysicalDevice!.GetMemoryProperties();
 
             for (var i = 0; i < memoryProperties.MemoryTypes.Length; i++)
             {
@@ -153,41 +145,47 @@ namespace ajiva.EngineManagers
 
         #region CommandPool
 
-        internal CommandPool TransientCommandPool;
-        public CommandPool CommandPool;
-        public CommandBuffer[] CommandBuffers;
+        internal CommandPool? TransientCommandPool;
+        public CommandPool? CommandPool;
+        public CommandBuffer[]? CommandBuffers;
 
-        public void CreateCommandPools()
+        public void EnsureCommandPoolsExists()
         {
-            var queueFamilies = FindQueueFamilies(PhysicalDevice);
+            EnsureDevicesExist();
 
-            TransientCommandPool = Device.CreateCommandPool(queueFamilies.TransferFamily!.Value, CommandPoolCreateFlags.Transient);
+            var queueFamilies = FindQueueFamilies(PhysicalDevice!);
 
-            CommandPool = Device.CreateCommandPool(queueFamilies.GraphicsFamily!.Value);
+            TransientCommandPool ??= Device!.CreateCommandPool(queueFamilies.TransferFamily!.Value, CommandPoolCreateFlags.Transient);
+
+            CommandPool ??= Device!.CreateCommandPool(queueFamilies.GraphicsFamily!.Value);
         }
 
-        public void CreateCommandBuffers()
+        public void EnsureCommandBuffersExists()
         {
-            CommandPool.Reset(CommandPoolResetFlags.ReleaseResources);
+            EnsureCommandPoolsExists();
 
-            CommandBuffers = Device.AllocateCommandBuffers(CommandPool, CommandBufferLevel.Primary, (uint)RenderEngine.SwapChainComponent.FrameBuffers.Length);
+            RenderEngine.SwapChainComponent.EnsureFrameBuffersExists();
 
-            for (var index = 0; index < RenderEngine.SwapChainComponent.FrameBuffers.Length; index++)
+            CommandPool!.Reset(CommandPoolResetFlags.ReleaseResources);
+
+            CommandBuffers ??= Device!.AllocateCommandBuffers(CommandPool, CommandBufferLevel.Primary, (uint)RenderEngine.SwapChainComponent.FrameBuffers!.Length);
+
+            for (var index = 0; index < RenderEngine.SwapChainComponent.FrameBuffers!.Length; index++)
             {
                 var commandBuffer = CommandBuffers[index];
 
                 commandBuffer.Begin(CommandBufferUsageFlags.SimultaneousUse);
 
-                commandBuffer.BeginRenderPass(RenderEngine.GraphicsComponent.RenderPass,
+                commandBuffer.BeginRenderPass(RenderEngine.GraphicsComponent.Current!.RenderPass,
                     RenderEngine.SwapChainComponent.FrameBuffers[index],
-                    new(new(), RenderEngine.SwapChainComponent.SwapChainExtent),
+                    new(new(), RenderEngine.SwapChainComponent.SwapChainExtent!.Value),
                     new ClearValue[]
                     {
                         new ClearColorValue(.1f, .1f, .1f, 1), new ClearDepthStencilValue(1, 0)
                     },
                     SubpassContents.Inline);
 
-                commandBuffer.BindPipeline(PipelineBindPoint.Graphics, RenderEngine.GraphicsComponent.Pipeline);
+                commandBuffer.BindPipeline(PipelineBindPoint.Graphics, RenderEngine.GraphicsComponent.Current.Pipeline);
 
                 RenderEngine.AEntityComponent.BindAllAndDraw(commandBuffer);
 
@@ -199,7 +197,9 @@ namespace ajiva.EngineManagers
 
         public void SingleTimeCommand(Func<DeviceComponent, Queue> queueSelector, Action<CommandBuffer> action)
         {
-            var commandBuffer = Device.AllocateCommandBuffer(CommandPool, CommandBufferLevel.Primary);
+            EnsureCommandPoolsExists();
+
+            var commandBuffer = Device!.AllocateCommandBuffer(CommandPool, CommandBufferLevel.Primary);
             commandBuffer.Begin(CommandBufferUsageFlags.OneTimeSubmit);
 
             action.Invoke(commandBuffer);
@@ -217,13 +217,13 @@ namespace ajiva.EngineManagers
             }, null);
 
             queue.WaitIdle();
-            CommandPool.FreeCommandBuffers(commandBuffer);
+            CommandPool!.FreeCommandBuffers(commandBuffer);
             commandBuffer = null;
         }
-        
+
   #endregion
 
-        public void FreeCommandBuffers()
+        public void EnsureCommandBuffersFree()
         {
             CommandPool?.FreeCommandBuffers(CommandBuffers);
         }
@@ -231,11 +231,11 @@ namespace ajiva.EngineManagers
         /// <inheritdoc />
         protected override void ReleaseUnmanagedResources()
         {
-            CommandPool.FreeCommandBuffers(CommandBuffers);
-            CommandBuffers = Array.Empty<CommandBuffer>();
-            TransientCommandPool.Dispose();
-            CommandPool.Dispose();
-            Device.Dispose();
+            CommandPool?.FreeCommandBuffers(CommandBuffers);
+            CommandBuffers = null;
+            TransientCommandPool?.Dispose();
+            CommandPool?.Dispose();
+            Device?.Dispose();
         }
     }
 }
