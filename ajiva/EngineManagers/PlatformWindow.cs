@@ -70,9 +70,9 @@ namespace ajiva.EngineManagers
 
         private WindowHandle window;
 
-        public void CreateSurface()
+        public void EnsureSurfaceExists()
         {
-            Surface = RenderEngine.Instance.CreateGlfw3Surface(window);
+            Surface ??= RenderEngine.Instance.CreateGlfw3Surface(window);
         }
 
         public Task InitWindow(int surfaceWidth, int surfaceHeight)
