@@ -1,6 +1,7 @@
 ﻿using System;
 using System.IO;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using ajiva.Engine;
 using ajiva.EngineManagers;
 using GlmSharp;
@@ -10,25 +11,16 @@ using SharpVk.Shanq.GlmSharp;
 
 namespace ajiva.Models
 {
-    public class Shader : DisposingLogger
+    public class Shader : DisposingLogger, IThreadSaveCreatable
     {
         private readonly DeviceComponent component;
-        public bool Created { get; private set; }
-        private object creatingLock = new();
         public ShaderModule? FragShader { get; private set; }
         public ShaderModule? VertShader { get; private set; }
-
-        //public UniformBuffer<UniformBufferData> Uniform;
 
         public Shader(DeviceComponent component)
         {
             this.component = component;
         }
-
-        //public void CreateUniformBuffer()
-        //{
-        //    Uniform = new(component, 1);
-        //}
 
         private static uint[] LoadShaderData(string filePath, out int codeSize)
         {
@@ -54,47 +46,41 @@ namespace ajiva.Models
         public const string DefaultVertexShaderName = "vert.spv";
         public const string DefaultFragmentShaderName = "frag.spv";
 
+        [MethodImpl(MethodImplOptions.Synchronized)]
         public void CreateShaderModules(string dir)
         {
-            lock (creatingLock)
-            {
-                if (Created) return;
-                VertShader = CreateShader($"{dir}/{DefaultVertexShaderName}");
+            if (Created) return;
+            VertShader = CreateShader($"{dir}/{DefaultVertexShaderName}");
 
-                FragShader = CreateShader($"{dir}/{DefaultFragmentShaderName}");
-                Created = true;
-            }
+            FragShader = CreateShader($"{dir}/{DefaultFragmentShaderName}");
+            Created = true;
         }
 
+        [MethodImpl(MethodImplOptions.Synchronized)]
         public void CreateShaderModules(string vertexShaderName, string fragmentShaderName)
         {
-            lock (creatingLock)
-            {
-                if (Created) return;
-                VertShader = CreateShader(vertexShaderName);
+            if (Created) return;
+            VertShader = CreateShader(vertexShaderName);
 
-                FragShader = CreateShader(fragmentShaderName);
-                Created = true;
-            }
+            FragShader = CreateShader(fragmentShaderName);
+            Created = true;
         }
 
+        [MethodImpl(MethodImplOptions.Synchronized)]
         public void CreateShaderModules<TV, TF>(Func<IShanqFactory, IQueryable<TV>> vertexShaderFunc, Func<IShanqFactory, IQueryable<TF>> fragmentShaderFunc)
         {
-            lock (creatingLock)
-            {
-                if (Created) return;
-                VertShader = component.Device.CreateVertexModule(vertexShaderFunc);
+            if (Created) return;
+            VertShader = component.Device.CreateVertexModule(vertexShaderFunc);
 
-                FragShader = component.Device.CreateFragmentModule(fragmentShaderFunc);
-                Created = true;
-            }
+            FragShader = component.Device.CreateFragmentModule(fragmentShaderFunc);
+            Created = true;
         }
 
         public static Shader CreateShaderFrom(string dir, DeviceComponent component)
         {
             var sh = new Shader(component);
             sh.CreateShaderModules(dir);
-            //sh.CreateUniformBuffer();
+            //sh.EnsureCreateUniformBufferExists();
 
             return sh;
         }
@@ -103,7 +89,7 @@ namespace ajiva.Models
         {
             var sh = new Shader(component);
             sh.CreateShaderModules(vertexShaderFunc, fragmentShaderFunc);
-            //sh.CreateUniformBuffer();
+            //sh.EnsureCreateUniformBufferExists();
 
             return sh;
         }
@@ -129,9 +115,17 @@ namespace ajiva.Models
         /// <inheritdoc />
         protected override void ReleaseUnmanagedResources()
         {
-            //Uniform?.Dispose();
             FragShader?.Dispose();
             VertShader?.Dispose();
+        }
+
+        /// <inheritdoc />
+        public bool Created { get; private set; }
+
+        /// <inheritdoc />
+        public void EnsureExists()
+        {
+            throw new NotSupportedException("Create with Specific Arguments");
         }
     }
 }
