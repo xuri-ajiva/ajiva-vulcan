@@ -165,6 +165,7 @@ namespace ajiva
         /// <inheritdoc />
         protected override void ReleaseUnmanagedResources()
         {
+            engine?.Dispose();
         }
     }
 }
