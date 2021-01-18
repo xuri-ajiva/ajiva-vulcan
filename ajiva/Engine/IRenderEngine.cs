@@ -3,6 +3,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.Linq.Expressions;
 using System.Runtime.CompilerServices;
 using ajiva.EngineManagers;
+using ajiva.Entity;
 using GlmSharp;
 using SharpVk;
 

@@ -1,9 +1,8 @@
 ﻿using System;
-using ajiva.Entity;
 using ajiva.Models;
 using GlmSharp;
 
-namespace ajiva.EngineManagers
+namespace ajiva.Entity
 {
     public static class Cameras
     {
