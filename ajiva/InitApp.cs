@@ -19,7 +19,7 @@ using Semaphore = SharpVk.Semaphore;
 
 namespace ajiva
 {
-    public partial class Program : DisposingLogger
+    public class Program : DisposingLogger
     {
         private readonly AjivaRenderEngine engine;
         private const int SurfaceWidth = 800;
