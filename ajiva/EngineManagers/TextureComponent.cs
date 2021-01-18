@@ -20,6 +20,7 @@ namespace ajiva.EngineManagers
             Textures = new();
         }
 
+        public Texture? Default { get; private set; }
         private List<Texture> Textures { get; }
         public DescriptorImageInfo[] TextureSamplerImageViews { get; }
 
@@ -60,9 +61,9 @@ namespace ajiva.EngineManagers
 
         private Sampler CreateTextureSampler()
         {
-            var properties = RenderEngine.DeviceComponent.PhysicalDevice.GetProperties();
+            var properties = RenderEngine.DeviceComponent.PhysicalDevice!.GetProperties();
 
-            var textureSampler = RenderEngine.DeviceComponent.Device.CreateSampler(Filter.Linear, Filter.Linear, SamplerMipmapMode.Linear, SamplerAddressMode.Repeat,
+            var textureSampler = RenderEngine.DeviceComponent.Device!.CreateSampler(Filter.Linear, Filter.Linear, SamplerMipmapMode.Linear, SamplerAddressMode.Repeat,
                 SamplerAddressMode.Repeat, SamplerAddressMode.Repeat, default, true, properties.Limits.MaxSamplerAnisotropy,
                 false, CompareOp.Always, default, default, BorderColor.IntOpaqueBlack, false);
             return textureSampler;
@@ -80,7 +81,7 @@ namespace ajiva.EngineManagers
 
             TextureSamplerImageViews[texture.TextureId] = texture.DescriptorImageInfo;
         }
-        
+
         /// <inheritdoc />
         protected override void ReleaseUnmanagedResources()
         {
@@ -94,22 +95,27 @@ namespace ajiva.EngineManagers
             }
         }
 
-        public void CreateDefaultImages()
+        public void EnsureDefaultImagesExists()
         {
-            AddAndMapTextureToDescriptor(new(0)
+            if (Default != null) return;
+            RenderEngine.DeviceComponent.EnsureDevicesExist();
+            
+            Default = new(0)
             {
                 Image = CreateTextureImageFromFile("logo.png"),
                 Sampler = CreateTextureSampler()
-            });
+            };
             for (var i = 0; i < MAX_TEXTURE_SAMPLERS_IN_SHADER; i++)
             {
-                TextureSamplerImageViews[i] = Textures.First().DescriptorImageInfo;
+                TextureSamplerImageViews[i] = Default.DescriptorImageInfo;
             }
-            AddAndMapTextureToDescriptor(new(1)
+
+            /* todo move int hot load
+             AddAndMapTextureToDescriptor(new(1)
             {
                 Image = CreateTextureImageFromFile("logo2.png"),
                 Sampler = CreateTextureSampler()
-            });
+            });*/
         }
     }
 }
