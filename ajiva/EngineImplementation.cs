@@ -105,19 +105,13 @@ namespace ajiva
 
         private void CleanupSwapChain()
         {
-            ImageComponent.DepthImage.Dispose();
+            ImageComponent.EnsureDepthResourcesDeletion();
 
-            SwapChainComponent.CleanupSwapChain();
+            SwapChainComponent.EnsureSwapChainDeletion();
 
-            DeviceComponent.FreeCommandBuffers();
+            DeviceComponent.EnsureCommandBuffersFree();
 
-            GraphicsComponent.Pipeline.Dispose();
-
-            GraphicsComponent.PipelineLayout.Dispose();
-
-            GraphicsComponent.RenderPass.Dispose();
-
-            GraphicsComponent.DescriptorPool.Dispose();
+            GraphicsComponent.EnsureGraphicsLayoutDeletion();
         }
 
         public void RecreateSwapChain()
@@ -129,16 +123,12 @@ namespace ajiva
                 CleanupSwapChain();
 
                 MainCamara.UpdatePerspective(mainCamara.Fov, Window.Width, Window.Height);
-                SwapChainComponent.CreateSwapChain();
-                SwapChainComponent.CreateImageViews();
-                ImageComponent.CreateDepthResources();
-                GraphicsComponent.CreateRenderPass();
-                SwapChainComponent.CreateFrameBuffers();
-                //bufferManager.CreateUniformBuffer();   free in cleanup swapchain if created here
-                GraphicsComponent.CreateGraphicsPipeline();
-                GraphicsComponent.CreateDescriptorPool();
-                GraphicsComponent.CreateDescriptorSet();
-                DeviceComponent.CreateCommandBuffers();
+                SwapChainComponent.EnsureSwapChainExists();
+                ImageComponent.EnsureDepthResourcesExits();
+                GraphicsComponent.EnsureGraphicsLayoutExists();
+                GraphicsComponent.Current!.EnsureExists();
+                SwapChainComponent.EnsureFrameBuffersExists();
+                DeviceComponent.EnsureCommandBuffersExists();
             }
         }
 
@@ -222,32 +212,32 @@ namespace ajiva
         {
             lock (RenderLock)
             {
-                Window.CreateSurface();
-                DeviceComponent.CreateDevice();
-                SwapChainComponent.CreateSwapChain();
-                SwapChainComponent.CreateImageViews();
-                GraphicsComponent.CreateRenderPass();
-                GraphicsComponent.CreateDescriptorSetLayout();
-                ShaderComponent.CreateShaderModules();
-                GraphicsComponent.CreateGraphicsPipeline();
-                DeviceComponent.CreateCommandPools();
-                ImageComponent.CreateDepthResources();
-                SwapChainComponent.CreateFrameBuffers();
-                TextureComponent.CreateDefaultImages();
+                Window.EnsureSurfaceExists();
+                DeviceComponent.EnsureDevicesExist();
+                DeviceComponent.EnsureCommandPoolsExists();
+                ShaderComponent.EnsureCreateUniformBufferExists();
+                SwapChainComponent.EnsureSwapChainExists();
+                GraphicsComponent.EnsureGraphicsLayoutExists();
+
+                TextureComponent.EnsureDefaultImagesExists();
+                GraphicsComponent.Current!.EnsureExists();
+                ImageComponent.EnsureDepthResourcesExits();
+                SwapChainComponent.EnsureFrameBuffersExists();
                 foreach (var entity in Entities)
                 {
                     entity.RenderAble?.Create(this);
                     AEntityComponent.Entities.Add(entity);
                 }
-                ShaderComponent.CreateUniformBuffer();
-                GraphicsComponent.CreateDescriptorPool();
-                GraphicsComponent.CreateDescriptorSet();
-                DeviceComponent.CreateCommandBuffers();
-                SemaphoreComponent.CreateSemaphores();
+
+                DeviceComponent.EnsureCommandBuffersExists();
+
+                SemaphoreComponent.EnsureSemaphoresExists();
+                GC.Collect();
             }
         }
 
-        public List<AEntity> Entities = new();
+        /// <inheritdoc />
+        public List<AEntity> Entities { get; } = new();
         private Cameras.Camera mainCamara;
 
         public async Task MainLoop(TimeSpan maxValue)
@@ -332,7 +322,7 @@ namespace ajiva
             {
                 CommandBuffers = new[]
                 {
-                    DeviceComponent.CommandBuffers[nextImage]
+                    DeviceComponent.CommandBuffers![nextImage]
                 },
                 SignalSemaphores = new[]
                 {
@@ -347,7 +337,7 @@ namespace ajiva
                     SemaphoreComponent.ImageAvailable
                 }
             };
-            DeviceComponent.GraphicsQueue.Submit(si, null);
+            DeviceComponent.GraphicsQueue!.Submit(si, null);
             var result = new Result[1];
             DeviceComponent.PresentQueue.Present(SemaphoreComponent.RenderFinished, SwapChainComponent.SwapChain, nextImage, result);
             si.SignalSemaphores = Array.Empty<Semaphore>();
