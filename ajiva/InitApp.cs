@@ -81,7 +81,9 @@ namespace ajiva
 
             var app = new Program(renderEngine);
 
-            await app.Run(TimeSpan.MaxValue);
+            var tasks = new[] {Task.Run(async () => await app.Run(TimeSpan.MaxValue)), Task.Run(app.Menu)};
+            Task.WaitAll(tasks);
+
 #endif
 
             debugReportCallback.Dispose();
