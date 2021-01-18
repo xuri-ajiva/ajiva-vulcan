@@ -1,5 +1,6 @@
 ﻿//#define TEST_MODE
 using System;
+using System.CodeDom;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
@@ -69,7 +70,6 @@ namespace ajiva
                 var verts = meshPref.VerticesData.ToArray();
                 var inds = meshPref.IndicesData.ToArray();
 
-                //var mesh = new Mesh(verts, inds);
 
                 renderEngine.Entities.Add(new(new(
                         new(r.Next(-posRange, posRange), r.Next(-posRange, posRange), r.Next(-posRange, posRange)), new(r.Next(0, 100), r.Next(0, 100), r.Next(0, 100)),
@@ -80,21 +80,6 @@ namespace ajiva
             Console.WriteLine();
 
             var app = new Program(renderEngine);
-            /*       
-                   new Thread(() =>
-                   {
-                       while (true)
-                       {
-                           Thread.Sleep(100);
-                           if (RenderEngine == null) continue;
-                           if (!RenderEngine.Runing) continue;
-                           if (app.applicationQueue.Count > 1000) continue;
-                           app.applicationQueue.Enqueue(() =>
-                           {
-                               RenderEngine.RecreateSwapChain();
-                           });
-                       }
-                   }).Start(); */
 
             await app.Run(TimeSpan.MaxValue);
 #endif
@@ -144,25 +129,13 @@ namespace ajiva
             UpdateUniformBuffer(delta);
         }
 
-        private void OnFrame(object sender, TimeSpan delta)
-        {
-        }
-
-        private Random r = new Random();
-
         private void UpdateUniformBuffer(TimeSpan timeSpan)
         {
             var currentTimestamp = Stopwatch.GetTimestamp();
             var totalTime = (currentTimestamp - engine.InitialTimestamp) / (float)Stopwatch.Frequency;
 
-            var delta = (float)timeSpan.TotalMilliseconds;
-            var translate = MathF.Sin(totalTime) / 10f;
-
             foreach (var aEntity in engine.Entities.Where(e => e.RenderAble != null && e.RenderAble.Render))
             {
-                //aEntity.Transform.Rotation = new(r.Next(0, 100), r.Next(0, 100), r.Next(0, 100));
-                //aEntity.Transform.Position.x += translate;
-                //aEntity.Transform.Rotation.x += delta;
                 if (engine.ShaderComponent.UniformModels.Staging.Value.Length > aEntity.RenderAble!.Id)
                 {
                     engine.ShaderComponent.UniformModels.Staging.Value[aEntity.RenderAble!.Id] = new() {Model = aEntity.Transform.ModelMat};
