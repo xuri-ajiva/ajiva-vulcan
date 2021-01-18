@@ -340,12 +340,12 @@ namespace ajiva
             DeviceComponent.GraphicsQueue!.Submit(si, null);
             var result = new Result[1];
             DeviceComponent.PresentQueue.Present(SemaphoreComponent.RenderFinished, SwapChainComponent.SwapChain, nextImage, result);
-            si.SignalSemaphores = Array.Empty<Semaphore>();
-            si.WaitSemaphores = Array.Empty<Semaphore>();
-            si.WaitDestinationStageMask = Array.Empty<PipelineStageFlags>();
-            si.CommandBuffers = Array.Empty<CommandBuffer>();
-            result = Array.Empty<Result>();
-            si = new();
+            si.SignalSemaphores = null!;
+            si.WaitSemaphores = null!;
+            si.WaitDestinationStageMask = null;
+            si.CommandBuffers = null;
+            result = null;
+            si = default;
         }
     }
 }
