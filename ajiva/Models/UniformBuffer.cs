@@ -4,10 +4,11 @@ using SharpVk;
 
 namespace ajiva.Models
 {
-    public class UniformBuffer<T> : DisposingLogger where T : struct
+    public class UniformBuffer<T> : DisposingLogger, IThreadSaveCreatable where T : struct
     {
+        public bool Created { get; private set; }
+
         private readonly DeviceComponent component;
-        //private const int ItemCount = 1;
         public WritableCopyBuffer<T> Staging { get; }
         public BufferOfT<T> Uniform { get; }
 
@@ -21,10 +22,12 @@ namespace ajiva.Models
             Uniform = new(value);
         }
 
-        public void Create()
+        public void EnsureExists()
         {
+            if (Created) return;
             Staging.Create(component, BufferUsageFlags.TransferSource, MemoryPropertyFlags.HostVisible | MemoryPropertyFlags.HostCoherent);
             Uniform.Create(component, BufferUsageFlags.TransferDestination | BufferUsageFlags.UniformBuffer, MemoryPropertyFlags.DeviceLocal);
+            Created = true;
         }
 
         public void Update(T[] toUpdate)
