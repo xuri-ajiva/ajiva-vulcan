@@ -153,25 +153,6 @@ namespace ajiva.EngineManagers
                     }
                 });
             });
-            var commandBuffer = RenderEngine.DeviceComponent.BeginSingleTimeCommands();
-
-            commandBuffer.CopyBufferToImage(buffer, image, ImageLayout.TransferDestinationOptimal, new BufferImageCopy()
-            {
-                BufferOffset = 0,
-                BufferRowLength = 0,
-                BufferImageHeight = 0,
-                ImageOffset = new(),
-                ImageExtent = new(width, height, 1),
-                ImageSubresource = new()
-                {
-                    AspectMask = ImageAspectFlags.Color,
-                    MipLevel = 0,
-                    BaseArrayLayer = 0,
-                    LayerCount = 1,
-                }
-            });
-
-            RenderEngine.DeviceComponent.EndSingleTimeCommands(commandBuffer);
         }
 
         public void TransitionImageLayout(Image image, Format format, ImageLayout oldLayout, ImageLayout newLayout)
