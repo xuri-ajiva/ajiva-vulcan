@@ -20,7 +20,9 @@ namespace ajiva.Models
 
         public void Create(DeviceComponent component, BufferUsageFlags usage, MemoryPropertyFlags flags)
         {
-            Buffer = component.Device.CreateBuffer(Size, usage, SharingMode.Exclusive, null);
+            component.EnsureDevicesExist();
+            
+            Buffer = component.Device!.CreateBuffer(Size, usage, SharingMode.Exclusive, null);
 
             var memRequirements = Buffer.GetMemoryRequirements();
 

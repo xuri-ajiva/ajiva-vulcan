@@ -37,9 +37,11 @@ namespace ajiva.Models
 
         public void CopyTo(BufferOfT<T> aBuffer, DeviceComponent component)
         {
+            component.EnsureDevicesExist();
+            
             if (aBuffer.Size < Size) throw new ArgumentException("The Destination Buffer is smaller than the Source Buffer", nameof(aBuffer));
 
-            component.SingleTimeCommand(x => x.GraphicsQueue, command =>
+            component.SingleTimeCommand(x => x.GraphicsQueue!, command =>
             {
                 command.CopyBuffer(Buffer, aBuffer.Buffer, new BufferCopy
                 {
@@ -49,9 +51,11 @@ namespace ajiva.Models
         }      
         public void CopyRegions(BufferOfT<T> aBuffer, ArrayProxy<BufferCopy> regions, DeviceComponent component)
         {
+            component.EnsureDevicesExist();
+            
             if (aBuffer.Size < Size) throw new ArgumentException("The Destination Buffer is smaller than the Source Buffer", nameof(aBuffer));
 
-            component.SingleTimeCommand(x => x.GraphicsQueue, command =>
+            component.SingleTimeCommand(x => x.GraphicsQueue!, command =>
             {
                 command.CopyBuffer(Buffer, aBuffer.Buffer, regions);
             });

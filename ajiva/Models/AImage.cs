@@ -6,8 +6,8 @@ namespace ajiva.Models
     public class AImage : DisposingLogger
     {
         private readonly bool disposeImage;
-        public ImageView View { get; set; } = null!;
-        public Image Image { get; set; } = null!;
+        public ImageView? View { get; set; } = null!;
+        public Image? Image { get; set; } = null!;
         public DeviceMemory? Memory { get; set; } = null!;
 
         public AImage(bool disposeImage)
@@ -19,8 +19,8 @@ namespace ajiva.Models
         protected override void ReleaseUnmanagedResources()
         {
             if (disposeImage)
-                Image.Dispose();
-            View.Dispose();
+                Image?.Dispose();
+            View?.Dispose();
             Memory?.Free();
         }
     }

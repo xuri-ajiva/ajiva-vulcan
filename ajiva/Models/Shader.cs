@@ -44,9 +44,11 @@ namespace ajiva.Models
 
         private ShaderModule? CreateShader(string path)
         {
+            component.EnsureDevicesExist();
+            
             var shaderData = LoadShaderData(path, out var codeSize);
 
-            return component.Device.CreateShaderModule(codeSize, shaderData);
+            return component.Device!.CreateShaderModule(codeSize, shaderData);
         }
 
         public const string DefaultVertexShaderName = "vert.spv";
