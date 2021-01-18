@@ -98,7 +98,7 @@ namespace ajiva
         private async void Menu()
         {
             ConsoleMenu m = new();
-            await m.ShowMenu("Actions: ", new ConsoleMenuItem[] {new("Load Texture", LoadTexture)});
+            await m.ShowMenu("Actions: ", new ConsoleMenuItem[] {new("Exit", null), new("Load Texture", LoadTexture)});
         }
 
         private void LoadTexture()
