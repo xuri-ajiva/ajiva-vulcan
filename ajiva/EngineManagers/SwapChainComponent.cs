@@ -10,22 +10,20 @@ namespace ajiva.EngineManagers
 {
     public class SwapChainComponent : RenderEngineComponent
     {
-
         public SwapChainComponent(IRenderEngine renderEngine) : base(renderEngine)
         {
-            SwapChain = null!;
-            SwapChainImage = Array.Empty<AImage>();
-            FrameBuffers = Array.Empty<Framebuffer>();
         }
 
         public Swapchain? SwapChain { get; private set; }
-        public Format SwapChainFormat { get; private set; }
-        public Extent2D SwapChainExtent { get; private set; }
-        public AImage[] SwapChainImage { get; private set; }
+        public Format? SwapChainFormat { get; private set; }
+        public Extent2D? SwapChainExtent { get; private set; }
+        public AImage[]? SwapChainImage { get; private set; }
 
-        public Framebuffer[] FrameBuffers { get; private set; }
+        public Framebuffer[]? FrameBuffers { get; private set; }
 
-        public PresentMode ChooseSwapPresentMode(IEnumerable<PresentMode> availablePresentModes)
+#region Choise
+
+        public static PresentMode ChooseSwapPresentMode(IEnumerable<PresentMode> availablePresentModes)
         {
             return availablePresentModes.Contains(PresentMode.Mailbox)
                 ? PresentMode.Mailbox
@@ -90,23 +88,36 @@ namespace ajiva.EngineManagers
             return SwapChain.AcquireNextImage(uint.MaxValue, RenderEngine.SemaphoreComponent.ImageAvailable, null);
         }
 
-        public void CreateSwapChain()
+        public void EnsureSwapChainExists()
         {
-            var swapChainSupport = QuerySwapChainSupport(RenderEngine.DeviceComponent.PhysicalDevice);
+            RenderEngine.DeviceComponent.EnsureDevicesExist();
 
+            var swapChainSupport = QuerySwapChainSupport(RenderEngine.DeviceComponent.PhysicalDevice!);
+
+            var extent = ChooseSwapExtent(swapChainSupport.Capabilities);
+            var surfaceFormat = ChooseSwapSurfaceFormat(swapChainSupport.Formats);
+
+            if (SwapChain == null) CreateSwapChain(swapChainSupport, surfaceFormat, extent);
+            if (SwapChainImage == null) CreateSwapchainImages();
+
+            SwapChainFormat ??= surfaceFormat.Format;
+            SwapChainExtent ??= extent;
+
+            //directly create the views sow we dont forget it, and reduce dependency
+            if (SwapChainImage!.Any(x => x.View == null)) CreateImageViews();
+        }
+
+        private void CreateSwapChain(SwapChainSupportDetails swapChainSupport, SurfaceFormat surfaceFormat, Extent2D extent)
+        {
             var imageCount = swapChainSupport.Capabilities.MinImageCount + 1;
             if (swapChainSupport.Capabilities.MaxImageCount > 0 && imageCount > swapChainSupport.Capabilities.MaxImageCount)
             {
                 imageCount = swapChainSupport.Capabilities.MaxImageCount;
             }
 
-            var surfaceFormat = ChooseSwapSurfaceFormat(swapChainSupport.Formats);
-
             var queueFamilies = RenderEngine.DeviceComponent.FindQueueFamilies(RenderEngine.DeviceComponent.PhysicalDevice);
 
             var queueFamilyIndices = queueFamilies.Indices.ToArray();
-
-            var extent = ChooseSwapExtent(swapChainSupport.Capabilities);
 
             SwapChain = RenderEngine.DeviceComponent.Device.CreateSwapchain(RenderEngine.Window.Surface,
                 imageCount,
@@ -124,62 +135,72 @@ namespace ajiva.EngineManagers
                 ChooseSwapPresentMode(swapChainSupport.PresentModes),
                 true,
                 SwapChain);
+        }
 
-            SwapChainImage = SwapChain.GetImages().Select(x => new AImage(false)
+        private void CreateSwapchainImages()
+        {
+            SwapChainImage = SwapChain!.GetImages().Select(x => new AImage(false)
             {
                 Image = x
             }).ToArray();
-            SwapChainFormat = surfaceFormat.Format;
-            SwapChainExtent = extent;
         }
 
-        public void CreateImageViews()
+        private void CreateImageViews()
         {
-            foreach (var image in SwapChainImage)
+            foreach (var image in SwapChainImage!)
             {
-                image.View = RenderEngine.ImageComponent.CreateImageView(image.Image, SwapChainFormat, ImageAspectFlags.Color);
+                image.View ??= RenderEngine.ImageComponent.CreateImageView(image.Image, SwapChainFormat!.Value, ImageAspectFlags.Color);
             }
         }
 
-        public void CreateFrameBuffers()
+        public void EnsureFrameBuffersExists()
         {
-            Framebuffer Create(ImageView imageView) => RenderEngine.DeviceComponent.Device.CreateFramebuffer(RenderEngine.GraphicsComponent.RenderPass,
+            RenderEngine.ImageComponent.EnsureDepthResourcesExits();
+            RenderEngine.GraphicsComponent.EnsureGraphicsLayoutExists();
+            RenderEngine.GraphicsComponent.Current!.EnsureExists();
+
+            Framebuffer Create(ImageView imageView) => RenderEngine.DeviceComponent.Device!.CreateFramebuffer(RenderEngine.GraphicsComponent.Current.RenderPass,
                 new[]
                 {
-                    imageView, RenderEngine.ImageComponent.DepthImage.View
+                    imageView, RenderEngine.ImageComponent.DepthImage!.View
                 },
-                SwapChainExtent.Width,
-                SwapChainExtent.Height,
+                SwapChainExtent!.Value.Width,
+                SwapChainExtent!.Value.Height,
                 1);
 
-            FrameBuffers = SwapChainImage.Select(x => Create(x.View)).ToArray();
+            FrameBuffers ??= SwapChainImage!.Select(x => Create(x.View!)).ToArray();
         }
 
         /// <inheritdoc />
         protected override void ReleaseUnmanagedResources()
         {
             SwapChain?.Dispose();
-            foreach (var frameBuffer in FrameBuffers)
-            {
-                frameBuffer.Dispose();
-            }
-            foreach (var image in SwapChainImage)
-            {
-                image.Dispose();
-            }
+            if (FrameBuffers != null)
+                foreach (var frameBuffer in FrameBuffers)
+                {
+                    frameBuffer.Dispose();
+                }
+
+            if (SwapChainImage != null)
+                foreach (var image in SwapChainImage)
+                {
+                    image.Dispose();
+                }
         }
 
-        public void CleanupSwapChain()
+        public void EnsureSwapChainDeletion()
         {
-            foreach (var frameBuffer in FrameBuffers)
-                frameBuffer.Dispose();
-            FrameBuffers = Array.Empty<Framebuffer>();
+            if (FrameBuffers != null)
+                foreach (var frameBuffer in FrameBuffers)
+                    frameBuffer.Dispose();
+            FrameBuffers = null;
 
-            foreach (var aImage in SwapChainImage)
-            {
-                aImage.Dispose();
-            }
-            SwapChainImage = Array.Empty<AImage>();
+            if (SwapChainImage != null)
+                foreach (var aImage in SwapChainImage)
+                {
+                    aImage.Dispose();
+                }
+            SwapChainImage = null;
 
             SwapChain?.Dispose();
             SwapChain = null;
