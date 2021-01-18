@@ -10,7 +10,7 @@ namespace ajiva.Helpers
         public async Task ShowMenu(string title, ConsoleMenuItem[] items)
         {
             Console.WriteLine(title);
-            var formate = new string(Enumerable.Repeat('0', items.Length).ToArray());
+            var formate = new string(Enumerable.Repeat('0', items.Length/10+1).ToArray());
             var i = 0;
             foreach (var item in items)
             {
@@ -23,9 +23,9 @@ namespace ajiva.Helpers
                 Console.WriteLine("Chose Action [0...{i}]");
             } while (int.TryParse(Console.ReadLine(), out num) && num < 0 && num > i);
 
-            items[num].Action();
+            items[num].Action?.Invoke();
         }
     }
 
-    public record ConsoleMenuItem (string Name, Action Action);
+    public record ConsoleMenuItem (string Name, Action? Action);
 }
