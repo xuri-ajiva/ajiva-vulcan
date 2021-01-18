@@ -9,10 +9,10 @@ namespace ajiva.Entity
 {
     public class ARenderAble : DisposingLogger
     {
-        public uint Id { get; protected set; }
+        public uint Id { get; }
         private IRenderEngine? render;
         public Mesh? Mesh { get; private set; }
-        public bool Render { get; set; } = true;
+        public bool Render { get; set; }
         public const int DoNotRenderId = -1;
 
         private static int currentMaxId = 0;
@@ -42,7 +42,7 @@ namespace ajiva.Entity
 
             Mesh.Bind(commandBuffer);
 
-            commandBuffer.BindDescriptorSets(PipelineBindPoint.Graphics, render.GraphicsComponent.PipelineLayout, 0, render.GraphicsComponent.DescriptorSet, Id * (uint)Unsafe.SizeOf<UniformModel>());
+            commandBuffer.BindDescriptorSets(PipelineBindPoint.Graphics, render.GraphicsComponent.Current!.PipelineLayout, 0, render.GraphicsComponent.Current.DescriptorSet, Id * (uint)Unsafe.SizeOf<UniformModel>());
 
             Mesh.DrawIndexed(commandBuffer);
         }
