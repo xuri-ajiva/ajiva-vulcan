@@ -1,16 +1,38 @@
 ﻿using System;
-using ajiva.Models;
+using ajiva.Components;
+using ajiva.Ecs;
+using ajiva.Ecs.Entity;
+using ajiva.Ecs.Factory;
 using GlmSharp;
 
-namespace ajiva.Entity
+namespace ajiva.Entitys
 {
     public static class Cameras
     {
-        public abstract class Camera : AEntity
+        public class FpsCamaraFactory : EntityFactoryBase<FpsCamera>
         {
-            public readonly float Fov;
-            public readonly float Width;
-            public readonly float Height;
+            /// <inheritdoc />
+            public override FpsCamera Create(AjivaEcs system, uint id)
+            {
+                var cam = new FpsCamera();
+                system.AttachComponentToEntity<Transform3d>(cam);
+                system.AttachComponentToEntity<ARenderAble>(cam);
+
+                cam.OnMouseMoved(0.0f, 0.0f);
+                return cam;
+            }
+
+            /// <inheritdoc />
+            protected override void ReleaseUnmanagedResources()
+            {
+            }
+        }
+
+        public abstract class Camera : TransFormEntity
+        {
+            public float Fov;
+            public float Width;
+            public float Height;
 
             public bool Moving()
             {
@@ -27,27 +49,13 @@ namespace ajiva.Entity
 
             public readonly __Keys Keys = new();
 
-            public Camera(float fov, float width, float height) : base(Transform3d.Default, new ARenderAble(Mesh.Empty, ARenderAble.DoNotRenderId))
-            {
-                this.Fov = fov;
-                this.Width = width;
-                this.Height = height;
-                UpdatePerspective(fov, width, height);
-                View = mat4.Identity;
-            }
-
-            public void Update(in float delta)
-            {
-                UpdatePosition(delta);
-            }
-
             public abstract void UpdateMatrices();
             public abstract void UpdatePosition(in float delta);
             public abstract void OnMouseMoved(float xRel, float yRel);
 
             public virtual void Translate(vec3 v)
             {
-                Transform.Position += v;
+                GetComponent<Transform3d>().Position += v;
                 View += mat4.Translate(v * -1.0F);
             }
 
@@ -58,7 +66,11 @@ namespace ajiva.Entity
 
             public void UpdatePerspective(float fov, float width, float height)
             {
+                this.Fov = fov;
+                this.Width = width;
+                this.Height = height;
                 Projection = mat4.Perspective(fov / 2.0F, width / height, .1F, 1000.0F);
+                View = mat4.Identity;
             }
         }
         public sealed class FpsCamera : Camera
@@ -74,9 +86,9 @@ namespace ajiva.Entity
                     z: glm.Cos(glm.Radians(Transform.Rotation.x)) * glm.Cos(glm.Radians(Transform.Rotation.y))
                 ).Normalized;
 
-            public FpsCamera(float fov, float width, float height) : base(fov, width, height)
+            public FpsCamera()
             {
-                OnMouseMoved(0.0f, 0.0f);
+                HasUpdate = true;
             }
 
             public override void OnMouseMoved(float xRel, float yRel)
@@ -132,6 +144,12 @@ namespace ajiva.Entity
             {
                 Translate(vec3.UnitY * amount);
                 UpdateMatrices();
+            }
+
+            /// <inheritdoc />
+            public override void Update(TimeSpan delta)
+            {
+                UpdatePosition((float)delta.TotalMilliseconds);
             }
         };
     }
