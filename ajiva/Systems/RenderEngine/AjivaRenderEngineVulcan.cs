@@ -33,8 +33,6 @@ namespace ajiva.Systems.RenderEngine
 
             SwapChainComponent.EnsureSwapChainDeletion();
 
-            DeviceComponent.EnsureCommandBuffersFree();
-
             GraphicsComponent.EnsureGraphicsLayoutDeletion();
         }
 
@@ -51,8 +49,6 @@ namespace ajiva.Systems.RenderEngine
                 ImageComponent.EnsureDepthResourcesExits();
                 GraphicsComponent.EnsureGraphicsLayoutExists();
                 GraphicsComponent.Current!.EnsureExists();
-                SwapChainComponent.EnsureFrameBuffersExists();
-                DeviceComponent.EnsureCommandBuffersExists();
             }
         }
 
@@ -73,14 +69,12 @@ namespace ajiva.Systems.RenderEngine
                 DeviceComponent.EnsureCommandPoolsExists();
                 ShaderComponent.EnsureCreateUniformBufferExists();
                 SwapChainComponent.EnsureSwapChainExists();
-                GraphicsComponent.EnsureGraphicsLayoutExists();
-
-                TextureComponent.EnsureDefaultImagesExists();
-                GraphicsComponent.Current!.EnsureExists();
-                ImageComponent.EnsureDepthResourcesExits();
-                SwapChainComponent.EnsureFrameBuffersExists();
                 
-                DeviceComponent.EnsureCommandBuffersExists();
+                TextureComponent.EnsureDefaultImagesExists();
+                ImageComponent.EnsureDepthResourcesExits();
+
+                GraphicsComponent.EnsureGraphicsLayoutExists();
+                GraphicsComponent.Current!.EnsureExists();
 
                 SemaphoreComponent.EnsureSemaphoresExists();
                 GC.Collect();
