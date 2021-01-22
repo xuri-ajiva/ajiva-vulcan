@@ -122,39 +122,8 @@ namespace ajiva.Systems.VulcanEngine
 
         private void DrawFrame(TimeSpan delta)
         {
-            ATrace.Assert(SwapChainComponent.SwapChain != null, "SwapChainComponent.SwapChain != null");
-            var nextImage = SwapChainComponent.SwapChain.AcquireNextImage(uint.MaxValue, SemaphoreComponent.ImageAvailable, null);
-
             OnFrame?.Invoke(delta);
-
-            var si = new SubmitInfo
-            {
-                CommandBuffers = new[]
-                {
-                    GraphicsComponent.Current.CommandBuffers![nextImage]
-                },
-                SignalSemaphores = new[]
-                {
-                    SemaphoreComponent.RenderFinished
-                },
-                WaitDestinationStageMask = new[]
-                {
-                    PipelineStageFlags.ColorAttachmentOutput
-                },
-                WaitSemaphores = new[]
-                {
-                    SemaphoreComponent.ImageAvailable
-                }
-            };
-            DeviceComponent.GraphicsQueue!.Submit(si, null);
-            var result = new Result[1];
-            DeviceComponent.PresentQueue.Present(SemaphoreComponent.RenderFinished, SwapChainComponent.SwapChain, nextImage, result);
-            si.SignalSemaphores = null!;
-            si.WaitSemaphores = null!;
-            si.WaitDestinationStageMask = null;
-            si.CommandBuffers = null;
-            result = null;
-            si = default;
+            GraphicsComponent.Current?.DrawFrame();
         }
 
         /// <inheritdoc />

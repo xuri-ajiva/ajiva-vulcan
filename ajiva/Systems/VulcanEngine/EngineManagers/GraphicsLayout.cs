@@ -503,5 +503,48 @@ namespace ajiva.Systems.VulcanEngine.EngineManagers
             CreateFrameBuffers();
             CreateCommandBuffers();
         }
+
+        public void DrawFrame()
+        {
+            if (!Created) return;
+            lock (disposeLock)
+            {
+                if (disposed) return;
+
+                var nextImage = SwapChain!.AcquireNextImage(uint.MaxValue, renderEngine.SemaphoreComponent.ImageAvailable, null);
+
+                var si = new SubmitInfo
+                {
+                    CommandBuffers = new[]
+                    {
+                        CommandBuffers![nextImage]
+                    },
+                    SignalSemaphores = new[]
+                    {
+                        renderEngine.SemaphoreComponent.RenderFinished
+                    },
+                    WaitDestinationStageMask = new[]
+                    {
+                        PipelineStageFlags.ColorAttachmentOutput
+                    },
+                    WaitSemaphores = new[]
+                    {
+                        renderEngine.SemaphoreComponent.ImageAvailable
+                    }
+                };
+                renderEngine.DeviceComponent.GraphicsQueue!.Submit(si, /*renderEngine.SemaphoreComponent.RenderFence*/ null);
+                //renderEngine.SemaphoreComponent.RenderFence?.Wait(1000);
+                var result = new Result[1];
+                renderEngine.DeviceComponent.PresentQueue.Present(renderEngine.SemaphoreComponent.RenderFinished, SwapChain, nextImage, result);
+                si.SignalSemaphores = null!;
+                si.WaitSemaphores = null!;
+                si.WaitDestinationStageMask = null;
+                si.CommandBuffers = null;
+                // ReSharper disable once RedundantAssignment
+                result = null;
+                // ReSharper disable once RedundantAssignment
+                si = default;
+            }
+        }
     }
 }
