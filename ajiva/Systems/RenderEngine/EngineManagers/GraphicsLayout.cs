@@ -1,4 +1,6 @@
 ﻿using System.Linq;
+using System.Runtime.CompilerServices;
+using ajiva.Helpers;
 using ajiva.Models;
 using ajiva.Systems.RenderEngine.Engine;
 using SharpVk;
@@ -7,13 +9,14 @@ namespace ajiva.Systems.RenderEngine.EngineManagers
 {
     public class GraphicsLayout : RenderEngineComponent, IThreadSaveCreatable
     {
-        public PipelineLayout? PipelineLayout { get; private set; }
-        public RenderPass? RenderPass { get; private set; }
-        public Pipeline? Pipeline { get; private set; }
+        private PipelineLayout? PipelineLayout { get; set; }
+        private RenderPass? RenderPass { get; set; }
+        private Pipeline? Pipeline { get; set; }
 
-        public DescriptorPool? DescriptorPool { get; private set; }
-        public DescriptorSetLayout? DescriptorSetLayout { get; private set; }
-        public DescriptorSet? DescriptorSet { get; private set; }
+        private DescriptorPool? DescriptorPool { get; set; }
+        private DescriptorSetLayout? DescriptorSetLayout { get; set; }
+        private DescriptorSet? DescriptorSet { get; set; }
+        
 
         
         private Framebuffer[]? FrameBuffers { get; set; }
@@ -40,7 +43,7 @@ namespace ajiva.Systems.RenderEngine.EngineManagers
             CommandBuffers = null;
         }
 
-        public void CreateGraphicsPipeline()
+        private void CreateGraphicsPipeline()
         {
             var bindingDescription = Vertex.GetBindingDescription();
             var attributeDescriptions = Vertex.GetAttributeDescriptions();
@@ -160,7 +163,7 @@ namespace ajiva.Systems.RenderEngine.EngineManagers
             }).Single();
         }
 
-        public void CreateRenderPass()
+        private void CreateRenderPass()
         {
             RenderPass = RenderEngine.DeviceComponent.Device!.CreateRenderPass(
                 new AttachmentDescription[]
@@ -220,7 +223,7 @@ namespace ajiva.Systems.RenderEngine.EngineManagers
                 });
         }
 
-        public void CreateDescriptorSetLayout()
+        private void CreateDescriptorSetLayout()
         {
             DescriptorSetLayout = RenderEngine.DeviceComponent.Device!.CreateDescriptorSetLayout(
                 new DescriptorSetLayoutBinding[]
@@ -249,7 +252,7 @@ namespace ajiva.Systems.RenderEngine.EngineManagers
                 });
         }
 
-        public void CreateDescriptorPool()
+        private void CreateDescriptorPool()
         {
             DescriptorPool = RenderEngine.DeviceComponent.Device!.CreateDescriptorPool(
                 10000,
@@ -273,7 +276,7 @@ namespace ajiva.Systems.RenderEngine.EngineManagers
                 });
         }
 
-        public void CreateDescriptorSet()
+        private void CreateDescriptorSet()
         {
             DescriptorSet = RenderEngine.DeviceComponent.Device!.AllocateDescriptorSets(DescriptorPool, DescriptorSetLayout).Single();
 
