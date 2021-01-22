@@ -443,7 +443,7 @@ namespace ajiva.Systems.VulcanEngine.EngineManagers
         {
             renderEngine.DeviceComponent.EnsureCommandPoolsExists();
 
-            renderEngine.DeviceComponent.CommandPool!.Reset(CommandPoolResetFlags.ReleaseResources);
+            //renderEngine.DeviceComponent.CommandPool!.Reset(CommandPoolResetFlags.ReleaseResources);
 
             CommandBuffers ??= renderEngine.DeviceComponent.Device!.AllocateCommandBuffers(renderEngine.DeviceComponent.CommandPool, CommandBufferLevel.Primary, (uint)FrameBuffers!.Length);
 
