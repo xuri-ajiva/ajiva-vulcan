@@ -4,6 +4,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using ajiva.Systems.VulcanEngine.Engine;
 using GlmSharp;
+using SharpVk;
 using SharpVk.Glfw;
 using SharpVk.Khronos;
 using Glfw3 = SharpVk.Glfw.Glfw3;
@@ -68,7 +69,7 @@ namespace ajiva.Systems.VulcanEngine.EngineManagers
                 Glfw3.DestroyWindow(window);
                 return;
             }
-            
+
             WindowReady = false;
         }
 
@@ -108,8 +109,7 @@ namespace ajiva.Systems.VulcanEngine.EngineManagers
         public int Width { get; set; }
         public int Height { get; set; }
 
-        public uint SurfaceWidth => (uint)Width;
-        public uint SurfaceHeight => (uint)Height;
+        public Extent2D SurfaceExtent => new((uint)Width, (uint)Height);
 
         private void MouseCallback(WindowHandle windowHandle, double xPosition, double yPosition)
         {
