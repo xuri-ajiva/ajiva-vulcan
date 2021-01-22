@@ -19,7 +19,7 @@ namespace ajiva.Models
 
         public void ClearT()
         {
-            Value = Array.Empty<T>();
+            Value = null!;
         }
 
         /// <inheritdoc />
