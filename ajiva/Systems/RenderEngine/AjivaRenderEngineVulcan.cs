@@ -11,9 +11,6 @@ namespace ajiva.Systems.RenderEngine
 
         public void Cleanup()
         {
-            if (!Runing) return;
-            Runing = false;
-
             lock (UpdateLock)
             lock (RenderLock)
             {
