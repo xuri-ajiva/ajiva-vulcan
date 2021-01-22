@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Linq;
 using ajiva.Helpers;
-using ajiva.Models;
 using ajiva.Systems.VulcanEngine.Engine;
 using SharpVk;
 using SharpVk.Khronos;
@@ -33,12 +32,12 @@ namespace ajiva.Systems.VulcanEngine.EngineManagers
             ATrace.Assert(RenderEngine.Instance != null, "renderEngine.Instance != null");
             var availableDevices = RenderEngine.Instance.EnumeratePhysicalDevices();
 
-            PhysicalDevice = availableDevices.First(IsSuitableDevice);
+            PhysicalDevice = availableDevices.First(x => x.IsSuitableDevice(RenderEngine.Window.Surface!));
         }
 
         private void CreateLogicalDevice()
         {
-            var queueFamilies = FindQueueFamilies(PhysicalDevice);
+            var queueFamilies = PhysicalDevice!.FindQueueFamilies(RenderEngine.Window.Surface!);
 
             Device = PhysicalDevice.CreateDevice(queueFamilies.Indices
                     .Select(index => new DeviceQueueCreateInfo
@@ -58,43 +57,6 @@ namespace ajiva.Systems.VulcanEngine.EngineManagers
             GraphicsQueue = Device.GetQueue(queueFamilies.GraphicsFamily!.Value, 0);
             PresentQueue = Device.GetQueue(queueFamilies.PresentFamily!.Value, 0);
             TransferQueue = Device.GetQueue(queueFamilies.TransferFamily!.Value, 0);
-        }
-
-        public QueueFamilyIndices FindQueueFamilies(PhysicalDevice device)
-        {
-            var indices = new QueueFamilyIndices();
-
-            var queueFamilies = device.GetQueueFamilyProperties();
-
-            for (uint index = 0; index < queueFamilies.Length && !indices.IsComplete; index++)
-            {
-                if (queueFamilies[index].QueueFlags.HasFlag(QueueFlags.Graphics))
-                {
-                    indices.GraphicsFamily = index;
-                }
-
-                if (device.GetSurfaceSupport(index, RenderEngine.Window.Surface))
-                {
-                    indices.PresentFamily = index;
-                }
-
-                if (queueFamilies[index].QueueFlags.HasFlag(QueueFlags.Transfer) && !queueFamilies[index].QueueFlags.HasFlag(QueueFlags.Graphics))
-                {
-                    indices.TransferFamily = index;
-                }
-            }
-
-            indices.TransferFamily ??= indices.GraphicsFamily;
-
-            return indices;
-        }
-
-        private bool IsSuitableDevice(PhysicalDevice dvc)
-        {
-            var features = dvc.GetFeatures();
-
-            return dvc.EnumerateDeviceExtensionProperties(null).Any(extension => extension.ExtensionName == KhrExtensions.Swapchain)
-                   && FindQueueFamilies(dvc).IsComplete && features.SamplerAnisotropy;
         }
 
         public void WaitIdle()
@@ -117,11 +79,6 @@ namespace ajiva.Systems.VulcanEngine.EngineManagers
                     RenderEngine.SemaphoreComponent.ImageAvailable
                 }
             }, null);
-        }
-
-        public void Present(in uint nextImage)
-        {
-            PresentQueue.Present(RenderEngine.SemaphoreComponent.RenderFinished, RenderEngine.SwapChainComponent.SwapChain, nextImage, new Result[1]);
         }
 
         #region BufferAndMemory
@@ -153,14 +110,12 @@ namespace ajiva.Systems.VulcanEngine.EngineManagers
         {
             EnsureDevicesExist();
 
-            var queueFamilies = FindQueueFamilies(PhysicalDevice!);
+            var queueFamilies = PhysicalDevice!.FindQueueFamilies(RenderEngine.Window.Surface!);
 
             TransientCommandPool ??= Device!.CreateCommandPool(queueFamilies.TransferFamily!.Value, CommandPoolCreateFlags.Transient);
 
             CommandPool ??= Device!.CreateCommandPool(queueFamilies.GraphicsFamily!.Value);
         }
-
-        
 
         public void SingleTimeCommand(Func<DeviceComponent, Queue> queueSelector, Action<CommandBuffer> action)
         {
@@ -189,7 +144,7 @@ namespace ajiva.Systems.VulcanEngine.EngineManagers
         }
 
   #endregion
-        
+
         /// <inheritdoc />
         protected override void ReleaseUnmanagedResources()
         {
