@@ -1,5 +1,6 @@
-﻿//#define LOGGING_TRUE
+﻿#define LOGGING_TRUE
 using System;
+using System.Diagnostics;
 
 namespace ajiva.Helpers
 {
@@ -18,6 +19,7 @@ namespace ajiva.Helpers
 
         protected abstract void ReleaseUnmanagedResources();
 
+        [DebuggerStepThrough]
         protected virtual void Dispose(bool disposing)
         {
             lock (disposeLock)
@@ -29,6 +31,7 @@ namespace ajiva.Helpers
         }
 
         /// <inheritdoc />
+        [DebuggerStepThrough]
         public void Dispose()
         {
 #if LOGGING_TRUE
@@ -36,6 +39,7 @@ namespace ajiva.Helpers
 #endif
             Dispose(true);
             GC.SuppressFinalize(this);
+            GC.Collect();
         }
 
         /// <inheritdoc />
