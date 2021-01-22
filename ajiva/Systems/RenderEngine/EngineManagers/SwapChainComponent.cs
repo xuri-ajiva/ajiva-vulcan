@@ -20,7 +20,6 @@ namespace ajiva.Systems.RenderEngine.EngineManagers
         public Extent2D? SwapChainExtent { get; private set; }
         public AImage[]? SwapChainImage { get; private set; }
 
-        public Framebuffer[]? FrameBuffers { get; private set; }
 
 #region Choise
 
@@ -154,25 +153,7 @@ namespace ajiva.Systems.RenderEngine.EngineManagers
                 image.View ??= RenderEngine.ImageComponent.CreateImageView(image.Image, SwapChainFormat!.Value, ImageAspectFlags.Color);
             }
         }
-
-        public void EnsureFrameBuffersExists()
-        {
-            RenderEngine.ImageComponent.EnsureDepthResourcesExits();
-            RenderEngine.GraphicsComponent.EnsureGraphicsLayoutExists();
-            RenderEngine.GraphicsComponent.Current!.EnsureExists();
-
-            Framebuffer Create(ImageView imageView) => RenderEngine.DeviceComponent.Device!.CreateFramebuffer(RenderEngine.GraphicsComponent.Current.RenderPass,
-                new[]
-                {
-                    imageView, RenderEngine.ImageComponent.DepthImage!.View
-                },
-                SwapChainExtent!.Value.Width,
-                SwapChainExtent!.Value.Height,
-                1);
-
-            FrameBuffers ??= SwapChainImage!.Select(x => Create(x.View!)).ToArray();
-        }
-
+        
         /// <inheritdoc />
         protected override void ReleaseUnmanagedResources()
         {
@@ -181,11 +162,6 @@ namespace ajiva.Systems.RenderEngine.EngineManagers
 
         public void EnsureSwapChainDeletion()
         {
-            if (FrameBuffers != null)
-                foreach (var frameBuffer in FrameBuffers)
-                    frameBuffer.Dispose();
-            FrameBuffers = null;
-
             if (SwapChainImage != null)
                 foreach (var aImage in SwapChainImage)
                 {

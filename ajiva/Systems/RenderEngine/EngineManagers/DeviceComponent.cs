@@ -149,7 +149,6 @@ namespace ajiva.Systems.RenderEngine.EngineManagers
 
         internal CommandPool? TransientCommandPool;
         public CommandPool? CommandPool;
-        public CommandBuffer[]? CommandBuffers;
 
         public void EnsureCommandPoolsExists()
         {
@@ -162,48 +161,7 @@ namespace ajiva.Systems.RenderEngine.EngineManagers
             CommandPool ??= Device!.CreateCommandPool(queueFamilies.GraphicsFamily!.Value);
         }
 
-        public void EnsureCommandBuffersExists()
-        {
-            EnsureCommandPoolsExists();
-
-            RenderEngine.SwapChainComponent.EnsureFrameBuffersExists();
-
-            CommandPool!.Reset(CommandPoolResetFlags.ReleaseResources);
-
-            CommandBuffers ??= Device!.AllocateCommandBuffers(CommandPool, CommandBufferLevel.Primary, (uint)RenderEngine.SwapChainComponent.FrameBuffers!.Length);
-
-            for (var index = 0; index < RenderEngine.SwapChainComponent.FrameBuffers!.Length; index++)
-            {
-                var commandBuffer = CommandBuffers[index];
-
-                commandBuffer.Begin(CommandBufferUsageFlags.SimultaneousUse);
-
-                commandBuffer.BeginRenderPass(RenderEngine.GraphicsComponent.Current!.RenderPass,
-                    RenderEngine.SwapChainComponent.FrameBuffers[index],
-                    new(new(), RenderEngine.SwapChainComponent.SwapChainExtent!.Value),
-                    new ClearValue[]
-                    {
-                        new ClearColorValue(.1f, .1f, .1f, 1), new ClearDepthStencilValue(1, 0)
-                    },
-                    SubpassContents.Inline);
-
-                commandBuffer.BindPipeline(PipelineBindPoint.Graphics, RenderEngine.GraphicsComponent.Current.Pipeline);
-
-                foreach (var (renderAble, entity) in RenderEngine.ComponentEntityMap.Where(x=> x.Key.Render))
-                {
-                    ATrace.Assert(renderAble.Mesh != null, "renderAble.Mesh != null");
-                    renderAble.Mesh.Bind(commandBuffer);
-
-                    commandBuffer.BindDescriptorSets(PipelineBindPoint.Graphics, RenderEngine.GraphicsComponent.Current!.PipelineLayout, 0, RenderEngine.GraphicsComponent.Current.DescriptorSet, renderAble.Id * (uint)Unsafe.SizeOf<UniformModel>());
-
-                    renderAble.Mesh.DrawIndexed(commandBuffer);
-                }
-
-                commandBuffer.EndRenderPass();
-
-                commandBuffer.End();
-            }
-        }
+        
 
         public void SingleTimeCommand(Func<DeviceComponent, Queue> queueSelector, Action<CommandBuffer> action)
         {
@@ -232,18 +190,10 @@ namespace ajiva.Systems.RenderEngine.EngineManagers
         }
 
   #endregion
-
-        public void EnsureCommandBuffersFree()
-        {
-            CommandPool?.FreeCommandBuffers(CommandBuffers);
-            CommandBuffers = null;
-        }
-
+        
         /// <inheritdoc />
         protected override void ReleaseUnmanagedResources()
         {
-            CommandPool?.FreeCommandBuffers(CommandBuffers);
-            CommandBuffers = null;
             TransientCommandPool?.Dispose();
             CommandPool?.Dispose();
             Device?.Dispose();

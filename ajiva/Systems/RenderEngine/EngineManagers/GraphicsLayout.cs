@@ -15,6 +15,9 @@ namespace ajiva.Systems.RenderEngine.EngineManagers
         public DescriptorSetLayout? DescriptorSetLayout { get; private set; }
         public DescriptorSet? DescriptorSet { get; private set; }
 
+        
+        private Framebuffer[]? FrameBuffers { get; set; }
+        public CommandBuffer[]? CommandBuffers { get; private set; }
         public GraphicsLayout(IRenderEngine renderEngine) : base(renderEngine)
         {
         }
@@ -27,6 +30,14 @@ namespace ajiva.Systems.RenderEngine.EngineManagers
             Pipeline?.Dispose();
             DescriptorPool?.Dispose();
             DescriptorSetLayout?.Dispose();
+
+            if (FrameBuffers != null)
+                foreach (var frameBuffer in FrameBuffers)
+                    frameBuffer.Dispose();
+            FrameBuffers = null;
+
+            RenderEngine.DeviceComponent.CommandPool?.FreeCommandBuffers(CommandBuffers);
+            CommandBuffers = null;
         }
 
         public void CreateGraphicsPipeline()
@@ -315,6 +326,61 @@ namespace ajiva.Systems.RenderEngine.EngineManagers
                 }, null);
         }
 
+        private void CreateCommandBuffers()
+        {
+            RenderEngine.DeviceComponent.EnsureCommandPoolsExists();
+
+            RenderEngine.DeviceComponent.CommandPool!.Reset(CommandPoolResetFlags.ReleaseResources);
+
+            CommandBuffers ??= RenderEngine.DeviceComponent.Device!.AllocateCommandBuffers(RenderEngine.DeviceComponent.CommandPool, CommandBufferLevel.Primary, (uint)FrameBuffers!.Length);
+
+            for (var index = 0; index < FrameBuffers!.Length; index++)
+            {
+                var commandBuffer = CommandBuffers[index];
+
+                commandBuffer.Begin(CommandBufferUsageFlags.SimultaneousUse);
+
+                commandBuffer.BeginRenderPass(RenderPass,
+                    FrameBuffers[index],
+                    new(new(), RenderEngine.SwapChainComponent.SwapChainExtent!.Value),
+                    new ClearValue[]
+                    {
+                        new ClearColorValue(.1f, .1f, .1f, 1), new ClearDepthStencilValue(1, 0)
+                    },
+                    SubpassContents.Inline);
+
+                commandBuffer.BindPipeline(PipelineBindPoint.Graphics, Pipeline);
+
+                foreach (var (renderAble, _) in RenderEngine.ComponentEntityMap.Where(x => x.Key.Render))
+                {
+                    ATrace.Assert(renderAble.Mesh != null, "renderAble.Mesh != null");
+                    renderAble.Mesh.Bind(commandBuffer);
+
+                    commandBuffer.BindDescriptorSets(PipelineBindPoint.Graphics, PipelineLayout, 0, DescriptorSet, renderAble.Id * (uint)Unsafe.SizeOf<UniformModel>());
+
+                    renderAble.Mesh.DrawIndexed(commandBuffer);
+                }
+
+                commandBuffer.EndRenderPass();
+
+                commandBuffer.End();
+            }
+        }
+
+        private void CreateFrameBuffers()
+        {
+            Framebuffer Create(ImageView imageView) => RenderEngine.DeviceComponent.Device!.CreateFramebuffer(RenderPass,
+                new[]
+                {
+                    imageView, RenderEngine.ImageComponent.DepthImage!.View
+                },
+                RenderEngine.SwapChainComponent.SwapChainExtent!.Value.Width,
+                RenderEngine.SwapChainComponent.SwapChainExtent!.Value.Height,
+                1);
+
+            FrameBuffers ??= RenderEngine.SwapChainComponent.SwapChainImage!.Select(x => Create(x.View!)).ToArray();
+        }
+
         /// <inheritdoc />
         public bool Created { get; private set; }
 
@@ -330,10 +396,15 @@ namespace ajiva.Systems.RenderEngine.EngineManagers
             RenderEngine.TextureComponent.EnsureDefaultImagesExists();
 
             CreateRenderPass();
+
             CreateDescriptorSetLayout();
             CreateGraphicsPipeline();
+
             CreateDescriptorPool();
             CreateDescriptorSet();
+
+            CreateFrameBuffers();
+            CreateCommandBuffers();
 
             Created = true;
         }
