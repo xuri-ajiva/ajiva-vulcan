@@ -14,8 +14,6 @@ namespace ajiva.Systems.VulcanEngine.Engine
 {
     public interface IRenderEngine : IComponentSystem<ARenderAble>
     {
-        public bool Runing { get; }
-
         Instance? Instance { get; }
         DeviceComponent DeviceComponent { get; }
         SwapChainComponent SwapChainComponent { get; }

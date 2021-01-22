@@ -20,10 +20,6 @@ namespace ajiva.Systems.VulcanEngine
 {
     public partial class AjivaRenderEngine : ComponentSystemBase<ARenderAble>, IRenderEngine, IDisposable
     {
-        //public static Instance? Instance { get; set; }
-        /// <inheritdoc />
-        public bool Runing { get; set; }
-
         /// <inheritdoc />
         public Cameras.Camera MainCamara
         {
@@ -96,12 +92,6 @@ namespace ajiva.Systems.VulcanEngine
 
             var debugReportCallback = instance.CreateDebugReportCallback(DebugReportDelegate, DebugReportFlags.Error | DebugReportFlags.Warning | DebugReportFlags.PerformanceWarning);
 
-            //foreach (var extension in SharpVk.Instance.EnumerateExtensionProperties())
-            //    Console.WriteLine($"Extension available: {extension.ExtensionName}");
-            //
-            //foreach (var layer in SharpVk.Instance.EnumerateLayerProperties())
-            //    Console.WriteLine($"Layer available: {layer.LayerName}, {layer.Description}");
-
             return (instance, debugReportCallback);
         }
 
@@ -131,10 +121,9 @@ namespace ajiva.Systems.VulcanEngine
         {
             foreach (var (renderAble, entity) in ComponentEntityMap)
             {
-                var transform3d = entity.GetComponent<Transform3d>();
                 ShaderComponent.UniformModels.Staging.Value[renderAble!.Id] = new()
                 {
-                    Model = transform3d.ModelMat, TextureSamplerId = renderAble!.Id
+                    Model =  entity.GetComponent<Transform3d>()?.ModelMat ?? mat4.Identity, TextureSamplerId = renderAble!.Id
                 };
             }
 
@@ -144,7 +133,7 @@ namespace ajiva.Systems.VulcanEngine
 
             Window.PollEvents();
             //MainCamara.Update((float)delta.TotalMilliseconds);
-            
+
             lock (RenderLock)
                 UpdateCamaraProjView();
             lock (RenderLock)
