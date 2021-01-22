@@ -3,11 +3,18 @@ using ajiva.Helpers;
 
 namespace ajiva.Models
 {
-    public interface IThreadSaveCreatable
+    public abstract class ThreadSaveCreatable : DisposingLogger
     {
-        bool Created { get; }
+        public bool Created { get; protected set; }
 
         [MethodImpl(MethodImplOptions.Synchronized)]
-        public abstract void EnsureExists();
+        public void EnsureExists()
+        {
+            if (Created) return;
+            Created = true;
+            Create();
+        }
+
+        protected abstract void Create();
     }
 }

@@ -11,7 +11,7 @@ using SharpVk.Shanq.GlmSharp;
 
 namespace ajiva.Models
 {
-    public class Shader : DisposingLogger, IThreadSaveCreatable
+    public class Shader : ThreadSaveCreatable
     {
         private readonly DeviceComponent component;
         public ShaderModule? FragShader { get; private set; }
@@ -37,7 +37,7 @@ namespace ajiva.Models
         private ShaderModule? CreateShader(string path)
         {
             component.EnsureDevicesExist();
-            
+
             var shaderData = LoadShaderData(path, out var codeSize);
 
             return component.Device!.CreateShaderModule(codeSize, shaderData);
@@ -120,10 +120,7 @@ namespace ajiva.Models
         }
 
         /// <inheritdoc />
-        public bool Created { get; private set; }
-
-        /// <inheritdoc />
-        public void EnsureExists()
+        protected override void Create()
         {
             throw new NotSupportedException("Create with Specific Arguments");
         }
