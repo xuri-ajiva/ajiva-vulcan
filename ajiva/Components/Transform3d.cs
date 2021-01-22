@@ -3,7 +3,7 @@ using GlmSharp;
 
 namespace ajiva.Components
 {
-    public class Transform3d
+    public class Transform3d : IComponent
     {
         public Transform3d(vec3 position, vec3 rotation, vec3 scale)
         {
