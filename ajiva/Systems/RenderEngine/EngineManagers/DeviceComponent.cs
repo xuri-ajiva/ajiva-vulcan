@@ -188,7 +188,15 @@ namespace ajiva.EngineManagers
 
                 commandBuffer.BindPipeline(PipelineBindPoint.Graphics, RenderEngine.GraphicsComponent.Current.Pipeline);
 
-                RenderEngine.AEntityComponent.BindAllAndDraw(commandBuffer);
+                foreach (var (renderAble, entity) in RenderEngine.ComponentEntityMap.Where(x=> x.Key.Render))
+                {
+                    ATrace.Assert(renderAble.Mesh != null, "renderAble.Mesh != null");
+                    renderAble.Mesh.Bind(commandBuffer);
+
+                    commandBuffer.BindDescriptorSets(PipelineBindPoint.Graphics, RenderEngine.GraphicsComponent.Current!.PipelineLayout, 0, RenderEngine.GraphicsComponent.Current.DescriptorSet, renderAble.Id * (uint)Unsafe.SizeOf<UniformModel>());
+
+                    renderAble.Mesh.DrawIndexed(commandBuffer);
+                }
 
                 commandBuffer.EndRenderPass();
 
