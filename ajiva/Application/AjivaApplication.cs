@@ -111,10 +111,10 @@ namespace ajiva.Application
         /// <inheritdoc />
         protected override void ReleaseUnmanagedResources()
         {
-            vulcanInstance.Dispose();
-            debugReportCallback.Dispose();
-            
             EntityComponentSystem.Dispose();
+            
+            debugReportCallback.Dispose();
+            vulcanInstance.Dispose();
         }
     }
 }
