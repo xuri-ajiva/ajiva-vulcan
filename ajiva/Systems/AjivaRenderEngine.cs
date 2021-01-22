@@ -19,7 +19,7 @@ using SharpVk.Multivendor;
 // ReSharper disable once CheckNamespace
 namespace ajiva.Systems.RenderEngine
 {
-    public class AjivaRenderEngine : IRenderEngine, IDisposable
+    public partial class AjivaRenderEngine : ComponentSystemBase<ARenderAble>, IRenderEngine, IDisposable
     {
         public AjivaRenderEngine(Instance instance)
         {
@@ -30,7 +30,6 @@ namespace ajiva.Systems.RenderEngine
             Window = new(this);
             GraphicsComponent = new(this);
             ShaderComponent = new(this);
-            AEntityComponent = new(this);
             SemaphoreComponent = new(this);
             TextureComponent = new(this);
         }
@@ -38,37 +37,46 @@ namespace ajiva.Systems.RenderEngine
         //public static Instance? Instance { get; set; }
         /// <inheritdoc />
         public bool Runing { get; set; }
+
         /// <inheritdoc />
         public Instance? Instance { get; set; }
+
         /// <inheritdoc />
         public DeviceComponent DeviceComponent { get; }
+
         /// <inheritdoc />
         public SwapChainComponent SwapChainComponent { get; }
+
         /// <inheritdoc />
         public PlatformWindow Window { get; }
+
         /// <inheritdoc />
         public ImageComponent ImageComponent { get; }
+
         /// <inheritdoc />
         public GraphicsComponent GraphicsComponent { get; }
+
         /// <inheritdoc />
         public ShaderComponent ShaderComponent { get; }
-        /// <inheritdoc />
-        public AEntityComponent AEntityComponent { get; }
+
         /// <inheritdoc />
         public SemaphoreComponent SemaphoreComponent { get; }
+
         /// <inheritdoc />
         public TextureComponent TextureComponent { get; }
 
         /// <inheritdoc />
         public event PlatformEventHandler OnFrame;
-        /// <inheritdoc />
-        public event PlatformEventHandler OnUpdate;
+
         /// <inheritdoc />
         public event KeyEventHandler OnKeyEvent;
+
         /// <inheritdoc />
         public event EventHandler OnResize;
+
         /// <inheritdoc />
         public event EventHandler<vec2> OnMouseMove;
+
         /// <inheritdoc />
         public Cameras.Camera MainCamara
         {
@@ -79,10 +87,15 @@ namespace ajiva.Systems.RenderEngine
                 mainCamara = value;
             }
         }
+
         /// <inheritdoc />
         public object RenderLock { get; } = new();
+
         /// <inheritdoc />
         public object UpdateLock { get; } = new();
+
+        /// <inheritdoc />
+        public AjivaEcs Ecs { get; set; }
 
         #region Public
 
@@ -166,10 +179,12 @@ namespace ajiva.Systems.RenderEngine
             ShaderComponent.ViewProj.Copy();
         }
 
-        private void DrawFrame()
+        private void DrawFrame(TimeSpan delta)
         {
             ATrace.Assert(SwapChainComponent.SwapChain != null, "SwapChainComponent.SwapChain != null");
             var nextImage = SwapChainComponent.SwapChain.AcquireNextImage(uint.MaxValue, SemaphoreComponent.ImageAvailable, null);
+
+            OnFrame?.Invoke(delta);
 
             var si = new SubmitInfo
             {
@@ -199,6 +214,59 @@ namespace ajiva.Systems.RenderEngine
             si.CommandBuffers = null;
             result = null;
             si = default;
+        }
+
+        /// <inheritdoc />
+        public override void Update(TimeSpan delta)
+        {
+            foreach (var (renderAble, entity) in ComponentEntityMap)
+            {
+                var transform3d = entity.GetComponent<Transform3d>();
+                ShaderComponent.UniformModels.Staging.Value[renderAble!.Id] = new()
+                {
+                    Model = transform3d.ModelMat, TextureSamplerId = renderAble!.Id
+                };
+            }
+
+            ShaderComponent.UniformModels.Staging.CopyValueToBuffer();
+            lock (RenderLock)
+                ShaderComponent.UniformModels.Copy();
+
+            Window.PollEvents();
+            //MainCamara.Update((float)delta.TotalMilliseconds);
+            
+            lock (RenderLock)
+                UpdateCamaraProjView();
+            lock (RenderLock)
+                DrawFrame(delta);
+            //Console.WriteLine(mainCamara.GetComponent<Transform3d>());
+            Console.WriteLine(delta);
+
+            if (!Window.WindowReady)
+                Ecs.IssueClose();
+        }
+
+        /// <inheritdoc />
+        public override async Task Init(AjivaEcs ecs)
+        {
+            await InitWindow(ecs.GetPara<int>("SurfaceWidth"), ecs.GetPara<int>("SurfaceHeight"));
+
+            await InitVulkan();
+            Ecs = ecs;
+        }
+
+        /// <inheritdoc />
+        public override ARenderAble CreateComponent(IEntity entity)
+        {
+            var rnd = new ARenderAble();
+            ComponentEntityMap.Add(rnd, entity);
+            return rnd;
+        }
+
+        /// <inheritdoc />
+        public override void AttachNewComponent(IEntity entity)
+        {
+            entity.Components.Add(typeof(ARenderAble), CreateComponent(entity));
         }
     }
 }
