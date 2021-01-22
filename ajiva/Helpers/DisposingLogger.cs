@@ -1,7 +1,7 @@
 ﻿//#define LOGGING_TRUE
 using System;
 
-namespace ajiva.Engine
+namespace ajiva.Helpers
 {
     public abstract class DisposingLogger : IDisposable
     {
