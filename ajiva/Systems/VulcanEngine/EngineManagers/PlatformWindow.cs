@@ -2,14 +2,14 @@
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
-using ajiva.Systems.RenderEngine.Engine;
+using ajiva.Systems.VulcanEngine.Engine;
 using GlmSharp;
 using SharpVk.Glfw;
 using SharpVk.Khronos;
 using Glfw3 = SharpVk.Glfw.Glfw3;
 using Key = SharpVk.Glfw.Key;
 
-namespace ajiva.Systems.RenderEngine.EngineManagers
+namespace ajiva.Systems.VulcanEngine.EngineManagers
 {
     public class PlatformWindow : RenderEngineComponent
     {

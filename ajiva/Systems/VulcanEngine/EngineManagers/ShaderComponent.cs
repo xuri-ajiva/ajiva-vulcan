@@ -1,7 +1,7 @@
 ﻿using ajiva.Models;
-using ajiva.Systems.RenderEngine.Engine;
+using ajiva.Systems.VulcanEngine.Engine;
 
-namespace ajiva.Systems.RenderEngine.EngineManagers
+namespace ajiva.Systems.VulcanEngine.EngineManagers
 {
     public class ShaderComponent : RenderEngineComponent
     {

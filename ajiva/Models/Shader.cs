@@ -2,9 +2,8 @@
 using System.IO;
 using System.Linq;
 using System.Runtime.CompilerServices;
-using ajiva.Helpers;
-using ajiva.Systems.RenderEngine;
-using ajiva.Systems.RenderEngine.EngineManagers;
+using ajiva.Systems.VulcanEngine;
+using ajiva.Systems.VulcanEngine.EngineManagers;
 using GlmSharp;
 using SharpVk;
 using SharpVk.Shanq;

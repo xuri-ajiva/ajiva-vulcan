@@ -2,10 +2,10 @@
 using System.Runtime.CompilerServices;
 using ajiva.Helpers;
 using ajiva.Models;
-using ajiva.Systems.RenderEngine.Engine;
+using ajiva.Systems.VulcanEngine.Engine;
 using SharpVk;
 
-namespace ajiva.Systems.RenderEngine.EngineManagers
+namespace ajiva.Systems.VulcanEngine.EngineManagers
 {
     public class GraphicsLayout : RenderEngineComponent, IThreadSaveCreatable
     {

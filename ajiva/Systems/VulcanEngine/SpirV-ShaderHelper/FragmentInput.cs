@@ -1,7 +1,7 @@
 ﻿using GlmSharp;
 using SharpVk.Shanq;
 
-namespace ajiva.Systems.RenderEngine
+namespace ajiva.Systems.VulcanEngine
 {
     internal struct FragmentInput
     {

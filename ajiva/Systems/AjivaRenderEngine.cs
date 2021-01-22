@@ -9,15 +9,14 @@ using ajiva.Ecs.Entity;
 using ajiva.Entitys;
 using ajiva.Helpers;
 using ajiva.Models;
-using ajiva.Systems.RenderEngine.Engine;
-using ajiva.Systems.RenderEngine.EngineManagers;
+using ajiva.Systems.VulcanEngine.Engine;
 using GlmSharp;
 using SharpVk;
 using SharpVk.Khronos;
 using SharpVk.Multivendor;
 
 // ReSharper disable once CheckNamespace
-namespace ajiva.Systems.RenderEngine
+namespace ajiva.Systems.VulcanEngine
 {
     public partial class AjivaRenderEngine : ComponentSystemBase<ARenderAble>, IRenderEngine, IDisposable
     {

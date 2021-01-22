@@ -2,7 +2,7 @@
 using ajiva.Ecs.Component;
 using ajiva.Helpers;
 using ajiva.Models;
-using ajiva.Systems.RenderEngine.EngineManagers;
+using ajiva.Systems.VulcanEngine.EngineManagers;
 
 namespace ajiva.Components
 {

@@ -1,7 +1,7 @@
-﻿using ajiva.Systems.RenderEngine.Engine;
+﻿using ajiva.Systems.VulcanEngine.Engine;
 using SharpVk;
 
-namespace ajiva.Systems.RenderEngine.EngineManagers
+namespace ajiva.Systems.VulcanEngine.EngineManagers
 {
     public class SemaphoreComponent : RenderEngineComponent
     {

@@ -6,11 +6,11 @@ using ajiva.Components;
 using ajiva.Ecs;
 using ajiva.Ecs.Component;
 using ajiva.Entitys;
-using ajiva.Systems.RenderEngine.EngineManagers;
+using ajiva.Systems.VulcanEngine.EngineManagers;
 using GlmSharp;
 using SharpVk;
 
-namespace ajiva.Systems.RenderEngine.Engine
+namespace ajiva.Systems.VulcanEngine.Engine
 {
     public interface IRenderEngine : IComponentSystem<ARenderAble>
     {

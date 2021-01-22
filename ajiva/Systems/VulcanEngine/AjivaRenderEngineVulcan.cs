@@ -3,7 +3,7 @@ using System.Threading.Tasks;
 using GlmSharp;
 using SharpVk.Glfw;
 
-namespace ajiva.Systems.RenderEngine
+namespace ajiva.Systems.VulcanEngine
 {
     public partial class AjivaRenderEngine
     {

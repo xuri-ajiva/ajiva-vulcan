@@ -1,6 +1,6 @@
 ﻿using ajiva.Helpers;
 
-namespace ajiva.Systems.RenderEngine.Engine
+namespace ajiva.Systems.VulcanEngine.Engine
 {
     public abstract class RenderEngineComponent : DisposingLogger
     {

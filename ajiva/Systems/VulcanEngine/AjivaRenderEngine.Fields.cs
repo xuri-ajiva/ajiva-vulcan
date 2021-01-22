@@ -1,9 +1,9 @@
 ﻿using System;
-using ajiva.Systems.RenderEngine.EngineManagers;
+using ajiva.Systems.VulcanEngine.EngineManagers;
 using GlmSharp;
 using SharpVk;
 
-namespace ajiva.Systems.RenderEngine
+namespace ajiva.Systems.VulcanEngine
 {
     public partial class AjivaRenderEngine
     {
