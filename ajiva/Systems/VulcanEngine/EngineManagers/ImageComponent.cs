@@ -98,7 +98,7 @@ namespace ajiva.Systems.VulcanEngine.EngineManagers
         {
             RenderEngine.DeviceComponent.EnsureDevicesExist();
 
-            DepthImage ??= CreateManagedImage(FindDepthFormat(), ImageAspectFlags.Depth);
+            DepthImage ??= CreateManagedImage(FindDepthFormat(), ImageAspectFlags.Depth, RenderEngine.Window.SurfaceExtent);
 
             /*
             var depthFormat =;
@@ -116,12 +116,11 @@ namespace ajiva.Systems.VulcanEngine.EngineManagers
             DepthImage = null;
         }
 
-        private AImage CreateManagedImage(Format format, ImageAspectFlags aspectFlags)
+        private AImage CreateManagedImage(Format format, ImageAspectFlags aspectFlags, Extent2D extent)
         {
-            if (!RenderEngine.SwapChainComponent.SwapChainExtent.HasValue) RenderEngine.SwapChainComponent.EnsureSwapChainExists();
-            var aImage = CreateImageAndView(RenderEngine.SwapChainComponent.SwapChainExtent!.Value.Width, RenderEngine.SwapChainComponent.SwapChainExtent!.Value.Height, format, ImageTiling.Optimal, ImageUsageFlags.DepthStencilAttachment, MemoryPropertyFlags.DeviceLocal, aspectFlags);
+            var aImage = CreateImageAndView(extent.Width, extent.Height, format, ImageTiling.Optimal, ImageUsageFlags.DepthStencilAttachment, MemoryPropertyFlags.DeviceLocal, aspectFlags);
 
-            TransitionImageLayout(aImage.Image, format, ImageLayout.Undefined, ImageLayout.DepthStencilAttachmentOptimal);
+            TransitionImageLayout(aImage.Image!, format, ImageLayout.Undefined, ImageLayout.DepthStencilAttachmentOptimal);
             return aImage;
         }
 
