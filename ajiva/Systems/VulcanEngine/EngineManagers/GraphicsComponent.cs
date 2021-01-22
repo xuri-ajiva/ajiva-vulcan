@@ -27,5 +27,11 @@ namespace ajiva.Systems.VulcanEngine.EngineManagers
             Current?.Dispose();
             Current = null;
         }
+
+        public void RecreateCurrentGraphicsLayout()
+        {
+            EnsureGraphicsLayoutDeletion();
+            EnsureGraphicsLayoutExists();
+        }
     }
 }
