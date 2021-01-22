@@ -45,7 +45,6 @@ namespace ajiva.Systems.VulcanEngine
                 CleanupSwapChain();
 
                 MainCamara.UpdatePerspective(mainCamara.Fov, Window.Width, Window.Height);
-                SwapChainComponent.EnsureSwapChainExists();
                 ImageComponent.EnsureDepthResourcesExits();
                 GraphicsComponent.EnsureGraphicsLayoutExists();
                 GraphicsComponent.Current!.EnsureExists();
@@ -68,7 +67,6 @@ namespace ajiva.Systems.VulcanEngine
                 DeviceComponent.EnsureDevicesExist();
                 DeviceComponent.EnsureCommandPoolsExists();
                 ShaderComponent.EnsureCreateUniformBufferExists();
-                SwapChainComponent.EnsureSwapChainExists();
                 
                 TextureComponent.EnsureDefaultImagesExists();
                 ImageComponent.EnsureDepthResourcesExits();

@@ -7,12 +7,10 @@ using ajiva.Ecs;
 using ajiva.Ecs.Component;
 using ajiva.Ecs.Entity;
 using ajiva.Entitys;
-using ajiva.Helpers;
 using ajiva.Models;
 using ajiva.Systems.VulcanEngine.Engine;
 using GlmSharp;
 using SharpVk;
-using SharpVk.Khronos;
 using SharpVk.Multivendor;
 
 // ReSharper disable once CheckNamespace
