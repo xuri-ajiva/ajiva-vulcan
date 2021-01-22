@@ -4,6 +4,7 @@ using ajiva.Helpers;
 using ajiva.Models;
 using ajiva.Systems.VulcanEngine.Engine;
 using SharpVk;
+using SharpVk.Khronos;
 
 namespace ajiva.Systems.VulcanEngine.EngineManagers
 {
@@ -339,7 +340,7 @@ namespace ajiva.Systems.VulcanEngine.EngineManagers
             }).Single();
         }
 
-  #endregion
+#endregion
 
 #region Descriptor
 
@@ -420,6 +421,24 @@ namespace ajiva.Systems.VulcanEngine.EngineManagers
                 }, null);
         }
 
+#endregion
+
+#region DrawBuffer
+
+        private void CreateFrameBuffers()
+        {
+            Framebuffer MakeFrameBuffer(ImageView imageView) => renderEngine.DeviceComponent.Device!.CreateFramebuffer(RenderPass,
+                new[]
+                {
+                    imageView, renderEngine.ImageComponent.DepthImage!.View
+                },
+                SwapChainExtent!.Value.Width,
+                SwapChainExtent!.Value.Height,
+                1);
+
+            FrameBuffers ??= SwapChainImage!.Select(x => MakeFrameBuffer(x.View!)).ToArray();
+        }
+
         private void CreateCommandBuffers()
         {
             renderEngine.DeviceComponent.EnsureCommandPoolsExists();
@@ -461,19 +480,7 @@ namespace ajiva.Systems.VulcanEngine.EngineManagers
             }
         }
 
-        private void CreateFrameBuffers()
-        {
-            Framebuffer Create(ImageView imageView) => renderEngine.DeviceComponent.Device!.CreateFramebuffer(RenderPass,
-                new[]
-                {
-                    imageView, renderEngine.ImageComponent.DepthImage!.View
-                },
-                renderEngine.SwapChainComponent.SwapChainExtent!.Value.Width,
-                renderEngine.SwapChainComponent.SwapChainExtent!.Value.Height,
-                1);
-
-            FrameBuffers ??= renderEngine.SwapChainComponent.SwapChainImage!.Select(x => Create(x.View!)).ToArray();
-        }
+#endregion
 
         /// <inheritdoc />
         protected override void Create()
