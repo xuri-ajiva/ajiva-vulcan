@@ -8,10 +8,10 @@ namespace ajiva.Systems.VulcanEngine.EngineManagers
         public Semaphore? ImageAvailable { get; private set; }
         public Semaphore? RenderFinished { get; private set; }
 
+        public Fence? RenderFence { get; private set; }
+
         public SemaphoreComponent(IRenderEngine renderEngine) : base(renderEngine)
         {
-            RenderFinished = null!;
-            ImageAvailable = null!;
         }
 
         public void EnsureSemaphoresExists()
@@ -19,6 +19,7 @@ namespace ajiva.Systems.VulcanEngine.EngineManagers
             RenderEngine.DeviceComponent.EnsureDevicesExist();
             ImageAvailable ??= RenderEngine.DeviceComponent.Device!.CreateSemaphore();
             RenderFinished ??= RenderEngine.DeviceComponent.Device!.CreateSemaphore();
+            RenderFence ??= RenderEngine.DeviceComponent.Device!.CreateFence();
         }
 
         /// <inheritdoc />
@@ -26,8 +27,10 @@ namespace ajiva.Systems.VulcanEngine.EngineManagers
         {
             ImageAvailable?.Dispose();
             RenderFinished?.Dispose();
+            RenderFence?.Dispose();
             ImageAvailable = null!;
             RenderFinished = null!;
+            RenderFence = null!;
         }
     }
 }
