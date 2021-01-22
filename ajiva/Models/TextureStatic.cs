@@ -1,7 +1,7 @@
 ﻿using System.Drawing;
 using System.Drawing.Imaging;
-using ajiva.Engine;
-using ajiva.EngineManagers;
+using ajiva.Systems.RenderEngine.Engine;
+using ajiva.Systems.RenderEngine.EngineManagers;
 using SharpVk;
 
 namespace ajiva.Models

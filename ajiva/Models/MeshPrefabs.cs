@@ -1,10 +1,8 @@
-﻿using ajiva.Entity;
-
-namespace ajiva.Models
+﻿namespace ajiva.Models
 {
     public partial class Mesh
     {
-        public static implicit operator ARenderAble(Mesh? mesh) => new(mesh, ARenderAble.NextId());
+        //public static implicit operator ARenderAble(Mesh? mesh) => new(mesh, ARenderAble.NextId());
         
         public static Mesh Cube { get; } = new(new Vertex[]
         {
