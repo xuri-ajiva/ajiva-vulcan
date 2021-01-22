@@ -10,6 +10,7 @@ namespace ajiva.Systems.VulcanEngine.EngineManagers
     public class GraphicsLayout : ThreadSaveCreatable
     {
         private readonly IRenderEngine renderEngine;
+        private IRenderEngine RenderEngine => renderEngine;
         private PipelineLayout? PipelineLayout { get; set; }
         private RenderPass? RenderPass { get; set; }
         private Pipeline? Pipeline { get; set; }
@@ -19,7 +20,12 @@ namespace ajiva.Systems.VulcanEngine.EngineManagers
         private DescriptorSet? DescriptorSet { get; set; }
 
         private Framebuffer[]? FrameBuffers { get; set; }
-        public CommandBuffer[]? CommandBuffers { get; private set; }
+        private CommandBuffer[]? CommandBuffers { get; set; }
+
+        public Swapchain? SwapChain { get; private set; }
+        public Format? SwapChainFormat { get; private set; }
+        public Extent2D? SwapChainExtent { get; private set; }
+        public AImage[]? SwapChainImage { get; private set; }
 
         public GraphicsLayout(IRenderEngine renderEngine)
         {
@@ -35,14 +41,94 @@ namespace ajiva.Systems.VulcanEngine.EngineManagers
             DescriptorPool?.Dispose();
             DescriptorSetLayout?.Dispose();
 
+            renderEngine.DeviceComponent.CommandPool?.FreeCommandBuffers(CommandBuffers);
+            CommandBuffers = null;
+
             if (FrameBuffers != null)
                 foreach (var frameBuffer in FrameBuffers)
                     frameBuffer.Dispose();
             FrameBuffers = null;
 
-            renderEngine.DeviceComponent.CommandPool?.FreeCommandBuffers(CommandBuffers);
-            CommandBuffers = null;
+            if (SwapChainImage != null)
+                foreach (var aImage in SwapChainImage)
+                    aImage.Dispose();
+            SwapChainImage = null;
+
+            SwapChain?.Dispose();
+            SwapChain = null;
+
+            SwapChainExtent = null;
+            SwapChainFormat = null;
         }
+
+        #region Swapchain
+
+        public void EnsureSwapChainExists()
+        {
+            renderEngine.DeviceComponent.EnsureDevicesExist();
+
+            var swapChainSupport = RenderEngine.DeviceComponent.PhysicalDevice!.QuerySwapChainSupport(renderEngine.Window.Surface!);
+            var extent = swapChainSupport.Capabilities.ChooseSwapExtent(renderEngine.Window.SurfaceExtent);
+            var surfaceFormat = swapChainSupport.Formats.ChooseSwapSurfaceFormat();
+
+            if (SwapChain == null) CreateSwapChain(swapChainSupport, surfaceFormat, extent);
+            if (SwapChainImage == null) CreateSwapchainImages();
+
+            SwapChainFormat ??= surfaceFormat.Format;
+            SwapChainExtent ??= extent;
+
+            //directly create the views sow we dont forget it, and reduce dependency
+            if (SwapChainImage!.Any(x => x.View == null)) CreateImageViews();
+        }
+
+        private void CreateSwapChain(Extensions.SwapChainSupportDetails swapChainSupport, SurfaceFormat surfaceFormat, Extent2D extent)
+        {
+            var imageCount = swapChainSupport.Capabilities.MinImageCount + 1;
+            if (swapChainSupport.Capabilities.MaxImageCount > 0 && imageCount > swapChainSupport.Capabilities.MaxImageCount)
+            {
+                imageCount = swapChainSupport.Capabilities.MaxImageCount;
+            }
+
+            var queueFamilies = RenderEngine.DeviceComponent.PhysicalDevice!.FindQueueFamilies(renderEngine.Window.Surface!);
+
+            var queueFamilyIndices = queueFamilies.Indices.ToArray();
+
+            SwapChain = RenderEngine.DeviceComponent.Device.CreateSwapchain(RenderEngine.Window.Surface,
+                imageCount,
+                surfaceFormat.Format,
+                surfaceFormat.ColorSpace,
+                extent,
+                1,
+                ImageUsageFlags.ColorAttachment,
+                queueFamilyIndices.Length == 1
+                    ? SharingMode.Exclusive
+                    : SharingMode.Concurrent,
+                queueFamilyIndices,
+                swapChainSupport.Capabilities.CurrentTransform,
+                CompositeAlphaFlags.Opaque,
+                swapChainSupport.PresentModes.ChooseSwapPresentMode(),
+                true,
+                SwapChain);
+        }
+
+        private void CreateSwapchainImages()
+        {
+            SwapChainImage = SwapChain!.GetImages().Select(x => new AImage(false)
+            {
+                Image = x
+            }).ToArray();
+        }
+
+        private void CreateImageViews()
+        {
+            foreach (var image in SwapChainImage!)
+            {
+                image.View ??= RenderEngine.ImageComponent.CreateImageView(image.Image!, SwapChainFormat!.Value, ImageAspectFlags.Color);
+            }
+        }
+
+#endregion
+#region PoplineAndRenderPase
 
         private void CreateRenderPass()
         {
@@ -51,7 +137,7 @@ namespace ajiva.Systems.VulcanEngine.EngineManagers
                 {
                     new()
                     {
-                        Format = renderEngine.SwapChainComponent.SwapChainFormat!.Value,
+                        Format = SwapChainFormat!.Value,
                         Samples = SampleCountFlags.SampleCount1,
                         LoadOp = AttachmentLoadOp.Clear,
                         StoreOp = AttachmentStoreOp.Store,
@@ -350,7 +436,7 @@ namespace ajiva.Systems.VulcanEngine.EngineManagers
 
                 commandBuffer.BeginRenderPass(RenderPass,
                     FrameBuffers[index],
-                    new(new(), renderEngine.SwapChainComponent.SwapChainExtent!.Value),
+                    new(new(), SwapChainExtent!.Value),
                     new ClearValue[]
                     {
                         new ClearColorValue(.1f, .1f, .1f, 1), new ClearDepthStencilValue(1, 0)
@@ -393,7 +479,7 @@ namespace ajiva.Systems.VulcanEngine.EngineManagers
         protected override void Create()
         {
             renderEngine.DeviceComponent.EnsureDevicesExist();
-            renderEngine.SwapChainComponent.EnsureSwapChainExists();
+            EnsureSwapChainExists();
             renderEngine.ShaderComponent.EnsureShaderModulesExists();
             renderEngine.ShaderComponent.UniformModels.EnsureExists();
             renderEngine.ShaderComponent.ViewProj.EnsureExists();
