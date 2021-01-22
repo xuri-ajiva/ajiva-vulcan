@@ -44,126 +44,6 @@ namespace ajiva.Systems.VulcanEngine.EngineManagers
             CommandBuffers = null;
         }
 
-        private void CreateGraphicsPipeline()
-        {
-            var bindingDescription = Vertex.GetBindingDescription();
-            var attributeDescriptions = Vertex.GetAttributeDescriptions();
-
-            PipelineLayout = renderEngine.DeviceComponent.Device!.CreatePipelineLayout(DescriptorSetLayout, null);
-
-            Pipeline = renderEngine.DeviceComponent.Device.CreateGraphicsPipelines(null, new[]
-            {
-                new GraphicsPipelineCreateInfo
-                {
-                    Layout = PipelineLayout,
-                    RenderPass = RenderPass,
-                    Subpass = 0,
-                    VertexInputState = new()
-                    {
-                        VertexBindingDescriptions = new[]
-                        {
-                            bindingDescription
-                        },
-                        VertexAttributeDescriptions = attributeDescriptions
-                    },
-                    InputAssemblyState = new()
-                    {
-                        PrimitiveRestartEnable = false,
-                        Topology = PrimitiveTopology.TriangleList
-                    },
-                    ViewportState = new()
-                    {
-                        Viewports = new[]
-                        {
-                            new Viewport
-                            {
-                                X = 0f,
-                                Y = 0f,
-                                Width = renderEngine.SwapChainComponent.SwapChainExtent!.Value.Width,
-                                Height = renderEngine.SwapChainComponent.SwapChainExtent!.Value.Height,
-                                MaxDepth = 1,
-                                MinDepth = 0,
-                            }
-                        },
-                        Scissors = new[]
-                        {
-                            new Rect2D
-                            {
-                                Offset = Offset2D.Zero,
-                                Extent = renderEngine.SwapChainComponent.SwapChainExtent!.Value
-                            }
-                        }
-                    },
-                    RasterizationState = new()
-                    {
-                        DepthClampEnable = false,
-                        RasterizerDiscardEnable = false,
-                        PolygonMode = PolygonMode.Fill,
-                        LineWidth = 1,
-                        //CullMode = CullModeFlags.Back,
-                        //FrontFace = FrontFace.CounterClockwise,
-                        DepthBiasEnable = false
-                    },
-                    MultisampleState = new()
-                    {
-                        SampleShadingEnable = false,
-                        RasterizationSamples = SampleCountFlags.SampleCount1,
-                        MinSampleShading = 1
-                    },
-                    ColorBlendState = new()
-                    {
-                        Attachments = new[]
-                        {
-                            new PipelineColorBlendAttachmentState
-                            {
-                                ColorWriteMask = ColorComponentFlags.R
-                                                 | ColorComponentFlags.G
-                                                 | ColorComponentFlags.B
-                                                 | ColorComponentFlags.A,
-                                BlendEnable = false,
-                                SourceColorBlendFactor = BlendFactor.One,
-                                DestinationColorBlendFactor = BlendFactor.Zero,
-                                ColorBlendOp = BlendOp.Add,
-                                SourceAlphaBlendFactor = BlendFactor.One,
-                                DestinationAlphaBlendFactor = BlendFactor.Zero,
-                                AlphaBlendOp = BlendOp.Add
-                            }
-                        },
-                        LogicOpEnable = false,
-                        LogicOp = LogicOp.Copy,
-                        BlendConstants = (0, 0, 0, 0)
-                    },
-                    Stages = new[]
-                    {
-                        new PipelineShaderStageCreateInfo
-                        {
-                            Stage = ShaderStageFlags.Vertex,
-                            Module = renderEngine.ShaderComponent.Main!.VertShader,
-                            Name = "main"
-                        },
-                        new PipelineShaderStageCreateInfo
-                        {
-                            Stage = ShaderStageFlags.Fragment,
-                            Module = renderEngine.ShaderComponent.Main!.FragShader,
-                            Name = "main"
-                        }
-                    },
-                    DepthStencilState = new()
-                    {
-                        DepthTestEnable = true,
-                        DepthWriteEnable = true,
-                        DepthCompareOp = CompareOp.Less,
-                        DepthBoundsTestEnable = false,
-                        MinDepthBounds = 0,
-                        MaxDepthBounds = 1,
-                        StencilTestEnable = false,
-                        Back = new(),
-                        Flags = new(),
-                    }
-                }
-            }).Single();
-        }
-
         private void CreateRenderPass()
         {
             RenderPass = renderEngine.DeviceComponent.Device!.CreateRenderPass(
@@ -252,6 +132,130 @@ namespace ajiva.Systems.VulcanEngine.EngineManagers
                     }
                 });
         }
+
+        private void CreateGraphicsPipeline()
+        {
+            var bindingDescription = Vertex.GetBindingDescription();
+            var attributeDescriptions = Vertex.GetAttributeDescriptions();
+
+            PipelineLayout = renderEngine.DeviceComponent.Device!.CreatePipelineLayout(DescriptorSetLayout, null);
+
+            Pipeline = renderEngine.DeviceComponent.Device.CreateGraphicsPipelines(null, new[]
+            {
+                new GraphicsPipelineCreateInfo
+                {
+                    Layout = PipelineLayout,
+                    RenderPass = RenderPass,
+                    Subpass = 0,
+                    VertexInputState = new()
+                    {
+                        VertexBindingDescriptions = new[]
+                        {
+                            bindingDescription
+                        },
+                        VertexAttributeDescriptions = attributeDescriptions
+                    },
+                    InputAssemblyState = new()
+                    {
+                        PrimitiveRestartEnable = false,
+                        Topology = PrimitiveTopology.TriangleList
+                    },
+                    ViewportState = new()
+                    {
+                        Viewports = new[]
+                        {
+                            new Viewport
+                            {
+                                X = 0f,
+                                Y = 0f,
+                                Width = SwapChainExtent!.Value.Width,
+                                Height = SwapChainExtent!.Value.Height,
+                                MaxDepth = 1,
+                                MinDepth = 0,
+                            }
+                        },
+                        Scissors = new[]
+                        {
+                            new Rect2D
+                            {
+                                Offset = Offset2D.Zero,
+                                Extent = SwapChainExtent!.Value
+                            }
+                        }
+                    },
+                    RasterizationState = new()
+                    {
+                        DepthClampEnable = false,
+                        RasterizerDiscardEnable = false,
+                        PolygonMode = PolygonMode.Fill,
+                        LineWidth = 1,
+                        //CullMode = CullModeFlags.Back,
+                        //FrontFace = FrontFace.CounterClockwise,
+                        DepthBiasEnable = false
+                    },
+                    MultisampleState = new()
+                    {
+                        SampleShadingEnable = false,
+                        RasterizationSamples = SampleCountFlags.SampleCount1,
+                        MinSampleShading = 1
+                    },
+                    ColorBlendState = new()
+                    {
+                        Attachments = new[]
+                        {
+                            new PipelineColorBlendAttachmentState
+                            {
+                                ColorWriteMask = ColorComponentFlags.R
+                                                 | ColorComponentFlags.G
+                                                 | ColorComponentFlags.B
+                                                 | ColorComponentFlags.A,
+                                BlendEnable = false,
+                                SourceColorBlendFactor = BlendFactor.One,
+                                DestinationColorBlendFactor = BlendFactor.Zero,
+                                ColorBlendOp = BlendOp.Add,
+                                SourceAlphaBlendFactor = BlendFactor.One,
+                                DestinationAlphaBlendFactor = BlendFactor.Zero,
+                                AlphaBlendOp = BlendOp.Add
+                            }
+                        },
+                        LogicOpEnable = false,
+                        LogicOp = LogicOp.Copy,
+                        BlendConstants = (0, 0, 0, 0)
+                    },
+                    Stages = new[]
+                    {
+                        new PipelineShaderStageCreateInfo
+                        {
+                            Stage = ShaderStageFlags.Vertex,
+                            Module = renderEngine.ShaderComponent.Main!.VertShader,
+                            Name = "main"
+                        },
+                        new PipelineShaderStageCreateInfo
+                        {
+                            Stage = ShaderStageFlags.Fragment,
+                            Module = renderEngine.ShaderComponent.Main!.FragShader,
+                            Name = "main"
+                        }
+                    },
+                    DepthStencilState = new()
+                    {
+                        DepthTestEnable = true,
+                        DepthWriteEnable = true,
+                        DepthCompareOp = CompareOp.Less,
+                        DepthBoundsTestEnable = false,
+                        MinDepthBounds = 0,
+                        MaxDepthBounds = 1,
+                        StencilTestEnable = false,
+                        Back = new(),
+                        Flags = new(),
+                    }
+                }
+            }).Single();
+        }
+
+  #endregion
+
+#region Descriptor
 
         private void CreateDescriptorPool()
         {
