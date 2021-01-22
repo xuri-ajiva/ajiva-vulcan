@@ -1,7 +1,7 @@
 ﻿using GlmSharp;
 using SharpVk.Shanq;
 
-namespace ajiva
+namespace ajiva.Systems.RenderEngine
 {
     internal struct FragmentInput
     {

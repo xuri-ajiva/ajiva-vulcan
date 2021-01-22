@@ -1,21 +1,18 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
-using ajiva.Engine;
+using ajiva.Systems.RenderEngine.Engine;
 using GlmSharp;
 using SharpVk.Glfw;
 using SharpVk.Khronos;
 using Glfw3 = SharpVk.Glfw.Glfw3;
 using Key = SharpVk.Glfw.Key;
 
-namespace ajiva.EngineManagers
+namespace ajiva.Systems.RenderEngine.EngineManagers
 {
     public class PlatformWindow : RenderEngineComponent
     {
-        public event PlatformEventHandler OnUpdate = null!;
-        public event PlatformEventHandler OnFrame = null!;
         public event KeyEventHandler OnKeyEvent = null!;
         public event EventHandler OnResize = null!;
         public event EventHandler<vec2> OnMouseMove = null!;
@@ -36,6 +33,7 @@ namespace ajiva.EngineManagers
             PreviousMousePosition = vec2.Zero;
             mouseMotion = false;
             WindowThread = new(WindowStartup);
+            WindowThread.SetApartmentState(ApartmentState.STA);
         }
 
         private void WindowStartup()
@@ -65,7 +63,7 @@ namespace ajiva.EngineManagers
                     }
                 }
                 Glfw3.PollEvents();
-                
+
                 if (WindowReady) continue;
                 Glfw3.DestroyWindow(window);
                 return;
@@ -128,6 +126,7 @@ namespace ajiva.EngineManagers
 
         private void KeyCallback(WindowHandle windowHandle, Key key, int scancode, InputAction inputAction, Modifier modifiers)
         {
+            // ReSharper disable once SwitchStatementMissingSomeEnumCasesNoDefault
             switch (key)
             {
                 //todo dev only
@@ -141,61 +140,12 @@ namespace ajiva.EngineManagers
                     break;
             }
 
-            OnKeyEvent.Invoke(this, key, scancode, inputAction, modifiers);
+            OnKeyEvent?.Invoke(this, key, scancode, inputAction, modifiers);
         }
 
         private void UpdateCursor()
         {
             Glfw3.SetInputMode(window, Glfw3Enum.GLFW_CURSOR, mouseMotion ? Glfw3Enum.GLFW_CURSOR_DISABLED : Glfw3Enum.GLFW_CURSOR_NORMAL);
-        }
-
-        private static async Task RunDelta(Action<TimeSpan> action, Func<bool> condition, TimeSpan maxToRun)
-        {
-            var iteration = 0u;
-            var start = DateTime.Now;
-
-            var delta = TimeSpan.Zero;
-            var now = Stopwatch.GetTimestamp();
-            while (condition())
-            {
-                await Task.Delay(5);
-
-                action?.Invoke(delta);
-
-                iteration++;
-
-                if (iteration % 10 == 0)
-                {
-                    if (DateTime.Now - start > maxToRun)
-                    {
-                        return;
-                    }
-                }
-                var end = Stopwatch.GetTimestamp();
-                delta = new(end - now);
-
-                now = end;
-            }
-        }
-
-        public async Task RenderLoop(TimeSpan timeToRun)
-        {
-            await RunDelta(delegate(TimeSpan delta)
-            {
-                lock (RenderEngine.RenderLock)
-                    OnFrame.Invoke(this, delta);
-
-                Glfw3.PollEvents();
-            }, () => RenderEngine.Runing && !Glfw3.WindowShouldClose(window), timeToRun);
-        }
-
-        public async Task UpdateLoop(TimeSpan timeToRun)
-        {
-            await RunDelta(delegate(TimeSpan delta)
-            {
-                lock (RenderEngine.UpdateLock)
-                    OnUpdate?.Invoke(this, delta);
-            }, () => RenderEngine.Runing && !Glfw3.WindowShouldClose(window), timeToRun);
         }
 
         public void CloseWindow()
@@ -208,9 +158,14 @@ namespace ajiva.EngineManagers
             Surface?.Dispose();
             CloseWindow();
         }
+
+        public void PollEvents()
+        {
+            Glfw3.PollEvents();
+        }
     }
 
     public delegate void KeyEventHandler(object? sender, Key key, int scancode, InputAction inputAction, Modifier modifiers);
 
-    public delegate void PlatformEventHandler(object sender, TimeSpan delta);
+    public delegate void PlatformEventHandler(TimeSpan delta);
 }

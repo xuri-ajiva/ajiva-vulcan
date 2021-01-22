@@ -1,6 +1,6 @@
-﻿using ajiva.Engine;
+﻿using ajiva.Systems.RenderEngine.Engine;
 
-namespace ajiva.EngineManagers
+namespace ajiva.Systems.RenderEngine.EngineManagers
 {
     public class GraphicsComponent : RenderEngineComponent
     {

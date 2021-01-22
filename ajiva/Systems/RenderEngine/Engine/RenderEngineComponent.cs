@@ -1,4 +1,6 @@
-﻿namespace ajiva.Engine
+﻿using ajiva.Helpers;
+
+namespace ajiva.Systems.RenderEngine.Engine
 {
     public abstract class RenderEngineComponent : DisposingLogger
     {

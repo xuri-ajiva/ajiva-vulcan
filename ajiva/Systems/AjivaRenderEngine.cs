@@ -1,21 +1,23 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
-using ajiva.Engine;
-using ajiva.EngineManagers;
-using ajiva.Entity;
+using ajiva.Components;
+using ajiva.Ecs;
+using ajiva.Ecs.Component;
+using ajiva.Ecs.Entity;
+using ajiva.Entitys;
 using ajiva.Helpers;
 using ajiva.Models;
+using ajiva.Systems.RenderEngine.Engine;
+using ajiva.Systems.RenderEngine.EngineManagers;
 using GlmSharp;
 using SharpVk;
-using SharpVk.Glfw;
 using SharpVk.Khronos;
 using SharpVk.Multivendor;
-using Semaphore = SharpVk.Semaphore;
 
-namespace ajiva
+// ReSharper disable once CheckNamespace
+namespace ajiva.Systems.RenderEngine
 {
     public class AjivaRenderEngine : IRenderEngine, IDisposable
     {

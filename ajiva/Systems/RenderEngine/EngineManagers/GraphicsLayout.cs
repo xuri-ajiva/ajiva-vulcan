@@ -1,9 +1,9 @@
 ﻿using System.Linq;
-using ajiva.Engine;
 using ajiva.Models;
+using ajiva.Systems.RenderEngine.Engine;
 using SharpVk;
 
-namespace ajiva.EngineManagers
+namespace ajiva.Systems.RenderEngine.EngineManagers
 {
     public class GraphicsLayout : RenderEngineComponent, IThreadSaveCreatable
     {

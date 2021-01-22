@@ -1,12 +1,13 @@
 ﻿using System;
 using System.Linq;
-using ajiva.Engine;
+using System.Runtime.CompilerServices;
 using ajiva.Helpers;
 using ajiva.Models;
+using ajiva.Systems.RenderEngine.Engine;
 using SharpVk;
 using SharpVk.Khronos;
 
-namespace ajiva.EngineManagers
+namespace ajiva.Systems.RenderEngine.EngineManagers
 {
     public class DeviceComponent : RenderEngineComponent
     {

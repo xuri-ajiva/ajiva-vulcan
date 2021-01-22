@@ -1,11 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
-using ajiva.Engine;
 using ajiva.Models;
+using ajiva.Systems.RenderEngine.Engine;
 using SharpVk;
 using Buffer = SharpVk.Buffer;
 
-namespace ajiva.EngineManagers
+namespace ajiva.Systems.RenderEngine.EngineManagers
 {
     public class ImageComponent : RenderEngineComponent
     {

@@ -2,7 +2,7 @@
 using SharpVk.Shanq;
 using SharpVk.Spirv;
 
-namespace ajiva
+namespace ajiva.Systems.RenderEngine
 {
     internal struct VertexOutput
     {

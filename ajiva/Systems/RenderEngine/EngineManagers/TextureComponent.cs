@@ -1,14 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Drawing;
-using System.Drawing.Imaging;
-using System.Linq;
 using System.Runtime.InteropServices.ComTypes;
-using ajiva.Engine;
 using ajiva.Models;
+using ajiva.Systems.RenderEngine.Engine;
 using SharpVk;
 
-namespace ajiva.EngineManagers
+namespace ajiva.Systems.RenderEngine.EngineManagers
 {
     public class TextureComponent : RenderEngineComponent
     {
@@ -23,9 +20,7 @@ namespace ajiva.EngineManagers
         public Texture? Default { get; private set; }
         private List<Texture> Textures { get; }
         public DescriptorImageInfo[] TextureSamplerImageViews { get; }
-
-
-
+        
         public void AddAndMapTextureToDescriptor(Texture texture)
         {
             MapTextureToDescriptor(texture);

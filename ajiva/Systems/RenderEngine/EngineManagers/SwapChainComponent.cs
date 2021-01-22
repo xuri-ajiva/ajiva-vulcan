@@ -1,13 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using ajiva.Engine;
 using ajiva.Helpers;
 using ajiva.Models;
+using ajiva.Systems.RenderEngine.Engine;
 using SharpVk;
 using SharpVk.Khronos;
 
-namespace ajiva.EngineManagers
+namespace ajiva.Systems.RenderEngine.EngineManagers
 {
     public class SwapChainComponent : RenderEngineComponent
     {

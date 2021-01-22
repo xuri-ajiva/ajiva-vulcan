@@ -1,6 +1,7 @@
-﻿using GlmSharp;
+﻿using ajiva.Ecs.Component;
+using GlmSharp;
 
-namespace ajiva.Entity
+namespace ajiva.Components
 {
     public class Transform3d
     {
