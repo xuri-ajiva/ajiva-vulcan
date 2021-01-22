@@ -68,6 +68,8 @@ namespace ajiva.Systems.RenderEngine.EngineManagers
                 Glfw3.DestroyWindow(window);
                 return;
             }
+            
+            WindowReady = false;
         }
 
         private WindowHandle window;
