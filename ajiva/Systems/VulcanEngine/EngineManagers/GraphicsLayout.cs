@@ -7,8 +7,9 @@ using SharpVk;
 
 namespace ajiva.Systems.VulcanEngine.EngineManagers
 {
-    public class GraphicsLayout : RenderEngineComponent, IThreadSaveCreatable
+    public class GraphicsLayout : ThreadSaveCreatable
     {
+        private readonly IRenderEngine renderEngine;
         private PipelineLayout? PipelineLayout { get; set; }
         private RenderPass? RenderPass { get; set; }
         private Pipeline? Pipeline { get; set; }
@@ -16,13 +17,13 @@ namespace ajiva.Systems.VulcanEngine.EngineManagers
         private DescriptorPool? DescriptorPool { get; set; }
         private DescriptorSetLayout? DescriptorSetLayout { get; set; }
         private DescriptorSet? DescriptorSet { get; set; }
-        
 
-        
         private Framebuffer[]? FrameBuffers { get; set; }
         public CommandBuffer[]? CommandBuffers { get; private set; }
-        public GraphicsLayout(IRenderEngine renderEngine) : base(renderEngine)
+
+        public GraphicsLayout(IRenderEngine renderEngine)
         {
+            this.renderEngine = renderEngine;
         }
 
         /// <inheritdoc />
@@ -39,7 +40,7 @@ namespace ajiva.Systems.VulcanEngine.EngineManagers
                     frameBuffer.Dispose();
             FrameBuffers = null;
 
-            RenderEngine.DeviceComponent.CommandPool?.FreeCommandBuffers(CommandBuffers);
+            renderEngine.DeviceComponent.CommandPool?.FreeCommandBuffers(CommandBuffers);
             CommandBuffers = null;
         }
 
@@ -48,9 +49,9 @@ namespace ajiva.Systems.VulcanEngine.EngineManagers
             var bindingDescription = Vertex.GetBindingDescription();
             var attributeDescriptions = Vertex.GetAttributeDescriptions();
 
-            PipelineLayout = RenderEngine.DeviceComponent.Device!.CreatePipelineLayout(DescriptorSetLayout, null);
+            PipelineLayout = renderEngine.DeviceComponent.Device!.CreatePipelineLayout(DescriptorSetLayout, null);
 
-            Pipeline = RenderEngine.DeviceComponent.Device.CreateGraphicsPipelines(null, new[]
+            Pipeline = renderEngine.DeviceComponent.Device.CreateGraphicsPipelines(null, new[]
             {
                 new GraphicsPipelineCreateInfo
                 {
@@ -78,8 +79,8 @@ namespace ajiva.Systems.VulcanEngine.EngineManagers
                             {
                                 X = 0f,
                                 Y = 0f,
-                                Width = RenderEngine.SwapChainComponent.SwapChainExtent!.Value.Width,
-                                Height = RenderEngine.SwapChainComponent.SwapChainExtent!.Value.Height,
+                                Width = renderEngine.SwapChainComponent.SwapChainExtent!.Value.Width,
+                                Height = renderEngine.SwapChainComponent.SwapChainExtent!.Value.Height,
                                 MaxDepth = 1,
                                 MinDepth = 0,
                             }
@@ -89,7 +90,7 @@ namespace ajiva.Systems.VulcanEngine.EngineManagers
                             new Rect2D
                             {
                                 Offset = Offset2D.Zero,
-                                Extent = RenderEngine.SwapChainComponent.SwapChainExtent!.Value
+                                Extent = renderEngine.SwapChainComponent.SwapChainExtent!.Value
                             }
                         }
                     },
@@ -137,13 +138,13 @@ namespace ajiva.Systems.VulcanEngine.EngineManagers
                         new PipelineShaderStageCreateInfo
                         {
                             Stage = ShaderStageFlags.Vertex,
-                            Module = RenderEngine.ShaderComponent.Main!.VertShader,
+                            Module = renderEngine.ShaderComponent.Main!.VertShader,
                             Name = "main"
                         },
                         new PipelineShaderStageCreateInfo
                         {
                             Stage = ShaderStageFlags.Fragment,
-                            Module = RenderEngine.ShaderComponent.Main!.FragShader,
+                            Module = renderEngine.ShaderComponent.Main!.FragShader,
                             Name = "main"
                         }
                     },
@@ -165,12 +166,12 @@ namespace ajiva.Systems.VulcanEngine.EngineManagers
 
         private void CreateRenderPass()
         {
-            RenderPass = RenderEngine.DeviceComponent.Device!.CreateRenderPass(
+            RenderPass = renderEngine.DeviceComponent.Device!.CreateRenderPass(
                 new AttachmentDescription[]
                 {
                     new()
                     {
-                        Format = RenderEngine.SwapChainComponent.SwapChainFormat!.Value,
+                        Format = renderEngine.SwapChainComponent.SwapChainFormat!.Value,
                         Samples = SampleCountFlags.SampleCount1,
                         LoadOp = AttachmentLoadOp.Clear,
                         StoreOp = AttachmentStoreOp.Store,
@@ -181,7 +182,7 @@ namespace ajiva.Systems.VulcanEngine.EngineManagers
                     },
                     new()
                     {
-                        Format = RenderEngine.ImageComponent.FindDepthFormat(),
+                        Format = renderEngine.ImageComponent.FindDepthFormat(),
                         Samples = SampleCountFlags.SampleCount1,
                         LoadOp = AttachmentLoadOp.Clear,
                         StoreOp = AttachmentStoreOp.DontCare,
@@ -225,7 +226,7 @@ namespace ajiva.Systems.VulcanEngine.EngineManagers
 
         private void CreateDescriptorSetLayout()
         {
-            DescriptorSetLayout = RenderEngine.DeviceComponent.Device!.CreateDescriptorSetLayout(
+            DescriptorSetLayout = renderEngine.DeviceComponent.Device!.CreateDescriptorSetLayout(
                 new DescriptorSetLayoutBinding[]
                 {
                     new()
@@ -254,7 +255,7 @@ namespace ajiva.Systems.VulcanEngine.EngineManagers
 
         private void CreateDescriptorPool()
         {
-            DescriptorPool = RenderEngine.DeviceComponent.Device!.CreateDescriptorPool(
+            DescriptorPool = renderEngine.DeviceComponent.Device!.CreateDescriptorPool(
                 10000,
                 new DescriptorPoolSize[]
                 {
@@ -278,9 +279,9 @@ namespace ajiva.Systems.VulcanEngine.EngineManagers
 
         private void CreateDescriptorSet()
         {
-            DescriptorSet = RenderEngine.DeviceComponent.Device!.AllocateDescriptorSets(DescriptorPool, DescriptorSetLayout).Single();
+            DescriptorSet = renderEngine.DeviceComponent.Device!.AllocateDescriptorSets(DescriptorPool, DescriptorSetLayout).Single();
 
-            RenderEngine.DeviceComponent.Device.UpdateDescriptorSets(
+            renderEngine.DeviceComponent.Device.UpdateDescriptorSets(
                 new WriteDescriptorSet[]
                 {
                     new()
@@ -289,9 +290,9 @@ namespace ajiva.Systems.VulcanEngine.EngineManagers
                         {
                             new DescriptorBufferInfo
                             {
-                                Buffer = RenderEngine.ShaderComponent.ViewProj.Uniform.Buffer,
+                                Buffer = renderEngine.ShaderComponent.ViewProj.Uniform.Buffer,
                                 Offset = 0,
-                                Range = RenderEngine.ShaderComponent.ViewProj.Uniform.SizeOfT
+                                Range = renderEngine.ShaderComponent.ViewProj.Uniform.SizeOfT
                             }
                         },
                         DescriptorCount = 1,
@@ -306,9 +307,9 @@ namespace ajiva.Systems.VulcanEngine.EngineManagers
                         {
                             new DescriptorBufferInfo
                             {
-                                Buffer = RenderEngine.ShaderComponent.UniformModels.Uniform.Buffer,
+                                Buffer = renderEngine.ShaderComponent.UniformModels.Uniform.Buffer,
                                 Offset = 0,
-                                Range = RenderEngine.ShaderComponent.UniformModels.Uniform.SizeOfT
+                                Range = renderEngine.ShaderComponent.UniformModels.Uniform.SizeOfT
                             }
                         },
                         DescriptorCount = 1,
@@ -319,7 +320,7 @@ namespace ajiva.Systems.VulcanEngine.EngineManagers
                     },
                     new()
                     {
-                        ImageInfo = RenderEngine.TextureComponent.TextureSamplerImageViews,
+                        ImageInfo = renderEngine.TextureComponent.TextureSamplerImageViews,
                         DescriptorCount = TextureComponent.MAX_TEXTURE_SAMPLERS_IN_SHADER,
                         DestinationSet = DescriptorSet,
                         DestinationBinding = 2,
@@ -331,11 +332,11 @@ namespace ajiva.Systems.VulcanEngine.EngineManagers
 
         private void CreateCommandBuffers()
         {
-            RenderEngine.DeviceComponent.EnsureCommandPoolsExists();
+            renderEngine.DeviceComponent.EnsureCommandPoolsExists();
 
-            RenderEngine.DeviceComponent.CommandPool!.Reset(CommandPoolResetFlags.ReleaseResources);
+            renderEngine.DeviceComponent.CommandPool!.Reset(CommandPoolResetFlags.ReleaseResources);
 
-            CommandBuffers ??= RenderEngine.DeviceComponent.Device!.AllocateCommandBuffers(RenderEngine.DeviceComponent.CommandPool, CommandBufferLevel.Primary, (uint)FrameBuffers!.Length);
+            CommandBuffers ??= renderEngine.DeviceComponent.Device!.AllocateCommandBuffers(renderEngine.DeviceComponent.CommandPool, CommandBufferLevel.Primary, (uint)FrameBuffers!.Length);
 
             for (var index = 0; index < FrameBuffers!.Length; index++)
             {
@@ -345,7 +346,7 @@ namespace ajiva.Systems.VulcanEngine.EngineManagers
 
                 commandBuffer.BeginRenderPass(RenderPass,
                     FrameBuffers[index],
-                    new(new(), RenderEngine.SwapChainComponent.SwapChainExtent!.Value),
+                    new(new(), renderEngine.SwapChainComponent.SwapChainExtent!.Value),
                     new ClearValue[]
                     {
                         new ClearColorValue(.1f, .1f, .1f, 1), new ClearDepthStencilValue(1, 0)
@@ -354,7 +355,7 @@ namespace ajiva.Systems.VulcanEngine.EngineManagers
 
                 commandBuffer.BindPipeline(PipelineBindPoint.Graphics, Pipeline);
 
-                foreach (var (renderAble, _) in RenderEngine.ComponentEntityMap.Where(x => x.Key.Render))
+                foreach (var (renderAble, _) in renderEngine.ComponentEntityMap.Where(x => x.Key.Render))
                 {
                     ATrace.Assert(renderAble.Mesh != null, "renderAble.Mesh != null");
                     renderAble.Mesh.Bind(commandBuffer);
@@ -372,31 +373,27 @@ namespace ajiva.Systems.VulcanEngine.EngineManagers
 
         private void CreateFrameBuffers()
         {
-            Framebuffer Create(ImageView imageView) => RenderEngine.DeviceComponent.Device!.CreateFramebuffer(RenderPass,
+            Framebuffer Create(ImageView imageView) => renderEngine.DeviceComponent.Device!.CreateFramebuffer(RenderPass,
                 new[]
                 {
-                    imageView, RenderEngine.ImageComponent.DepthImage!.View
+                    imageView, renderEngine.ImageComponent.DepthImage!.View
                 },
-                RenderEngine.SwapChainComponent.SwapChainExtent!.Value.Width,
-                RenderEngine.SwapChainComponent.SwapChainExtent!.Value.Height,
+                renderEngine.SwapChainComponent.SwapChainExtent!.Value.Width,
+                renderEngine.SwapChainComponent.SwapChainExtent!.Value.Height,
                 1);
 
-            FrameBuffers ??= RenderEngine.SwapChainComponent.SwapChainImage!.Select(x => Create(x.View!)).ToArray();
+            FrameBuffers ??= renderEngine.SwapChainComponent.SwapChainImage!.Select(x => Create(x.View!)).ToArray();
         }
 
         /// <inheritdoc />
-        public bool Created { get; private set; }
-
-        public void EnsureExists()
+        protected override void Create()
         {
-            if (Created) return;
-
-            RenderEngine.DeviceComponent.EnsureDevicesExist();
-            RenderEngine.SwapChainComponent.EnsureSwapChainExists();
-            RenderEngine.ShaderComponent.EnsureShaderModulesExists();
-            RenderEngine.ShaderComponent.UniformModels.EnsureExists();
-            RenderEngine.ShaderComponent.ViewProj.EnsureExists();
-            RenderEngine.TextureComponent.EnsureDefaultImagesExists();
+            renderEngine.DeviceComponent.EnsureDevicesExist();
+            renderEngine.SwapChainComponent.EnsureSwapChainExists();
+            renderEngine.ShaderComponent.EnsureShaderModulesExists();
+            renderEngine.ShaderComponent.UniformModels.EnsureExists();
+            renderEngine.ShaderComponent.ViewProj.EnsureExists();
+            renderEngine.TextureComponent.EnsureDefaultImagesExists();
 
             CreateRenderPass();
 
@@ -408,8 +405,6 @@ namespace ajiva.Systems.VulcanEngine.EngineManagers
 
             CreateFrameBuffers();
             CreateCommandBuffers();
-
-            Created = true;
         }
     }
 }
