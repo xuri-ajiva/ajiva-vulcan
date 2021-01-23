@@ -23,5 +23,16 @@ namespace ajiva.Models
             //Value = newData;
             CopyValueToBuffer();
         }
+
+        public void Update(T newData, int id)
+        {
+            if (id > Value.Length)
+            {
+                throw new ArgumentException("Currently you can only update the data, not add some", nameof(newData));
+            }
+
+            Value[id] = newData;
+            CopySingleValueToBuffer(id);
+        }
     }
 }

@@ -71,5 +71,16 @@ namespace ajiva.Models
             }
             Staging.CopyValueToBuffer();
         }
+
+        public void CopyRegions(List<uint> updated)
+        {
+            Staging.CopySetValueToBuffer(updated);
+            Staging.CopyRegions(Uniform, updated.Select(id=> new BufferCopy
+            {
+                Size = Uniform.SizeOfT,
+                DestinationOffset = Uniform.SizeOfT * id,
+                SourceOffset = Uniform.SizeOfT * id
+            }).ToArray(), component);
+        }
     }
 }

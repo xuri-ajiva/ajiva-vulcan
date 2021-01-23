@@ -22,7 +22,30 @@ namespace ajiva.Models
 
             for (var index = 0; index < Value.Length; index++)
             {
-                Marshal.StructureToPtr(Value[index], memPtr + Unsafe.SizeOf<T>() * index, false);
+                Marshal.StructureToPtr(Value[index], memPtr + Unsafe.SizeOf<T>() * index, true);
+            }
+
+            Memory.Unmap();
+        }
+
+        public void CopySingleValueToBuffer(int id)
+        {
+            ATrace.Assert(Memory != null, nameof(Memory) + " != null");
+            var memPtr = Memory.Map(0, Size, MemoryMapFlags.None);
+
+            Marshal.StructureToPtr(Value[id], memPtr + Unsafe.SizeOf<T>() * id, true);
+
+            Memory.Unmap();
+        }
+
+        public void CopySetValueToBuffer(IEnumerable<uint> ids)
+        {
+            ATrace.Assert(Memory != null, nameof(Memory) + " != null");
+            var memPtr = Memory.Map(0, Size, MemoryMapFlags.None);
+
+            foreach (var u in ids)
+            {
+                Marshal.StructureToPtr(Value[u], memPtr + (Unsafe.SizeOf<T>() * (int)u), true);
             }
 
             Memory.Unmap();
