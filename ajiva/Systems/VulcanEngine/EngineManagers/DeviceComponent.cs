@@ -64,23 +64,6 @@ namespace ajiva.Systems.VulcanEngine.EngineManagers
             Device?.WaitIdle();
         }
 
-        public void Submit(CommandBuffer[] commandBuffers, PipelineStageFlags[] waitDestinationStageMask)
-        {
-            GraphicsQueue.Submit(new SubmitInfo
-            {
-                CommandBuffers = commandBuffers,
-                SignalSemaphores = new[]
-                {
-                    RenderEngine.SemaphoreComponent.RenderFinished
-                },
-                WaitDestinationStageMask = waitDestinationStageMask,
-                WaitSemaphores = new[]
-                {
-                    RenderEngine.SemaphoreComponent.ImageAvailable
-                }
-            }, null);
-        }
-
         #region BufferAndMemory
 
         public uint FindMemoryType(uint typeFilter, MemoryPropertyFlags flags)
