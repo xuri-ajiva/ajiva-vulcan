@@ -59,7 +59,7 @@ namespace ajiva.Systems.VulcanEngine
 
         #endregion
 
-        public async Task InitVulkan()
+        public void InitVulkan()
         {
             lock (RenderLock)
             {

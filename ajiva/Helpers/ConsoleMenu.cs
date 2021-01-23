@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -7,7 +6,7 @@ namespace ajiva.Helpers
 {
     public class ConsoleMenu
     {
-        public async Task ShowMenu(string title, ConsoleMenuItem[] items)
+        public void ShowMenu(string title, ConsoleMenuItem[] items)
         {
             Console.WriteLine(title);
             var formate = new string(Enumerable.Repeat('0', items.Length/10+1).ToArray());

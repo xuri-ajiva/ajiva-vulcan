@@ -24,54 +24,54 @@ namespace ajiva
             Environment.Exit(0);
         }
 
-        private async void Menu()
-        {
-            ConsoleMenu m = new();
-            await m.ShowMenu("Actions: ", new ConsoleMenuItem[] {new("Exit", null), new("Load Texture", LoadTexture)});
-        }
+        // private void Menu()
+        // {
+        //     ConsoleMenu m = new();
+        //     m.ShowMenu("Actions: ", new ConsoleMenuItem[] {new("Exit", null), new("Load Texture", LoadTexture)});
+        // }
 
-        private void LoadTexture()
-        {
-            Console.WriteLine("Path:");
-            var path = Console.ReadLine()!;
-            //engine.TextureComponent.AddAndMapTextureToDescriptor(Texture.FromFile(engine, path));
-            Menu();
-        }
+        // private void LoadTexture()
+        // {
+        //     Console.WriteLine("Path:");
+        //     var path = Console.ReadLine()!;
+        //     engine.TextureComponent.AddAndMapTextureToDescriptor(Texture.FromFile(engine, path));
+        //     Menu();
+        // }
 
-        private void OnUpdate(TimeSpan delta)
-        {
-            UpdateApplication();
+        // private void OnUpdate(TimeSpan delta)
+        // {
+        //     //UpdateApplication();
+        //
+        //     UpdateUniformBuffer(delta);
+        // }
 
-            UpdateUniformBuffer(delta);
-        }
+//         private void UpdateUniformBuffer(TimeSpan timeSpan)
+//         {
+//             //var currentTimestamp = Stopwatch.GetTimestamp();
+//             //var totalTime = (currentTimestamp - engine.InitialTimestamp) / (float)Stopwatch.Frequency;
+//
+//             /*foreach (var aEntity in Ecs.Entities.Values.Where(e => e.RenderAble != null && e.RenderAble.Render))
+//             {
+//                 if (engine.ShaderComponent.UniformModels.Staging.Value.Length > aEntity.RenderAble!.Id)
+//                 {
+//                     engine.ShaderComponent.UniformModels.Staging.Value[aEntity.RenderAble!.Id] = new()
+//                     {
+//                         Model = aEntity.Transform.ModelMat, TextureSamplerId = aEntity.RenderAble!.Id
+//                     };
+//                 }
+//             }
+//
+//             engine.ShaderComponent.UniformModels.Staging.CopyValueToBuffer();
+//             lock (engine.RenderLock)
+//                 engine.ShaderComponent.UniformModels.Copy();*/
+//         }
 
-        private void UpdateUniformBuffer(TimeSpan timeSpan)
-        {
-            //var currentTimestamp = Stopwatch.GetTimestamp();
-            //var totalTime = (currentTimestamp - engine.InitialTimestamp) / (float)Stopwatch.Frequency;
+        //private readonly Queue<Action> applicationQueue = new();
 
-            /*foreach (var aEntity in Ecs.Entities.Values.Where(e => e.RenderAble != null && e.RenderAble.Render))
-            {
-                if (engine.ShaderComponent.UniformModels.Staging.Value.Length > aEntity.RenderAble!.Id)
-                {
-                    engine.ShaderComponent.UniformModels.Staging.Value[aEntity.RenderAble!.Id] = new()
-                    {
-                        Model = aEntity.Transform.ModelMat, TextureSamplerId = aEntity.RenderAble!.Id
-                    };
-                }
-            }
-
-            engine.ShaderComponent.UniformModels.Staging.CopyValueToBuffer();
-            lock (engine.RenderLock)
-                engine.ShaderComponent.UniformModels.Copy();*/
-        }
-
-        private readonly Queue<Action> applicationQueue = new();
-
-        private void UpdateApplication()
-        {
-            while (applicationQueue.TryDequeue(out var action))
-                action.Invoke();
-        }
+        /* private void UpdateApplication()
+         {
+             while (applicationQueue.TryDequeue(out var action))
+                 action.Invoke();
+         }  */
     }
 }

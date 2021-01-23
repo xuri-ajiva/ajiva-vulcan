@@ -148,7 +148,7 @@ namespace ajiva.Systems.VulcanEngine
         {
             await InitWindow(ecs.GetPara<int>("SurfaceWidth"), ecs.GetPara<int>("SurfaceHeight"));
 
-            await InitVulkan();
+            InitVulkan();
             Ecs = ecs;
         }
 
