@@ -1,24 +1,18 @@
-﻿using System.Drawing;
-using System.Drawing.Imaging;
-using System.Runtime.CompilerServices;
+﻿using ajiva.Ecs.Component;
 using ajiva.Helpers;
+using ajiva.Models;
 using SharpVk;
 
-namespace ajiva.Models
+namespace ajiva.Components
 {
-    public partial class Texture : DisposingLogger
+    public partial class ATexture : DisposingLogger , IComponent
     {
-        private static int currentMaxId = 0;
-
-        [MethodImpl(MethodImplOptions.Synchronized)]
-        public static int NextId() => currentMaxId++;
-
-        public Texture()
+        public ATexture()
         {
-            TextureId = NextId();
+            TextureId = INextId<ATexture>.Next();
         }
 
-        public int TextureId { get; }
+        public uint TextureId { get; }
         public Sampler Sampler { get; set; } = null!;
 
         public AImage Image { get; set; } = null!;
@@ -28,9 +22,12 @@ namespace ajiva.Models
         {
             Sampler.Dispose();
             Image.Dispose();
-            //currentMaxId--; //bug gets duplicate ids
+            INextId<ATexture>.Remove(TextureId);
         }
 
         public DescriptorImageInfo DescriptorImageInfo => new() {Sampler = Sampler, ImageView = Image.View, ImageLayout = ImageLayout.ShaderReadOnlyOptimal};
+
+        /// <inheritdoc />
+        public bool Dirty { get; set; }
     }
 }

@@ -32,5 +32,19 @@ namespace ajiva.Components
         {
             return $"{nameof(Position)}: {Position}, {nameof(Rotation)}: {Rotation}, {nameof(Scale)}: {Scale}";
         }
+
+        /// <inheritdoc />
+        public bool Dirty
+        {
+            get => dirty;
+            set => dirty = value;
+        }
+
+        /// <inheritdoc />
+        public void Dispose()
+        {
+            GC.SuppressFinalize(this);
+            //todo need to add something hear ??
+        }
     }
 }

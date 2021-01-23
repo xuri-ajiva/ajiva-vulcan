@@ -14,7 +14,7 @@ namespace ajiva.Components
         public ARenderAble()
         {
             Render = false;
-            Id = NextId();
+            Id = INextId<ARenderAble>.Next();
         }
         
         public void SetMesh(Mesh? mesh, DeviceComponent component)
@@ -28,21 +28,12 @@ namespace ajiva.Components
         /// <inheritdoc />
         protected override void ReleaseUnmanagedResources()
         {
-            UsedIds.Remove(Id);
+            INextId<ARenderAble>.Remove(Id);
             Mesh?.Dispose();
         }
 
-        private static readonly HashSet<uint> UsedIds = new();
 
-        public static uint NextId()
-        {
-            for (uint i = 0;; i++)
-            {
-                if (UsedIds.Contains(i)) continue;
-                
-                UsedIds.Add(i);
-                return i;
-            }
-        }
+        /// <inheritdoc />
+        public bool Dirty { get; set; }
     }
 }

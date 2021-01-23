@@ -1,14 +1,15 @@
 ﻿using System.Drawing;
 using System.Drawing.Imaging;
+using ajiva.Models;
 using ajiva.Systems.VulcanEngine.Engine;
 using ajiva.Systems.VulcanEngine.EngineManagers;
 using SharpVk;
 
-namespace ajiva.Models
+namespace ajiva.Components
 {
-    public partial class Texture
+    public partial class ATexture
     {
-        public static Texture FromFile(IRenderEngine renderEngine, string path)
+        public static ATexture FromFile(IRenderEngine renderEngine, string path)
         {
             return new()
             {
