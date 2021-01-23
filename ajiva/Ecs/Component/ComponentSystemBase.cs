@@ -28,5 +28,16 @@ namespace ajiva.Ecs.Component
 
         /// <inheritdoc />
         object IComponentSystem.ComponentEntityMap => ComponentEntityMap;
+
+        protected override void ReleaseUnmanagedResources()
+        {
+            foreach (var (component, entity) in ComponentEntityMap)
+            {
+                entity?.RemoveComponent<T>();
+                component?.Dispose();
+            }
+            ComponentEntityMap.Clear();
+            ComponentEntityMap = null;
+        }
     }
 }
