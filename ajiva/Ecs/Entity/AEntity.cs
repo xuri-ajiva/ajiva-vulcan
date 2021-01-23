@@ -13,8 +13,7 @@ namespace ajiva.Ecs.Entity
         /// <inheritdoc />
         public uint Id { get; init; } = CurrentId++;
 
-        /// <inheritdoc />
-        public IDictionary<Type, IComponent> Components { get; } = new Dictionary<Type, IComponent>();
+        private IDictionary<Type, IComponent> Components { get; } = new Dictionary<Type, IComponent>();
 
         /// <inheritdoc />
         public bool TryGetComponent<T>(out T? value) where T : class, IComponent
@@ -26,25 +25,11 @@ namespace ajiva.Ecs.Entity
             }
             value = default;
             return false;
-
-            /*
-            foreach (var component in Components)
-                if (component is T tmp)
-                {
-                    value = tmp;
-                    return true;
-                }
-            value = default;
-            return false;*/
         }
 
         public T GetComponent<T>() where T : class, IComponent
         {
-            return (T)Components[typeof(T)]; /*
-            foreach (var component in Components)
-                if (component is T c)
-                    return c;
-            return default;*/
+            return (T)Components[typeof(T)];
         }
 
         /// <inheritdoc />
@@ -54,10 +39,16 @@ namespace ajiva.Ecs.Entity
             //return Components.Any(c => c.GetType() == typeof(T));
         }
 
-        //public void AddComponent<T>(T component) where T : class, IComponent
-        //{
-        //    Components.Add(typeof(T), component);
-        //}
+        public void AddComponent<T>(T component) where T : class, IComponent
+        {
+            Components.Add(typeof(T), component);
+        }
+
+        /// <inheritdoc />
+        public void RemoveComponent<T>() where T : class, IComponent
+        {
+            Components.Remove(typeof(T));
+        }
 
         public bool HasUpdate { get; protected set; }
         public abstract void Update(TimeSpan delta);
