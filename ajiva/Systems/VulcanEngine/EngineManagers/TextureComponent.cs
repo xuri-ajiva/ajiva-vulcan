@@ -1,7 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Runtime.InteropServices.ComTypes;
-using ajiva.Models;
+using ajiva.Components;
+using ajiva.Helpers;
 using ajiva.Systems.VulcanEngine.Engine;
 using SharpVk;
 
@@ -9,25 +10,27 @@ namespace ajiva.Systems.VulcanEngine.EngineManagers
 {
     public class TextureComponent : RenderEngineComponent
     {
+        // ReSharper disable once InconsistentNaming
         public const int MAX_TEXTURE_SAMPLERS_IN_SHADER = 128;
 
         public TextureComponent(IRenderEngine renderEngine) : base(renderEngine)
         {
+            INextId<ATexture>.MaxId = MAX_TEXTURE_SAMPLERS_IN_SHADER;
             TextureSamplerImageViews = new DescriptorImageInfo[MAX_TEXTURE_SAMPLERS_IN_SHADER];
             Textures = new();
         }
 
-        public Texture? Default { get; private set; }
-        private List<Texture> Textures { get; }
+        public ATexture? Default { get; private set; }
+        private List<ATexture> Textures { get; }
         public DescriptorImageInfo[] TextureSamplerImageViews { get; }
         
-        public void AddAndMapTextureToDescriptor(Texture texture)
+        public void AddAndMapTextureToDescriptor(ATexture texture)
         {
             MapTextureToDescriptor(texture);
             Textures.Add(texture);
         }
 
-        public void MapTextureToDescriptor(Texture texture)
+        public void MapTextureToDescriptor(ATexture texture)
         {
             if (MAX_TEXTURE_SAMPLERS_IN_SHADER <= texture.TextureId) throw new ArgumentException($"{nameof(texture.TextureId)} is more then {nameof(MAX_TEXTURE_SAMPLERS_IN_SHADER)}", nameof(IBindCtx));
 
@@ -52,7 +55,8 @@ namespace ajiva.Systems.VulcanEngine.EngineManagers
             if (Default != null) return;
             RenderEngine.DeviceComponent.EnsureDevicesExist();
 
-            Default = Texture.FromFile(RenderEngine,"logo.png");
+            Default = ATexture.FromFile(RenderEngine,"logo.png");
+            Textures.Add(Default);
 
             for (var i = 0; i < MAX_TEXTURE_SAMPLERS_IN_SHADER; i++)
             {
