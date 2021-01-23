@@ -16,6 +16,7 @@ namespace ajiva.Systems.VulcanEngine
             {
                 DeviceComponent.WaitIdle();
 
+                mainCamara?.Dispose();
                 SwapChainComponent.Dispose();
                 ImageComponent.Dispose();
                 GraphicsComponent.Dispose();
@@ -24,6 +25,18 @@ namespace ajiva.Systems.VulcanEngine
                 TextureComponent.Dispose();
                 Window.Dispose();
                 DeviceComponent.Dispose();
+
+                Ecs = null!;
+                Instance = null!;
+                mainCamara = null!;
+                Window = null!;
+                DeviceComponent = null!;
+                GraphicsComponent = null!;
+                ImageComponent = null!;
+                SemaphoreComponent = null!;
+                ShaderComponent = null!;
+                TextureComponent = null!;
+                SwapChainComponent = null!;
             }
         }
 
@@ -44,7 +57,7 @@ namespace ajiva.Systems.VulcanEngine
                 DeviceComponent.WaitIdle();
                 CleanupSwapChain();
 
-                MainCamara.UpdatePerspective(mainCamara.Fov, Window.Width, Window.Height);
+                mainCamara?.UpdatePerspective(mainCamara.Fov, Window.Width, Window.Height);
                 ImageComponent.EnsureDepthResourcesExits();
                 GraphicsComponent.EnsureGraphicsLayoutExists();
                 GraphicsComponent.Current!.EnsureExists();
@@ -55,6 +68,7 @@ namespace ajiva.Systems.VulcanEngine
         protected override void ReleaseUnmanagedResources()
         {
             Cleanup();
+            base.ReleaseUnmanagedResources();
         }
 
         #endregion
