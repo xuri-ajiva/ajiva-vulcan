@@ -34,12 +34,7 @@ namespace ajiva.Ecs.Example
         {
             var cmp = new StdComponent {Health = 100};
             ComponentEntityMap.Add(cmp, entity);
-            entity.Components.Add(typeof(StdComponent),cmp);
-        }
-
-        /// <inheritdoc />
-        protected override void ReleaseUnmanagedResources()
-        {
+            entity.AddComponent(cmp);
         }
     }
 }

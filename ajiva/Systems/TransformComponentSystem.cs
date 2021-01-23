@@ -10,11 +10,6 @@ namespace ajiva.Systems
     public class TransformComponentSystem : ComponentSystemBase<Transform3d>
     {
         /// <inheritdoc />
-        protected override void ReleaseUnmanagedResources()
-        {
-        }
-
-        /// <inheritdoc />
         public override void Update(TimeSpan delta)
         {
         }
@@ -30,7 +25,7 @@ namespace ajiva.Systems
         /// <inheritdoc />
         public override void AttachNewComponent(IEntity entity)
         {
-            entity.Components.Add(typeof(Transform3d), CreateComponent(entity));
+            entity.AddComponent(CreateComponent(entity));
         }
 
         /// <inheritdoc />

@@ -1,11 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using ajiva.Helpers;
-using ajiva.Models;
-using ajiva.Systems.VulcanEngine.Engine;
-using SharpVk;
-using SharpVk.Khronos;
+﻿using ajiva.Systems.VulcanEngine.Engine;
 
 namespace ajiva.Systems.VulcanEngine.EngineManagers
 {

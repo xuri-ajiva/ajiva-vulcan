@@ -1,5 +1,4 @@
 ﻿using System.Threading;
-using System.Threading.Tasks;
 using ajiva.Systems.VulcanEngine.Engine;
 
 namespace ajiva.Systems.VulcanEngine.EngineManagers

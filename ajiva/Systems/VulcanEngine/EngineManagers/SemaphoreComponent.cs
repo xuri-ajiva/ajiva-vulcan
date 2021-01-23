@@ -1,5 +1,6 @@
 ﻿using ajiva.Systems.VulcanEngine.Engine;
 using SharpVk;
+using Semaphore = SharpVk.Semaphore;
 
 namespace ajiva.Systems.VulcanEngine.EngineManagers
 {

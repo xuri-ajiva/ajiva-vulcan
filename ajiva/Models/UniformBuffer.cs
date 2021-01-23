@@ -1,4 +1,5 @@
-﻿using ajiva.Helpers;
+﻿using System.Collections.Generic;
+using System.Linq;
 using ajiva.Systems.VulcanEngine.EngineManagers;
 using SharpVk;
 
@@ -39,7 +40,7 @@ namespace ajiva.Models
 
         public void UpdateCopyOne(T data, uint id)
         {
-            Uniform.Value[id] = data;
+            Staging.Value[id] = data;
             Staging.CopyRegions(Uniform, new BufferCopy
             {
                 Size = Uniform.SizeOfT,

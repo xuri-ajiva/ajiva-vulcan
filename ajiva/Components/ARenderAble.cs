@@ -1,5 +1,4 @@
-﻿using System.Collections.Generic;
-using ajiva.Ecs.Component;
+﻿using ajiva.Ecs.Component;
 using ajiva.Helpers;
 using ajiva.Models;
 using ajiva.Systems.VulcanEngine.EngineManagers;

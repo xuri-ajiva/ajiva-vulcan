@@ -4,8 +4,8 @@ using System.Threading.Tasks;
 using ajiva.Components;
 using ajiva.Ecs;
 using ajiva.Ecs.Example;
-using ajiva.Entitys;
-using ajiva.Factorys;
+using ajiva.Entities;
+using ajiva.Factories;
 using ajiva.Helpers;
 using ajiva.Models;
 using ajiva.Systems;
@@ -39,7 +39,7 @@ namespace ajiva.Application
             var start = DateTime.Now;
 
             var delta = TimeSpan.Zero;
-            var now = Stopwatch.GetTimestamp();
+            long end = 0, now = Stopwatch.GetTimestamp();
             while (condition())
             {
                 await Task.Delay(5);
@@ -48,14 +48,15 @@ namespace ajiva.Application
 
                 iteration++;
 
-                if (iteration % 10 == 0)
+                if (iteration % 100 == 0)
                 {
                     if (DateTime.Now - start > maxToRun)
                     {
                         return;
                     }
                 }
-                var end = Stopwatch.GetTimestamp();
+
+                end = Stopwatch.GetTimestamp();
                 delta = new(end - now);
 
                 now = end;
@@ -112,7 +113,7 @@ namespace ajiva.Application
         protected override void ReleaseUnmanagedResources()
         {
             EntityComponentSystem.Dispose();
-            
+
             debugReportCallback.Dispose();
             vulcanInstance.Dispose();
         }

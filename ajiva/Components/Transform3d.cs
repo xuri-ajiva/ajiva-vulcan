@@ -1,4 +1,5 @@
-﻿using ajiva.Ecs.Component;
+﻿using System;
+using ajiva.Ecs.Component;
 using GlmSharp;
 
 namespace ajiva.Components

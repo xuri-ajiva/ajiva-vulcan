@@ -1,22 +1,21 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using ajiva.Components;
+﻿using ajiva.Components;
 using ajiva.Ecs;
 using ajiva.Ecs.Component;
 using ajiva.Ecs.Entity;
-using ajiva.Entitys;
 using ajiva.Models;
 using ajiva.Systems.VulcanEngine.Engine;
-using GlmSharp;
 using SharpVk;
 using SharpVk.Multivendor;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
+using ajiva.Entities;
 
 // ReSharper disable once CheckNamespace
 namespace ajiva.Systems.VulcanEngine
 {
-    public partial class AjivaRenderEngine : ComponentSystemBase<ARenderAble>, IRenderEngine, IDisposable
+    public partial class AjivaRenderEngine : ComponentSystemBase<ARenderAble>, IRenderEngine
     {
         /// <inheritdoc />
         public Cameras.Camera MainCamara
@@ -24,7 +23,7 @@ namespace ajiva.Systems.VulcanEngine
             get => mainCamara;
             set
             {
-                MainCamara?.Dispose();
+                mainCamara?.Dispose();
                 mainCamara = value;
             }
         }
@@ -49,7 +48,7 @@ namespace ajiva.Systems.VulcanEngine
             return false;
         }
 
-  #endregion
+        #endregion
 
         public static (Instance instance, DebugReportCallback debugReportCallback) CreateInstance(IEnumerable<string> enabledExtensionNames)
         {
@@ -93,7 +92,7 @@ namespace ajiva.Systems.VulcanEngine
             return (instance, debugReportCallback);
         }
 
-        private Cameras.Camera mainCamara;
+        private Cameras.Camera? mainCamara;
 
         private void UpdateCamaraProjView()
         {
@@ -137,7 +136,6 @@ namespace ajiva.Systems.VulcanEngine
             lock (RenderLock)
                 DrawFrame(delta);
             //Console.WriteLine(mainCamara.GetComponent<Transform3d>());
-            Console.WriteLine(delta);
 
             if (!Window.WindowReady)
                 Ecs.IssueClose();
@@ -163,7 +161,7 @@ namespace ajiva.Systems.VulcanEngine
         /// <inheritdoc />
         public override void AttachNewComponent(IEntity entity)
         {
-            entity.Components.Add(typeof(ARenderAble), CreateComponent(entity));
+            entity.AddComponent(CreateComponent(entity));
         }
     }
 }

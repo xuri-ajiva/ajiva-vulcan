@@ -10,7 +10,7 @@ namespace ajiva.Ecs.Component
     {
         public Type ComponentType { get; } = typeof(T);
 
-        public Dictionary<T, IEntity> ComponentEntityMap { get; } = new();
+        public Dictionary<T, IEntity> ComponentEntityMap { get; private set; } = new();
 
         /// <inheritdoc />
         public abstract void Update(TimeSpan delta);

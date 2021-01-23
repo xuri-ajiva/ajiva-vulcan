@@ -14,16 +14,17 @@ namespace ajiva.Systems.VulcanEngine.EngineManagers
 {
     public class PlatformWindow : RenderEngineComponent
     {
-        public event KeyEventHandler OnKeyEvent = null!;
-        public event EventHandler OnResize = null!;
-        public event EventHandler<vec2> OnMouseMove = null!;
+        public event KeyEventHandler? OnKeyEvent;
+        public event EventHandler? OnResize;
+        public event EventHandler<vec2>? OnMouseMove;
         public Surface? Surface { get; private set; }
 
         public vec2 PreviousMousePosition { get; private set; }
 
-        public Thread WindowThread { get; private set; }
-        public Queue<Action> WindowThreadQueue { get; } = new();
-        public bool WindowReady { get; private set; } = false;
+        public Thread WindowThread { get; }
+
+        public Queue<Action?> WindowThreadQueue { get; } = new();
+        public bool WindowReady { get; private set; }
 
         public PlatformWindow(IRenderEngine renderEngine) : base(renderEngine)
         {
@@ -98,7 +99,7 @@ namespace ajiva.Systems.VulcanEngine.EngineManagers
             Height = height;
             Width = width;
 
-            OnResize.Invoke(this, EventArgs.Empty);
+            OnResize?.Invoke(this, EventArgs.Empty);
         }
 
         //force NO gc on these delegates by keeping an reference
@@ -120,7 +121,7 @@ namespace ajiva.Systems.VulcanEngine.EngineManagers
             if (mousePos == PreviousMousePosition)
                 return;
 
-            OnMouseMove.Invoke(this, -(PreviousMousePosition - mousePos));
+            OnMouseMove?.Invoke(this, -(PreviousMousePosition - mousePos));
             PreviousMousePosition = mousePos;
         }
 

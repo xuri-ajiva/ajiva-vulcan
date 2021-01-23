@@ -1,6 +1,5 @@
 ﻿//#define TEST_MODE
 using System;
-using System.Collections.Generic;
 using System.Threading.Tasks;
 using ajiva.Application;
 using ajiva.Helpers;
@@ -17,6 +16,7 @@ namespace ajiva
             await app01.Init();
             await app01.Run();
             app01.Dispose();
+            app01 = null;
 
             Glfw3.Terminate();
             Console.WriteLine("Finished, press any Key to continue.");

@@ -1,4 +1,4 @@
-﻿#define LOGGING_TRUE
+﻿//#define LOGGING_TRUE
 using System;
 using System.Diagnostics;
 

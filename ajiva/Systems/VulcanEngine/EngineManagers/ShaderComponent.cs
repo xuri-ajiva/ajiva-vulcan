@@ -13,7 +13,7 @@ namespace ajiva.Systems.VulcanEngine.EngineManagers
         public ShaderComponent(IRenderEngine renderEngine) : base(renderEngine)
         {
             ViewProj = new(renderEngine.DeviceComponent, 1);
-            UniformModels = new(renderEngine.DeviceComponent, 200000);
+            UniformModels = new(renderEngine.DeviceComponent, 2000);
 
             //Uniform = new(renderEngine.DeviceComponent);
         }
