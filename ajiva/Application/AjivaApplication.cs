@@ -50,6 +50,8 @@ namespace ajiva.Application
 
                 if (iteration % 100 == 0)
                 {
+                    Console.WriteLine($"iteration: {iteration}, delta: {delta}, FPS: {1000.0f/delta.TotalMilliseconds}");
+
                     if (DateTime.Now - start > maxToRun)
                     {
                         return;
