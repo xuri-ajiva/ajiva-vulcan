@@ -1,11 +1,10 @@
 ﻿using System;
 using ajiva.Components;
 using ajiva.Ecs;
-using ajiva.Ecs.Entity;
 using ajiva.Ecs.Factory;
 using GlmSharp;
 
-namespace ajiva.Entitys
+namespace ajiva.Entities
 {
     public static class Cameras
     {
@@ -93,9 +92,12 @@ namespace ajiva.Entitys
 
             public override void OnMouseMoved(float xRel, float yRel)
             {
-                Transform.Rotation.y += xRel * MouseSensitivity; //yaw
-                Transform.Rotation.x -= yRel * MouseSensitivity; //pitch
-                Transform.Rotation.x = Math.Clamp(Transform.Rotation.x, -89.0F, 89.0f);
+                Transform.RefRotation((ref vec3 r) =>
+                {
+                    r.y += xRel * MouseSensitivity; //yaw
+                    r.x -= yRel * MouseSensitivity; //pitch
+                    r.x = Math.Clamp(Transform.Rotation.x, -89.0F, 89.0f);
+                });
 
                 lockAt = CamFront;
                 UpdateMatrices();

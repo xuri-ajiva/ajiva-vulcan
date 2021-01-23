@@ -1,7 +1,7 @@
 ﻿using System;
 using ajiva.Components;
 
-namespace ajiva.Entitys
+namespace ajiva.Entities
 {
     public class TransFormEntity : DefaultEntity
     {
