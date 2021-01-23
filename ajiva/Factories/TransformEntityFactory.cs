@@ -1,9 +1,9 @@
 ﻿using ajiva.Components;
 using ajiva.Ecs;
 using ajiva.Ecs.Factory;
-using ajiva.Entitys;
+using ajiva.Entities;
 
-namespace ajiva.Factorys
+namespace ajiva.Factories
 {
     public class TransformEntityFactory : EntityFactoryBase<TransFormEntity>
     {

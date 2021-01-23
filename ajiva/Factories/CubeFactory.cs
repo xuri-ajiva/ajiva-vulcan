@@ -1,10 +1,9 @@
 ﻿using ajiva.Components;
 using ajiva.Ecs;
-using ajiva.Ecs.Entity;
 using ajiva.Ecs.Factory;
-using ajiva.Entitys;
+using ajiva.Entities;
 
-namespace ajiva.Factorys
+namespace ajiva.Factories
 {
     public class CubeFactory : EntityFactoryBase<Cube>
     {
@@ -14,6 +13,7 @@ namespace ajiva.Factorys
             var cube = new Cube();
             system.AttachComponentToEntity<Transform3d>(cube);
             system.AttachComponentToEntity<ARenderAble>(cube);
+            system.AttachComponentToEntity<ATexture>(cube);
             return cube;
         }
 
