@@ -12,35 +12,31 @@ namespace ajiva.Ecs
     public class AjivaEcs : DisposingLogger
     {
         public bool Available { get; private set; }
-        private object Lock = new();
+        private readonly object @lock = new();
         private uint currentEntityId;
-        public uint CurrentEntityId => currentEntityId;
         private Dictionary<uint, IEntity> Entities { get; } = new();
-        private Dictionary<Type, IEntityFactory> Factorys { get; } = new();
+        private Dictionary<Type, IEntityFactory> Factories { get; } = new();
 
-        public Dictionary<string, object> Params { get; } = new();
+        private Dictionary<string, object> Params { get; } = new();
 
         public void Update(TimeSpan delta)
         {
-            lock (Lock)
+            lock (@lock)
             {
-                foreach (var system in Systems)
+                var p0 = Parallel.ForEach(Systems, x => x.Update(delta));
+                var p1 = Parallel.ForEach(Entities.Values.Where(x => x.HasUpdate), x => x.Update(delta));
+                while (!p1.IsCompleted && !p0.IsCompleted)
                 {
-                    system.Update(delta);
-                }
-
-                foreach (var entity in Entities.Values.Where(x => x.HasUpdate))
-                {
-                    entity.Update(delta);
+                    Task.Delay(1);
                 }
             }
         }
 
         public T CreateEntity<T>() where T : class, IEntity
         {
-            foreach (var factory in Factorys.Where(factory => factory.Key == typeof(T)))
+            foreach (var factory in Factories.Where(factory => factory.Key == typeof(T)))
             {
-                lock (Lock)
+                lock (@lock)
                 {
                     var entity = factory.Value.Create(this, currentEntityId++);
                     Entities.Add(entity.Id, entity);
@@ -68,7 +64,7 @@ namespace ajiva.Ecs
 
         public void AddEntityFactory(Type type, IEntityFactory entityFactory)
         {
-            Factorys.Add(type, entityFactory);
+            Factories.Add(type, entityFactory);
         }
 
         public T GetPara<T>(string name) => (T)Params[name];
@@ -90,14 +86,8 @@ namespace ajiva.Ecs
 
         public async Task InitSystems()
         {
-            /*
-                        var pl = Parallel.ForEach(Systems, async system => await system.Init(this));
-                        */
+            Task.WaitAll(Systems.Select(x => Task.Run(() => x.Init(this))).ToArray());
 
-            foreach (var system in Systems)
-            {
-                await system.Init(this);
-            }
             Available = true;
         }
 
@@ -111,23 +101,22 @@ namespace ajiva.Ecs
 
         public void IssueClose()
         {
-            lock (Lock)
+            lock (@lock)
             {
                 Available = false;
-                Task.Run(ReleaseUnmanagedResources);
             }
         }
 
         /// <inheritdoc />
         protected override void ReleaseUnmanagedResources()
         {
-            lock (Lock)
+            lock (@lock)
             {
-                foreach (var factory in Factorys)
+                foreach (var factory in Factories)
                 {
                     factory.Value?.Dispose();
                 }
-                Factorys.Clear();
+                Factories.Clear();
 
                 foreach (var entity in Entities)
                 {
