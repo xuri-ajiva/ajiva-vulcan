@@ -18,46 +18,47 @@ namespace ajiva.Systems.VulcanEngine
             ShaderComponent = new(this);
             SemaphoreComponent = new(this);
             TextureComponent = new(this);
+            Ecs = null!;
         }
 
         /// <inheritdoc />
         public Instance? Instance { get; set; }
 
         /// <inheritdoc />
-        public DeviceComponent DeviceComponent { get; }
+        public DeviceComponent DeviceComponent { get; private set; }
 
         /// <inheritdoc />
-        public SwapChainComponent SwapChainComponent { get; }
+        public SwapChainComponent SwapChainComponent { get; private set; }
 
         /// <inheritdoc />
-        public PlatformWindow Window { get; }
+        public PlatformWindow Window { get; private set; }
 
         /// <inheritdoc />
-        public ImageComponent ImageComponent { get; }
+        public ImageComponent ImageComponent { get; private set; }
 
         /// <inheritdoc />
-        public GraphicsComponent GraphicsComponent { get; }
+        public GraphicsComponent GraphicsComponent { get; private set; }
 
         /// <inheritdoc />
-        public ShaderComponent ShaderComponent { get; }
+        public ShaderComponent ShaderComponent { get; private set; }
 
         /// <inheritdoc />
-        public SemaphoreComponent SemaphoreComponent { get; }
+        public SemaphoreComponent SemaphoreComponent { get; private set; }
 
         /// <inheritdoc />
-        public TextureComponent TextureComponent { get; }
+        public TextureComponent TextureComponent { get; private set; }
 
         /// <inheritdoc />
-        public event PlatformEventHandler OnFrame;
+        public event PlatformEventHandler? OnFrame;
 
         /// <inheritdoc />
-        public event KeyEventHandler OnKeyEvent;
+        public event KeyEventHandler? OnKeyEvent;
 
         /// <inheritdoc />
-        public event EventHandler OnResize;
+        public event EventHandler? OnResize;
 
         /// <inheritdoc />
-        public event EventHandler<vec2> OnMouseMove;
+        public event EventHandler<vec2>? OnMouseMove;
 
         /// <inheritdoc />
         public object RenderLock { get; } = new();
