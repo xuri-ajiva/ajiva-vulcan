@@ -16,6 +16,8 @@ namespace ajiva.Systems.VulcanEngine.EngineManagers
         internal Queue? PresentQueue { get; private set; }
         internal Queue? TransferQueue { get; private set; }
 
+        public CommandBuffer? SingleCommandBuffer { get; private set; }
+
         public DeviceComponent(IRenderEngine renderEngine) : base(renderEngine)
         {
         }
@@ -97,33 +99,36 @@ namespace ajiva.Systems.VulcanEngine.EngineManagers
 
             TransientCommandPool ??= Device!.CreateCommandPool(queueFamilies.TransferFamily!.Value, CommandPoolCreateFlags.Transient);
 
-            CommandPool ??= Device!.CreateCommandPool(queueFamilies.GraphicsFamily!.Value);
+            CommandPool ??= Device!.CreateCommandPool(queueFamilies.GraphicsFamily!.Value, CommandPoolCreateFlags.ResetCommandBuffer);
+
+            SingleCommandBuffer ??= Device!.AllocateCommandBuffer(CommandPool, CommandBufferLevel.Primary);
         }
 
         public void SingleTimeCommand(Func<DeviceComponent, Queue> queueSelector, Action<CommandBuffer> action)
         {
             EnsureCommandPoolsExists();
 
-            var commandBuffer = Device!.AllocateCommandBuffer(CommandPool, CommandBufferLevel.Primary);
-            commandBuffer.Begin(CommandBufferUsageFlags.OneTimeSubmit);
-
-            action.Invoke(commandBuffer);
-
-            commandBuffer.End();
-
-            var queue = queueSelector(this);
-
-            queue.Submit(new SubmitInfo()
+            lock (SingleCommandBuffer!)
             {
-                CommandBuffers = new[]
-                {
-                    commandBuffer
-                },
-            }, null);
+                SingleCommandBuffer.Begin(CommandBufferUsageFlags.OneTimeSubmit);
 
-            queue.WaitIdle();
-            CommandPool!.FreeCommandBuffers(commandBuffer);
-            commandBuffer = null;
+                action.Invoke(SingleCommandBuffer);
+
+                SingleCommandBuffer.End();
+
+                var queue = queueSelector(this);
+
+                queue.Submit(new SubmitInfo
+                {
+                    CommandBuffers = new[]
+                    {
+                        SingleCommandBuffer
+                    },
+                }, null);
+
+                queue.WaitIdle();
+                SingleCommandBuffer.Reset(CommandBufferResetFlags.ReleaseResources);
+            }
         }
 
   #endregion
@@ -132,8 +137,15 @@ namespace ajiva.Systems.VulcanEngine.EngineManagers
         protected override void ReleaseUnmanagedResources()
         {
             TransientCommandPool?.Dispose();
+            CommandPool?.FreeCommandBuffers(SingleCommandBuffer);
             CommandPool?.Dispose();
             Device?.Dispose();
+
+            SingleCommandBuffer = null;
+            CommandPool = null;
+            TransientCommandPool = null;
+            Device = null;
+            PhysicalDevice = null;
         }
     }
 }
