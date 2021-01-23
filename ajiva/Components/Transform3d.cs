@@ -6,19 +6,72 @@ namespace ajiva.Components
 {
     public class Transform3d : IComponent
     {
+        private vec3 position;
+        private vec3 rotation;
+        private vec3 scale;
+        private bool dirty;
+
         public Transform3d(vec3 position, vec3 rotation, vec3 scale)
         {
-            Position = position;
-            Rotation = rotation;
-            Scale = scale;
+            this.position = position;
+            this.rotation = rotation;
+            this.scale = scale;
         }
 
         public Transform3d(vec3 position, vec3 rotation) : this(position, rotation, Default.Scale) { }
         public Transform3d(vec3 position) : this(position, Default.Rotation) { }
 
-        public vec3 Position;
-        public vec3 Rotation;
-        public vec3 Scale;
+#region propatys
+
+        public vec3 Position
+        {
+            get => position;
+            set
+            {
+                Dirty = true;
+                position = value;
+            }
+        }
+        public vec3 Rotation
+        {
+            get => rotation;
+            set
+            {
+                Dirty = true;
+                rotation = value;
+            }
+        }
+        public vec3 Scale
+        {
+            get => scale;
+            set
+            {
+                Dirty = true;
+                scale = value;
+            }
+        }
+
+        public void RefPosition(ModifyRef mod)
+        {
+            mod?.Invoke(ref position);
+            Dirty = true;
+        }
+
+        public void RefRotation(ModifyRef mod)
+        {
+            mod?.Invoke(ref rotation);
+            Dirty = true;
+        }
+
+        public void RefScale(ModifyRef mod)
+        {
+            mod?.Invoke(ref scale);
+            Dirty = true;
+        }
+
+        public delegate void ModifyRef(ref vec3 vec);
+
+  #endregion
 
         public static Transform3d Default => new(vec3.Zero, vec3.Zero, vec3.Ones);
 
