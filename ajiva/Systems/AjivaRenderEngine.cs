@@ -96,15 +96,24 @@ namespace ajiva.Systems.VulcanEngine
 
         private void UpdateCamaraProjView()
         {
+            int updateCtr = 0;
             ShaderComponent.ViewProj.UpdateExpresion(delegate(int index, ref UniformViewProj value)
             {
                 if (index != 0) return;
 
-                value.View = MainCamara.View;
+                if (value.View != mainCamara!.View)
+                {
+                    updateCtr++;
+                    value.View = MainCamara.View;
+                }
+                if (value.Proj == MainCamara.Projection) return;
+                
+                updateCtr++;
                 value.Proj = MainCamara.Projection;
                 value.Proj[1, 1] *= -1;
             });
-            ShaderComponent.ViewProj.Copy();
+            if (updateCtr != 0)
+                ShaderComponent.ViewProj.Copy();
         }
 
         private void DrawFrame(TimeSpan delta)
@@ -116,17 +125,36 @@ namespace ajiva.Systems.VulcanEngine
         /// <inheritdoc />
         public override void Update(TimeSpan delta)
         {
+            var updated = new List<uint>();
             foreach (var (renderAble, entity) in ComponentEntityMap)
             {
-                ShaderComponent.UniformModels.Staging.Value[renderAble!.Id] = new()
+                var update = false;
+                Transform3d? transform = null!;
+                //ATexture? texture = null!;
+                if (entity.TryGetComponent(out transform) && transform!.Dirty)
                 {
-                    Model =  entity.GetComponent<Transform3d>()?.ModelMat ?? mat4.Identity, TextureSamplerId = renderAble!.Id
-                };
+                    ShaderComponent.UniformModels.Staging.Value[renderAble!.Id].Model = transform.ModelMat; // texture?.TextureId ?? 0
+                    update = true;
+                }
+                if (renderAble.Dirty /*entity.TryGetComponent(out texture) && texture!.Dirty ||*/)
+                {
+                    ShaderComponent.UniformModels.Staging.Value[renderAble!.Id].TextureSamplerId = renderAble!.Id; // texture?.TextureId ?? 0
+                    update = true;
+                }
+
+                if (update)
+                    updated.Add(renderAble.Id);
+
+                /*ShaderComponent.UniformModels.UpdateCopyOne( new()
+                {
+                    TextureSamplerId = renderAble!.Id;   
+                },renderAble.Id); */
             }
 
-            ShaderComponent.UniformModels.Staging.CopyValueToBuffer();
-            lock (RenderLock)
-                ShaderComponent.UniformModels.Copy();
+            //ShaderComponent.UniformModels.Staging.CopyValueToBuffer();
+            if (updated.Any())
+                lock (RenderLock)
+                    ShaderComponent.UniformModels.CopyRegions(updated);
 
             Window.PollEvents();
             //MainCamara.Update((float)delta.TotalMilliseconds);
