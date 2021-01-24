@@ -2,7 +2,6 @@
 using System;
 using System.Threading.Tasks;
 using ajiva.Application;
-using ajiva.Helpers;
 using SharpVk.Glfw;
 
 namespace ajiva

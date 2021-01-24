@@ -101,7 +101,7 @@ namespace ajiva.Systems.VulcanEngine.EngineManagers
 
             CommandPool ??= Device!.CreateCommandPool(queueFamilies.GraphicsFamily!.Value, CommandPoolCreateFlags.ResetCommandBuffer);
 
-            SingleCommandBuffer ??= Device!.AllocateCommandBuffer(CommandPool, CommandBufferLevel.Primary);
+            SingleCommandBuffer ??= Device!.AllocateCommandBuffers(CommandPool, CommandBufferLevel.Primary, 1).Single();
         }
 
         public void SingleTimeCommand(Func<DeviceComponent, Queue> queueSelector, Action<CommandBuffer> action)

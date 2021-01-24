@@ -5,7 +5,7 @@ using System.Runtime.CompilerServices;
 using ajiva.Components;
 using ajiva.Ecs;
 using ajiva.Ecs.Component;
-using ajiva.Entitys;
+using ajiva.Entities;
 using ajiva.Systems.VulcanEngine.EngineManagers;
 using GlmSharp;
 using SharpVk;
