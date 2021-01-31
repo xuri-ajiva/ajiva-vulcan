@@ -22,47 +22,16 @@ namespace ajiva.Application
 
         private AjivaEcs EntityComponentSystem = new();
 
-        public async Task Run()
+        public void Run()
         {
-            Runing = true;
-            await RunDelta(delegate(TimeSpan span)
+            Running = true;
+
+            Helpers.RunHelper.RunDelta(delegate(TimeSpan span)
             {
-                EntityComponentSystem.Update(span);
-                if (!EntityComponentSystem.Available)
-                    Runing = false;
-            }, () => Runing, TimeSpan.MaxValue);
-        }
-
-        private static async Task RunDelta(Action<TimeSpan> action, Func<bool> condition, TimeSpan maxToRun)
-        {
-            var iteration = 0u;
-            var start = DateTime.Now;
-
-            var delta = TimeSpan.Zero;
-            long end = 0, now = Stopwatch.GetTimestamp();
-            while (condition())
-            {
-                await Task.Delay(5);
-
-                action?.Invoke(delta);
-
-                iteration++;
-
-                if (iteration % 100 == 0)
-                {
-                    Console.WriteLine($"iteration: {iteration}, delta: {delta}, FPS: {1000.0f/delta.TotalMilliseconds}");
-
-                    if (DateTime.Now - start > maxToRun)
-                    {
-                        return;
-                    }
-                }
-
-                end = Stopwatch.GetTimestamp();
-                delta = new(end - now);
-
-                now = end;
-            }
+                entityComponentSystem.Update(span);
+                if (!entityComponentSystem.Available)
+                    Running = false;
+            }, () => Running, TimeSpan.MaxValue);
         }
 
         private Instance vulcanInstance;
