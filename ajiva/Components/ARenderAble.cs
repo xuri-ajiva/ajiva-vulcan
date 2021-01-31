@@ -2,6 +2,7 @@
 using ajiva.Helpers;
 using ajiva.Models;
 using ajiva.Systems.VulcanEngine.EngineManagers;
+using ajiva.Systems.VulcanEngine.Systems;
 
 namespace ajiva.Components
 {
@@ -17,11 +18,11 @@ namespace ajiva.Components
             Id = INextId<ARenderAble>.Next();
         }
         
-        public void SetMesh(Mesh? mesh, DeviceComponent component)
+        public void SetMesh(Mesh? mesh, DeviceSystem system)
         {
             Mesh?.Dispose();
             Mesh = mesh;
-            Mesh?.Create(component);
+            Mesh?.Create(system);
             Render &= mesh != null;
         }
 
