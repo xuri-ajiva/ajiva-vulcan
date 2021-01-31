@@ -2,8 +2,10 @@
 using System.IO;
 using System.Linq;
 using System.Runtime.CompilerServices;
+using ajiva.Ecs.Component;
 using ajiva.Systems.VulcanEngine;
 using ajiva.Systems.VulcanEngine.EngineManagers;
+using ajiva.Systems.VulcanEngine.Systems;
 using GlmSharp;
 using SharpVk;
 using SharpVk.Shanq;
@@ -11,15 +13,15 @@ using SharpVk.Shanq.GlmSharp;
 
 namespace ajiva.Models
 {
-    public class Shader : ThreadSaveCreatable
+    public class Shader : ThreadSaveCreatable, IComponent
     {
-        private readonly DeviceComponent component;
+        private readonly DeviceSystem system;
         public ShaderModule? FragShader { get; private set; }
         public ShaderModule? VertShader { get; private set; }
 
-        public Shader(DeviceComponent component)
+        public Shader(DeviceSystem system)
         {
-            this.component = component;
+            this.system = system;
         }
 
         private static uint[] LoadShaderData(string filePath, out int codeSize)
@@ -36,11 +38,11 @@ namespace ajiva.Models
 
         private ShaderModule? CreateShader(string path)
         {
-            component.EnsureDevicesExist();
+            //todo: system.EnsureDevicesExist();
 
             var shaderData = LoadShaderData(path, out var codeSize);
 
-            return component.Device!.CreateShaderModule(codeSize, shaderData);
+            return system.Device!.CreateShaderModule(codeSize, shaderData);
         }
 
         public const string DefaultVertexShaderName = "vert.spv";
@@ -70,31 +72,31 @@ namespace ajiva.Models
         public void CreateShaderModules<TV, TF>(Func<IShanqFactory, IQueryable<TV>> vertexShaderFunc, Func<IShanqFactory, IQueryable<TF>> fragmentShaderFunc)
         {
             if (Created) return;
-            VertShader = component.Device.CreateVertexModule(vertexShaderFunc);
+            VertShader = system.Device.CreateVertexModule(vertexShaderFunc);
 
-            FragShader = component.Device.CreateFragmentModule(fragmentShaderFunc);
+            FragShader = system.Device.CreateFragmentModule(fragmentShaderFunc);
             Created = true;
         }
 
-        public static Shader CreateShaderFrom(string dir, DeviceComponent component)
+        public static Shader CreateShaderFrom(string dir, DeviceSystem system)
         {
-            var sh = new Shader(component);
+            var sh = new Shader(system);
             sh.CreateShaderModules(dir);
             //sh.EnsureCreateUniformBufferExists();
 
             return sh;
         }
 
-        public static Shader CreateShaderFrom<TV, TF>(Func<IShanqFactory, IQueryable<TV>> vertexShaderFunc, Func<IShanqFactory, IQueryable<TF>> fragmentShaderFunc, DeviceComponent component)
+        public static Shader CreateShaderFrom<TV, TF>(Func<IShanqFactory, IQueryable<TV>> vertexShaderFunc, Func<IShanqFactory, IQueryable<TF>> fragmentShaderFunc, DeviceSystem system)
         {
-            var sh = new Shader(component);
+            var sh = new Shader(system);
             sh.CreateShaderModules(vertexShaderFunc, fragmentShaderFunc);
             //sh.EnsureCreateUniformBufferExists();
 
             return sh;
         }
 
-        public static Shader DefaultShader(DeviceComponent component)
+        public static Shader DefaultShader(DeviceSystem system)
         {
             return CreateShaderFrom(shank => from input in shank.GetInput<Vertex>()
                 from ubo in shank.GetBinding<UniformBufferData>(0)
@@ -109,7 +111,7 @@ namespace ajiva.Models
                 select new FragmentOutput
                 {
                     Colour = colour
-                }, component);
+                }, system);
         }
 
         /// <inheritdoc />
@@ -124,5 +126,8 @@ namespace ajiva.Models
         {
             throw new NotSupportedException("Create with Specific Arguments");
         }
+
+        /// <inheritdoc />
+        public bool Dirty { get; set; }
     }
 }
