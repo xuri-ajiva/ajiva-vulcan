@@ -1,21 +1,22 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using ajiva.Systems.VulcanEngine.EngineManagers;
+using ajiva.Systems.VulcanEngine.Systems;
 using SharpVk;
 
 namespace ajiva.Models
 {
     public class UniformBuffer<T> : ThreadSaveCreatable where T : struct
     {
-        private readonly DeviceComponent component;
+        private readonly DeviceSystem system;
         public WritableCopyBuffer<T> Staging { get; }
         public BufferOfT<T> Uniform { get; }
 
-        public UniformBuffer(DeviceComponent component, int itemCount)
+        public UniformBuffer(DeviceSystem system, int itemCount)
         {
             var value = new T[itemCount];
 
-            this.component = component;
+            this.system = system;
 
             Staging = new(value);
             Uniform = new(value);
@@ -24,8 +25,8 @@ namespace ajiva.Models
         /// <inheritdoc />
         protected override void Create()
         {
-            Staging.Create(component, BufferUsageFlags.TransferSource, MemoryPropertyFlags.HostVisible | MemoryPropertyFlags.HostCoherent);
-            Uniform.Create(component, BufferUsageFlags.TransferDestination | BufferUsageFlags.UniformBuffer, MemoryPropertyFlags.DeviceLocal);
+            Staging.Create(system, BufferUsageFlags.TransferSource, MemoryPropertyFlags.HostVisible | MemoryPropertyFlags.HostCoherent);
+            Uniform.Create(system, BufferUsageFlags.TransferDestination | BufferUsageFlags.UniformBuffer, MemoryPropertyFlags.DeviceLocal);
         }
 
         public void Update(T[] toUpdate)
@@ -35,7 +36,7 @@ namespace ajiva.Models
 
         public void Copy()
         {
-            Staging.CopyTo(Uniform, component);
+            Staging.CopyTo(Uniform, system);
         }
 
         public void UpdateCopyOne(T data, uint id)
@@ -46,7 +47,7 @@ namespace ajiva.Models
                 Size = Uniform.SizeOfT,
                 DestinationOffset = Uniform.SizeOfT * id,
                 SourceOffset = Uniform.SizeOfT * id
-            }, component);
+            }, system);
         }
 
         /// <inheritdoc />
@@ -80,7 +81,7 @@ namespace ajiva.Models
                 Size = Uniform.SizeOfT,
                 DestinationOffset = Uniform.SizeOfT * id,
                 SourceOffset = Uniform.SizeOfT * id
-            }).ToArray(), component);
+            }).ToArray(), system);
         }
     }
 }
