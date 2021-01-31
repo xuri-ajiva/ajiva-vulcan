@@ -53,6 +53,16 @@ namespace ajiva.Systems.VulcanEngine.Systems
             while (!Glfw3.WindowShouldClose(window))
             {
                 Thread.Sleep(1);
+
+                if (lastResize != DateTime.MinValue)
+                {
+                    if (lastResize.AddSeconds(5) > DateTime.Now)
+                    {
+                        OnResize?.Invoke(this, EventArgs.Empty);
+                        lastResize = DateTime.MinValue;
+                    }
+                }
+
                 while (WindowThreadQueue.TryDequeue(out var action))
                 {
                     try
@@ -93,12 +103,14 @@ namespace ajiva.Systems.VulcanEngine.Systems
             }
         }
 
+        DateTime lastResize = DateTime.MinValue;
+
         private void SizeCallback(WindowHandle windowHandle, int width, int height)
         {
             Height = height;
             Width = width;
 
-            OnResize?.Invoke(this, EventArgs.Empty);
+            lastResize = DateTime.Now;
         }
 
         //force NO gc on these delegates by keeping an reference
