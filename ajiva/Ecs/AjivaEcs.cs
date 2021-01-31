@@ -20,19 +20,6 @@ namespace ajiva.Ecs
         private Dictionary<Type, ISystem> Systems { get; } = new();
         private Dictionary<string, object> Params { get; } = new();
 
-        public void Update(TimeSpan delta)
-        {
-            lock (@lock)
-            {
-                var p0 = Parallel.ForEach(Systems, x => x.Update(delta));
-                var p1 = Parallel.ForEach(Entities.Values.Where(x => x.HasUpdate), x => x.Update(delta));
-                while (!p1.IsCompleted && !p0.IsCompleted)
-                {
-                    Task.Delay(1);
-                }
-            }
-        }
-
         public T CreateEntity<T>() where T : class, IEntity
         {
             foreach (var factory in Factories.Where(factory => factory.Key == typeof(T)))
@@ -94,10 +81,24 @@ namespace ajiva.Ecs
 
         public void AttachComponentToEntity<T>(IEntity entity) where T : class, IComponent
         {
-            foreach (var system in Systems.Where(system => system.ComponentType == typeof(T)))
-            {
-                system.AttachNewComponent(entity);
-            }
+            if (!Inits.ContainsKey(phase)) return;
+            lock (@lock)
+                if (multiThreading)
+                    Parallel.ForEach(Inits[phase], i => i.Init(this, phase));
+                else
+                    foreach (var init in Inits[phase])
+                        init.Init(this, phase);
+        }
+
+        public void Update(TimeSpan delta)
+        {
+            if (Updates.Count < 1) return;
+            lock (@lock)
+                if (multiThreading)
+                    Parallel.ForEach(Updates, d => d.Update(delta));
+                else
+                    foreach (var update in Updates)
+                        update.Update(delta);
         }
 
         public void IssueClose()
@@ -134,6 +135,20 @@ namespace ajiva.Ecs
                 }
                 Systems.Clear();
             }
+        }
+
+        private List<IUpdate> Updates = new();
+
+        public void RegisterUpdate(IUpdate update) => Updates.Add(update);
+
+        private Dictionary<InitPhase, List<IInit>> Inits = new();
+
+        public void RegisterInit(IInit init, InitPhase phase)
+        {
+            if (Inits.ContainsKey(phase))
+                Inits[phase].Add(init);
+            else
+                Inits.Add(phase, new() {init});
         }
     }
 }
