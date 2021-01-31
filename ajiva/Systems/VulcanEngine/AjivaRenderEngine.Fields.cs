@@ -21,5 +21,10 @@ namespace ajiva.Systems.VulcanEngine
 
         /// <inheritdoc />
         public object UpdateLock { get; } = new();
+
+        public int DirtyComponents = 0;
+        private const int MaxDirt = 10;
+
+        private System.Collections.Generic.Queue<Action?> renderThreadQueue = new();
     }
 }
