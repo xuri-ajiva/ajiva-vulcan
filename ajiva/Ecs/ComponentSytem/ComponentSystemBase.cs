@@ -1,10 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Threading.Tasks;
+using ajiva.Ecs.Component;
 using ajiva.Ecs.Entity;
 using ajiva.Helpers;
 
-namespace ajiva.Ecs.Component
+namespace ajiva.Ecs.ComponentSytem
 {
     public abstract class ComponentSystemBase<T> : DisposingLogger, IComponentSystem<T> where T : class, IComponent
     {
@@ -12,13 +12,15 @@ namespace ajiva.Ecs.Component
 
         public Dictionary<T, IEntity> ComponentEntityMap { get; private set; } = new();
 
-        /// <inheritdoc />
-        public abstract void Update(TimeSpan delta);
+        protected abstract void Setup();
 
-        public abstract Task Init(AjivaEcs ecs);
+        public void Setup(AjivaEcs ecs)
+        {
+            Ecs = ecs;
+            Setup();
+        }
 
-        /// <inheritdoc />
-        object IComponentSystem.CreateComponent(IEntity entity) => CreateComponent(entity);
+        protected AjivaEcs Ecs { get; private set; }
 
         /// <inheritdoc />
         public abstract void AttachNewComponent(IEntity entity);
@@ -26,8 +28,6 @@ namespace ajiva.Ecs.Component
         /// <inheritdoc />
         public abstract T CreateComponent(IEntity entity);
 
-        /// <inheritdoc />
-        object IComponentSystem.ComponentEntityMap => ComponentEntityMap;
 
         protected override void ReleaseUnmanagedResources()
         {
