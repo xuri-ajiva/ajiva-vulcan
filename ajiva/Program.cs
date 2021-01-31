@@ -3,20 +3,26 @@ using System;
 using System.Threading.Tasks;
 using ajiva.Application;
 using SharpVk.Glfw;
+using SharpVk.Interop;
 
 namespace ajiva
 {
     public class Program
     {
-        private static async Task Main()
+        private static void Main()
         {
             Glfw3.Init();
+
             var app01 = new AjivaApplication();
-            await app01.Init();
-            await app01.Run();
+            app01.Init();
+            app01.Run();
             app01.Dispose();
             app01 = null;
 
+            GC.Collect();
+            GC.WaitForPendingFinalizers();
+            GC.Collect();
+            HeapUtil.AllocHFree();
             Glfw3.Terminate();
             Console.WriteLine("Finished, press any Key to continue.");
             Console.ReadKey();
