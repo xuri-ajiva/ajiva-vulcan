@@ -22,7 +22,7 @@ namespace ajiva
             GC.Collect();
             GC.WaitForPendingFinalizers();
             GC.Collect();
-            HeapUtil.AllocHFree();
+            HeapUtil.FreeHGlobal();
             Glfw3.Terminate();
             Console.WriteLine("Finished, press any Key to continue.");
             Console.ReadKey();
