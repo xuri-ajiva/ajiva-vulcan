@@ -2,18 +2,20 @@
 using System.Collections.Generic;
 using System.Runtime.InteropServices.ComTypes;
 using ajiva.Components;
+using ajiva.Ecs;
+using ajiva.Ecs.ComponentSytem;
+using ajiva.Ecs.Entity;
 using ajiva.Helpers;
-using ajiva.Systems.VulcanEngine.Engine;
 using SharpVk;
 
-namespace ajiva.Systems.VulcanEngine.EngineManagers
+namespace ajiva.Systems.VulcanEngine.Systems
 {
-    public class TextureComponent : RenderEngineComponent
+    public class TextureSystem : ComponentSystemBase<ATexture>, IInit
     {
         // ReSharper disable once InconsistentNaming
         public const int MAX_TEXTURE_SAMPLERS_IN_SHADER = 128;
 
-        public TextureComponent(IRenderEngine renderEngine) : base(renderEngine)
+        public TextureSystem()
         {
             INextId<ATexture>.MaxId = MAX_TEXTURE_SAMPLERS_IN_SHADER;
             TextureSamplerImageViews = new DescriptorImageInfo[MAX_TEXTURE_SAMPLERS_IN_SHADER];
@@ -38,6 +40,24 @@ namespace ajiva.Systems.VulcanEngine.EngineManagers
         }
 
         /// <inheritdoc />
+        public override ATexture CreateComponent(IEntity entity)
+        {
+            return new ATexture();
+        }
+
+        /// <inheritdoc />
+        public override void AttachNewComponent(IEntity entity)
+        {
+            entity.AddComponent(CreateComponent(entity));
+        }
+
+        /// <inheritdoc />
+        protected override void Setup()
+        {
+             Ecs.RegisterInit(this, InitPhase.PreMain);
+        }
+
+        /// <inheritdoc />
         protected override void ReleaseUnmanagedResources()
         {
             for (var i = 0; i < MAX_TEXTURE_SAMPLERS_IN_SHADER; i++)
@@ -50,12 +70,11 @@ namespace ajiva.Systems.VulcanEngine.EngineManagers
             }
         }
 
-        public void EnsureDefaultImagesExists()
+        public void EnsureDefaultImagesExists(AjivaEcs ecs)
         {
             if (Default != null) return;
-            RenderEngine.DeviceComponent.EnsureDevicesExist();
-
-            Default = ATexture.FromFile(RenderEngine,"logo.png");
+            
+            Default = ATexture.FromFile(ecs,"logo.png");
             Textures.Add(Default);
 
             for (var i = 0; i < MAX_TEXTURE_SAMPLERS_IN_SHADER; i++)
@@ -69,6 +88,12 @@ namespace ajiva.Systems.VulcanEngine.EngineManagers
                 Image = CreateTextureImageFromFile("logo2.png"),
                 Sampler = CreateTextureSampler()
             });*/
+        }
+
+        /// <inheritdoc />
+        public void Init(AjivaEcs ecs, InitPhase phase)
+        {
+            EnsureDefaultImagesExists(ecs);
         }
     }
 }
