@@ -1,6 +1,4 @@
 ﻿using System;
-using System.Diagnostics;
-using System.Threading.Tasks;
 using ajiva.Components;
 using ajiva.Ecs;
 using ajiva.Ecs.Example;
@@ -10,6 +8,7 @@ using ajiva.Helpers;
 using ajiva.Models;
 using ajiva.Systems;
 using ajiva.Systems.VulcanEngine;
+using ajiva.Systems.VulcanEngine.Systems;
 using SharpVk;
 using SharpVk.Glfw;
 using SharpVk.Multivendor;
@@ -18,9 +17,9 @@ namespace ajiva.Application
 {
     public class AjivaApplication : DisposingLogger
     {
-        public bool Runing { get; set; } = false;
+        private bool Running { get; set; } = false;
 
-        private AjivaEcs EntityComponentSystem = new();
+        private readonly AjivaEcs entityComponentSystem = new(true);
 
         public void Run()
         {
@@ -40,37 +39,52 @@ namespace ajiva.Application
         private const int SurfaceWidth = 800;
         private const int SurfaceHeight = 600;
 
-        public async Task Init()
+        public void Init()
         {
             (vulcanInstance, debugReportCallback) = AjivaRenderEngine.CreateInstance(Glfw3.GetRequiredInstanceExtensions());
-            var renderEngine = new AjivaRenderEngine(vulcanInstance);
-            EntityComponentSystem.AddComponentSystem(renderEngine);
-            EntityComponentSystem.AddComponentSystem(new TransformComponentSystem());
-            EntityComponentSystem.AddEntityFactory(typeof(SdtEntity), new SomeEntityFactory());
-            EntityComponentSystem.AddEntityFactory(typeof(Cube), new CubeFactory());
-            EntityComponentSystem.AddEntityFactory(typeof(Cameras.FpsCamera), new Cameras.FpsCamaraFactory());
-            EntityComponentSystem.AddParam(nameof(SurfaceHeight), SurfaceHeight);
-            EntityComponentSystem.AddParam(nameof(SurfaceWidth), SurfaceWidth);
+            var renderEngine = new AjivaRenderEngine();
+            var deviceSystem = new DeviceSystem();
 
-            renderEngine.MainCamara = EntityComponentSystem.CreateEntity<Cameras.FpsCamera>();
+            entityComponentSystem.AddInstance(vulcanInstance);
+
+            entityComponentSystem.AddSystem(deviceSystem);
+            entityComponentSystem.AddSystem(new ShaderSystem(deviceSystem));
+            entityComponentSystem.AddSystem(new WindowSystem());
+            entityComponentSystem.AddSystem(new GraphicsSystem());
+
+            entityComponentSystem.AddComponentSystem(renderEngine);
+            entityComponentSystem.AddComponentSystem(new TextureSystem());
+            entityComponentSystem.AddComponentSystem(new ImageSystem());
+            entityComponentSystem.AddComponentSystem(new TransformComponentSystem());
+
+            entityComponentSystem.AddEntityFactory(typeof(SdtEntity), new SomeEntityFactory());
+
+            entityComponentSystem.AddEntityFactory(typeof(Cube), new CubeFactory());
+            entityComponentSystem.AddEntityFactory(typeof(Cameras.FpsCamera), new Cameras.FpsCamaraFactory());
+
+            entityComponentSystem.AddParam(nameof(SurfaceHeight), SurfaceHeight);
+            entityComponentSystem.AddParam(nameof(SurfaceWidth), SurfaceWidth);
+
+            renderEngine.MainCamara = entityComponentSystem.CreateEntity<Cameras.FpsCamera>();
             renderEngine.MainCamara.UpdatePerspective(90, SurfaceWidth, SurfaceHeight);
             renderEngine.MainCamara.MovementSpeed = .1f;
 
-            var meshPref = Mesh.Cube;
+            var meshPref = Mesh.Cube.Clone();
             var r = new Random();
 
             const int size = 10;
             const int posRange = 10;
             const float scale = 0.7f;
 
-            await EntityComponentSystem.InitSystems();
+            entityComponentSystem.SetupSystems();
+            entityComponentSystem.InitSystems();
 
             for (var i = 0; i < size; i++)
             {
-                var cube = EntityComponentSystem.CreateEntity<Cube>();
+                var cube = entityComponentSystem.CreateEntity<Cube>();
 
                 var render = cube.GetComponent<ARenderAble>();
-                render.SetMesh(meshPref, renderEngine.DeviceComponent);
+                render.SetMesh(meshPref, deviceSystem);
                 render.Render = true;
 
                 var trans = cube.GetComponent<Transform3d>();
@@ -83,10 +97,15 @@ namespace ajiva.Application
         /// <inheritdoc />
         protected override void ReleaseUnmanagedResources()
         {
-            EntityComponentSystem.Dispose();
+            entityComponentSystem.Dispose();
 
             debugReportCallback.Dispose();
             vulcanInstance.Dispose();
+            debugReportCallback = null;
+            vulcanInstance = null;
+            GC.Collect();
+            GC.WaitForPendingFinalizers();
+            GC.Collect();
         }
     }
 }

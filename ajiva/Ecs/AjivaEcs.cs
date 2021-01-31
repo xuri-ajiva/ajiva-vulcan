@@ -3,8 +3,10 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using ajiva.Ecs.Component;
+using ajiva.Ecs.ComponentSytem;
 using ajiva.Ecs.Entity;
 using ajiva.Ecs.Factory;
+using ajiva.Ecs.System;
 using ajiva.Helpers;
 
 namespace ajiva.Ecs
@@ -156,8 +158,8 @@ namespace ajiva.Ecs
                 {
                     system?.Dispose();
                 }
-                ComponentSystems.Clear();  
-                
+                ComponentSystems.Clear();
+
                 foreach (var system in Systems.Values)
                 {
                     system?.Dispose();
