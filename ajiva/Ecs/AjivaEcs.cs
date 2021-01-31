@@ -34,26 +34,24 @@ namespace ajiva.Ecs
             return default!;
         }
 
-        public void AddComponentSystem(IComponentSystem system)
+        public T CreateComponent<T>(IEntity entity) where T : class, IComponent => ((IComponentSystem<T>)ComponentSystems[typeof(T)]).CreateComponent(entity);
+
+        public void AttachComponentToEntity<T>(IEntity entity) where T : class, IComponent => ((IComponentSystem<T>)ComponentSystems[typeof(T)]).AttachNewComponent(entity);
+
+        public void AddEntityFactory(Type type, IEntityFactory entityFactory) => Factories.Add(type, entityFactory);
+
+        public void AddComponentSystem<T>(IComponentSystem<T> system) where T : class, IComponent => ComponentSystems.Add(typeof(T), system);
+        public IComponentSystem<T> GetComponentSystemByComponent<T>() where T : class, IComponent => (IComponentSystem<T>)ComponentSystems[typeof(T)];
+        public TS GetComponentSystem<TS, TC>() where TS : IComponentSystem<TC> where TC : class, IComponent => (TS)ComponentSystems[typeof(TC)];
+
+        public void AddSystem<T>(T system) where T : class, ISystem
         {
-            Systems.Add(system);
+            if (system is IComponentSystem)
+                throw new ArgumentException("IComponentSystem should not be assinged as ISystem");
+            Systems.Add(typeof(T), system);
         }
 
-        public List<IComponentSystem> Systems { get; } = new();
-
-        public T CreateComponent<T>(IEntity entityId) where T : class, IComponent
-        {
-            foreach (var system in Systems.Where(system => system.ComponentType == typeof(T)))
-            {
-                return (T)system.CreateComponent(entityId);
-            }
-            throw new ArgumentException($"{typeof(T)} Has No Factory!");
-        }
-
-        public void AddEntityFactory(Type type, IEntityFactory entityFactory)
-        {
-            Factories.Add(type, entityFactory);
-        }
+        public T GetSystem<T>() where T : class, ISystem => (T)Systems[typeof(T)];
 
         public T GetPara<T>(string name) => (T)Params[name];
 
