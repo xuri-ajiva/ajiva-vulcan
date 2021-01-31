@@ -11,6 +11,13 @@ namespace ajiva.Ecs
 {
     public class AjivaEcs : DisposingLogger
     {
+        private readonly bool multiThreading;
+
+        public AjivaEcs(bool multiThreading)
+        {
+            this.multiThreading = multiThreading;
+        }
+
         public bool Available { get; private set; }
         private readonly object @lock = new();
         private uint currentEntityId;
@@ -77,7 +84,22 @@ namespace ajiva.Ecs
             Available = true;
         }
 
-        public void AttachComponentToEntity<T>(IEntity entity) where T : class, IComponent
+        public void SetupSystems()
+        {
+            lock (@lock)
+                if (multiThreading)
+                    Parallel.Invoke(
+                        () => Parallel.ForEach(ComponentSystems.Values, s => s.Setup(this)),
+                        () => Parallel.ForEach(Systems.Values, s => s.Setup(this))
+                    );
+                else
+                {
+                    foreach (var system in ComponentSystems.Values) system.Setup(this);
+                    foreach (var system in Systems.Values) system.Setup(this);
+                }
+        }
+
+        private void Init(InitPhase phase)
         {
             if (!Inits.ContainsKey(phase)) return;
             lock (@lock)
