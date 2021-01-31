@@ -4,6 +4,7 @@ using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using ajiva.Helpers;
 using ajiva.Systems.VulcanEngine.EngineManagers;
+using ajiva.Systems.VulcanEngine.Systems;
 using SharpVk;
 
 namespace ajiva.Models
@@ -51,22 +52,22 @@ namespace ajiva.Models
             Memory.Unmap();
         }
 
-        public static CopyBuffer<T> CreateCopyBufferOnDevice(T[] val, DeviceComponent component)
+        public static CopyBuffer<T> CreateCopyBufferOnDevice(T[] val, DeviceSystem system)
         {
             var copyBuffer = new CopyBuffer<T>(val);
 
-            copyBuffer.Create(component, BufferUsageFlags.TransferSource, MemoryPropertyFlags.HostVisible | MemoryPropertyFlags.HostCoherent);
+            copyBuffer.Create(system, BufferUsageFlags.TransferSource, MemoryPropertyFlags.HostVisible | MemoryPropertyFlags.HostCoherent);
             copyBuffer.CopyValueToBuffer();
             return copyBuffer;
         }
 
-        public void CopyTo(BufferOfT<T> aBuffer, DeviceComponent component)
+        public void CopyTo(BufferOfT<T> aBuffer, DeviceSystem system)
         {
-            component.EnsureDevicesExist();
+            //todo: system.EnsureDevicesExist();
 
             if (aBuffer.Size < Size) throw new ArgumentException("The Destination Buffer is smaller than the Source Buffer", nameof(aBuffer));
 
-            component.SingleTimeCommand(x => x.GraphicsQueue!, command =>
+            system.SingleTimeCommand(x => x.GraphicsQueue!, command =>
             {
                 command.CopyBuffer(Buffer, aBuffer.Buffer, new BufferCopy
                 {
@@ -75,13 +76,13 @@ namespace ajiva.Models
             });
         }
 
-        public void CopyRegions(BufferOfT<T> aBuffer, ArrayProxy<BufferCopy> regions, DeviceComponent component)
+        public void CopyRegions(BufferOfT<T> aBuffer, ArrayProxy<BufferCopy> regions, DeviceSystem system)
         {
-            component.EnsureDevicesExist();
+            //todo: system.EnsureDevicesExist();
 
             if (aBuffer.Size < Size) throw new ArgumentException("The Destination Buffer is smaller than the Source Buffer", nameof(aBuffer));
 
-            component.SingleTimeCommand(x => x.GraphicsQueue!, command =>
+            system.SingleTimeCommand(x => x.GraphicsQueue!, command =>
             {
                 command.CopyBuffer(Buffer, aBuffer.Buffer, regions);
             });
