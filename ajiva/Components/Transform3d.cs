@@ -9,7 +9,6 @@ namespace ajiva.Components
         private vec3 position;
         private vec3 rotation;
         private vec3 scale;
-        private bool dirty;
 
         public Transform3d(vec3 position, vec3 rotation, vec3 scale)
         {
@@ -87,17 +86,12 @@ namespace ajiva.Components
         }
 
         /// <inheritdoc />
-        public bool Dirty
-        {
-            get => dirty;
-            set => dirty = value;
-        }
+        public bool Dirty { get; set; }
 
         /// <inheritdoc />
         public void Dispose()
         {
             GC.SuppressFinalize(this);
-            //todo need to add something hear ??
         }
     }
 }
