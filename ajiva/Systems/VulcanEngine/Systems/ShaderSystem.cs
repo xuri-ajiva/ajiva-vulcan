@@ -1,29 +1,46 @@
-﻿using ajiva.Models;
-using ajiva.Systems.VulcanEngine.Engine;
+﻿using ajiva.Ecs;
+using ajiva.Ecs.Component;
+using ajiva.Ecs.Entity;
+using ajiva.Ecs.System;
+using ajiva.Models;
 
-namespace ajiva.Systems.VulcanEngine.EngineManagers
+namespace ajiva.Systems.VulcanEngine.Systems
 {
-    public class ShaderComponent : RenderEngineComponent
+    public class ShaderSystem : SystemBase, IInit
     {
         public Shader? Main { get; set; }
 
         public readonly UniformBuffer<UniformViewProj> ViewProj;
         public readonly UniformBuffer<UniformModel> UniformModels;
 
-        public ShaderComponent(IRenderEngine renderEngine) : base(renderEngine)
+        public ShaderSystem(DeviceSystem deviceSystem)
         {
-            ViewProj = new(renderEngine.DeviceComponent, 1);
-            UniformModels = new(renderEngine.DeviceComponent, 2000);
-
-            //Uniform = new(renderEngine.DeviceComponent);
+            ViewProj = new(deviceSystem, 1);
+            UniformModels = new(deviceSystem, 2000);
         }
 
-        public void EnsureShaderModulesExists()
+        /// <inheritdoc />
+        protected override void Setup()
+        {
+            Ecs.RegisterInit(this, InitPhase.PreMain);
+        }
+
+        /// <inheritdoc />
+        public void Init(AjivaEcs ecs, InitPhase phase)
         {
             if (Main != null) return;
-            
-            Main = new(RenderEngine.DeviceComponent);
+
+            Main = new(ecs.GetSystem<DeviceSystem>());
             Main.CreateShaderModules("./Shaders");
+
+            //ProjView = new(renderEngine.DeviceComponent,1);
+            // UniformModels = new(renderEngine.DeviceComponent,1000);
+
+            ViewProj.EnsureExists();
+            UniformModels.EnsureExists();
+
+            //Main.EnsureCreateUniformBufferExists();
+
             /* Main.EnsureShaderModulesExists(shank => from input in shank.GetInput<Vertex>()
                  from viewProj in shank.GetBinding<UniformViewProj>(0)
                  from model in shank.GetBinding<UniformModel>(1)
@@ -47,17 +64,6 @@ namespace ajiva.Systems.VulcanEngine.EngineManagers
             Main?.Dispose();
             UniformModels.Dispose();
             ViewProj.Dispose();
-        }
-
-        public void EnsureCreateUniformBufferExists()
-        {
-            //ProjView = new(renderEngine.DeviceComponent,1);
-            // UniformModels = new(renderEngine.DeviceComponent,1000);
-
-            ViewProj.EnsureExists();
-            UniformModels.EnsureExists();
-
-            //Main.EnsureCreateUniformBufferExists();
         }
     }
 }
