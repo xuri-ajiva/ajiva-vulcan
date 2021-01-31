@@ -84,11 +84,7 @@ namespace ajiva.Entities
                     y: glm.Sin(glm.Radians(Transform.Rotation.x)),
                     z: glm.Cos(glm.Radians(Transform.Rotation.x)) * glm.Cos(glm.Radians(Transform.Rotation.y))
                 ).Normalized;
-
-            public FpsCamera()
-            {
-                HasUpdate = true;
-            }
+            
 
             public override void OnMouseMoved(float xRel, float yRel)
             {

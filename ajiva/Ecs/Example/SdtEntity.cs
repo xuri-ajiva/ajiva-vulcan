@@ -14,15 +14,9 @@ namespace ajiva.Ecs.Example
             }
         }
 
-        public SdtEntity()
-        {
-            HasUpdate = true;
-        }
-
         /// <inheritdoc />
         protected override void ReleaseUnmanagedResources()
         {
-            
         }
     };
 }

@@ -49,8 +49,6 @@ namespace ajiva.Ecs.Entity
         {
             Components.Remove(typeof(T));
         }
-
-        public bool HasUpdate { get; protected set; }
         public abstract void Update(TimeSpan delta);
     }
 }
