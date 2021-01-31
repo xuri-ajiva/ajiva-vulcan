@@ -1,8 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Threading;
-using System.Threading.Tasks;
-using ajiva.Systems.VulcanEngine.Engine;
+using ajiva.Ecs;
+using ajiva.Ecs.System;
 using GlmSharp;
 using SharpVk;
 using SharpVk.Glfw;
@@ -10,9 +10,9 @@ using SharpVk.Khronos;
 using Glfw3 = SharpVk.Glfw.Glfw3;
 using Key = SharpVk.Glfw.Key;
 
-namespace ajiva.Systems.VulcanEngine.EngineManagers
+namespace ajiva.Systems.VulcanEngine.Systems
 {
-    public class PlatformWindow : RenderEngineComponent
+    public class WindowSystem : SystemBase, IUpdate, IInit
     {
         public event KeyEventHandler? OnKeyEvent;
         public event EventHandler? OnResize;
@@ -26,7 +26,7 @@ namespace ajiva.Systems.VulcanEngine.EngineManagers
         public Queue<Action?> WindowThreadQueue { get; } = new();
         public bool WindowReady { get; private set; }
 
-        public PlatformWindow(IRenderEngine renderEngine) : base(renderEngine)
+        public WindowSystem()
         {
             keyDelegate = KeyCallback;
             cursorPosDelegate = MouseCallback;
@@ -78,20 +78,19 @@ namespace ajiva.Systems.VulcanEngine.EngineManagers
 
         public void EnsureSurfaceExists()
         {
-            Surface ??= RenderEngine.Instance.CreateGlfw3Surface(window);
+            Surface ??= Ecs.GetInstance<Instance>().CreateGlfw3Surface(window);
         }
 
-        public Task InitWindow(int surfaceWidth, int surfaceHeight)
+        public void InitWindow()
         {
-            Width = surfaceWidth;
-            Height = surfaceHeight;
+            Width = Ecs.GetPara<int>("SurfaceWidth");
+            Height = Ecs.GetPara<int>("SurfaceHeight");
             WindowThread.Start();
 
             while (!WindowReady)
             {
-                Task.Delay(1);
+                Thread.Sleep(1);
             }
-            return Task.CompletedTask;
         }
 
         private void SizeCallback(WindowHandle windowHandle, int width, int height)
@@ -162,9 +161,31 @@ namespace ajiva.Systems.VulcanEngine.EngineManagers
             CloseWindow();
         }
 
+        /// <inheritdoc />
+        protected override void Setup()
+        {
+            Ecs.RegisterUpdate(this);
+            Ecs.RegisterInit(this, InitPhase.Start);
+        }
+
         public void PollEvents()
         {
             Glfw3.PollEvents();
+        }
+
+        /// <inheritdoc />
+        public void Update(TimeSpan delta)
+        {
+            PollEvents();
+            if (!WindowReady)
+                Ecs.IssueClose();
+        }
+
+        /// <inheritdoc />
+        public void Init(AjivaEcs ecs, InitPhase phase)
+        {
+            InitWindow();
+            EnsureSurfaceExists();
         }
     }
 
