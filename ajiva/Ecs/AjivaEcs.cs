@@ -77,10 +77,16 @@ namespace ajiva.Ecs
 
         public T GetComponentSystem<T>() => (T)Systems.First(x => x.GetType() == typeof(T));
 
-        public async Task InitSystems()
+        public void InitSystems()
         {
-            Task.WaitAll(Systems.Select(x => Task.Run(() => x.Init(this))).ToArray());
-
+            Init(InitPhase.Start);
+            Init(InitPhase.PreInit);
+            Init(InitPhase.Init);
+            Init(InitPhase.PreMain);
+            Init(InitPhase.Main);
+            Init(InitPhase.PostMain);
+            Init(InitPhase.Post);
+            Init(InitPhase.Finish);
             Available = true;
         }
 
