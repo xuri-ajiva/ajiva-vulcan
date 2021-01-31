@@ -1,6 +1,7 @@
 ﻿using System;
 using ajiva.Helpers;
 using ajiva.Systems.VulcanEngine.EngineManagers;
+using ajiva.Systems.VulcanEngine.Systems;
 using SharpVk;
 using Buffer = SharpVk.Buffer;
 
@@ -17,15 +18,15 @@ namespace ajiva.Models
             Size = size;
         }
 
-        public void Create(DeviceComponent component, BufferUsageFlags usage, MemoryPropertyFlags flags)
+        public void Create(DeviceSystem system, BufferUsageFlags usage, MemoryPropertyFlags flags)
         {
-            component.EnsureDevicesExist();
+            //todo: system.EnsureDevicesExist();
             
-            Buffer = component.Device!.CreateBuffer(Size, usage, SharingMode.Exclusive, null);
+            Buffer = system.Device!.CreateBuffer(Size, usage, SharingMode.Exclusive, null);
 
             var memRequirements = Buffer.GetMemoryRequirements();
 
-            Memory = component.Device.AllocateMemory(memRequirements.Size, component.FindMemoryType(memRequirements.MemoryTypeBits, flags));
+            Memory = system.Device.AllocateMemory(memRequirements.Size, system.FindMemoryType(memRequirements.MemoryTypeBits, flags));
             Buffer.BindMemory(Memory, 0);
         }
 
