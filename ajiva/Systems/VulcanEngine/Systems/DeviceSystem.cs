@@ -1,13 +1,14 @@
 ﻿using System;
 using System.Linq;
-using ajiva.Helpers;
-using ajiva.Systems.VulcanEngine.Engine;
+using ajiva.Ecs;
+using ajiva.Ecs.System;
+using ajiva.Models;
 using SharpVk;
 using SharpVk.Khronos;
 
-namespace ajiva.Systems.VulcanEngine.EngineManagers
+namespace ajiva.Systems.VulcanEngine.Systems
 {
-    public class DeviceComponent : RenderEngineComponent
+    public class DeviceSystem : SystemBase, IInit
     {
         internal PhysicalDevice? PhysicalDevice { get; private set; }
         internal Device? Device { get; private set; }
@@ -18,30 +19,20 @@ namespace ajiva.Systems.VulcanEngine.EngineManagers
 
         public CommandBuffer? SingleCommandBuffer { get; private set; }
 
-        public DeviceComponent(IRenderEngine renderEngine) : base(renderEngine)
-        {
-        }
+        private QueueFamilyIndices queueFamilies;
 
-        public void EnsureDevicesExist()
+        private void PickPhysicalDevice(Instance instance)
         {
-            RenderEngine.Window.EnsureSurfaceExists();
-            if (RenderEngine.DeviceComponent.PhysicalDevice == null) PickPhysicalDevice();
-            if (RenderEngine.DeviceComponent.Device == null) CreateLogicalDevice();
-        }
+            var availableDevices = instance.EnumeratePhysicalDevices();
 
-        private void PickPhysicalDevice()
-        {
-            ATrace.Assert(RenderEngine.Instance != null, "renderEngine.Instance != null");
-            var availableDevices = RenderEngine.Instance.EnumeratePhysicalDevices();
-
-            PhysicalDevice = availableDevices.First(x => x.IsSuitableDevice(RenderEngine.Window.Surface!));
+            PhysicalDevice = availableDevices.First(x => x.IsSuitableDevice(Ecs.GetSystem<WindowSystem>().Surface));
         }
 
         private void CreateLogicalDevice()
         {
-            var queueFamilies = PhysicalDevice!.FindQueueFamilies(RenderEngine.Window.Surface!);
-
-            Device = PhysicalDevice.CreateDevice(queueFamilies.Indices
+            queueFamilies = PhysicalDevice!.FindQueueFamilies(Ecs.GetSystem<WindowSystem>().Surface);
+            
+            Device = PhysicalDevice!.CreateDevice(queueFamilies.Indices
                     .Select(index => new DeviceQueueCreateInfo
                     {
                         QueueFamilyIndex = index,
@@ -91,12 +82,8 @@ namespace ajiva.Systems.VulcanEngine.EngineManagers
         internal CommandPool? TransientCommandPool;
         public CommandPool? CommandPool;
 
-        public void EnsureCommandPoolsExists()
+        private void EnsureCommandPoolsExists()
         {
-            EnsureDevicesExist();
-
-            var queueFamilies = PhysicalDevice!.FindQueueFamilies(RenderEngine.Window.Surface!);
-
             TransientCommandPool ??= Device!.CreateCommandPool(queueFamilies.TransferFamily!.Value, CommandPoolCreateFlags.Transient);
 
             CommandPool ??= Device!.CreateCommandPool(queueFamilies.GraphicsFamily!.Value, CommandPoolCreateFlags.ResetCommandBuffer);
@@ -104,7 +91,7 @@ namespace ajiva.Systems.VulcanEngine.EngineManagers
             SingleCommandBuffer ??= Device!.AllocateCommandBuffers(CommandPool, CommandBufferLevel.Primary, 1).Single();
         }
 
-        public void SingleTimeCommand(Func<DeviceComponent, Queue> queueSelector, Action<CommandBuffer> action)
+        public void SingleTimeCommand(Func<DeviceSystem, Queue> queueSelector, Action<CommandBuffer> action)
         {
             EnsureCommandPoolsExists();
 
@@ -134,6 +121,12 @@ namespace ajiva.Systems.VulcanEngine.EngineManagers
   #endregion
 
         /// <inheritdoc />
+        protected override void Setup()
+        {
+            Ecs.RegisterInit(this, InitPhase.PreInit);
+        }
+
+        /// <inheritdoc />
         protected override void ReleaseUnmanagedResources()
         {
             TransientCommandPool?.Dispose();
@@ -146,6 +139,13 @@ namespace ajiva.Systems.VulcanEngine.EngineManagers
             TransientCommandPool = null;
             Device = null;
             PhysicalDevice = null;
+        }
+
+        /// <inheritdoc />
+        public void Init(AjivaEcs ecs, InitPhase phase)
+        {
+            PickPhysicalDevice(ecs.GetInstance<Instance>());
+            CreateLogicalDevice();
         }
     }
 }
