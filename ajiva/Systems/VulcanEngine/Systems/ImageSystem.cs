@@ -1,13 +1,16 @@
 ﻿using System;
 using System.Collections.Generic;
+using ajiva.Components;
+using ajiva.Ecs;
+using ajiva.Ecs.ComponentSytem;
+using ajiva.Ecs.Entity;
 using ajiva.Models;
-using ajiva.Systems.VulcanEngine.Engine;
 using SharpVk;
 using Buffer = SharpVk.Buffer;
 
-namespace ajiva.Systems.VulcanEngine.EngineManagers
+namespace ajiva.Systems.VulcanEngine.Systems
 {
-    public class ImageComponent : RenderEngineComponent
+    public class ImageSystem : ComponentSystemBase<AImage>, IInit
     {
         public AImage? DepthImage { get; set; }
 
@@ -21,7 +24,7 @@ namespace ajiva.Systems.VulcanEngine.EngineManagers
 
         public ImageView CreateImageView(Image image, Format format, ImageAspectFlags aspectFlags)
         {
-            return RenderEngine.DeviceComponent.Device!.CreateImageView(image, ImageViewType.ImageView2d, format, ComponentMapping.Identity, new()
+            return Ecs.GetSystem<DeviceSystem>().Device!.CreateImageView(image, ImageViewType.ImageView2d, format, ComponentMapping.Identity, new()
             {
                 AspectMask = aspectFlags,
                 BaseMipLevel = 0,
@@ -33,10 +36,9 @@ namespace ajiva.Systems.VulcanEngine.EngineManagers
 
         public AImage CreateImageAndView(uint width, uint height, Format format, ImageTiling tiling, ImageUsageFlags usage, MemoryPropertyFlags properties, ImageAspectFlags aspectFlags)
         {
-            RenderEngine.DeviceComponent.EnsureDevicesExist();
-
             var aImage = new AImage(true);
-            var device = RenderEngine.DeviceComponent.Device!;
+            var deviceSystem = Ecs.GetSystem<DeviceSystem>();
+            var device = deviceSystem.Device!;
 
             aImage.Image = device.CreateImage(ImageType.Image2d, format, new(width, height, 1), 1, 1, SampleCountFlags.SampleCount1, tiling, usage, SharingMode.Exclusive, ArrayProxy<uint>.Null, ImageLayout.Undefined);
 
@@ -45,7 +47,7 @@ namespace ajiva.Systems.VulcanEngine.EngineManagers
                 Image = aImage.Image
             });
 
-            aImage.Memory = device.AllocateMemory(memRequirements.MemoryRequirements.Size, RenderEngine.DeviceComponent.FindMemoryType(memRequirements.MemoryRequirements.MemoryTypeBits, properties), new()
+            aImage.Memory = device.AllocateMemory(memRequirements.MemoryRequirements.Size, deviceSystem.FindMemoryType(memRequirements.MemoryRequirements.MemoryTypeBits, properties), new()
             {
                 Image = aImage.Image,
             });
@@ -78,7 +80,7 @@ namespace ajiva.Systems.VulcanEngine.EngineManagers
         {
             foreach (var format in candidates)
             {
-                var props = RenderEngine.DeviceComponent.PhysicalDevice!.GetFormatProperties(format);
+                var props = Ecs.GetSystem<DeviceSystem>().PhysicalDevice!.GetFormatProperties(format);
 
                 switch (tiling)
                 {
@@ -94,7 +96,7 @@ namespace ajiva.Systems.VulcanEngine.EngineManagers
             throw new ArgumentOutOfRangeException(nameof(candidates), candidates, "failed to find supported format!");
         }
 
-        public void EnsureDepthResourcesExits()
+        public void EnsureDepthResourcesExitsA()
         {
             RenderEngine.DeviceComponent.EnsureDevicesExist();
 
@@ -133,9 +135,7 @@ namespace ajiva.Systems.VulcanEngine.EngineManagers
 
         public void CopyBufferToImage(Buffer buffer, Image image, uint width, uint height)
         {
-            RenderEngine.DeviceComponent.EnsureDevicesExist();
-            
-            RenderEngine.DeviceComponent.SingleTimeCommand(x => x.GraphicsQueue!, command =>
+            Ecs.GetSystem<DeviceSystem>().SingleTimeCommand(x => x.GraphicsQueue!, command =>
             {
                 command.CopyBufferToImage(buffer, image, ImageLayout.TransferDestinationOptimal, new BufferImageCopy()
                 {
@@ -157,8 +157,6 @@ namespace ajiva.Systems.VulcanEngine.EngineManagers
 
         public void TransitionImageLayout(Image image, Format format, ImageLayout oldLayout, ImageLayout newLayout)
         {
-            RenderEngine.DeviceComponent.EnsureDevicesExist();
-            
             ImageSubresourceRange subresourceRange = new()
             {
                 BaseMipLevel = 0,
@@ -219,7 +217,30 @@ namespace ajiva.Systems.VulcanEngine.EngineManagers
                     throw new ArgumentException("unsupported layout transition!");
             }
 
-            RenderEngine.DeviceComponent.SingleTimeCommand(x => x.GraphicsQueue!, command => command.PipelineBarrier(sourceStage, destinationStage, ArrayProxy<MemoryBarrier>.Null, ArrayProxy<BufferMemoryBarrier>.Null, barrier));
+            Ecs.GetSystem<DeviceSystem>().SingleTimeCommand(x => x.GraphicsQueue!, command => command.PipelineBarrier(sourceStage, destinationStage, ArrayProxy<MemoryBarrier>.Null, ArrayProxy<BufferMemoryBarrier>.Null, barrier));
+        }
+
+        /// <inheritdoc />
+        protected override void Setup()
+        {
+            Ecs.RegisterInit(this, InitPhase.Init);
+            Ecs.GetComponentSystem<AjivaRenderEngine, ARenderAble>().OnResize += (_, _) =>
+            {
+                //EnsureDepthResourcesDeletion();
+                //EnsureDepthResourcesExits();
+            };
+        }
+
+        /// <inheritdoc />
+        public override void AttachNewComponent(IEntity entity)
+        {
+            throw new NotImplementedException();
+        }
+
+        /// <inheritdoc />
+        public override AImage CreateComponent(IEntity entity)
+        {
+            throw new NotImplementedException();
         }
 
         /// <inheritdoc />
@@ -233,5 +254,11 @@ namespace ajiva.Systems.VulcanEngine.EngineManagers
         }
 
   #endregion
+
+        /// <inheritdoc />
+        public void Init(AjivaEcs ecs, InitPhase phase)
+        {
+            
+        }
     }
 }
