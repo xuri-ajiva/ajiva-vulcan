@@ -13,8 +13,8 @@ namespace ajiva.Models
         public void EnsureExists()
         {
             if (Created) return;
-            Created = true;
             Create();
+            Created = true;
         }
 
         protected abstract void Create();
