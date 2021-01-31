@@ -1,11 +1,11 @@
-﻿using System;
-using System.Threading.Tasks;
+﻿using ajiva.Ecs;
+using ajiva.Systems.VulcanEngine.Systems;
 using GlmSharp;
 using SharpVk.Glfw;
 
 namespace ajiva.Systems.VulcanEngine
 {
-    public partial class AjivaRenderEngine
+    public partial class AjivaRenderEngine : IInit
     {
         #region Public
 
@@ -14,39 +14,10 @@ namespace ajiva.Systems.VulcanEngine
             lock (UpdateLock)
             lock (RenderLock)
             {
-                DeviceComponent.WaitIdle();
+                Ecs.GetSystem<DeviceSystem>().WaitIdle();
 
                 mainCamara?.Dispose();
-                SwapChainComponent.Dispose();
-                ImageComponent.Dispose();
-                GraphicsComponent.Dispose();
-                ShaderComponent.Dispose();
-                SemaphoreComponent.Dispose();
-                TextureComponent.Dispose();
-                Window.Dispose();
-                DeviceComponent.Dispose();
-
-                Ecs = null!;
-                Instance = null!;
-                mainCamara = null!;
-                Window = null!;
-                DeviceComponent = null!;
-                GraphicsComponent = null!;
-                ImageComponent = null!;
-                SemaphoreComponent = null!;
-                ShaderComponent = null!;
-                TextureComponent = null!;
-                SwapChainComponent = null!;
             }
-        }
-
-        private void CleanupSwapChain()
-        {
-            ImageComponent.EnsureDepthResourcesDeletion();
-
-            SwapChainComponent.EnsureSwapChainDeletion();
-
-            GraphicsComponent.EnsureGraphicsLayoutDeletion();
         }
 
         public void RecreateSwapChain()
@@ -54,13 +25,15 @@ namespace ajiva.Systems.VulcanEngine
             lock (UpdateLock)
             lock (RenderLock)
             {
-                DeviceComponent.WaitIdle();
-                CleanupSwapChain();
+                Ecs.GetSystem<DeviceSystem>().WaitIdle();
 
-                mainCamara?.UpdatePerspective(mainCamara.Fov, Window.Width, Window.Height);
-                ImageComponent.EnsureDepthResourcesExits();
-                GraphicsComponent.EnsureGraphicsLayoutExists();
-                GraphicsComponent.Current!.EnsureExists();
+                var window = Ecs.GetSystem<WindowSystem>();
+
+                mainCamara?.UpdatePerspective(mainCamara.Fov, window.Width, window.Height);
+                
+                Ecs.GetSystem<GraphicsSystem>().EnsureGraphicsLayoutDeletion();
+                Ecs.GetSystem<GraphicsSystem>().EnsureGraphicsLayoutExists();
+                Ecs.GetSystem<GraphicsSystem>().Current!.EnsureExists();
             }
         }
 
@@ -72,38 +45,18 @@ namespace ajiva.Systems.VulcanEngine
         }
 
         #endregion
-
-        public void InitVulkan()
+        
+        public void InitWindow()
         {
-            lock (RenderLock)
-            {
-                Window.EnsureSurfaceExists();
-                DeviceComponent.EnsureDevicesExist();
-                DeviceComponent.EnsureCommandPoolsExists();
-                ShaderComponent.EnsureCreateUniformBufferExists();
-                
-                TextureComponent.EnsureDefaultImagesExists();
-                ImageComponent.EnsureDepthResourcesExits();
+            var window = Ecs.GetSystem<WindowSystem>();
 
-                GraphicsComponent.EnsureGraphicsLayoutExists();
-                GraphicsComponent.Current!.EnsureExists();
-
-                SemaphoreComponent.EnsureSemaphoresExists();
-                GC.Collect();
-            }
-        }
-
-        public async Task InitWindow(int surfaceWidth, int surfaceHeight)
-        {
-            await Window.InitWindow(surfaceWidth, surfaceHeight);
-
-            Window.OnResize += (_, eventArgs) =>
+            window.OnResize += (_, eventArgs) =>
             {
                 RecreateSwapChain();
                 OnResize?.Invoke(this, eventArgs);
             };
 
-            Window.OnKeyEvent += delegate(object? _, Key key, int scancode, InputAction action, Modifier modifier)
+            window.OnKeyEvent += delegate(object? _, Key key, int scancode, InputAction action, Modifier modifier)
             {
                 var down = action != InputAction.Release;
 
@@ -127,7 +80,7 @@ namespace ajiva.Systems.VulcanEngine
                 OnKeyEvent?.Invoke(this, key, scancode, action, modifier);
             };
 
-            Window.OnMouseMove += delegate(object? _, vec2 vec2)
+            window.OnMouseMove += delegate(object? _, vec2 vec2)
             {
                 MainCamara.OnMouseMoved(vec2.x, vec2.y);
                 OnMouseMove?.Invoke(this, vec2);
