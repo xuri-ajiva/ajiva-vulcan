@@ -5,8 +5,10 @@ using System.Runtime.CompilerServices;
 using ajiva.Components;
 using ajiva.Ecs;
 using ajiva.Ecs.Component;
+using ajiva.Ecs.ComponentSytem;
 using ajiva.Entities;
 using ajiva.Systems.VulcanEngine.EngineManagers;
+using ajiva.Systems.VulcanEngine.Systems;
 using GlmSharp;
 using SharpVk;
 
@@ -14,17 +16,6 @@ namespace ajiva.Systems.VulcanEngine.Engine
 {
     public interface IRenderEngine : IComponentSystem<ARenderAble>
     {
-        Instance? Instance { get; }
-        DeviceComponent DeviceComponent { get; }
-        SwapChainComponent SwapChainComponent { get; }
-        PlatformWindow Window { get; }
-        ImageComponent ImageComponent { get; }
-        GraphicsComponent GraphicsComponent { get; }
-        ShaderComponent ShaderComponent { get; }
-        SemaphoreComponent SemaphoreComponent { get; }
-        TextureComponent TextureComponent { get; }
-
-        event PlatformEventHandler OnFrame;
         event KeyEventHandler OnKeyEvent;
         event EventHandler OnResize;
         event EventHandler<vec2> OnMouseMove;
@@ -33,7 +24,6 @@ namespace ajiva.Systems.VulcanEngine.Engine
 
         public object RenderLock { get; }
         public object UpdateLock { get; }
-        public AjivaEcs Ecs { get; }
 
 #pragma warning disable 8763
         [DoesNotReturn, MethodImpl(MethodImplOptions.AggressiveOptimization)]
