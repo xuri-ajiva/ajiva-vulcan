@@ -1,8 +1,7 @@
-﻿using System;
-using System.Threading.Tasks;
-using ajiva.Components;
+﻿using ajiva.Components;
 using ajiva.Ecs;
 using ajiva.Ecs.Component;
+using ajiva.Ecs.ComponentSytem;
 using ajiva.Ecs.Entity;
 
 namespace ajiva.Systems
@@ -10,7 +9,7 @@ namespace ajiva.Systems
     public class TransformComponentSystem : ComponentSystemBase<Transform3d>
     {
         /// <inheritdoc />
-        public override void Update(TimeSpan delta)
+        protected override void Setup()
         {
         }
 
@@ -26,13 +25,6 @@ namespace ajiva.Systems
         public override void AttachNewComponent(IEntity entity)
         {
             entity.AddComponent(CreateComponent(entity));
-        }
-
-        /// <inheritdoc />
-        public override Task Init(AjivaEcs ecs)
-        {
-            //todo ?=
-            return Task.CompletedTask;
         }
     }
 }
