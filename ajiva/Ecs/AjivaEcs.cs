@@ -16,7 +16,8 @@ namespace ajiva.Ecs
         private uint currentEntityId;
         private Dictionary<uint, IEntity> Entities { get; } = new();
         private Dictionary<Type, IEntityFactory> Factories { get; } = new();
-
+        private Dictionary<Type, IComponentSystem> ComponentSystems { get; } = new();
+        private Dictionary<Type, ISystem> Systems { get; } = new();
         private Dictionary<string, object> Params { get; } = new();
 
         public void Update(TimeSpan delta)
@@ -101,10 +102,7 @@ namespace ajiva.Ecs
 
         public void IssueClose()
         {
-            lock (@lock)
-            {
-                Available = false;
-            }
+            lock (@lock) Available = false;
         }
 
         /// <inheritdoc />
@@ -112,19 +110,25 @@ namespace ajiva.Ecs
         {
             lock (@lock)
             {
-                foreach (var factory in Factories)
+                foreach (var factory in Factories.Values)
                 {
-                    factory.Value?.Dispose();
+                    factory?.Dispose();
                 }
                 Factories.Clear();
 
-                foreach (var entity in Entities)
+                foreach (var entity in Entities.Values)
                 {
-                    entity.Value.Dispose();
+                    entity.Dispose();
                 }
                 Entities.Clear();
 
-                foreach (var system in Systems)
+                foreach (var system in ComponentSystems.Values)
+                {
+                    system?.Dispose();
+                }
+                ComponentSystems.Clear();  
+                
+                foreach (var system in Systems.Values)
                 {
                     system?.Dispose();
                 }
