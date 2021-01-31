@@ -12,16 +12,6 @@ namespace ajiva.Systems.VulcanEngine.Systems
 {
     public class ImageSystem : ComponentSystemBase<AImage>, IInit
     {
-        public AImage? DepthImage { get; set; }
-
-        public List<AImage> Images { get; }
-
-        public ImageComponent(IRenderEngine renderEngine) : base(renderEngine)
-        {
-            DepthImage = null!;
-            Images = new();
-        }
-
         public ImageView CreateImageView(Image image, Format format, ImageAspectFlags aspectFlags)
         {
             return Ecs.GetSystem<DeviceSystem>().Device!.CreateImageView(image, ImageViewType.ImageView2d, format, ComponentMapping.Identity, new()
@@ -98,10 +88,6 @@ namespace ajiva.Systems.VulcanEngine.Systems
 
         public void EnsureDepthResourcesExitsA()
         {
-            RenderEngine.DeviceComponent.EnsureDevicesExist();
-
-            DepthImage ??= CreateManagedImage(FindDepthFormat(), ImageAspectFlags.Depth, RenderEngine.Window.SurfaceExtent);
-
             /*
             var depthFormat =;
 
@@ -112,13 +98,7 @@ namespace ajiva.Systems.VulcanEngine.Systems
         */
         }
 
-        public void EnsureDepthResourcesDeletion()
-        {
-            DepthImage?.Dispose();
-            DepthImage = null;
-        }
-
-        private AImage CreateManagedImage(Format format, ImageAspectFlags aspectFlags, Extent2D extent)
+        public AImage CreateManagedImage(Format format, ImageAspectFlags aspectFlags, Extent2D extent)
         {
             var aImage = CreateImageAndView(extent.Width, extent.Height, format, ImageTiling.Optimal, ImageUsageFlags.DepthStencilAttachment, MemoryPropertyFlags.DeviceLocal, aspectFlags);
 
@@ -246,11 +226,6 @@ namespace ajiva.Systems.VulcanEngine.Systems
         /// <inheritdoc />
         protected override void ReleaseUnmanagedResources()
         {
-            DepthImage?.Dispose();
-            foreach (var managedImage in Images)
-            {
-                managedImage.Dispose();
-            }
         }
 
   #endregion

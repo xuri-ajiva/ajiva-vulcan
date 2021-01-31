@@ -1,8 +1,10 @@
 ﻿using System.Linq;
 using System.Runtime.CompilerServices;
+using ajiva.Components;
+using ajiva.Ecs;
 using ajiva.Helpers;
 using ajiva.Models;
-using ajiva.Systems.VulcanEngine.Engine;
+using ajiva.Systems.VulcanEngine.Systems;
 using SharpVk;
 using SharpVk.Khronos;
 
@@ -27,7 +29,16 @@ namespace ajiva.Systems.VulcanEngine.EngineManagers
         public Extent2D? SwapChainExtent { get; private set; }
         public AImage[]? SwapChainImage { get; private set; }
 
-        public GraphicsLayout(IRenderEngine renderEngine)
+        private Semaphore? ImageAvailable { get; set; }
+        private Semaphore? RenderFinished { get; set; }
+
+        private AImage? DepthImage { get; set; }
+
+        private WindowSystem window;
+        private DeviceSystem deviceSystem;
+        private Format? DepthFormat { get; set; }
+
+        public GraphicsLayout(AjivaEcs ecs)
         {
             this.ecs = ecs;
             window = ecs.GetSystem<WindowSystem>();
@@ -56,8 +67,17 @@ namespace ajiva.Systems.VulcanEngine.EngineManagers
                     aImage.Dispose();
             SwapChainImage = null;
 
+            DepthImage?.Dispose();
+            DepthImage = null;
+
             SwapChain?.Dispose();
             SwapChain = null;
+
+            ImageAvailable?.Dispose();
+            RenderFinished?.Dispose();
+
+            ImageAvailable = null;
+            RenderFinished = null;
 
             SwapChainExtent = null;
             SwapChainFormat = null;
@@ -486,12 +506,17 @@ namespace ajiva.Systems.VulcanEngine.EngineManagers
         /// <inheritdoc />
         protected override void Create()
         {
-            renderEngine.DeviceComponent.EnsureDevicesExist();
+            //todo: deviceSystem.EnsureDevicesExist();
             EnsureSwapChainExists();
-            renderEngine.ShaderComponent.EnsureShaderModulesExists();
-            renderEngine.ShaderComponent.UniformModels.EnsureExists();
-            renderEngine.ShaderComponent.ViewProj.EnsureExists();
-            renderEngine.TextureComponent.EnsureDefaultImagesExists();
+            /*todo: renderEngine.ShaderSystem.EnsureShaderModulesExists();
+            renderEngine.ShaderSystem.UniformModels.EnsureExists();
+            renderEngine.ShaderSystem.ViewProj.EnsureExists();
+            renderEngine.TextureSystem.EnsureDefaultImagesExists(RenderEngine);*/
+
+            ImageAvailable ??= deviceSystem.Device!.CreateSemaphore();
+            RenderFinished ??= deviceSystem.Device!.CreateSemaphore();
+
+            CreateDepthImage();
 
             CreateRenderPass();
 
@@ -503,6 +528,14 @@ namespace ajiva.Systems.VulcanEngine.EngineManagers
 
             CreateFrameBuffers();
             CreateCommandBuffers();
+        }
+
+        private void CreateDepthImage()
+        {
+            var imageSystem = ecs.GetComponentSystem<ImageSystem, AImage>();
+            DepthFormat = imageSystem.FindDepthFormat();
+
+            DepthImage ??= imageSystem.CreateManagedImage(DepthFormat.Value, ImageAspectFlags.Depth, ecs.GetSystem<WindowSystem>().SurfaceExtent);
         }
 
         public void DrawFrame()
