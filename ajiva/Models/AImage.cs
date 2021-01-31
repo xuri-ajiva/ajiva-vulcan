@@ -1,14 +1,42 @@
-﻿using ajiva.Helpers;
+﻿using ajiva.Ecs.Component;
+using ajiva.Helpers;
 using SharpVk;
 
 namespace ajiva.Models
 {
-    public class AImage : DisposingLogger
+    public class AImage : DisposingLogger, IComponent
     {
         private readonly bool disposeImage;
-        public ImageView? View { get; set; } = null!;
-        public Image? Image { get; set; } = null!;
-        public DeviceMemory? Memory { get; set; } = null!;
+        private ImageView? view = null!;
+        private Image? image = null!;
+        private DeviceMemory? memory = null!;
+        public ImageView? View
+        {
+            get => view;
+            set
+            {
+                Dirty = true;
+                view = value;
+            }
+        }
+        public Image? Image
+        {
+            get => image;
+            set
+            {
+                Dirty = true;
+                image = value;
+            }
+        }
+        public DeviceMemory? Memory
+        {
+            get => memory;
+            set
+            {
+                Dirty = true;
+                memory = value;
+            }
+        }
 
         public AImage(bool disposeImage)
         {
@@ -23,5 +51,8 @@ namespace ajiva.Models
             View?.Dispose();
             Memory?.Free();
         }
+
+        /// <inheritdoc />
+        public bool Dirty { get; set; }
     }
 }
