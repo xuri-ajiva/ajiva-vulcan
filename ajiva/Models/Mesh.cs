@@ -1,5 +1,7 @@
-﻿using ajiva.Helpers;
+﻿using System.Linq;
+using ajiva.Helpers;
 using ajiva.Systems.VulcanEngine.EngineManagers;
+using ajiva.Systems.VulcanEngine.Systems;
 using SharpVk;
 
 namespace ajiva.Models
@@ -8,7 +10,7 @@ namespace ajiva.Models
     {
         public readonly Vertex[] VerticesData;
         public readonly ushort[] IndicesData;
-        private DeviceComponent? deviceComponent;
+        private DeviceSystem? deviceComponent;
         public BufferOfT<Vertex>? Vertices { get; protected set; }
         public BufferOfT<ushort>? Indeces { get; protected set; }
 
@@ -18,10 +20,10 @@ namespace ajiva.Models
             this.IndicesData = indicesData;
         }
 
-        public void Create(DeviceComponent component)
+        public void Create(DeviceSystem system)
         {
             if (deviceComponent != null) return; // if we have an deviceComponent we are created!
-            this.deviceComponent = component;
+            this.deviceComponent = system;
             Vertices = CreateShaderBuffer(VerticesData, BufferUsageFlags.VertexBuffer);
             Indeces = CreateShaderBuffer(IndicesData, BufferUsageFlags.IndexBuffer);
         }
@@ -59,6 +61,11 @@ namespace ajiva.Models
         {
             ATrace.Assert(Indeces != null, nameof(Indeces) + " != null");
             commandBuffer.DrawIndexed((uint)Indeces.Length, 1, 0, 0, 0);
+        }
+
+        public Mesh Clone()
+        {
+            return new(VerticesData.ToArray(), IndicesData.ToArray());
         }
     }
 }
