@@ -9,13 +9,15 @@ using SharpVk.Multivendor;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading.Tasks;
+using System.Threading;
+using ajiva.Ecs.ComponentSytem;
 using ajiva.Entities;
+using ajiva.Systems.VulcanEngine.Systems;
 
 // ReSharper disable once CheckNamespace
 namespace ajiva.Systems.VulcanEngine
 {
-    public partial class AjivaRenderEngine : ComponentSystemBase<ARenderAble>, IRenderEngine
+    public partial class AjivaRenderEngine : ComponentSystemBase<ARenderAble>, IRenderEngine, IUpdate, IInit
     {
         /// <inheritdoc />
         public Cameras.Camera MainCamara
@@ -27,9 +29,6 @@ namespace ajiva.Systems.VulcanEngine
                 mainCamara = value;
             }
         }
-
-        /// <inheritdoc />
-        public AjivaEcs Ecs { get; set; }
 
         #region Public
 
@@ -94,37 +93,33 @@ namespace ajiva.Systems.VulcanEngine
 
         private Cameras.Camera? mainCamara;
 
-        private void UpdateCamaraProjView()
+        private void UpdateCamaraProjView(ShaderSystem shaderSystem)
         {
-            int updateCtr = 0;
-            ShaderComponent.ViewProj.UpdateExpresion(delegate(int index, ref UniformViewProj value)
+            var updateCtr = false;
+            shaderSystem.ViewProj.UpdateExpresion(delegate(int index, ref UniformViewProj value)
             {
                 if (index != 0) return;
 
                 if (value.View != mainCamara!.View)
                 {
-                    updateCtr++;
+                    updateCtr = true;
                     value.View = MainCamara.View;
                 }
                 if (value.Proj == MainCamara.Projection) return;
-                
-                updateCtr++;
+
+                updateCtr = true;
                 value.Proj = MainCamara.Projection;
                 value.Proj[1, 1] *= -1;
             });
-            if (updateCtr != 0)
-                ShaderComponent.ViewProj.Copy();
-        }
-
-        private void DrawFrame(TimeSpan delta)
-        {
-            OnFrame?.Invoke(delta);
-            GraphicsComponent.Current?.DrawFrame();
+            if (updateCtr)
+                shaderSystem.ViewProj.Copy();
         }
 
         /// <inheritdoc />
-        public override void Update(TimeSpan delta)
+        public void Update(TimeSpan delta)
         {
+            ShaderSystem shaderSystem = Ecs.GetSystem<ShaderSystem>();
+
             var updated = new List<uint>();
             foreach (var (renderAble, entity) in ComponentEntityMap)
             {
@@ -133,12 +128,12 @@ namespace ajiva.Systems.VulcanEngine
                 //ATexture? texture = null!;
                 if (entity.TryGetComponent(out transform) && transform!.Dirty)
                 {
-                    ShaderComponent.UniformModels.Staging.Value[renderAble!.Id].Model = transform.ModelMat; // texture?.TextureId ?? 0
+                    shaderSystem.UniformModels.Staging.Value[renderAble!.Id].Model = transform.ModelMat; // texture?.TextureId ?? 0
                     update = true;
                 }
                 if (renderAble.Dirty /*entity.TryGetComponent(out texture) && texture!.Dirty ||*/)
                 {
-                    ShaderComponent.UniformModels.Staging.Value[renderAble!.Id].TextureSamplerId = renderAble!.Id; // texture?.TextureId ?? 0
+                    shaderSystem.UniformModels.Staging.Value[renderAble!.Id].TextureSamplerId = renderAble!.Id; // texture?.TextureId ?? 0
                     update = true;
                 }
 
@@ -154,28 +149,27 @@ namespace ajiva.Systems.VulcanEngine
             //ShaderComponent.UniformModels.Staging.CopyValueToBuffer();
             if (updated.Any())
                 lock (RenderLock)
-                    ShaderComponent.UniformModels.CopyRegions(updated);
+                    shaderSystem.UniformModels.CopyRegions(updated);
 
-            Window.PollEvents();
             //MainCamara.Update((float)delta.TotalMilliseconds);
 
             lock (RenderLock)
-                UpdateCamaraProjView();
-            lock (RenderLock)
-                DrawFrame(delta);
-            //Console.WriteLine(mainCamara.GetComponent<Transform3d>());
+                UpdateCamaraProjView(shaderSystem);
 
-            if (!Window.WindowReady)
-                Ecs.IssueClose();
+            //Console.WriteLine(mainCamara.GetComponent<Transform3d>());
         }
 
         /// <inheritdoc />
-        public override async Task Init(AjivaEcs ecs)
+        public void Init(AjivaEcs ecs, InitPhase phase)
         {
-            await InitWindow(ecs.GetPara<int>("SurfaceWidth"), ecs.GetPara<int>("SurfaceHeight"));
+            InitWindow();
+        }
 
-            InitVulkan();
-            Ecs = ecs;
+        /// <inheritdoc />
+        protected override void Setup()
+        {
+            Ecs.RegisterInit(this, InitPhase.Start);
+            Ecs.RegisterUpdate(this);
         }
 
         /// <inheritdoc />
@@ -183,6 +177,7 @@ namespace ajiva.Systems.VulcanEngine
         {
             var rnd = new ARenderAble();
             ComponentEntityMap.Add(rnd, entity);
+            Interlocked.Add(ref DirtyComponents, 1);
             return rnd;
         }
 
