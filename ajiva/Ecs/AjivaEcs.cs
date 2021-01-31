@@ -25,6 +25,7 @@ namespace ajiva.Ecs
         private Dictionary<Type, IEntityFactory> Factories { get; } = new();
         private Dictionary<Type, IComponentSystem> ComponentSystems { get; } = new();
         private Dictionary<Type, ISystem> Systems { get; } = new();
+        private Dictionary<Type, object> Instances { get; } = new();
         private Dictionary<string, object> Params { get; } = new();
 
         public T CreateEntity<T>() where T : class, IEntity
@@ -70,12 +71,14 @@ namespace ajiva.Ecs
             return true;
         }
 
-        public void AddParam(string name, object data)
+        public void AddParam(string name, object data) => Params.Add(name, data);
+
+        public void AddInstance<T>(T instance) where T : class
         {
-            Params.Add(name, data);
+            Instances.Add(typeof(T), Instances);
         }
 
-        public T GetComponentSystem<T>() => (T)Systems.First(x => x.GetType() == typeof(T));
+        public T GetInstance<T>() where T : class => (T)Instances[typeof(T)];
 
         public void InitSystems()
         {
