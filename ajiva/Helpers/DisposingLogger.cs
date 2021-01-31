@@ -1,13 +1,14 @@
-﻿//#define LOGGING_TRUE
+﻿#define LOGGING_TRUE
 using System;
 using System.Diagnostics;
+using System.Threading.Tasks;
 
 namespace ajiva.Helpers
 {
     public abstract class DisposingLogger : IDisposable
     {
         protected readonly object disposeLock = new();
-        protected bool disposed { get; private set; }
+        public bool Disposed { get; private set; }
 
 #if LOGGING_TRUE
         public DisposingLogger()
@@ -22,30 +23,56 @@ namespace ajiva.Helpers
         [DebuggerStepThrough]
         protected virtual void Dispose(bool disposing)
         {
+            if (!disposing)
+                Console.WriteLine($"Deleted: {GetType()}");
+#if LOGGING_TRUE
+            else
+                Console.WriteLine($"Disposed: {GetType()}");
+#endif
+
             lock (disposeLock)
             {
-                if (disposed) return;
-                ReleaseUnmanagedResources();
-                disposed = true;
+                if (Disposed) return;
+                if (!disposing)
+                    try
+                    {
+#if LOGGING_TRUE
+                        Console.WriteLine("Trying to Release resources although we are not disposing!");
+#endif
+                        ReleaseUnmanagedResources();
+                    }
+                    catch (Exception e)
+                    {
+                        Console.WriteLine("Error releasing unmanaged resources: " + e);
+                    }
+                else
+                    ReleaseUnmanagedResources();
+                Disposed = true;
             }
+        }
+
+        [DebuggerStepThrough]
+        public void DisposeIn(int delayMs)
+        {
+            GC.SuppressFinalize(this);
+            Task.Run(async () =>
+            {
+                await Task.Delay(delayMs);
+                Dispose(true);
+            });
         }
 
         /// <inheritdoc />
         [DebuggerStepThrough]
         public void Dispose()
         {
-#if LOGGING_TRUE
-            Console.WriteLine($"Disposed: {GetType()}");
-#endif
             Dispose(true);
             GC.SuppressFinalize(this);
-            GC.Collect();
         }
 
         /// <inheritdoc />
         ~DisposingLogger()
         {
-            Console.WriteLine($"Deleted: {GetType()}");
             Dispose(false);
         }
 
