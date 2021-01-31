@@ -1,24 +1,27 @@
 ﻿using System.Drawing;
 using System.Drawing.Imaging;
+using ajiva.Ecs;
 using ajiva.Models;
+using ajiva.Systems.VulcanEngine;
 using ajiva.Systems.VulcanEngine.Engine;
 using ajiva.Systems.VulcanEngine.EngineManagers;
+using ajiva.Systems.VulcanEngine.Systems;
 using SharpVk;
 
 namespace ajiva.Components
 {
     public partial class ATexture
     {
-        public static ATexture FromFile(IRenderEngine renderEngine, string path)
+        public static ATexture FromFile(AjivaEcs ecs, string path)
         {
             return new()
             {
-                Image = CreateTextureImageFromFile(renderEngine, path),
-                Sampler = CreateTextureSampler(renderEngine.DeviceComponent)
+                Image = CreateTextureImageFromFile(ecs, path),
+                Sampler = CreateTextureSampler(ecs.GetSystem<DeviceSystem>())
             };
         }
 
-        private static AImage CreateTextureImageFromFile(IRenderEngine renderEngine, string fileName)
+        private static AImage CreateTextureImageFromFile(AjivaEcs ecs, string fileName)
         {
             var img = System.Drawing.Image.FromFile(fileName);
             var bm = new Bitmap(img);
@@ -28,7 +31,7 @@ namespace ajiva.Components
             var imageSize = texWidth * texHeight * 4u;
 
             using ABuffer aBuffer = new(imageSize);
-            aBuffer.Create(renderEngine.DeviceComponent, BufferUsageFlags.TransferSource, MemoryPropertyFlags.HostVisible | MemoryPropertyFlags.HostCached);
+            aBuffer.Create(ecs.GetSystem<DeviceSystem>(), BufferUsageFlags.TransferSource, MemoryPropertyFlags.HostVisible | MemoryPropertyFlags.HostCached);
 
             unsafe
             {
@@ -44,20 +47,22 @@ namespace ajiva.Components
                 }
             }
 
-            AImage aImage = renderEngine.ImageComponent.CreateImageAndView(texWidth, texHeight, Format.R8G8B8A8Srgb, ImageTiling.Optimal, ImageUsageFlags.TransferDestination | ImageUsageFlags.Sampled, MemoryPropertyFlags.DeviceLocal, ImageAspectFlags.Color);
+            var image = ecs.GetComponentSystem<ImageSystem, AImage>();
+            
+            AImage aImage = image.CreateImageAndView(texWidth, texHeight, Format.R8G8B8A8Srgb, ImageTiling.Optimal, ImageUsageFlags.TransferDestination | ImageUsageFlags.Sampled, MemoryPropertyFlags.DeviceLocal, ImageAspectFlags.Color);
 
-            renderEngine.ImageComponent.TransitionImageLayout(aImage.Image!, Format.R8G8B8A8Srgb, ImageLayout.Undefined, ImageLayout.TransferDestinationOptimal);
-            renderEngine.ImageComponent.CopyBufferToImage(aBuffer.Buffer!, aImage.Image, texWidth, texHeight);
-            renderEngine.ImageComponent.TransitionImageLayout(aImage.Image, Format.R8G8B8A8Srgb, ImageLayout.TransferDestinationOptimal, ImageLayout.ShaderReadOnlyOptimal);
+            image.TransitionImageLayout(aImage.Image!, Format.R8G8B8A8Srgb, ImageLayout.Undefined, ImageLayout.TransferDestinationOptimal);
+            image.CopyBufferToImage(aBuffer.Buffer!, aImage.Image, texWidth, texHeight);
+            image.TransitionImageLayout(aImage.Image, Format.R8G8B8A8Srgb, ImageLayout.TransferDestinationOptimal, ImageLayout.ShaderReadOnlyOptimal);
 
             return aImage;
         }
 
-        private static Sampler CreateTextureSampler(DeviceComponent deviceComponent)
+        private static Sampler CreateTextureSampler(DeviceSystem deviceSystem)
         {
-            var properties = deviceComponent.PhysicalDevice!.GetProperties();
+            var properties = deviceSystem.PhysicalDevice!.GetProperties();
 
-            var textureSampler = deviceComponent.Device!.CreateSampler(Filter.Linear, Filter.Linear, SamplerMipmapMode.Linear, SamplerAddressMode.Repeat,
+            var textureSampler = deviceSystem.Device!.CreateSampler(Filter.Linear, Filter.Linear, SamplerMipmapMode.Linear, SamplerAddressMode.Repeat,
                 SamplerAddressMode.Repeat, SamplerAddressMode.Repeat, default, true, properties.Limits.MaxSamplerAnisotropy,
                 false, CompareOp.Always, default, default, BorderColor.IntOpaqueBlack, false);
             return textureSampler;
