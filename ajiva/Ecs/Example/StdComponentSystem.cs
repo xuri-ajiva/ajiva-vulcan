@@ -1,32 +1,33 @@
 ﻿using System;
 using System.Threading.Tasks;
 using ajiva.Ecs.Component;
+using ajiva.Ecs.ComponentSytem;
 using ajiva.Ecs.Entity;
 
 namespace ajiva.Ecs.Example
 {
-    public class StdComponentSystem : ComponentSystemBase<StdComponent>
+    public class StdComponentSystem : ComponentSystemBase<StdComponent>, IUpdate
     {
         /// <inheritdoc />
-        public override void Update(TimeSpan delta)
+        public void Update(TimeSpan delta)
         {
             foreach (var (key, value) in ComponentEntityMap)
             {
                 Console.WriteLine($"[{value}]: " + key);
             }
         }
-
-        /// <inheritdoc />
-        public override async Task Init(AjivaEcs ecs)
-        {
-        }
-
         /// <inheritdoc />
         public override StdComponent CreateComponent(IEntity entity)
         {
             var cmp = new StdComponent {Health = 100};
             ComponentEntityMap.Add(cmp, entity);
             return cmp;
+        }
+
+        /// <inheritdoc />
+        protected override void Setup()
+        {
+            Ecs.RegisterUpdate(this);
         }
 
         /// <inheritdoc />
