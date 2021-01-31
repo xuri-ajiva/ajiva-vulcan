@@ -16,7 +16,7 @@ namespace ajiva.Entities
                 var cam = new FpsCamera();
                 system.AttachComponentToEntity<Transform3d>(cam);
                 system.AttachComponentToEntity<ARenderAble>(cam);
-
+                system.RegisterUpdate(cam);
                 cam.OnMouseMoved(0.0f, 0.0f);
                 return cam;
             }
@@ -27,7 +27,7 @@ namespace ajiva.Entities
             }
         }
 
-        public abstract class Camera : TransFormEntity
+        public abstract class Camera : TransFormEntity, IUpdate
         {
             public float Fov;
             public float Width;
