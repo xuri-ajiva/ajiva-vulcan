@@ -5,7 +5,7 @@ using SharpVk.Glfw;
 
 namespace ajiva.Systems.VulcanEngine
 {
-    public partial class AjivaRenderEngine : IInit
+    public partial class AjivaRenderEngine
     {
         #region Public
 
@@ -25,6 +25,11 @@ namespace ajiva.Systems.VulcanEngine
             lock (UpdateLock)
             lock (RenderLock)
             {
+                foreach (var entity in ComponentEntityMap)
+                {
+                    entity.Key.Dirty = true;
+                }
+                
                 Ecs.GetSystem<DeviceSystem>().WaitIdle();
 
                 var window = Ecs.GetSystem<WindowSystem>();
