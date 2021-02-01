@@ -170,16 +170,23 @@ namespace ajiva.Ecs
 
         private List<IUpdate> Updates = new();
 
-        public void RegisterUpdate(IUpdate update) => Updates.Add(update);
+        public void RegisterUpdate(IUpdate update)
+        {
+            lock (regLock) Updates.Add(update);
+        }
 
         private Dictionary<InitPhase, List<IInit>> Inits = new();
 
+        private object regLock = new();
+
         public void RegisterInit(IInit init, InitPhase phase)
         {
-            if (Inits.ContainsKey(phase))
-                Inits[phase].Add(init);
-            else
-                Inits.Add(phase, new() {init});
+            Console.WriteLine(init.GetHashCode() + " <- "+ phase);
+            lock (regLock)
+                if (Inits.ContainsKey(phase))
+                    Inits[phase].Add(init);
+                else
+                    Inits.Add(phase, new() {init});
         }
     }
 }
