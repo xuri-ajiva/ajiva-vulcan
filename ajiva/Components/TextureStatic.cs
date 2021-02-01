@@ -21,11 +21,24 @@ namespace ajiva.Components
             };
         }
 
+        public static ATexture FromBitmap(AjivaEcs ecs, Bitmap bitmap)
+        {
+            return new()
+            {
+                Image = CreateTextureImageFromBitmap(ecs, bitmap),
+                Sampler = CreateTextureSampler(ecs.GetSystem<DeviceSystem>())
+            };
+        }
+
         private static AImage CreateTextureImageFromFile(AjivaEcs ecs, string fileName)
         {
             var img = System.Drawing.Image.FromFile(fileName);
             var bm = new Bitmap(img);
+            return CreateTextureImageFromBitmap(ecs, bm);
+        }
 
+        private static AImage CreateTextureImageFromBitmap(AjivaEcs ecs, Bitmap bm)
+        {
             var texWidth = (uint)bm.Width;
             var texHeight = (uint)bm.Height;
             var imageSize = texWidth * texHeight * 4u;
@@ -48,7 +61,7 @@ namespace ajiva.Components
             }
 
             var image = ecs.GetComponentSystem<ImageSystem, AImage>();
-            
+
             AImage aImage = image.CreateImageAndView(texWidth, texHeight, Format.R8G8B8A8Srgb, ImageTiling.Optimal, ImageUsageFlags.TransferDestination | ImageUsageFlags.Sampled, MemoryPropertyFlags.DeviceLocal, ImageAspectFlags.Color);
 
             image.TransitionImageLayout(aImage.Image!, Format.R8G8B8A8Srgb, ImageLayout.Undefined, ImageLayout.TransferDestinationOptimal);
