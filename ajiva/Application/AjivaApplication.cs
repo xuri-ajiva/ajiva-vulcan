@@ -4,11 +4,13 @@ using ajiva.Ecs;
 using ajiva.Ecs.Example;
 using ajiva.Entities;
 using ajiva.Factories;
+using ajiva.Generators.Texture;
 using ajiva.Helpers;
 using ajiva.Models;
 using ajiva.Systems;
 using ajiva.Systems.VulcanEngine;
 using ajiva.Systems.VulcanEngine.Systems;
+using ajiva.Worker;
 using SharpVk;
 using SharpVk.Glfw;
 using SharpVk.Multivendor;
@@ -19,7 +21,7 @@ namespace ajiva.Application
     {
         private bool Running { get; set; } = false;
 
-        private readonly AjivaEcs entityComponentSystem = new(true);
+        private readonly AjivaEcs entityComponentSystem = new(false);
 
         public void Run()
         {
@@ -44,6 +46,7 @@ namespace ajiva.Application
             (vulcanInstance, debugReportCallback) = AjivaRenderEngine.CreateInstance(Glfw3.GetRequiredInstanceExtensions());
             var renderEngine = new AjivaRenderEngine();
             var deviceSystem = new DeviceSystem();
+            var pool = new WorkerPool(16, "AjivaWorkerPool");
 
             entityComponentSystem.AddInstance(vulcanInstance);
 
@@ -51,6 +54,8 @@ namespace ajiva.Application
             entityComponentSystem.AddSystem(new ShaderSystem(deviceSystem));
             entityComponentSystem.AddSystem(new WindowSystem());
             entityComponentSystem.AddSystem(new GraphicsSystem());
+            entityComponentSystem.AddSystem(pool);
+            entityComponentSystem.AddSystem(new BoxTextureGenerator());
 
             entityComponentSystem.AddComponentSystem(renderEngine);
             entityComponentSystem.AddComponentSystem(new TextureSystem());
@@ -79,6 +84,8 @@ namespace ajiva.Application
             entityComponentSystem.SetupSystems();
             entityComponentSystem.InitSystems();
 
+            pool.Enabled = true;
+            
             for (var i = 0; i < size; i++)
             {
                 var cube = entityComponentSystem.CreateEntity<Cube>();
