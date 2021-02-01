@@ -77,7 +77,7 @@ namespace ajiva.Ecs
 
         public void AddInstance<T>(T instance) where T : class
         {
-            Instances.Add(typeof(T), Instances);
+            Instances.Add(typeof(T), instance);
         }
 
         public T GetInstance<T>() where T : class => (T)Instances[typeof(T)];
