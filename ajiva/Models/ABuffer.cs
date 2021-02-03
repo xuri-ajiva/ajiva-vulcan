@@ -1,6 +1,5 @@
 ﻿using System;
 using ajiva.Helpers;
-using ajiva.Systems.VulcanEngine.EngineManagers;
 using ajiva.Systems.VulcanEngine.Systems;
 using SharpVk;
 using Buffer = SharpVk.Buffer;

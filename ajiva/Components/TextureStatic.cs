@@ -2,9 +2,6 @@
 using System.Drawing.Imaging;
 using ajiva.Ecs;
 using ajiva.Models;
-using ajiva.Systems.VulcanEngine;
-using ajiva.Systems.VulcanEngine.Engine;
-using ajiva.Systems.VulcanEngine.EngineManagers;
 using ajiva.Systems.VulcanEngine.Systems;
 using SharpVk;
 

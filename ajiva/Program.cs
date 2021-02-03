@@ -1,6 +1,5 @@
 ﻿//#define TEST_MODE
 using System;
-using System.Threading.Tasks;
 using ajiva.Application;
 using SharpVk.Glfw;
 using SharpVk.Interop;

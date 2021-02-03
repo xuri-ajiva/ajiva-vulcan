@@ -5,7 +5,6 @@ using ajiva.Ecs;
 using ajiva.Ecs.System;
 using ajiva.Systems.VulcanEngine.Systems;
 using ajiva.Worker;
-using SharpVk;
 
 namespace ajiva.Generators.Texture
 {

@@ -1,6 +1,4 @@
 ﻿using System;
-using System.Threading.Tasks;
-using ajiva.Ecs.Component;
 using ajiva.Ecs.ComponentSytem;
 using ajiva.Ecs.Entity;
 

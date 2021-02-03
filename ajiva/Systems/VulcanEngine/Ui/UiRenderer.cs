@@ -1,9 +1,6 @@
-﻿using System;
-using ajiva.Components;
-using ajiva.Ecs;
+﻿using ajiva.Components;
 using ajiva.Ecs.ComponentSytem;
 using ajiva.Ecs.Entity;
-using ajiva.Systems.VulcanEngine.Engine;
 
 namespace ajiva.Systems.VulcanEngine.Ui
 {
