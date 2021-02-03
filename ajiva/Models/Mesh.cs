@@ -1,20 +1,19 @@
 ﻿using System.Linq;
 using ajiva.Helpers;
-using ajiva.Systems.VulcanEngine.EngineManagers;
 using ajiva.Systems.VulcanEngine.Systems;
 using SharpVk;
 
 namespace ajiva.Models
 {
-    public partial class Mesh : DisposingLogger
+    public partial class Mesh<T> : DisposingLogger where T : notnull
     {
-        public readonly Vertex[] VerticesData;
+        public readonly T[] VerticesData;
         public readonly ushort[] IndicesData;
         private DeviceSystem? deviceComponent;
-        public BufferOfT<Vertex>? Vertices { get; protected set; }
+        public BufferOfT<T>? Vertices { get; protected set; }
         public BufferOfT<ushort>? Indeces { get; protected set; }
 
-        public Mesh(Vertex[] verticesData, ushort[] indicesData)
+        public Mesh(T[] verticesData, ushort[] indicesData)
         {
             this.VerticesData = verticesData;
             this.IndicesData = indicesData;
@@ -28,12 +27,12 @@ namespace ajiva.Models
             Indeces = CreateShaderBuffer(IndicesData, BufferUsageFlags.IndexBuffer);
         }
 
-        private BufferOfT<T> CreateShaderBuffer<T>(T[] val, BufferUsageFlags bufferUsage) where T : notnull
+        private BufferOfT<TV> CreateShaderBuffer<TV>(TV[] val, BufferUsageFlags bufferUsage) where TV : notnull
         {
             ATrace.Assert(deviceComponent != null, nameof(deviceComponent) + " != null");
             
-            BufferOfT<T> aBuffer = new(val);
-            var copyBuffer = CopyBuffer<T>.CreateCopyBufferOnDevice(val, deviceComponent);
+            BufferOfT<TV> aBuffer = new(val);
+            var copyBuffer = CopyBuffer<TV>.CreateCopyBufferOnDevice(val, deviceComponent);
 
             aBuffer.Create(deviceComponent, BufferUsageFlags.TransferDestination | bufferUsage, MemoryPropertyFlags.DeviceLocal);
 
@@ -63,7 +62,7 @@ namespace ajiva.Models
             commandBuffer.DrawIndexed((uint)Indeces.Length, 1, 0, 0, 0);
         }
 
-        public Mesh Clone()
+        public Mesh<T> Clone()
         {
             return new(VerticesData.ToArray(), IndicesData.ToArray());
         }
