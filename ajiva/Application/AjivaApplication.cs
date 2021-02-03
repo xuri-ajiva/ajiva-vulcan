@@ -58,6 +58,7 @@ namespace ajiva.Application
             entityComponentSystem.AddSystem(new BoxTextureGenerator());
 
             entityComponentSystem.AddComponentSystem(renderEngine);
+            entityComponentSystem.AddComponentSystem(new UiRenderer());
             entityComponentSystem.AddComponentSystem(new TextureSystem());
             entityComponentSystem.AddComponentSystem(new ImageSystem());
             entityComponentSystem.AddComponentSystem(new TransformComponentSystem());
@@ -65,6 +66,7 @@ namespace ajiva.Application
             entityComponentSystem.AddEntityFactory(typeof(SdtEntity), new SomeEntityFactory());
 
             entityComponentSystem.AddEntityFactory(typeof(Cube), new CubeFactory());
+            entityComponentSystem.AddEntityFactory(typeof(Rect), new RectFactory());
             entityComponentSystem.AddEntityFactory(typeof(Cameras.FpsCamera), new Cameras.FpsCamaraFactory());
 
             entityComponentSystem.AddParam(nameof(SurfaceHeight), SurfaceHeight);
@@ -74,7 +76,7 @@ namespace ajiva.Application
             renderEngine.MainCamara.UpdatePerspective(90, SurfaceWidth, SurfaceHeight);
             renderEngine.MainCamara.MovementSpeed = .1f;
 
-            var meshPref = Mesh.Cube.Clone();
+            var meshPref = MeshPrefab.Cube.Clone();
             var r = new Random();
 
             const int size = 10;
@@ -90,7 +92,7 @@ namespace ajiva.Application
             {
                 var cube = entityComponentSystem.CreateEntity<Cube>();
 
-                var render = cube.GetComponent<ARenderAble>();
+                var render = cube.GetComponent<ARenderAble3D>();
                 render.SetMesh(meshPref, deviceSystem);
                 render.Render = true;
 
@@ -98,6 +100,14 @@ namespace ajiva.Application
                 trans.Position = new(r.Next(-posRange, posRange), r.Next(-posRange, posRange), r.Next(-posRange, posRange));
                 trans.Rotation = new(r.Next(0, 100), r.Next(0, 100), r.Next(0, 100));
             }
+            
+            var rect = entityComponentSystem.CreateEntity<Rect>();
+
+            var renderRect = rect.GetComponent<ARenderAble2D>();
+            renderRect.SetMesh(MeshPrefab.Rect, deviceSystem);
+            renderRect.Render = true;
+            
+            
             Console.WriteLine();
         }
 
