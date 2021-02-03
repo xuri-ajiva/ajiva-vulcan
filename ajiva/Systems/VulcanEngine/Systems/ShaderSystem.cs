@@ -6,7 +6,8 @@ namespace ajiva.Systems.VulcanEngine.Systems
 {
     public class ShaderSystem : SystemBase, IInit
     {
-        public Shader? Main { get; set; }
+        public Shader? Main3D { get; set; }
+        public Shader? Main2D { get; set; }
 
         public readonly UniformBuffer<UniformViewProj> ViewProj;
         public readonly UniformBuffer<UniformModel> UniformModels;
@@ -26,10 +27,16 @@ namespace ajiva.Systems.VulcanEngine.Systems
         /// <inheritdoc />
         public void Init(AjivaEcs ecs, InitPhase phase)
         {
-            if (Main != null) return;
-
-            Main = new(ecs.GetSystem<DeviceSystem>());
-            Main.CreateShaderModules("./Shaders");
+            if (Main3D == null)
+            {
+                Main3D = new(ecs.GetSystem<DeviceSystem>());
+                Main3D.CreateShaderModules("./Shaders/3d");
+            }
+            if (Main2D == null)
+            {
+                Main2D = new(ecs.GetSystem<DeviceSystem>());
+                Main2D.CreateShaderModules("./Shaders/2d");
+            }
 
             //ProjView = new(renderEngine.DeviceComponent,1);
             // UniformModels = new(renderEngine.DeviceComponent,1000);
@@ -59,7 +66,8 @@ namespace ajiva.Systems.VulcanEngine.Systems
         /// <inheritdoc />
         protected override void ReleaseUnmanagedResources()
         {
-            Main?.Dispose();
+            Main3D?.Dispose();
+            Main2D?.Dispose();
             UniformModels.Dispose();
             ViewProj.Dispose();
         }
