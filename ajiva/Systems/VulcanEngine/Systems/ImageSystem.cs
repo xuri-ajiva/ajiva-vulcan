@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using ajiva.Components;
 using ajiva.Ecs;
 using ajiva.Ecs.ComponentSytem;
@@ -12,18 +11,6 @@ namespace ajiva.Systems.VulcanEngine.Systems
 {
     public class ImageSystem : ComponentSystemBase<AImage>, IInit
     {
-        public ImageView CreateImageView(Image image, Format format, ImageAspectFlags aspectFlags)
-        {
-            return Ecs.GetSystem<DeviceSystem>().Device!.CreateImageView(image, ImageViewType.ImageView2d, format, ComponentMapping.Identity, new()
-            {
-                AspectMask = aspectFlags,
-                BaseMipLevel = 0,
-                LevelCount = 1,
-                BaseArrayLayer = 0,
-                LayerCount = 1,
-            });
-        }
-
         public AImage CreateImageAndView(uint width, uint height, Format format, ImageTiling tiling, ImageUsageFlags usage, MemoryPropertyFlags properties, ImageAspectFlags aspectFlags)
         {
             var aImage = new AImage(true);
@@ -49,55 +36,11 @@ namespace ajiva.Systems.VulcanEngine.Systems
                 MemoryOffset = 0,
             });
 
-            aImage.View = CreateImageView(aImage.Image, format, aspectFlags);
+            aImage.CreateView(device, format, aspectFlags);
 
             return aImage;
         }
-
-        public Format FindDepthFormat()
-        {
-            return FindSupportedFormat(new[]
-                {
-                    Format.D32SFloat, Format.D32SFloatS8UInt, Format.D24UNormS8UInt
-                },
-                ImageTiling.Optimal,
-                FormatFeatureFlags.DepthStencilAttachment
-                //VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT
-            );
-        }
-
-        private Format FindSupportedFormat(IEnumerable<Format> candidates, ImageTiling tiling, FormatFeatureFlags features)
-        {
-            foreach (var format in candidates)
-            {
-                var props = Ecs.GetSystem<DeviceSystem>().PhysicalDevice!.GetFormatProperties(format);
-
-                switch (tiling)
-                {
-                    case ImageTiling.Linear when (props.LinearTilingFeatures & features) == features:
-                        return format;
-                    case ImageTiling.Optimal when (props.OptimalTilingFeatures & features) == features:
-                        return format;
-                    default:
-                        throw new ArgumentOutOfRangeException(nameof(tiling), tiling, "failed to find supported format!");
-                }
-            }
-
-            throw new ArgumentOutOfRangeException(nameof(candidates), candidates, "failed to find supported format!");
-        }
-
-        public void EnsureDepthResourcesExitsA()
-        {
-            /*
-            var depthFormat =;
-
-            ImageComponent.CreateImage(renderEngine.SwapChainComponent.swapChainExtent.Width, renderEngine.SwapChainComponent.swapChainExtent.Height, depthFormat, ImageTiling.Optimal, ImageUsageFlags.DepthStencilAttachment, MemoryPropertyFlags.DeviceLocal, out depthImage, out depthImageMemory);
-            depthImageView = CreateImageView(depthImage, depthFormat, ImageAspectFlags.Depth);
-
-            TransitionImageLayout(depthImage, depthFormat, ImageLayout.Undefined, ImageLayout.DepthStencilAttachmentOptimal);
-        */
-        }
-
+        
         public AImage CreateManagedImage(Format format, ImageAspectFlags aspectFlags, Extent2D extent)
         {
             var aImage = CreateImageAndView(extent.Width, extent.Height, format, ImageTiling.Optimal, ImageUsageFlags.DepthStencilAttachment, MemoryPropertyFlags.DeviceLocal, aspectFlags);
@@ -233,7 +176,6 @@ namespace ajiva.Systems.VulcanEngine.Systems
         /// <inheritdoc />
         public void Init(AjivaEcs ecs, InitPhase phase)
         {
-            
         }
     }
 }
