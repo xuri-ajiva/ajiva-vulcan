@@ -1,5 +1,6 @@
 ﻿using ajiva.Ecs.Component;
 using ajiva.Helpers;
+using ajiva.Systems.VulcanEngine;
 using SharpVk;
 
 namespace ajiva.Models
@@ -54,5 +55,10 @@ namespace ajiva.Models
 
         /// <inheritdoc />
         public bool Dirty { get; set; }
+
+        public void CreateView(Device device, Format format, ImageAspectFlags aspectFlags)
+        {
+            view = image?.CreateImageView(device, format, aspectFlags);
+        }
     }
 }
