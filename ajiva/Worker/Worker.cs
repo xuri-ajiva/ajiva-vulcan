@@ -1,7 +1,5 @@
 ﻿using System;
-using System.Collections.Concurrent;
 using System.Globalization;
-using System.Reactive;
 using System.Reactive.Linq;
 using System.Reactive.Subjects;
 using System.Threading;
@@ -33,26 +31,22 @@ namespace ajiva.Worker
         {
             while (!exit)
             {
-                if (!WorkerPool.Enabled)
-                {
-                    State.Publish(WorkResult.Disabled);
-                    while (!WorkerPool.Enabled)
-                    {
-                        Thread.Sleep(10);
-                    }
-                }
+                //if (!WorkerPool.Enabled)
+                //{
+                //    State.Publish(WorkResult.Disabled);
+                //    while (!WorkerPool.Enabled)
+                //    {
+                //        Thread.Sleep(10);
+                //    }
+                //}
                 WorkInfo? work;
                 State.Publish(WorkResult.Waiting);
+                WorkerPool.SyncSemaphore.WaitOne();
                 lock (WorkerPool.AvailableLock)
                 {
                     State.Publish(WorkResult.Locking);
-                    while (WorkerPool._available <= 0)
-                    {
-                        Thread.Sleep(1);
-                    }
+                    
                     if (!WorkerPool.TryGetWork(out work)) continue;
-
-                    Interlocked.Decrement(ref WorkerPool._available);
                 }
                 if (work == null) continue;
 

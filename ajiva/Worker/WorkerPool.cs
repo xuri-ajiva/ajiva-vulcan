@@ -1,9 +1,6 @@
 ﻿using System;
 using System.Collections.Concurrent;
-using System.Linq;
-using System.Runtime.CompilerServices;
 using System.Threading;
-using System.Threading.Tasks;
 using ajiva.Ecs.System;
 using ajiva.Helpers;
 
@@ -15,8 +12,8 @@ namespace ajiva.Worker
         public static WorkerPool Default = new(DefaultWorkerCount, nameof(Default));
 
         private readonly Worker[] workers;
-        internal int _available;
-        private int Available { get; set; }
+
+        public Semaphore SyncSemaphore { get; } = new(0, int.MaxValue);
         internal readonly object AvailableLock = new();
         public string Name { get; set; }
 
@@ -25,7 +22,6 @@ namespace ajiva.Worker
         public WorkerPool(int workerCount, string name)
         {
             Name = name;
-            Available = 0;
             workers = new Worker[workerCount];
             for (var i = 0; i < workerCount; i++)
             {
@@ -39,7 +35,7 @@ namespace ajiva.Worker
             var wi = new WorkInfo(work, name, errorNotify, userParam);
             concurrentQueue.Enqueue(wi);
 
-            Interlocked.Increment(ref _available);
+            SyncSemaphore.Release(1);
         }
 
         public bool Enabled { get; set; }
@@ -59,7 +55,7 @@ namespace ajiva.Worker
             var format = "X" + workers.Length.ToString("X").Length;
 
             Console.SetCursorPosition(0, posStart + 1);
-            Console.WriteLine($"Open Workers: {workers.Length} Work: {_available}".FillUp(Console.BufferWidth - 1));
+            Console.WriteLine($"Open Workers: {workers.Length} Work: {concurrentQueue.Count}".FillUp(Console.BufferWidth - 1));
             for (var i = 0; i < workers.Length; i++)
             {
                 var ci = i;
@@ -76,7 +72,7 @@ namespace ajiva.Worker
         protected override void ReleaseUnmanagedResources()
         {
             Enabled = false;
-            Interlocked.Add(ref _available, 100);
+            SyncSemaphore.Release(workers.Length * 5);
         }
 
         /// <inheritdoc />
