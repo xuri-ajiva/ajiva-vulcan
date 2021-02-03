@@ -6,20 +6,21 @@ namespace ajiva.Helpers
 {
     public class RunHelper
     {
-        public delegate void DeltaRun(TimeSpan delta);
+        public delegate bool DeltaRun(TimeSpan delta);
 
-        public static void RunDelta(DeltaRun action, Func<bool> condition, TimeSpan maxToRun)
+        public static void RunDelta(DeltaRun action, TimeSpan maxToRun)
         {
             var iteration = 0u;
             var start = DateTime.Now;
 
             var delta = TimeSpan.Zero;
-            long end = 0, now = Stopwatch.GetTimestamp();
-            while (condition())
+            var now = Stopwatch.GetTimestamp();
+
+            while (true)
             {
                 Thread.Sleep(1);
 
-                action?.Invoke(delta);
+                if (!action.Invoke(delta)) return;
 
                 iteration++;
 
@@ -33,7 +34,7 @@ namespace ajiva.Helpers
                     }
                 }
 
-                end = Stopwatch.GetTimestamp();
+                var end = Stopwatch.GetTimestamp();
                 delta = new(end - now);
 
                 now = end;

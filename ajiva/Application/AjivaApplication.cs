@@ -10,6 +10,7 @@ using ajiva.Models;
 using ajiva.Systems;
 using ajiva.Systems.VulcanEngine;
 using ajiva.Systems.VulcanEngine.Systems;
+using ajiva.Systems.VulcanEngine.Ui;
 using ajiva.Worker;
 using SharpVk;
 using SharpVk.Glfw;
@@ -19,7 +20,7 @@ namespace ajiva.Application
 {
     public class AjivaApplication : DisposingLogger
     {
-        private bool Running { get; set; } = false;
+        private bool Running { get; set; }
 
         private readonly AjivaEcs entityComponentSystem = new(false);
 
@@ -27,12 +28,13 @@ namespace ajiva.Application
         {
             Running = true;
 
-            Helpers.RunHelper.RunDelta(delegate(TimeSpan span)
+            RunHelper.RunDelta(delegate(TimeSpan span)
             {
                 entityComponentSystem.Update(span);
-                if (!entityComponentSystem.Available)
-                    Running = false;
-            }, () => Running, TimeSpan.MaxValue);
+                return entityComponentSystem.Available;
+            }, TimeSpan.MaxValue);
+            
+            Running = false;
         }
 
         private Instance vulcanInstance;
