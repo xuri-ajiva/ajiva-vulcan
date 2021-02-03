@@ -1,590 +1,80 @@
-﻿using System.Linq;
-using System.Runtime.CompilerServices;
+﻿using System.Collections.Generic;
+using System.Linq;
 using ajiva.Components;
 using ajiva.Ecs;
-using ajiva.Helpers;
 using ajiva.Models;
 using ajiva.Systems.VulcanEngine.Systems;
+using ajiva.Systems.VulcanEngine.Ui;
+using ajiva.Systems.VulcanEngine.Unions;
 using SharpVk;
-using SharpVk.Khronos;
 
 namespace ajiva.Systems.VulcanEngine.EngineManagers
 {
     public class GraphicsLayout : ThreadSaveCreatable
     {
         private readonly AjivaEcs ecs;
-        private PipelineLayout? PipelineLayout { get; set; }
-        private RenderPass? RenderPass { get; set; }
-        private Pipeline? Pipeline { get; set; }
-
-        private DescriptorPool? DescriptorPool { get; set; }
-        private DescriptorSetLayout? DescriptorSetLayout { get; set; }
-        private DescriptorSet? DescriptorSet { get; set; }
-
-        private Framebuffer[]? FrameBuffers { get; set; }
-        private CommandBuffer[]? CommandBuffers { get; set; }
-
-        public Swapchain? SwapChain { get; private set; }
-        public Format? SwapChainFormat { get; private set; }
-        public Extent2D? SwapChainExtent { get; private set; }
-        public AImage[]? SwapChainImage { get; private set; }
-
-        private Semaphore? ImageAvailable { get; set; }
-        private Semaphore? RenderFinished { get; set; }
-
         private AImage? DepthImage { get; set; }
 
-        private WindowSystem window;
-        private DeviceSystem deviceSystem;
         private Format? DepthFormat { get; set; }
 
         public GraphicsLayout(AjivaEcs ecs)
         {
             this.ecs = ecs;
-            window = ecs.GetSystem<WindowSystem>();
-            deviceSystem = ecs.GetSystem<DeviceSystem>();
         }
 
         /// <inheritdoc />
         protected override void ReleaseUnmanagedResources()
         {
-            PipelineLayout?.Dispose();
-            RenderPass?.Dispose();
-            Pipeline?.Dispose();
-            DescriptorPool?.Dispose();
-            DescriptorSetLayout?.Dispose();
-
-            deviceSystem.CommandPool?.FreeCommandBuffers(CommandBuffers);
-            CommandBuffers = null;
-
-            if (FrameBuffers != null)
-                foreach (var frameBuffer in FrameBuffers)
-                    frameBuffer.Dispose();
-            FrameBuffers = null;
-
-            if (SwapChainImage != null)
-                foreach (var aImage in SwapChainImage)
-                    aImage.Dispose();
-            SwapChainImage = null;
-
             DepthImage?.Dispose();
             DepthImage = null;
 
-            SwapChain?.Dispose();
-            SwapChain = null;
-
-            ImageAvailable?.Dispose();
-            RenderFinished?.Dispose();
-
-            ImageAvailable = null;
-            RenderFinished = null;
-
-            SwapChainExtent = null;
-            SwapChainFormat = null;
+            renderUnion?.Dispose();
+            renderUnion = null!;
         }
+        
+        private Queue render;
+        private Queue presentation;
 
-        #region Swapchain
-
-        public void EnsureSwapChainExists()
-        {
-            var swapChainSupport = deviceSystem.PhysicalDevice!.QuerySwapChainSupport(window.Surface!);
-            var extent = swapChainSupport.Capabilities.ChooseSwapExtent(window.SurfaceExtent);
-            var surfaceFormat = swapChainSupport.Formats.ChooseSwapSurfaceFormat();
-
-            if (SwapChain == null) CreateSwapChain(swapChainSupport, surfaceFormat, extent);
-            if (SwapChainImage == null) CreateSwapchainImages();
-
-            SwapChainFormat ??= surfaceFormat.Format;
-            SwapChainExtent ??= extent;
-
-            //directly create the views sow we dont forget it, and reduce dependency
-            if (SwapChainImage!.Any(x => x.View == null)) CreateImageViews();
-        }
-
-        private void CreateSwapChain(Extensions.SwapChainSupportDetails swapChainSupport, SurfaceFormat surfaceFormat, Extent2D extent)
-        {
-            var imageCount = swapChainSupport.Capabilities.MinImageCount + 1;
-            if (swapChainSupport.Capabilities.MaxImageCount > 0 && imageCount > swapChainSupport.Capabilities.MaxImageCount)
-            {
-                imageCount = swapChainSupport.Capabilities.MaxImageCount;
-            }
-
-            var queueFamilies = deviceSystem.PhysicalDevice!.FindQueueFamilies(window.Surface!);
-
-            var queueFamilyIndices = queueFamilies.Indices.ToArray();
-
-            SwapChain = deviceSystem.Device.CreateSwapchain(window.Surface,
-                imageCount,
-                surfaceFormat.Format,
-                surfaceFormat.ColorSpace,
-                extent,
-                1,
-                ImageUsageFlags.ColorAttachment,
-                queueFamilyIndices.Length == 1
-                    ? SharingMode.Exclusive
-                    : SharingMode.Concurrent,
-                queueFamilyIndices,
-                swapChainSupport.Capabilities.CurrentTransform,
-                CompositeAlphaFlags.Opaque,
-                swapChainSupport.PresentModes.ChooseSwapPresentMode(),
-                true,
-                SwapChain);
-        }
-
-        private void CreateSwapchainImages()
-        {
-            SwapChainImage = SwapChain!.GetImages().Select(x => new AImage(false)
-            {
-                Image = x
-            }).ToArray();
-        }
-
-        private void CreateImageViews()
-        {
-            foreach (var image in SwapChainImage!)
-            {
-                image.View ??= ecs.GetComponentSystem<ImageSystem, AImage>().CreateImageView(image.Image!, SwapChainFormat!.Value, ImageAspectFlags.Color);
-            }
-        }
-
-#endregion
-#region PoplineAndRenderPase
-
-        private void CreateRenderPass()
-        {
-            RenderPass = deviceSystem.Device!.CreateRenderPass(
-                new AttachmentDescription[]
-                {
-                    new()
-                    {
-                        Format = SwapChainFormat!.Value,
-                        Samples = SampleCountFlags.SampleCount1,
-                        LoadOp = AttachmentLoadOp.Clear,
-                        StoreOp = AttachmentStoreOp.Store,
-                        StencilLoadOp = AttachmentLoadOp.DontCare,
-                        StencilStoreOp = AttachmentStoreOp.DontCare,
-                        InitialLayout = ImageLayout.Undefined,
-                        FinalLayout = ImageLayout.PresentSource
-                    },
-                    new()
-                    {
-                        Format = ecs.GetComponentSystem<ImageSystem, AImage>().FindDepthFormat(),
-                        Samples = SampleCountFlags.SampleCount1,
-                        LoadOp = AttachmentLoadOp.Clear,
-                        StoreOp = AttachmentStoreOp.DontCare,
-                        StencilLoadOp = AttachmentLoadOp.DontCare,
-                        StencilStoreOp = AttachmentStoreOp.DontCare,
-                        InitialLayout = ImageLayout.Undefined,
-                        FinalLayout = ImageLayout.DepthStencilAttachmentOptimal
-                    }
-                },
-                new SubpassDescription
-                {
-                    DepthStencilAttachment = new(1, ImageLayout.DepthStencilAttachmentOptimal),
-                    PipelineBindPoint = PipelineBindPoint.Graphics,
-                    ColorAttachments = new[]
-                    {
-                        new AttachmentReference(0, ImageLayout.ColorAttachmentOptimal)
-                    }
-                },
-                new[]
-                {
-                    new SubpassDependency
-                    {
-                        SourceSubpass = Constants.SubpassExternal,
-                        DestinationSubpass = 0,
-                        SourceStageMask = PipelineStageFlags.BottomOfPipe,
-                        SourceAccessMask = AccessFlags.MemoryRead,
-                        DestinationStageMask = PipelineStageFlags.ColorAttachmentOutput | PipelineStageFlags.EarlyFragmentTests,
-                        DestinationAccessMask = AccessFlags.ColorAttachmentRead | AccessFlags.ColorAttachmentWrite | AccessFlags.DepthStencilAttachmentRead
-                    },
-                    new SubpassDependency
-                    {
-                        SourceSubpass = 0,
-                        DestinationSubpass = Constants.SubpassExternal,
-                        SourceStageMask = PipelineStageFlags.ColorAttachmentOutput | PipelineStageFlags.EarlyFragmentTests,
-                        SourceAccessMask = AccessFlags.ColorAttachmentRead | AccessFlags.ColorAttachmentWrite | AccessFlags.DepthStencilAttachmentRead,
-                        DestinationStageMask = PipelineStageFlags.BottomOfPipe,
-                        DestinationAccessMask = AccessFlags.MemoryRead
-                    },
-                });
-        }
-
-        private void CreateDescriptorSetLayout()
-        {
-            DescriptorSetLayout = deviceSystem.Device!.CreateDescriptorSetLayout(
-                new DescriptorSetLayoutBinding[]
-                {
-                    new()
-                    {
-                        Binding = 0,
-                        DescriptorType = DescriptorType.UniformBuffer,
-                        StageFlags = ShaderStageFlags.Vertex,
-                        DescriptorCount = 1
-                    },
-                    new()
-                    {
-                        Binding = 1,
-                        DescriptorType = DescriptorType.UniformBufferDynamic,
-                        StageFlags = ShaderStageFlags.Vertex,
-                        DescriptorCount = 1
-                    },
-                    new()
-                    {
-                        Binding = 2,
-                        DescriptorCount = TextureSystem.MAX_TEXTURE_SAMPLERS_IN_SHADER,
-                        DescriptorType = DescriptorType.CombinedImageSampler,
-                        StageFlags = ShaderStageFlags.Fragment,
-                    }
-                });
-        }
-
-        private void CreateGraphicsPipeline()
-        {
-            var bindingDescription = Vertex.GetBindingDescription();
-            var attributeDescriptions = Vertex.GetAttributeDescriptions();
-
-            PipelineLayout = deviceSystem.Device!.CreatePipelineLayout(DescriptorSetLayout, null);
-
-            Pipeline = deviceSystem.Device.CreateGraphicsPipelines(null, new[]
-            {
-                new GraphicsPipelineCreateInfo
-                {
-                    Layout = PipelineLayout,
-                    RenderPass = RenderPass,
-                    Subpass = 0,
-                    VertexInputState = new()
-                    {
-                        VertexBindingDescriptions = new[]
-                        {
-                            bindingDescription
-                        },
-                        VertexAttributeDescriptions = attributeDescriptions
-                    },
-                    InputAssemblyState = new()
-                    {
-                        PrimitiveRestartEnable = false,
-                        Topology = PrimitiveTopology.TriangleList
-                    },
-                    ViewportState = new()
-                    {
-                        Viewports = new[]
-                        {
-                            new Viewport
-                            {
-                                X = 0f,
-                                Y = 0f,
-                                Width = SwapChainExtent!.Value.Width,
-                                Height = SwapChainExtent!.Value.Height,
-                                MaxDepth = 1,
-                                MinDepth = 0,
-                            }
-                        },
-                        Scissors = new[]
-                        {
-                            new Rect2D
-                            {
-                                Offset = Offset2D.Zero,
-                                Extent = SwapChainExtent!.Value
-                            }
-                        }
-                    },
-                    RasterizationState = new()
-                    {
-                        DepthClampEnable = false,
-                        RasterizerDiscardEnable = false,
-                        PolygonMode = PolygonMode.Fill,
-                        LineWidth = 1,
-                        //CullMode = CullModeFlags.Back,
-                        //FrontFace = FrontFace.CounterClockwise,
-                        DepthBiasEnable = false
-                    },
-                    MultisampleState = new()
-                    {
-                        SampleShadingEnable = false,
-                        RasterizationSamples = SampleCountFlags.SampleCount1,
-                        MinSampleShading = 1
-                    },
-                    ColorBlendState = new()
-                    {
-                        Attachments = new[]
-                        {
-                            new PipelineColorBlendAttachmentState
-                            {
-                                ColorWriteMask = ColorComponentFlags.R
-                                                 | ColorComponentFlags.G
-                                                 | ColorComponentFlags.B
-                                                 | ColorComponentFlags.A,
-                                BlendEnable = false,
-                                SourceColorBlendFactor = BlendFactor.One,
-                                DestinationColorBlendFactor = BlendFactor.Zero,
-                                ColorBlendOp = BlendOp.Add,
-                                SourceAlphaBlendFactor = BlendFactor.One,
-                                DestinationAlphaBlendFactor = BlendFactor.Zero,
-                                AlphaBlendOp = BlendOp.Add
-                            }
-                        },
-                        LogicOpEnable = false,
-                        LogicOp = LogicOp.Copy,
-                        BlendConstants = (0, 0, 0, 0)
-                    },
-                    Stages = new[]
-                    {
-                        new PipelineShaderStageCreateInfo
-                        {
-                            Stage = ShaderStageFlags.Vertex,
-                            Module = ecs.GetSystem<ShaderSystem>().Main!.VertShader,
-                            Name = "main"
-                        },
-                        new PipelineShaderStageCreateInfo
-                        {
-                            Stage = ShaderStageFlags.Fragment,
-                            Module = ecs.GetSystem<ShaderSystem>().Main!.FragShader,
-                            Name = "main"
-                        }
-                    },
-                    DepthStencilState = new()
-                    {
-                        DepthTestEnable = true,
-                        DepthWriteEnable = true,
-                        DepthCompareOp = CompareOp.Less,
-                        DepthBoundsTestEnable = false,
-                        MinDepthBounds = 0,
-                        MaxDepthBounds = 1,
-                        StencilTestEnable = false,
-                        Back = new(),
-                        Flags = new(),
-                    }
-                }
-            }).Single();
-        }
-
-#endregion
-
-#region Descriptor
-
-        private void CreateDescriptorPool()
-        {
-            DescriptorPool = deviceSystem.Device!.CreateDescriptorPool(
-                10000,
-                new DescriptorPoolSize[]
-                {
-                    new()
-                    {
-                        DescriptorCount = 1,
-                        Type = DescriptorType.UniformBuffer
-                    },
-                    new()
-                    {
-                        DescriptorCount = 1,
-                        Type = DescriptorType.UniformBufferDynamic
-                    },
-                    new()
-                    {
-                        DescriptorCount = TextureSystem.MAX_TEXTURE_SAMPLERS_IN_SHADER,
-                        Type = DescriptorType.CombinedImageSampler
-                    }
-                });
-        }
-
-        private void CreateDescriptorSet()
-        {
-            DescriptorSet = deviceSystem.Device!.AllocateDescriptorSets(DescriptorPool, DescriptorSetLayout).Single();
-
-            var shaderSystem = ecs.GetSystem<ShaderSystem>();
-
-            deviceSystem.Device.UpdateDescriptorSets(
-                new WriteDescriptorSet[]
-                {
-                    new()
-                    {
-                        BufferInfo = new[]
-                        {
-                            new DescriptorBufferInfo
-                            {
-                                Buffer = shaderSystem.ViewProj.Uniform.Buffer,
-                                Offset = 0,
-                                Range = shaderSystem.ViewProj.Uniform.SizeOfT
-                            }
-                        },
-                        DescriptorCount = 1,
-                        DestinationSet = DescriptorSet,
-                        DestinationBinding = 0,
-                        DestinationArrayElement = 0,
-                        DescriptorType = DescriptorType.UniformBuffer
-                    },
-                    new()
-                    {
-                        BufferInfo = new[]
-                        {
-                            new DescriptorBufferInfo
-                            {
-                                Buffer = shaderSystem.UniformModels.Uniform.Buffer,
-                                Offset = 0,
-                                Range = shaderSystem.UniformModels.Uniform.SizeOfT
-                            }
-                        },
-                        DescriptorCount = 1,
-                        DestinationSet = DescriptorSet,
-                        DestinationBinding = 1,
-                        DestinationArrayElement = 0,
-                        DescriptorType = DescriptorType.UniformBufferDynamic
-                    },
-                    new()
-                    {
-                        ImageInfo = ecs.GetComponentSystem<TextureSystem, ATexture>().TextureSamplerImageViews,
-                        DescriptorCount = TextureSystem.MAX_TEXTURE_SAMPLERS_IN_SHADER,
-                        DestinationSet = DescriptorSet,
-                        DestinationBinding = 2,
-                        DestinationArrayElement = 0,
-                        DescriptorType = DescriptorType.CombinedImageSampler,
-                    }
-                }, null);
-        }
-
-#endregion
-
-#region DrawBuffer
-
-        private void CreateFrameBuffers()
-        {
-            Framebuffer MakeFrameBuffer(ImageView imageView) => deviceSystem.Device!.CreateFramebuffer(RenderPass,
-                new[]
-                {
-                    imageView, DepthImage!.View
-                },
-                SwapChainExtent!.Value.Width,
-                SwapChainExtent!.Value.Height,
-                1);
-
-            FrameBuffers ??= SwapChainImage!.Select(x => MakeFrameBuffer(x.View!)).ToArray();
-        }
-
-        private void CreateCommandBuffers()
-        {
-            //todo: deviceSystem.EnsureCommandPoolsExists();
-
-            //renderEngine.DeviceComponent.CommandPool!.Reset(CommandPoolResetFlags.ReleaseResources);
-
-            CommandBuffers ??= deviceSystem.Device!.AllocateCommandBuffers(deviceSystem.CommandPool, CommandBufferLevel.Primary, (uint)FrameBuffers!.Length);
-
-            for (var index = 0; index < FrameBuffers!.Length; index++)
-            {
-                var commandBuffer = CommandBuffers[index];
-
-                commandBuffer.Begin(CommandBufferUsageFlags.SimultaneousUse);
-
-                commandBuffer.BeginRenderPass(RenderPass,
-                    FrameBuffers[index],
-                    new(new(), SwapChainExtent!.Value),
-                    new ClearValue[]
-                    {
-                        new ClearColorValue(.1f, .1f, .1f, 1), new ClearDepthStencilValue(1, 0)
-                    },
-                    SubpassContents.Inline);
-
-                commandBuffer.BindPipeline(PipelineBindPoint.Graphics, Pipeline);
-
-                foreach (var (renderAble, _) in ecs.GetComponentSystem<AjivaRenderEngine, ARenderAble>().ComponentEntityMap.Where(x => x.Key.Render))
-                {
-                    ATrace.Assert(renderAble.Mesh != null, "renderAble.Mesh != null");
-                    renderAble.Mesh.Bind(commandBuffer);
-
-                    commandBuffer.BindDescriptorSets(PipelineBindPoint.Graphics, PipelineLayout, 0, DescriptorSet, renderAble.Id * (uint)Unsafe.SizeOf<UniformModel>());
-
-                    renderAble.Mesh.DrawIndexed(commandBuffer);
-                }
-
-                commandBuffer.EndRenderPass();
-
-                commandBuffer.End();
-            }
-        }
-
-#endregion
+        private static int i = 0;
 
         /// <inheritdoc />
         protected override void Create()
         {
-            //todo: deviceSystem.EnsureDevicesExist();
-            EnsureSwapChainExists();
-            /*todo: renderEngine.ShaderSystem.EnsureShaderModulesExists();
-            renderEngine.ShaderSystem.UniformModels.EnsureExists();
-            renderEngine.ShaderSystem.ViewProj.EnsureExists();
-            renderEngine.TextureSystem.EnsureDefaultImagesExists(RenderEngine);*/
+            var ds = ecs.GetSystem<DeviceSystem>();
+            var im = ecs.GetComponentSystem<ImageSystem, AImage>();
+            var wi = ecs.GetSystem<WindowSystem>();
+            var sh = ecs.GetSystem<ShaderSystem>();
+            var tx = ecs.GetComponentSystem<TextureSystem, ATexture>();
+            var ar = ecs.GetComponentSystem<AjivaRenderEngine, ARenderAble3D>();
+            var ui = ecs.GetComponentSystem<UiRenderer, ARenderAble2D>();
 
-            ImageAvailable ??= deviceSystem.Device!.CreateSemaphore();
-            RenderFinished ??= deviceSystem.Device!.CreateSemaphore();
+            render = ds.GraphicsQueue!;
+            presentation = ds.PresentQueue!;
 
-            CreateDepthImage();
+            CreateDepthImage(im, ds.PhysicalDevice!);
 
-            CreateRenderPass();
+            renderUnion = RenderUnion.CreateRenderUnion(ds.PhysicalDevice, ds.Device!, wi.Surface!, wi.SurfaceExtent, sh, tx.TextureSamplerImageViews, true, DepthImage!, ds.CommandPool);
 
-            CreateDescriptorSetLayout();
-            CreateGraphicsPipeline();
-
-            CreateDescriptorPool();
-            CreateDescriptorSet();
-
-            CreateFrameBuffers();
-            CreateCommandBuffers();
+            //renderUnion.FillFrameBuffers(ar.ComponentEntityMap.Keys.Union<ARenderAble>(ui.ComponentEntityMap.Keys));
+            renderUnion.FillFrameBuffers(new Dictionary<PipelineName, List<ARenderAble>>()
+            {
+                [PipelineName.PipeLine2d] = ui.ComponentEntityMap.Keys.Cast<ARenderAble>().ToList(),
+                [PipelineName.PipeLine3d] = ar.ComponentEntityMap.Keys.Cast<ARenderAble>().ToList(),
+            });
         }
 
-        private void CreateDepthImage()
+        private RenderUnion renderUnion;
+
+        private void CreateDepthImage(ImageSystem imageSystem, PhysicalDevice device)
         {
-            var imageSystem = ecs.GetComponentSystem<ImageSystem, AImage>();
-            DepthFormat = imageSystem.FindDepthFormat();
+            DepthFormat = device.FindDepthFormat();
 
             DepthImage ??= imageSystem.CreateManagedImage(DepthFormat.Value, ImageAspectFlags.Depth, ecs.GetSystem<WindowSystem>().SurfaceExtent);
         }
 
         public void DrawFrame()
         {
-            if (!Created) return;
-            lock (disposeLock)
-            {
-                if (Disposed) return;
-
-                if (SwapChain == null || CommandBuffers == null || RenderFinished == null)
-                {
-                    return;
-                }
-
-                var nextImage = SwapChain!.AcquireNextImage(uint.MaxValue, ImageAvailable, null);
-
-                var si = new SubmitInfo
-                {
-                    CommandBuffers = new[]
-                    {
-                        CommandBuffers![nextImage]
-                    },
-                    SignalSemaphores = new[]
-                    {
-                        RenderFinished
-                    },
-                    WaitDestinationStageMask = new[]
-                    {
-                        PipelineStageFlags.ColorAttachmentOutput
-                    },
-                    WaitSemaphores = new[]
-                    {
-                        ImageAvailable
-                    }
-                };
-
-                deviceSystem.GraphicsQueue!.Submit(si, null);
-
-                var result = new Result[1];
-                deviceSystem.PresentQueue.Present(RenderFinished, SwapChain, nextImage, result);
-                si.SignalSemaphores = null!;
-                si.WaitSemaphores = null!;
-                si.WaitDestinationStageMask = null;
-                si.CommandBuffers = null;
-                // ReSharper disable once RedundantAssignment
-                result = null;
-                // ReSharper disable once RedundantAssignment
-                si = default;
-            }
+            renderUnion.DrawFrame(render, presentation);
         }
     }
 }
