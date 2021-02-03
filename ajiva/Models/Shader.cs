@@ -4,7 +4,6 @@ using System.Linq;
 using System.Runtime.CompilerServices;
 using ajiva.Ecs.Component;
 using ajiva.Systems.VulcanEngine;
-using ajiva.Systems.VulcanEngine.EngineManagers;
 using ajiva.Systems.VulcanEngine.Systems;
 using GlmSharp;
 using SharpVk;
@@ -98,7 +97,7 @@ namespace ajiva.Models
 
         public static Shader DefaultShader(DeviceSystem system)
         {
-            return CreateShaderFrom(shank => from input in shank.GetInput<Vertex>()
+            return CreateShaderFrom(shank => from input in shank.GetInput<Vertex3D>()
                 from ubo in shank.GetBinding<UniformBufferData>(0)
                 let transform = ubo.Proj * ubo.View * ubo.Model
                 select new VertexOutput

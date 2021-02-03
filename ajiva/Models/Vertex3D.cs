@@ -5,16 +5,16 @@ using SharpVk.Shanq;
 
 namespace ajiva.Models
 {
-    public struct Vertex
+    public struct Vertex3D
     {
-        public Vertex(vec3 position, vec3 colour, vec2 textCoord)
+        public Vertex3D(vec3 position, vec3 colour, vec2 textCoord)
         {
             Position = position;
             Colour = colour;
             TextCoord = textCoord;
         }
 
-        public Vertex(vec3 position, vec3 colour)
+        public Vertex3D(vec3 position, vec3 colour)
         {
             Position = position;
             Colour = colour;
@@ -30,7 +30,7 @@ namespace ajiva.Models
             return new()
             {
                 Binding = 0,
-                Stride = (uint)Marshal.SizeOf<Vertex>(),
+                Stride = (uint)Marshal.SizeOf<Vertex3D>(),
                 InputRate = VertexInputRate.Vertex
             };
         }
@@ -44,21 +44,21 @@ namespace ajiva.Models
                     Binding = 0,
                     Location = 0,
                     Format = Format.R32G32B32SFloat,
-                    Offset = (uint)Marshal.OffsetOf<Vertex>(nameof(Position))
+                    Offset = (uint)Marshal.OffsetOf<Vertex3D>(nameof(Position))
                 },
                 new()
                 {
                     Binding = 0,
                     Location = 1,
                     Format = Format.R32G32B32SFloat,
-                    Offset = (uint)Marshal.OffsetOf<Vertex>(nameof(Colour))
+                    Offset = (uint)Marshal.OffsetOf<Vertex3D>(nameof(Colour))
                 },
                 new()
                 {
                     Binding = 0,
                     Location = 2,
                     Format = Format.R32G32SFloat,
-                    Offset = (uint)Marshal.OffsetOf<Vertex>(nameof(TextCoord))
+                    Offset = (uint)Marshal.OffsetOf<Vertex3D>(nameof(TextCoord))
                 }
             };
         }
