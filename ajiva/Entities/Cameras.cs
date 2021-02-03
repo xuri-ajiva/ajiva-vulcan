@@ -15,7 +15,7 @@ namespace ajiva.Entities
             {
                 var cam = new FpsCamera();
                 system.AttachComponentToEntity<Transform3d>(cam);
-                system.AttachComponentToEntity<ARenderAble>(cam);
+                system.AttachComponentToEntity<ARenderAble3D>(cam);
                 system.RegisterUpdate(cam);
                 cam.OnMouseMoved(0.0f, 0.0f);
                 return cam;

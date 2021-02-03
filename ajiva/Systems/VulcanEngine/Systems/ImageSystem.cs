@@ -147,7 +147,7 @@ namespace ajiva.Systems.VulcanEngine.Systems
         protected override void Setup()
         {
             Ecs.RegisterInit(this, InitPhase.Init);
-            Ecs.GetComponentSystem<AjivaRenderEngine, ARenderAble>().OnResize += (_, _) =>
+            Ecs.GetComponentSystem<AjivaRenderEngine, ARenderAble3D>().OnResize += (_, _) =>
             {
                 //EnsureDepthResourcesDeletion();
                 //EnsureDepthResourcesExits();

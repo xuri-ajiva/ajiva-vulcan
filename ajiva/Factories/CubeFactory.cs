@@ -12,7 +12,7 @@ namespace ajiva.Factories
         {
             var cube = new Cube();
             system.AttachComponentToEntity<Transform3d>(cube);
-            system.AttachComponentToEntity<ARenderAble>(cube);
+            system.AttachComponentToEntity<ARenderAble3D>(cube);
             //system.AttachComponentToEntity<ATexture>(cube);
             return cube;
         }

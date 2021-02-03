@@ -1,6 +1,5 @@
 ﻿using ajiva.Components;
 using ajiva.Ecs;
-using ajiva.Ecs.Component;
 using ajiva.Ecs.Entity;
 using ajiva.Models;
 using ajiva.Systems.VulcanEngine.Engine;
@@ -17,7 +16,7 @@ using ajiva.Systems.VulcanEngine.Systems;
 // ReSharper disable once CheckNamespace
 namespace ajiva.Systems.VulcanEngine
 {
-    public partial class AjivaRenderEngine : ComponentSystemBase<ARenderAble>, IRenderEngine, IUpdate, IInit
+    public partial class AjivaRenderEngine : ComponentSystemBase<ARenderAble3D>, IRenderEngine, IUpdate, IInit
     {
         /// <inheritdoc />
         public Cameras.Camera MainCamara
@@ -175,9 +174,9 @@ namespace ajiva.Systems.VulcanEngine
         }
 
         /// <inheritdoc />
-        public override ARenderAble CreateComponent(IEntity entity)
+        public override ARenderAble3D CreateComponent(IEntity entity)
         {
-            var rnd = new ARenderAble();
+            var rnd = new ARenderAble3D();
             ComponentEntityMap.Add(rnd, entity);
             Interlocked.Add(ref DirtyComponents, 1);
             return rnd;

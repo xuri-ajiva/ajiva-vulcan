@@ -1,5 +1,4 @@
-﻿using ajiva.Ecs;
-using ajiva.Systems.VulcanEngine.Systems;
+﻿using ajiva.Systems.VulcanEngine.Systems;
 using GlmSharp;
 using SharpVk.Glfw;
 

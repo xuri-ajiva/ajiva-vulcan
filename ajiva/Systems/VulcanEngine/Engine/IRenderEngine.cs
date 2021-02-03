@@ -3,18 +3,14 @@ using System.Diagnostics.CodeAnalysis;
 using System.Linq.Expressions;
 using System.Runtime.CompilerServices;
 using ajiva.Components;
-using ajiva.Ecs;
-using ajiva.Ecs.Component;
 using ajiva.Ecs.ComponentSytem;
 using ajiva.Entities;
-using ajiva.Systems.VulcanEngine.EngineManagers;
 using ajiva.Systems.VulcanEngine.Systems;
 using GlmSharp;
-using SharpVk;
 
 namespace ajiva.Systems.VulcanEngine.Engine
 {
-    public interface IRenderEngine : IComponentSystem<ARenderAble>
+    public interface IRenderEngine : IComponentSystem<ARenderAble3D>
     {
         event KeyEventHandler OnKeyEvent;
         event EventHandler OnResize;

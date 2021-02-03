@@ -1,6 +1,4 @@
 ﻿using ajiva.Components;
-using ajiva.Ecs;
-using ajiva.Ecs.Component;
 using ajiva.Ecs.ComponentSytem;
 using ajiva.Ecs.Entity;
 
