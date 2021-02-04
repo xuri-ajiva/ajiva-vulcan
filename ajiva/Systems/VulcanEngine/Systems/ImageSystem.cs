@@ -40,7 +40,7 @@ namespace ajiva.Systems.VulcanEngine.Systems
 
             return aImage;
         }
-        
+
         public AImage CreateManagedImage(Format format, ImageAspectFlags aspectFlags, Extent2D extent)
         {
             var aImage = CreateImageAndView(extent.Width, extent.Height, format, ImageTiling.Optimal, ImageUsageFlags.DepthStencilAttachment, MemoryPropertyFlags.DeviceLocal, aspectFlags);
@@ -51,10 +51,6 @@ namespace ajiva.Systems.VulcanEngine.Systems
 
         #region imageHelp
 
-        private static bool HasStencilComponent(Format format)
-        {
-            return format == Format.D32SFloatS8UInt || format == Format.D24UNormS8UInt;
-        }
 
         public void CopyBufferToImage(Buffer buffer, Image image, uint width, uint height)
         {
@@ -92,7 +88,7 @@ namespace ajiva.Systems.VulcanEngine.Systems
             {
                 subresourceRange.AspectMask = ImageAspectFlags.Depth;
 
-                if (HasStencilComponent(format)) subresourceRange.AspectMask |= ImageAspectFlags.Stencil;
+                if (format.HasStencilComponent()) subresourceRange.AspectMask |= ImageAspectFlags.Stencil;
             }
             else
             {
@@ -106,9 +102,6 @@ namespace ajiva.Systems.VulcanEngine.Systems
                 Image = image,
                 SubresourceRange = subresourceRange,
             };
-
-            //barrier.SourceQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-            //barrier.DestinationQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
 
             PipelineStageFlags sourceStage;
             PipelineStageFlags destinationStage;
@@ -147,11 +140,6 @@ namespace ajiva.Systems.VulcanEngine.Systems
         protected override void Setup()
         {
             Ecs.RegisterInit(this, InitPhase.Init);
-            Ecs.GetComponentSystem<AjivaRenderEngine, ARenderAble3D>().OnResize += (_, _) =>
-            {
-                //EnsureDepthResourcesDeletion();
-                //EnsureDepthResourcesExits();
-            };
         }
 
         /// <inheritdoc />
