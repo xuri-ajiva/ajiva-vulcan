@@ -120,7 +120,7 @@ namespace ajiva.Systems.VulcanEngine
         }
 
         /// <inheritdoc />
-        public void Update(TimeSpan delta)
+        public void Update(UpdateInfo delta)
         {
             ShaderSystem shaderSystem = Ecs.GetSystem<ShaderSystem>();
 

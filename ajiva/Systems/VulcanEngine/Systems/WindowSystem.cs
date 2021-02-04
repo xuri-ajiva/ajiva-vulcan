@@ -71,7 +71,7 @@ namespace ajiva.Systems.VulcanEngine.Systems
                     }
                     catch (Exception e)
                     {
-                        Console.WriteLine(e);
+                        LogHelper.WriteLine(e);
                     }
                 }
                 Glfw3.PollEvents();
@@ -150,7 +150,7 @@ namespace ajiva.Systems.VulcanEngine.Systems
                 case Key.Tab when inputAction == InputAction.Press:
                     mouseMotion = !mouseMotion;
                     UpdateCursor();
-                    Console.WriteLine($"mouseMotion: {mouseMotion}");
+                    LogHelper.WriteLine($"mouseMotion: {mouseMotion}");
                     break;
             }
 
@@ -186,7 +186,7 @@ namespace ajiva.Systems.VulcanEngine.Systems
         }
 
         /// <inheritdoc />
-        public void Update(TimeSpan delta)
+        public void Update(UpdateInfo delta)
         {
             PollEvents();
             if (!WindowReady)
@@ -202,6 +202,4 @@ namespace ajiva.Systems.VulcanEngine.Systems
     }
 
     public delegate void KeyEventHandler(object? sender, Key key, int scancode, InputAction inputAction, Modifier modifiers);
-
-    public delegate void PlatformEventHandler(TimeSpan delta);
 }

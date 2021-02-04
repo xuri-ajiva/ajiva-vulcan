@@ -1,5 +1,5 @@
-﻿using System;
-using ajiva.Ecs.Entity;
+﻿using ajiva.Ecs.Entity;
+using ajiva.Helpers;
 
 namespace ajiva.Entities
 {
@@ -11,7 +11,7 @@ namespace ajiva.Entities
         }
 
         /// <inheritdoc />
-        public override void Update(TimeSpan delta)
+        public override void Update(UpdateInfo delta)
         {
         }
     }

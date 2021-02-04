@@ -4,6 +4,8 @@ using System.Threading;
 
 namespace ajiva.Helpers
 {
+    public record UpdateInfo(TimeSpan Delta, ulong Iteration);
+
     public class RunHelper
     {
         public delegate bool DeltaRun(UpdateInfo info);
@@ -17,12 +19,13 @@ namespace ajiva.Helpers
 
             var delta = TimeSpan.Zero;
             var now = Stopwatch.GetTimestamp();
+            UpdateInfo info = new(TimeSpan.Zero, 0);
 
             while (true)
             {
                 Thread.Sleep(1);
 
-                if (!action.Invoke(delta)) return;
+                if (!action.Invoke(info with {Delta = delta, Iteration = iteration})) return;
 
                 iteration++;
 

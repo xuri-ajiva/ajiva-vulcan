@@ -1,5 +1,6 @@
 ﻿using System;
 using ajiva.Components;
+using ajiva.Helpers;
 
 namespace ajiva.Entities
 {
@@ -14,7 +15,7 @@ namespace ajiva.Entities
         public Transform3d Transform => TransformLazy.Value;
 
         /// <inheritdoc />
-        public override void Update(TimeSpan delta)
+        public override void Update(UpdateInfo delta)
         {
         }
 

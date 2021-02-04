@@ -1,7 +1,7 @@
-﻿using System;
-using System.Threading;
+﻿using System.Threading;
 using ajiva.Ecs;
 using ajiva.Ecs.System;
+using ajiva.Helpers;
 using ajiva.Systems.VulcanEngine.EngineManagers;
 
 namespace ajiva.Systems.VulcanEngine.Systems
@@ -73,7 +73,7 @@ namespace ajiva.Systems.VulcanEngine.Systems
         }
 
         /// <inheritdoc />
-        public void Update(TimeSpan delta)
+        public void Update(UpdateInfo delta)
         {
             //Console.WriteLine("Frame with " + Current?.GetHashCode());
             Current?.DrawFrame();

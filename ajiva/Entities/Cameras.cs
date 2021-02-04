@@ -2,6 +2,7 @@
 using ajiva.Components;
 using ajiva.Ecs;
 using ajiva.Ecs.Factory;
+using ajiva.Helpers;
 using GlmSharp;
 
 namespace ajiva.Entities
@@ -145,9 +146,9 @@ namespace ajiva.Entities
             }
 
             /// <inheritdoc />
-            public override void Update(TimeSpan delta)
+            public override void Update(UpdateInfo info)
             {
-                UpdatePosition((float)delta.TotalMilliseconds);
+                UpdatePosition((float)info.Delta.TotalMilliseconds);
             }
         };
     }

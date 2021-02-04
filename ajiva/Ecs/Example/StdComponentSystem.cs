@@ -1,17 +1,17 @@
-﻿using System;
-using ajiva.Ecs.ComponentSytem;
+﻿using ajiva.Ecs.ComponentSytem;
 using ajiva.Ecs.Entity;
+using ajiva.Helpers;
 
 namespace ajiva.Ecs.Example
 {
     public class StdComponentSystem : ComponentSystemBase<StdComponent>, IUpdate
     {
         /// <inheritdoc />
-        public void Update(TimeSpan delta)
+        public void Update(UpdateInfo delta)
         {
             foreach (var (key, value) in ComponentEntityMap)
             {
-                Console.WriteLine($"[{value}]: " + key);
+                LogHelper.WriteLine($"[{value}]: " + key);
             }
         }
         /// <inheritdoc />

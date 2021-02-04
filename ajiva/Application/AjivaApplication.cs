@@ -28,12 +28,12 @@ namespace ajiva.Application
         {
             Running = true;
 
-            RunHelper.RunDelta(delegate(TimeSpan span)
+            RunHelper.RunDelta(delegate(UpdateInfo info)
             {
-                entityComponentSystem.Update(span);
+                entityComponentSystem.Update(info);
                 return entityComponentSystem.Available;
             }, TimeSpan.MaxValue);
-            
+
             Running = false;
         }
 
@@ -53,7 +53,7 @@ namespace ajiva.Application
             entityComponentSystem.AddInstance(vulcanInstance);
 
             entityComponentSystem.AddSystem(deviceSystem);
-            entityComponentSystem.AddSystem(new ShaderSystem(deviceSystem));
+            entityComponentSystem.AddSystem(new ShaderSystem());
             entityComponentSystem.AddSystem(new WindowSystem());
             entityComponentSystem.AddSystem(new GraphicsSystem());
             entityComponentSystem.AddSystem(pool);
@@ -89,7 +89,7 @@ namespace ajiva.Application
             entityComponentSystem.InitSystems();
 
             pool.Enabled = true;
-            
+
             for (var i = 0; i < size; i++)
             {
                 var cube = entityComponentSystem.CreateEntity<Cube>();
@@ -102,15 +102,12 @@ namespace ajiva.Application
                 trans.Position = new(r.Next(-posRange, posRange), r.Next(-posRange, posRange), r.Next(-posRange, posRange));
                 trans.Rotation = new(r.Next(0, 100), r.Next(0, 100), r.Next(0, 100));
             }
-            
+
             var rect = entityComponentSystem.CreateEntity<Rect>();
 
             var renderRect = rect.GetComponent<ARenderAble2D>();
             renderRect.SetMesh(MeshPrefab.Rect, deviceSystem);
             renderRect.Render = true;
-            
-            
-            Console.WriteLine();
         }
 
         /// <inheritdoc />

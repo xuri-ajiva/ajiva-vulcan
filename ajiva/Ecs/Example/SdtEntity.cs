@@ -1,12 +1,13 @@
 ﻿using System;
 using ajiva.Ecs.Entity;
+using ajiva.Helpers;
 
 namespace ajiva.Ecs.Example
 {
     public class SdtEntity : AEntity
     {
         /// <inheritdoc />
-        public override void Update(TimeSpan delta)
+        public override void Update(UpdateInfo delta)
         {
             if (GetComponent<StdComponent>() is { } health)
             {

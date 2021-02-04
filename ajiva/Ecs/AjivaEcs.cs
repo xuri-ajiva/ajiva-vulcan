@@ -121,7 +121,7 @@ namespace ajiva.Ecs
                         init.Init(this, phase);
         }
 
-        public void Update(TimeSpan delta)
+        public void Update(UpdateInfo delta)
         {
             if (Updates.Count < 1) return;
             lock (@lock)
@@ -181,7 +181,7 @@ namespace ajiva.Ecs
 
         public void RegisterInit(IInit init, InitPhase phase)
         {
-            Console.WriteLine(init.GetHashCode() + " <- "+ phase);
+            //LogHelper.WriteLine(init.GetHashCode() + " <- "+ phase);
             lock (regLock)
                 if (Inits.ContainsKey(phase))
                     Inits[phase].Add(init);
