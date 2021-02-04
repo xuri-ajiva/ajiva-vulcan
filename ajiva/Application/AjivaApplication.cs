@@ -48,7 +48,7 @@ namespace ajiva.Application
             (vulcanInstance, debugReportCallback) = AjivaRenderEngine.CreateInstance(Glfw3.GetRequiredInstanceExtensions());
             var renderEngine = new AjivaRenderEngine();
             var deviceSystem = new DeviceSystem();
-            var pool = new WorkerPool(16, "AjivaWorkerPool");
+            var pool = new WorkerPool(Environment.ProcessorCount / 2, "AjivaWorkerPool");
 
             entityComponentSystem.AddInstance(vulcanInstance);
 
