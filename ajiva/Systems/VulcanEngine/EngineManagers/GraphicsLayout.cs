@@ -45,7 +45,7 @@ namespace ajiva.Systems.VulcanEngine.EngineManagers
             var wi = ecs.GetSystem<WindowSystem>();
             var sh = ecs.GetSystem<ShaderSystem>();
             var tx = ecs.GetComponentSystem<TextureSystem, ATexture>();
-            var ar = ecs.GetComponentSystem<AjivaRenderEngine, ARenderAble3D>();
+            var ar = ecs.GetComponentSystem<Ajiva3dSystem, ARenderAble3D>();
             var ui = ecs.GetComponentSystem<UiRenderer, ARenderAble2D>();
 
             render = ds.GraphicsQueue!;
