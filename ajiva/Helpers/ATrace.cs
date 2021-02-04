@@ -26,9 +26,9 @@ namespace ajiva.Helpers
             Instances.AddOrUpdate(type, _ => 0, (_, l) => l - 1);
 
             if (Log.Contains(type))
-                Console.WriteLine($"Deletion of Type {type}, Count {Instances[type]}");
+                LogHelper.WriteLine($"Deletion of Type {type}, Count {Instances[type]}");
             if (FullLog.Contains(type))
-                Console.WriteLine($"Deletion of Type {type}, Count {Instances[type]}, Stack:\n" + GetStack());
+                LogHelper.WriteLine($"Deletion of Type {type}, Count {Instances[type]}, Stack:\n" + GetStack());
         }
 
         public static void LogCreated(Type type)
@@ -44,9 +44,9 @@ namespace ajiva.Helpers
             Instances.AddOrUpdate(tReal, _ => 1, (_, l) => l + 1);
 
             if (Log.Contains(tReal))
-                Console.WriteLine($"New Creation of Type {type}, Count {Instances[tReal]}");
+                LogHelper.WriteLine($"New Creation of Type {type}, Count {Instances[tReal]}");
             if (FullLog.Contains(tReal))
-                Console.WriteLine($"New Creation of Type {type}, Count {Instances[tReal]}, Stack:\n" + GetStack());
+                LogHelper.WriteLine($"New Creation of Type {type}, Count {Instances[tReal]}, Stack:\n" + GetStack());
         }
 
         public static string GetStack(int skip = 2) => string.Join("", new StackTrace(true).GetFrames().Skip(skip).Select(x => x.ToString()));
