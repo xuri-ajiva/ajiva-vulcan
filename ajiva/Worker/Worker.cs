@@ -1,8 +1,6 @@
-﻿using System;
-using System.Globalization;
-using System.Reactive.Linq;
-using System.Reactive.Subjects;
+﻿using System.Globalization;
 using System.Threading;
+using ajiva.Helpers;
 
 namespace ajiva.Worker
 {
@@ -20,6 +18,7 @@ namespace ajiva.Worker
             WorkerPool = workerPool;
             WorkName = "";
 
+            State.Publish(WorkResult.Waiting);
             workingThread = new(Work)
             {
                 Name = $"WorkerThread {workerId.ToString()} from {WorkerPool.Name}",
@@ -31,21 +30,13 @@ namespace ajiva.Worker
         {
             while (!exit)
             {
-                //if (!WorkerPool.Enabled)
-                //{
-                //    State.Publish(WorkResult.Disabled);
-                //    while (!WorkerPool.Enabled)
-                //    {
-                //        Thread.Sleep(10);
-                //    }
-                //}
                 WorkInfo? work;
                 State.Publish(WorkResult.Waiting);
                 WorkerPool.SyncSemaphore.WaitOne();
                 lock (WorkerPool.AvailableLock)
                 {
                     State.Publish(WorkResult.Locking);
-                    
+
                     if (!WorkerPool.TryGetWork(out work)) continue;
                 }
                 if (work == null) continue;
@@ -58,7 +49,7 @@ namespace ajiva.Worker
             }
         }
 
-        public IObservable<WorkResult> State { get; } = new Subject<WorkResult>();
+        public Notify<WorkResult> State { get; } = new();
 
         public void Start()
         {

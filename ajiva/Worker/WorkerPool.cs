@@ -19,15 +19,20 @@ namespace ajiva.Worker
 
         private readonly ConcurrentQueue<WorkInfo> concurrentQueue = new();
 
+        private CancellationTokenSource cancellationTokenSource = new();
+
         public WorkerPool(int workerCount, string name)
         {
             Name = name;
             workers = new Worker[workerCount];
+
             for (var i = 0; i < workerCount; i++)
-            {
                 workers[i] = new(this, i);
+
+            StartMonitoring(cancellationTokenSource.Token);
+
+            for (var i = 0; i < workerCount; i++)
                 workers[i].Start();
-            }
         }
 
         public void EnqueueWork(Work work, ErrorNotify errorNotify, string name, object? userParam = default)
@@ -59,11 +64,10 @@ namespace ajiva.Worker
             for (var i = 0; i < workers.Length; i++)
             {
                 var ci = i;
-                workers[ci].State.Subscribe(delegate(WorkResult result)
+                workers[ci].State.Subscribe(delegate(WorkResult _, WorkResult result)
                 {
-                    var print = $"{nameof(Worker)} {workers[ci].WorkerId.ToString(format)} {$" [{result.ToString()}] ~> {workers[ci].WorkName}"}";
-                    Console.SetCursorPosition(0, posStart + ci + header);
-                    Console.Write(print.FillUp(Console.BufferWidth - 1));
+                    block.WriteAt($"Open Workers: {workers.Length} Work: {concurrentQueue.Count}", 1);
+                    block.WriteAt($"{nameof(Worker)} {workers[ci].WorkerId.ToString(format)} [{result.ToString()}] ~> {workers[ci].WorkName}", ci + 2);
                 }, cancellationToken);
             }
         }
