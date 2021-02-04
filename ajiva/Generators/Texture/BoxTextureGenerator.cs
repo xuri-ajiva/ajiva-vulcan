@@ -1,4 +1,5 @@
 ﻿using System.Drawing;
+using System.Threading;
 using ajiva.Components;
 using ajiva.Ecs;
 using ajiva.Ecs.System;
@@ -34,7 +35,7 @@ namespace ajiva.Generators.Texture
 
                 g.DrawRectangle(Pens.Black, 0, 0, bitmap.Height, bitmap.Width);
 
-                g.DrawString("Missing\nTexture", new(FontFamily.GenericMonospace, 600, FontStyle.Bold, GraphicsUnit.Pixel), new SolidBrush(Color.White), new PointF(600,600));
+                g.DrawString("Missing\nTexture", new(FontFamily.GenericMonospace, 600, FontStyle.Bold, GraphicsUnit.Pixel), new SolidBrush(Color.White), new PointF(600, 600));
 
                 g.Flush();
 
@@ -42,7 +43,7 @@ namespace ajiva.Generators.Texture
                 //MissingTexture.TextureId = 0;
 
                 Ecs.GetComponentSystem<TextureSystem, ATexture>().AddAndMapTextureToDescriptor(MissingTexture);
-                
+
                 return WorkResult.Succeeded;
             }, LogHelper.WriteLine, "Missing Texture Generator");
 
