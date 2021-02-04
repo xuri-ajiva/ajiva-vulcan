@@ -1,6 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
+using ajiva.Helpers;
 using SharpVk;
+using SharpVk.Multivendor;
 
 namespace ajiva.Systems.VulcanEngine
 {
@@ -48,6 +51,58 @@ namespace ajiva.Systems.VulcanEngine
             }
 
             throw new ArgumentOutOfRangeException(nameof(candidates), candidates, "failed to find supported format!");
+        }
+
+        private static readonly ConsoleRolBlock DebugReportBlock = new(5);
+
+        private static readonly DebugReportCallbackDelegate DebugReportDelegate = (flags, objectType, o, location, messageCode, layerPrefix, message, userData) =>
+        {
+            DebugReportBlock.WriteNext($"[{flags}] ({objectType}) {layerPrefix}");
+            DebugReportBlock.WriteNext(message);
+
+            return false;
+        };
+
+        public static (Instance instance, DebugReportCallback debugReportCallback) CreateInstance(IEnumerable<string> enabledExtensionNames)
+        {
+            //if (Instance != null) return;
+
+            List<string> enabledLayers = new();
+
+            var props = Instance.EnumerateLayerProperties();
+
+            void AddAvailableLayer(string layerName)
+            {
+                if (props.Any(x => x.LayerName == layerName))
+                    enabledLayers.Add(layerName);
+            }
+
+            AddAvailableLayer("VK_LAYER_LUNARG_standard_validation");
+            AddAvailableLayer("VK_LAYER_KHRONOS_validation");
+            AddAvailableLayer("VK_LAYER_GOOGLE_unique_objects");
+            //AddAvailableLayer("VK_LAYER_LUNARG_api_dump");
+            AddAvailableLayer("VK_LAYER_LUNARG_core_validation");
+            AddAvailableLayer("VK_LAYER_LUNARG_image");
+            AddAvailableLayer("VK_LAYER_LUNARG_object_tracker");
+            AddAvailableLayer("VK_LAYER_LUNARG_parameter_validation");
+            AddAvailableLayer("VK_LAYER_LUNARG_swapchain");
+            AddAvailableLayer("VK_LAYER_GOOGLE_threading");
+
+            var instance = Instance.Create(
+                enabledLayers.ToArray(),
+                enabledExtensionNames.Append(ExtExtensions.DebugReport).ToArray(),
+                applicationInfo: new ApplicationInfo
+                {
+                    ApplicationName = "ajiva",
+                    ApplicationVersion = new(0, 0, 1),
+                    EngineName = "ajiva-engine",
+                    EngineVersion = new(0, 0, 1),
+                    ApiVersion = new(1, 0, 0)
+                });
+
+            var debugReportCallback = instance.CreateDebugReportCallback(DebugReportDelegate, DebugReportFlags.Error | DebugReportFlags.Warning | DebugReportFlags.PerformanceWarning);
+
+            return (instance, debugReportCallback);
         }
     }
 }
