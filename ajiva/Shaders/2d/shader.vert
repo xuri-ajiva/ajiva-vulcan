@@ -13,13 +13,6 @@ layout(binding = 1) uniform UniformModel {
     int fragtexSamplerId4;
 } model;
 
-/*
-layout(binding = 0) uniform UniformBufferObject {
-  mat4 model;
-  mat4 view;
-  mat4 proj;
-} ubo;
-       */
 layout(location = 0) in vec2 inPosition;
 layout(location = 1) in vec3 inColor;
 layout(location = 2) in vec2 inTexCoord;
@@ -29,7 +22,7 @@ layout(location = 1) out vec2 fragTexCoord;
 layout(location = 2) out uint fragtexSamplerId;
 
 void main() {
-    gl_Position =/* viewProj.proj * viewProj.view *model.model  **/ vec4(inPosition, 0.0f, 1.0);
+    gl_Position = viewProj.view * model.model  * vec4(inPosition, 0.0f, 1.0);
     fragColor = inColor;
     fragTexCoord = inTexCoord;
     fragtexSamplerId = model.fragtexSamplerId;
