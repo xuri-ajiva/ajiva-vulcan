@@ -1,8 +1,8 @@
-﻿using System;
-using System.Drawing;
+﻿using System.Drawing;
 using ajiva.Components;
 using ajiva.Ecs;
 using ajiva.Ecs.System;
+using ajiva.Helpers;
 using ajiva.Systems.VulcanEngine.Systems;
 using ajiva.Worker;
 
@@ -44,7 +44,7 @@ namespace ajiva.Generators.Texture
                 Ecs.GetComponentSystem<TextureSystem, ATexture>().AddAndMapTextureToDescriptor(MissingTexture);
                 
                 return WorkResult.Succeeded;
-            }, Console.WriteLine, "Missing Texture Generator");
+            }, LogHelper.WriteLine, "Missing Texture Generator");
 
             //Ecs.GetSystem<WorkerPool>().;
         }
