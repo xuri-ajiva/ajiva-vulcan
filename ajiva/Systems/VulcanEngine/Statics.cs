@@ -104,5 +104,10 @@ namespace ajiva.Systems.VulcanEngine
 
             return (instance, debugReportCallback);
         }
+
+        public static bool HasStencilComponent(this Format format)
+        {
+            return format == Format.D32SFloatS8UInt || format == Format.D24UNormS8UInt;
+        }
     }
 }
