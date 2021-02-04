@@ -11,7 +11,9 @@ using System.Linq;
 using System.Threading;
 using ajiva.Ecs.ComponentSytem;
 using ajiva.Entities;
+using ajiva.Helpers;
 using ajiva.Systems.VulcanEngine.Systems;
+using ajiva.Systems.VulcanEngine.Unions;
 
 // ReSharper disable once CheckNamespace
 namespace ajiva.Systems.VulcanEngine
@@ -39,9 +41,12 @@ namespace ajiva.Systems.VulcanEngine
 
         #endregion
 
+        private static readonly ConsoleRolBlock DebugReportBlock = new(5);
+
         private static Bool32 DebugReport(DebugReportFlags flags, DebugReportObjectType objectType, ulong @object, HostSize location, int messageCode, string layerPrefix, string message, IntPtr userData)
         {
-            Console.WriteLine($"[{flags}] ({objectType}) {layerPrefix}:\n{message}");
+            DebugReportBlock.WriteNext($"[{flags}] ({objectType}) {layerPrefix}");
+            DebugReportBlock.WriteNext(message);
 
             return false;
         }
