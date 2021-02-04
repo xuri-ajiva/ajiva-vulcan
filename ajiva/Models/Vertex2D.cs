@@ -44,21 +44,21 @@ namespace ajiva.Models
                     Binding = 0,
                     Location = 0,
                     Format = Format.R32G32SFloat,
-                    Offset = (uint)Marshal.OffsetOf<Vertex3D>(nameof(Position))
+                    Offset = (uint)Marshal.OffsetOf<Vertex2D>(nameof(Position))
                 },
                 new()
                 {
                     Binding = 0,
                     Location = 1,
                     Format = Format.R32G32B32SFloat,
-                    Offset = (uint)Marshal.OffsetOf<Vertex3D>(nameof(Colour))
+                    Offset = (uint)Marshal.OffsetOf<Vertex2D>(nameof(Colour))
                 },
                 new()
                 {
                     Binding = 0,
                     Location = 2,
                     Format = Format.R32G32SFloat,
-                    Offset = (uint)Marshal.OffsetOf<Vertex3D>(nameof(TextCoord))
+                    Offset = (uint)Marshal.OffsetOf<Vertex2D>(nameof(TextCoord))
                 }
             };
         }
