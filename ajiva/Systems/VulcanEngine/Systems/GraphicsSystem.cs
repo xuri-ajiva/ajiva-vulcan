@@ -8,8 +8,8 @@ namespace ajiva.Systems.VulcanEngine.Systems
 {
     public class GraphicsSystem : SystemBase, IInit, IUpdate
     {
-        public static readonly object CurrentGraphicsLayoutSwapLock = new();
-        public GraphicsLayout? Current { get; private set; }
+        private static readonly object CurrentGraphicsLayoutSwapLock = new();
+        private GraphicsLayout? Current { get; set; }
 
         /// <inheritdoc />
         protected override void ReleaseUnmanagedResources()
@@ -70,12 +70,16 @@ namespace ajiva.Systems.VulcanEngine.Systems
         public void Init(AjivaEcs ecs, InitPhase phase)
         {
             RecreateCurrentGraphicsLayout();
+            Ecs.GetSystem<WindowSystem>().OnResize += (sender, args) =>
+            {
+                Ecs.GetSystem<DeviceSystem>().WaitIdle();
+                RecreateCurrentGraphicsLayout();
+            };
         }
 
         /// <inheritdoc />
         public void Update(UpdateInfo delta)
         {
-            //Console.WriteLine("Frame with " + Current?.GetHashCode());
             Current?.DrawFrame();
         }
     }
