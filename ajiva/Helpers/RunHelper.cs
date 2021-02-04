@@ -6,11 +6,13 @@ namespace ajiva.Helpers
 {
     public class RunHelper
     {
-        public delegate bool DeltaRun(TimeSpan delta);
+        public delegate bool DeltaRun(UpdateInfo info);
 
         public static void RunDelta(DeltaRun action, TimeSpan maxToRun)
         {
-            var iteration = 0u;
+            ConsoleBlock block = new(1);
+
+            var iteration = 0ul;
             var start = DateTime.Now;
 
             var delta = TimeSpan.Zero;
@@ -26,7 +28,7 @@ namespace ajiva.Helpers
 
                 if (iteration % 100 == 0)
                 {
-                    Console.WriteLine($"iteration: {iteration}, delta: {delta}, FPS: {1000.0f / delta.TotalMilliseconds}, PendingWorkItemCount: {ThreadPool.PendingWorkItemCount}");
+                    block.WriteAt($"iteration: {iteration}, delta: {delta}, FPS: {1000.0f / delta.TotalMilliseconds}, PendingWorkItemCount: {ThreadPool.PendingWorkItemCount}",0);
 
                     if (DateTime.Now - start > maxToRun)
                     {
