@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Concurrent;
+﻿using System.Collections.Concurrent;
 using System.Threading;
 using ajiva.Ecs.System;
 using ajiva.Helpers;
@@ -52,15 +51,11 @@ namespace ajiva.Worker
 
         public void StartMonitoring(CancellationToken cancellationToken)
         {
-            var posStart = Console.CursorTop;
+            var block = new ConsoleBlock(workers.Length + 2);
 
-            const int header = 2;
-            Console.SetCursorPosition(0, posStart + 0);
-            Console.WriteLine("Monitoring Started...");
-            var format = "X" + workers.Length.ToString("X").Length;
+            block.WriteAt("Monitoring Started...", 0);
+            var format = "X" + (workers.Length - 1).ToString("X").Length;
 
-            Console.SetCursorPosition(0, posStart + 1);
-            Console.WriteLine($"Open Workers: {workers.Length} Work: {concurrentQueue.Count}".FillUp(Console.BufferWidth - 1));
             for (var i = 0; i < workers.Length; i++)
             {
                 var ci = i;
@@ -75,6 +70,7 @@ namespace ajiva.Worker
         /// <inheritdoc />
         protected override void ReleaseUnmanagedResources()
         {
+            cancellationTokenSource.Cancel();
             Enabled = false;
             SyncSemaphore.Release(workers.Length * 5);
         }
