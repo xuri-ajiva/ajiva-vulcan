@@ -37,8 +37,6 @@ namespace ajiva.Models
 
         private ShaderModule? CreateShader(string path)
         {
-            //todo: system.EnsureDevicesExist();
-
             var shaderData = LoadShaderData(path, out var codeSize);
 
             return system.Device!.CreateShaderModule(codeSize, shaderData);
@@ -81,8 +79,6 @@ namespace ajiva.Models
         {
             var sh = new Shader(system);
             sh.CreateShaderModules(dir);
-            //sh.EnsureCreateUniformBufferExists();
-
             return sh;
         }
 
@@ -90,8 +86,6 @@ namespace ajiva.Models
         {
             var sh = new Shader(system);
             sh.CreateShaderModules(vertexShaderFunc, fragmentShaderFunc);
-            //sh.EnsureCreateUniformBufferExists();
-
             return sh;
         }
 

@@ -100,7 +100,7 @@ namespace ajiva.Systems.VulcanEngine
         private void UpdateCamaraProjView(ShaderSystem shaderSystem)
         {
             var updateCtr = false;
-            shaderSystem.ViewProj.UpdateExpresion(delegate(int index, ref UniformViewProj value)
+            shaderSystem.ShaderUnions[PipelineName.PipeLine3d].ViewProj.UpdateExpresion(delegate(int index, ref UniformViewProj value)
             {
                 if (index != 0) return;
 
@@ -116,7 +116,7 @@ namespace ajiva.Systems.VulcanEngine
                 value.Proj[1, 1] *= -1;
             });
             if (updateCtr)
-                shaderSystem.ViewProj.Copy();
+                shaderSystem.ShaderUnions[PipelineName.PipeLine3d].ViewProj.Copy();
         }
 
         /// <inheritdoc />
@@ -132,13 +132,13 @@ namespace ajiva.Systems.VulcanEngine
                 //ATexture? texture = null!;
                 if (entity.TryGetComponent(out transform) && transform!.Dirty)
                 {
-                    shaderSystem.UniformModels.Staging.Value[renderAble!.Id].Model = transform.ModelMat; // texture?.TextureId ?? 0
+                    shaderSystem.ShaderUnions[PipelineName.PipeLine3d].UniformModels.Staging.Value[renderAble!.Id].Model = transform.ModelMat; // texture?.TextureId ?? 0
                     update = true;
                     transform!.Dirty = false;
                 }
                 if (renderAble.Dirty /*entity.TryGetComponent(out texture) && texture!.Dirty ||*/)
                 {
-                    shaderSystem.UniformModels.Staging.Value[renderAble!.Id].TextureSamplerId = renderAble!.Id; // texture?.TextureId ?? 0
+                    shaderSystem.ShaderUnions[PipelineName.PipeLine3d].UniformModels.Staging.Value[renderAble!.Id].TextureSamplerId = renderAble!.Id; // texture?.TextureId ?? 0
                     update = true;
                     renderAble.Dirty = false;
                 }
@@ -155,7 +155,7 @@ namespace ajiva.Systems.VulcanEngine
             //ShaderComponent.UniformModels.Staging.CopyValueToBuffer();
             if (updated.Any())
                 lock (RenderLock)
-                    shaderSystem.UniformModels.CopyRegions(updated);
+                    shaderSystem.ShaderUnions[PipelineName.PipeLine3d].UniformModels.CopyRegions(updated);
 
             //MainCamara.Update((float)delta.TotalMilliseconds);
 
