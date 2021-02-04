@@ -12,12 +12,13 @@ using GlmSharp;
 
 namespace ajiva.Systems.VulcanEngine.Ui
 {
-    public class UiRenderer : ComponentSystemBase<ARenderAble2D>, IUpdate
+    public class UiRenderer : ComponentSystemBase<ARenderAble2D>, IUpdate, IInit
     {
         /// <inheritdoc />
         protected override void Setup()
         {
             Ecs.RegisterUpdate(this);
+            Ecs.RegisterInit(this, InitPhase.Finish);
         }
 
         /// <inheritdoc />
@@ -35,27 +36,31 @@ namespace ajiva.Systems.VulcanEngine.Ui
         }
 
         private Random r = new();
+
         /// <inheritdoc />
         public void Update(UpdateInfo delta)
         {
-            ShaderSystem shaderSystem = Ecs.GetSystem<ShaderSystem>();
-
-            var union = shaderSystem.ShaderUnions[PipelineName.PipeLine2d];
-
-            union.ViewProj.UpdateExpresion((int index, ref UniformViewProj value) =>
-            {
-                value.View = mat4.Identity;
-            });
-            union.ViewProj.Copy();
+            var union = Ecs.GetSystem<ShaderSystem>().ShaderUnions[PipelineName.PipeLine2d];
 
             var ids = new List<uint>();
             foreach (var entity in ComponentEntityMap.Keys)
             {
                 ids.Add(entity.Id);
-                union.UniformModels.UpdateOne(new() {Model = mat4.Translate((float)r.NextDouble(),(float)r.NextDouble(),0)}, entity.Id);
+                union.UniformModels.UpdateOne(new() {Model = mat4.Scale(.1f)}, entity.Id);
             }
-            
+
             union.UniformModels.CopyRegions(ids);
+        }
+
+        /// <inheritdoc />
+        public void Init(AjivaEcs ecs, InitPhase phase)
+        {
+            var union = Ecs.GetSystem<ShaderSystem>().ShaderUnions[PipelineName.PipeLine2d];
+            union.ViewProj.UpdateExpresion((int index, ref UniformViewProj value) =>
+            {
+                value.View = mat4.Translate(-1, -1, 0) * mat4.Scale(2);
+            });
+            union.ViewProj.Copy();
         }
     }
 }

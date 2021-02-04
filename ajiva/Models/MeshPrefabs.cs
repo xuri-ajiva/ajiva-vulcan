@@ -24,13 +24,13 @@
 
         public static Mesh<Vertex2D> Rect { get; } = new(new Vertex2D[]
         {
-            new(new(-0.1f, -.10f), new(1.0f, 0.0f, 0.0f)),
-            new(new(0.1f, -.10f), new(0.0f, 1.0f, 0.0f)),
-            new(new(.1f, .10f), new(0.0f, 0.0f, 1.0f)),
-            new(new(-.1f, .10f), new(1, 1, 1)),
+            new(new(0.0f, 0.0f), new(0.0f, 0.0f, 0.0f)),
+            new(new(0.0f, 1.0f), new(0.0f, 1.0f, 0.0f)),
+            new(new(1.0f, 0.0f), new(1.0f, 0.0f, 1.0f)),
+            new(new(1.0f, 1.0f), new(1.0f, 1.0f, 1.0f)),
         }, new ushort[]
         {
-            0, 1, 2, 2, 3, 0,
+            0, 1, 3, 2, 3, 0,
         });
 
         public static Mesh<object>? Empty { get; } = null;
