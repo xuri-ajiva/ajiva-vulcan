@@ -1,22 +1,15 @@
-﻿using ajiva.Ecs;
+﻿using System.Collections.Generic;
+using ajiva.Ecs;
 using ajiva.Ecs.System;
+using ajiva.Helpers;
 using ajiva.Models;
+using ajiva.Systems.VulcanEngine.Unions;
 
 namespace ajiva.Systems.VulcanEngine.Systems
 {
     public class ShaderSystem : SystemBase, IInit
     {
-        public Shader? Main3D { get; set; }
-        public Shader? Main2D { get; set; }
-
-        public readonly UniformBuffer<UniformViewProj> ViewProj;
-        public readonly UniformBuffer<UniformModel> UniformModels;
-
-        public ShaderSystem(DeviceSystem deviceSystem)
-        {
-            ViewProj = new(deviceSystem, 1);
-            UniformModels = new(deviceSystem, 2000);
-        }
+        public Dictionary<PipelineName, ShaderUnion> ShaderUnions { get; } = new();
 
         /// <inheritdoc />
         protected override void Setup()
@@ -27,49 +20,56 @@ namespace ajiva.Systems.VulcanEngine.Systems
         /// <inheritdoc />
         public void Init(AjivaEcs ecs, InitPhase phase)
         {
-            if (Main3D == null)
+            var ds = ecs.GetSystem<DeviceSystem>();
+
+            if (!ShaderUnions.ContainsKey(PipelineName.PipeLine2d))
             {
-                Main3D = new(ecs.GetSystem<DeviceSystem>());
-                Main3D.CreateShaderModules("./Shaders/3d");
+                ShaderUnions.Add(PipelineName.PipeLine2d, ShaderUnion.InitCreate("./Shaders/2d", ds, 10000));
             }
-            if (Main2D == null)
+            if (!ShaderUnions.ContainsKey(PipelineName.PipeLine3d))
             {
-                Main2D = new(ecs.GetSystem<DeviceSystem>());
-                Main2D.CreateShaderModules("./Shaders/2d");
+                ShaderUnions.Add(PipelineName.PipeLine3d, ShaderUnion.InitCreate("./Shaders/3d", ds, 25000));
             }
-
-            //ProjView = new(renderEngine.DeviceComponent,1);
-            // UniformModels = new(renderEngine.DeviceComponent,1000);
-
-            ViewProj.EnsureExists();
-            UniformModels.EnsureExists();
-
-            //Main.EnsureCreateUniformBufferExists();
-
-            /* Main.EnsureShaderModulesExists(shank => from input in shank.GetInput<Vertex>()
-                 from viewProj in shank.GetBinding<UniformViewProj>(0)
-                 from model in shank.GetBinding<UniformModel>(1)
-                 let transform = viewProj.Proj * viewProj.View * model.Model
-                 select new VertexOutput
-                 {
-                     Position = transform * new vec4(input.Position, 1),
-                     Colour = input.Colour
-                 }, shank => from input in shank.GetInput<FragmentInput>()
-                 from sampler in shank.GetSampler2d<vec4, vec2>(1, 1)
-                 let colour = sampler.Sample(input.Position.xy) //new vec4(input.Color,1)
-                 select new FragmentOutput
-                 {
-                     Colour = colour
-                 });             */
         }
 
         /// <inheritdoc />
         protected override void ReleaseUnmanagedResources()
         {
-            Main3D?.Dispose();
-            Main2D?.Dispose();
-            UniformModels.Dispose();
-            ViewProj.Dispose();
+            foreach (var (_, value) in ShaderUnions)
+            {
+                value.Dispose();
+            }
+        }
+    }
+    public class ShaderUnion : DisposingLogger
+    {
+        public Shader Main { get; init; }
+
+        public UniformBuffer<UniformViewProj> ViewProj { get; init; }
+        public UniformBuffer<UniformModel> UniformModels { get; init; }
+
+        public ShaderUnion(Shader main, UniformBuffer<UniformViewProj> viewProj, UniformBuffer<UniformModel> uniformModels)
+        {
+            Main = main;
+            ViewProj = viewProj;
+            UniformModels = uniformModels;
+        }
+
+        public static ShaderUnion InitCreate(string path, DeviceSystem ds, int count)
+        {
+            var su = new ShaderUnion(new(ds), new(ds, 1), new(ds, count));
+            su.Main.CreateShaderModules(path);
+            su.UniformModels.EnsureExists();
+            su.ViewProj.EnsureExists();
+            return su;
+        }
+
+        /// <inheritdoc />
+        protected override void ReleaseUnmanagedResources()
+        {
+            Main?.Dispose();
+            ViewProj?.Dispose();
+            UniformModels?.Dispose();
         }
     }
 }
