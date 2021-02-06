@@ -4,6 +4,7 @@ using System.Linq;
 using System.Runtime.CompilerServices;
 using ajiva.Ecs;
 using ajiva.Ecs.System;
+using ajiva.Ecs.Utils;
 using ajiva.Models;
 using SharpVk;
 using SharpVk.Khronos;

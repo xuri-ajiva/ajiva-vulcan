@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Threading;
 using ajiva.Ecs;
 using ajiva.Ecs.System;
+using ajiva.Ecs.Utils;
 using ajiva.Helpers;
 using GlmSharp;
 using SharpVk;

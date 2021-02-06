@@ -1,4 +1,4 @@
-﻿namespace ajiva.Ecs
+﻿namespace ajiva.Ecs.Utils
 {
     public interface IInit
     {

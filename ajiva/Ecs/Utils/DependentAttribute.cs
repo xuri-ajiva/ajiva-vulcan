@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace ajiva.Ecs
+namespace ajiva.Ecs.Utils
 {
     [AttributeUsage(AttributeTargets.Class)]
     public class DependentAttribute : Attribute

@@ -1,6 +1,6 @@
 ﻿using ajiva.Helpers;
 
-namespace ajiva.Ecs
+namespace ajiva.Ecs.Utils
 {
     public interface IUpdate
     {

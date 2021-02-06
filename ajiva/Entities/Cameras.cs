@@ -2,6 +2,7 @@
 using ajiva.Components;
 using ajiva.Ecs;
 using ajiva.Ecs.Factory;
+using ajiva.Ecs.Utils;
 using ajiva.Helpers;
 using GlmSharp;
 
