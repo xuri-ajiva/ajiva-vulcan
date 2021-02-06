@@ -74,10 +74,5 @@ namespace ajiva.Worker
             Enabled = false;
             SyncSemaphore.Release(workers.Length * 5);
         }
-
-        /// <inheritdoc />
-        protected override void Setup()
-        {
-        }
     }
 }

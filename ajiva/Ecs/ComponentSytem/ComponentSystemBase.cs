@@ -28,7 +28,6 @@ namespace ajiva.Ecs.ComponentSytem
         /// <inheritdoc />
         public abstract T CreateComponent(IEntity entity);
 
-
         protected override void ReleaseUnmanagedResources()
         {
             foreach (var (component, entity) in ComponentEntityMap)
@@ -37,7 +36,7 @@ namespace ajiva.Ecs.ComponentSytem
                 component?.Dispose();
             }
             ComponentEntityMap.Clear();
-            ComponentEntityMap = null;
+            ComponentEntityMap = null!;
         }
     }
 }

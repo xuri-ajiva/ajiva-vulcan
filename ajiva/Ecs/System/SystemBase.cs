@@ -6,7 +6,7 @@ namespace ajiva.Ecs.System
     {
         protected AjivaEcs Ecs { get; private set; }
 
-        protected abstract void Setup();
+        protected virtual void Setup() { }
 
         /// <inheritdoc />
         public void Setup(AjivaEcs ecs)

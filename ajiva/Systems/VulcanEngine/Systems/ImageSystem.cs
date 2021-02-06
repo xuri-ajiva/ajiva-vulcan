@@ -155,11 +155,6 @@ namespace ajiva.Systems.VulcanEngine.Systems
             throw new NotImplementedException();
         }
 
-        /// <inheritdoc />
-        protected override void ReleaseUnmanagedResources()
-        {
-        }
-
   #endregion
 
         /// <inheritdoc />
