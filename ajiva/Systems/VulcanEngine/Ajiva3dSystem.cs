@@ -15,7 +15,8 @@ using SharpVk.Glfw;
 
 namespace ajiva.Systems.VulcanEngine
 {
-    public class Ajiva3dSystem : ComponentSystemBase<ARenderAble3D>, IInit, IUpdate, IComponentSystem<ARenderAble3D>
+    [Dependent(typeof(WindowSystem))]
+    public class Ajiva3dSystem : ComponentSystemBase<ARenderAble3D>, IInit, IUpdate
     {
         public Cameras.Camera MainCamara
         {
@@ -88,7 +89,7 @@ namespace ajiva.Systems.VulcanEngine
         }
 
         /// <inheritdoc />
-        public void Init(AjivaEcs ecs, InitPhase phase)
+        public void Init(AjivaEcs ecs)
         {
             var window = Ecs.GetSystem<WindowSystem>();
 
@@ -136,7 +137,7 @@ namespace ajiva.Systems.VulcanEngine
         /// <inheritdoc />
         protected override void Setup()
         {
-            Ecs.RegisterInit(this, InitPhase.Start);
+            Ecs.RegisterInit(this);
             Ecs.RegisterUpdate(this);
         }
 

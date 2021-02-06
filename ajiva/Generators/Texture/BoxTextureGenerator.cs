@@ -9,23 +9,19 @@ using ajiva.Worker;
 
 namespace ajiva.Generators.Texture
 {
+    [Dependent(typeof(TextureSystem))]
     public class BoxTextureGenerator : SystemBase, IInit
     {
         public ATexture MissingTexture { get; private set; }
 
         /// <inheritdoc />
-        protected override void ReleaseUnmanagedResources()
-        {
-        }
-
-        /// <inheritdoc />
         protected override void Setup()
         {
-            Ecs.RegisterInit(this, InitPhase.Post);
+            Ecs.RegisterInit(this);
         }
 
         /// <inheritdoc />
-        public void Init(AjivaEcs ecs, InitPhase phase)
+        public void Init(AjivaEcs ecs)
         {
             Ecs.GetSystem<WorkerPool>().EnqueueWork(delegate
             {

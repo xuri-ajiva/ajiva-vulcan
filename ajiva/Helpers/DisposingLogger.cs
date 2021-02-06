@@ -12,24 +12,30 @@ namespace ajiva.Helpers
 
         private static readonly ConsoleRolBlock Block = new(10);
 
+        static void Log(string msg)
+        {
+            //LogHelper.Log(msg);
+            //Block.WriteNext(msg);
+        }
+
 #if LOGGING_TRUE
         protected DisposingLogger()
         {
-            Block.WriteNext($"Created: {GetType()}");
+            Log($"Created: {GetType()}");
         }
 #endif
 #region IDisposable
 
-        protected abstract void ReleaseUnmanagedResources();
+        protected virtual void ReleaseUnmanagedResources() { }
 
         [DebuggerStepThrough]
         protected virtual void Dispose(bool disposing)
         {
             if (!disposing)
-                Block.WriteNext($"Deleted: {GetType()}");
+                Log($"Deleted: {GetType()}");
 #if LOGGING_TRUE
             else
-                Block.WriteNext($"Disposed: {GetType()}");
+                Log($"Disposed: {GetType()}");
 #endif
 
             lock (disposeLock)
@@ -39,13 +45,13 @@ namespace ajiva.Helpers
                     try
                     {
 #if LOGGING_TRUE
-                        Block.WriteNext("Trying to Release resources although we are not disposing!");
+                        Log("Trying to Release resources although we are not disposing!");
 #endif
                         ReleaseUnmanagedResources();
                     }
                     catch (Exception e)
                     {
-                        Block.WriteNext("Error releasing unmanaged resources: " + e);
+                        Log("Error releasing unmanaged resources: " + e);
                     }
                 else
                     ReleaseUnmanagedResources();

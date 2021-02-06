@@ -10,6 +10,7 @@ using SharpVk;
 
 namespace ajiva.Systems.VulcanEngine.Systems
 {
+    [Dependent(typeof(ImageSystem))]
     public class TextureSystem : ComponentSystemBase<ATexture>, IInit
     {
         // ReSharper disable once InconsistentNaming
@@ -25,7 +26,7 @@ namespace ajiva.Systems.VulcanEngine.Systems
         public ATexture? Default { get; private set; }
         private List<ATexture> Textures { get; }
         public DescriptorImageInfo[] TextureSamplerImageViews { get; }
-        
+
         public void AddAndMapTextureToDescriptor(ATexture texture)
         {
             MapTextureToDescriptor(texture);
@@ -54,7 +55,7 @@ namespace ajiva.Systems.VulcanEngine.Systems
         /// <inheritdoc />
         protected override void Setup()
         {
-             Ecs.RegisterInit(this, InitPhase.PreMain);
+            Ecs.RegisterInit(this);
         }
 
         /// <inheritdoc />
@@ -73,8 +74,8 @@ namespace ajiva.Systems.VulcanEngine.Systems
         public void EnsureDefaultImagesExists(AjivaEcs ecs)
         {
             if (Default != null) return;
-            
-            Default = ATexture.FromFile(ecs,"logo.png");
+
+            Default = ATexture.FromFile(ecs, "logo.png");
             Textures.Add(Default);
 
             for (var i = 0; i < MAX_TEXTURE_SAMPLERS_IN_SHADER; i++)
@@ -91,7 +92,7 @@ namespace ajiva.Systems.VulcanEngine.Systems
         }
 
         /// <inheritdoc />
-        public void Init(AjivaEcs ecs, InitPhase phase)
+        public void Init(AjivaEcs ecs)
         {
             EnsureDefaultImagesExists(ecs);
         }

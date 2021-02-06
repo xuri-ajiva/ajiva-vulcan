@@ -3,9 +3,11 @@ using ajiva.Ecs;
 using ajiva.Ecs.System;
 using ajiva.Helpers;
 using ajiva.Systems.VulcanEngine.EngineManagers;
+using ajiva.Systems.VulcanEngine.Ui;
 
 namespace ajiva.Systems.VulcanEngine.Systems
 {
+    [Dependent(typeof(TextureSystem), typeof(Ajiva3dSystem), typeof(UiRenderer))]
     public class GraphicsSystem : SystemBase, IInit, IUpdate
     {
         private static readonly object CurrentGraphicsLayoutSwapLock = new();
@@ -62,12 +64,12 @@ namespace ajiva.Systems.VulcanEngine.Systems
         /// <inheritdoc />
         protected override void Setup()
         {
-            Ecs.RegisterInit(this, InitPhase.PostMain);
+            Ecs.RegisterInit(this);
             Ecs.RegisterUpdate(this);
         }
 
         /// <inheritdoc />
-        public void Init(AjivaEcs ecs, InitPhase phase)
+        public void Init(AjivaEcs ecs)
         {
             RecreateCurrentGraphicsLayout();
             Ecs.GetSystem<WindowSystem>().OnResize += (sender, args) =>

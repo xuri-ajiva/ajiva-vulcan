@@ -7,6 +7,7 @@ using ajiva.Systems.VulcanEngine.Unions;
 
 namespace ajiva.Systems.VulcanEngine.Systems
 {
+    [Dependent(typeof(DeviceSystem))]
     public class ShaderSystem : SystemBase, IInit
     {
         public Dictionary<PipelineName, ShaderUnion> ShaderUnions { get; } = new();
@@ -14,11 +15,11 @@ namespace ajiva.Systems.VulcanEngine.Systems
         /// <inheritdoc />
         protected override void Setup()
         {
-            Ecs.RegisterInit(this, InitPhase.PreMain);
+            Ecs.RegisterInit(this);
         }
 
         /// <inheritdoc />
-        public void Init(AjivaEcs ecs, InitPhase phase)
+        public void Init(AjivaEcs ecs)
         {
             var ds = ecs.GetSystem<DeviceSystem>();
 

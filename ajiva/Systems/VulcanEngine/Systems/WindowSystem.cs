@@ -48,6 +48,8 @@ namespace ajiva.Systems.VulcanEngine.Systems
             Glfw3.SetKeyCallback(window, keyDelegate);
             Glfw3.SetCursorPosCallback(window, cursorPosDelegate);
             Glfw3.SetWindowSizeCallback(window, sizeDelegate);
+            SharpVk.Glfw.extras.Glfw3.Public.SetWindowPos_0(window.RawHandle, 2800, 500);
+
             UpdateCursor();
 
             WindowReady = true;
@@ -178,7 +180,7 @@ namespace ajiva.Systems.VulcanEngine.Systems
         protected override void Setup()
         {
             Ecs.RegisterUpdate(this);
-            Ecs.RegisterInit(this, InitPhase.Start);
+            Ecs.RegisterInit(this);
         }
 
         public void PollEvents()
@@ -195,7 +197,7 @@ namespace ajiva.Systems.VulcanEngine.Systems
         }
 
         /// <inheritdoc />
-        public void Init(AjivaEcs ecs, InitPhase phase)
+        public void Init(AjivaEcs ecs)
         {
             InitWindow();
             EnsureSurfaceExists();

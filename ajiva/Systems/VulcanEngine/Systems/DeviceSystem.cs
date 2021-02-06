@@ -1,5 +1,7 @@
 ﻿using System;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using ajiva.Ecs;
 using ajiva.Ecs.System;
 using ajiva.Models;
@@ -8,6 +10,7 @@ using SharpVk.Khronos;
 
 namespace ajiva.Systems.VulcanEngine.Systems
 {
+    [Dependent(typeof(WindowSystem))]
     public class DeviceSystem : SystemBase, IInit
     {
         internal PhysicalDevice? PhysicalDevice { get; private set; }
@@ -31,7 +34,7 @@ namespace ajiva.Systems.VulcanEngine.Systems
         private void CreateLogicalDevice()
         {
             queueFamilies = PhysicalDevice!.FindQueueFamilies(Ecs.GetSystem<WindowSystem>().Surface);
-            
+
             Device = PhysicalDevice!.CreateDevice(queueFamilies.Indices
                     .Select(index => new DeviceQueueCreateInfo
                     {
@@ -123,7 +126,7 @@ namespace ajiva.Systems.VulcanEngine.Systems
         /// <inheritdoc />
         protected override void Setup()
         {
-            Ecs.RegisterInit(this, InitPhase.PreInit);
+            Ecs.RegisterInit(this);
         }
 
         /// <inheritdoc />
@@ -142,7 +145,7 @@ namespace ajiva.Systems.VulcanEngine.Systems
         }
 
         /// <inheritdoc />
-        public void Init(AjivaEcs ecs, InitPhase phase)
+        public void Init(AjivaEcs ecs)
         {
             PickPhysicalDevice(ecs.GetInstance<Instance>());
             CreateLogicalDevice();

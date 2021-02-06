@@ -12,13 +12,14 @@ using GlmSharp;
 
 namespace ajiva.Systems.VulcanEngine.Ui
 {
+    [Dependent(typeof(ShaderSystem))]
     public class UiRenderer : ComponentSystemBase<ARenderAble2D>, IUpdate, IInit
     {
         /// <inheritdoc />
         protected override void Setup()
         {
             Ecs.RegisterUpdate(this);
-            Ecs.RegisterInit(this, InitPhase.Finish);
+            Ecs.RegisterInit(this);
         }
 
         /// <inheritdoc />
@@ -53,7 +54,7 @@ namespace ajiva.Systems.VulcanEngine.Ui
         }
 
         /// <inheritdoc />
-        public void Init(AjivaEcs ecs, InitPhase phase)
+        public void Init(AjivaEcs ecs)
         {
             var union = Ecs.GetSystem<ShaderSystem>().ShaderUnions[PipelineName.PipeLine2d];
             union.ViewProj.UpdateExpresion((int index, ref UniformViewProj value) =>

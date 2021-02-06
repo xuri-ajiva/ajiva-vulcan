@@ -9,6 +9,7 @@ using Buffer = SharpVk.Buffer;
 
 namespace ajiva.Systems.VulcanEngine.Systems
 {
+    [Dependent(typeof(DeviceSystem))]
     public class ImageSystem : ComponentSystemBase<AImage>, IInit
     {
         public AImage CreateImageAndView(uint width, uint height, Format format, ImageTiling tiling, ImageUsageFlags usage, MemoryPropertyFlags properties, ImageAspectFlags aspectFlags)
@@ -50,7 +51,6 @@ namespace ajiva.Systems.VulcanEngine.Systems
         }
 
         #region imageHelp
-
 
         public void CopyBufferToImage(Buffer buffer, Image image, uint width, uint height)
         {
@@ -139,7 +139,7 @@ namespace ajiva.Systems.VulcanEngine.Systems
         /// <inheritdoc />
         protected override void Setup()
         {
-            Ecs.RegisterInit(this, InitPhase.Init);
+            Ecs.RegisterInit(this);
         }
 
         /// <inheritdoc />
@@ -162,7 +162,7 @@ namespace ajiva.Systems.VulcanEngine.Systems
   #endregion
 
         /// <inheritdoc />
-        public void Init(AjivaEcs ecs, InitPhase phase)
+        public void Init(AjivaEcs ecs)
         {
         }
     }
