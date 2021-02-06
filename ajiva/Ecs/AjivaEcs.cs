@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Linq.Expressions;
+using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using ajiva.Ecs.Component;
 using ajiva.Ecs.ComponentSytem;
@@ -8,6 +10,7 @@ using ajiva.Ecs.Entity;
 using ajiva.Ecs.Factory;
 using ajiva.Ecs.System;
 using ajiva.Helpers;
+using ajiva.Systems.VulcanEngine.Systems;
 
 namespace ajiva.Ecs
 {
@@ -84,15 +87,63 @@ namespace ajiva.Ecs
 
         public void InitSystems()
         {
-            Init(InitPhase.Start);
-            Init(InitPhase.PreInit);
-            Init(InitPhase.Init);
-            Init(InitPhase.PreMain);
-            Init(InitPhase.Main);
-            Init(InitPhase.PostMain);
-            Init(InitPhase.Post);
-            Init(InitPhase.Finish);
+            List<IInit> isInti = new();
+            foreach (var init in Inits)
+            {
+                InitOne(init, isInti);
+            }
+
             Available = true;
+        }
+
+        private void InitOne(IInit toInit, ICollection<IInit> initDone)
+        {
+            if (initDone.Contains(toInit)) return;
+            var attrib = toInit.GetType().GetCustomAttributes(typeof(DependentAttribute), false).FirstOrDefault();
+
+            if (attrib is DependentAttribute dependent)
+            {
+                foreach (var type in dependent.Dependent)
+                {
+                    var typeInterfaces = type.GetInterfaces();
+                    var isInitAble = typeInterfaces.Any(x => x == typeof(IInit));
+                    if (!isInitAble)
+                    {
+                        LogHelper.Log($"{type} is not of {nameof(IInit)}");
+                        continue;
+                    }
+
+                    var deps = Inits.Where(x => x.GetType() == type).ToArray();
+                    if (deps.Any())
+                    {
+                        foreach (var dep in deps)
+                        {
+                            if (initDone.Contains(dep)) continue;
+
+                            LogHelper.Log($"DepInit for {toInit.GetType()}: {dep.GetType()}");
+                            InitOne(dep, initDone);
+                        }
+                    }
+                    else
+                    {
+                        var nb = (IInit)Activator.CreateInstance(type)!;
+                        // first check IComponentSystem because it inherits from ISystem
+                        if (typeInterfaces.Any(x => x == typeof(IComponentSystem)))
+                        {
+                            ComponentSystems.Add(((IComponentSystem)nb).ComponentType, (IComponentSystem)nb);
+                        }
+                        //last check in an else if the type inherits the heights interface in the hierarchy
+                        else if (typeInterfaces.Any(x => x == typeof(ISystem)))
+                        {
+                            Systems.Add(nb.GetType(), (ISystem)nb);
+                        }
+                        InitOne(nb, initDone);
+                    }
+                }
+            }
+            LogHelper.Log($"Init: {toInit.GetType()}");
+            toInit.Init(this);
+            initDone.Add(toInit);
         }
 
         public void SetupSystems()
@@ -108,17 +159,6 @@ namespace ajiva.Ecs
                     foreach (var system in ComponentSystems.Values) system.Setup(this);
                     foreach (var system in Systems.Values) system.Setup(this);
                 }
-        }
-
-        private void Init(InitPhase phase)
-        {
-            if (!Inits.ContainsKey(phase)) return;
-            lock (@lock)
-                if (multiThreading)
-                    Parallel.ForEach(Inits[phase], i => i.Init(this, phase));
-                else
-                    foreach (var init in Inits[phase])
-                        init.Init(this, phase);
         }
 
         public void Update(UpdateInfo delta)
@@ -175,18 +215,15 @@ namespace ajiva.Ecs
             lock (regLock) Updates.Add(update);
         }
 
-        private Dictionary<InitPhase, List<IInit>> Inits = new();
+        private List<IInit> Inits = new();
 
         private object regLock = new();
 
-        public void RegisterInit(IInit init, InitPhase phase)
+        public void RegisterInit(IInit init)
         {
             //LogHelper.WriteLine(init.GetHashCode() + " <- "+ phase);
             lock (regLock)
-                if (Inits.ContainsKey(phase))
-                    Inits[phase].Add(init);
-                else
-                    Inits.Add(phase, new() {init});
+                Inits.Add(init);
         }
     }
 }
