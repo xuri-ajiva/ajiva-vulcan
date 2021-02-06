@@ -48,15 +48,14 @@ namespace ajiva.Application
             (vulcanInstance, debugReportCallback) = Statics.CreateInstance(Glfw3.GetRequiredInstanceExtensions());
             var renderEngine = new Ajiva3dSystem();
             var deviceSystem = new DeviceSystem();
-            var pool = new WorkerPool(Environment.ProcessorCount / 2, "AjivaWorkerPool");
 
             entityComponentSystem.AddInstance(vulcanInstance);
 
+            entityComponentSystem.AddSystem(new WorkerPool(Environment.ProcessorCount / 2, "AjivaWorkerPool") {Enabled = true});
             entityComponentSystem.AddSystem(deviceSystem);
             entityComponentSystem.AddSystem(new ShaderSystem());
             entityComponentSystem.AddSystem(new WindowSystem());
             entityComponentSystem.AddSystem(new GraphicsSystem());
-            entityComponentSystem.AddSystem(pool);
             entityComponentSystem.AddSystem(new BoxTextureGenerator());
 
             entityComponentSystem.AddComponentSystem(renderEngine);
@@ -76,7 +75,7 @@ namespace ajiva.Application
 
             renderEngine.MainCamara = entityComponentSystem.CreateEntity<Cameras.FpsCamera>();
             renderEngine.MainCamara.UpdatePerspective(90, SurfaceWidth, SurfaceHeight);
-            renderEngine.MainCamara.MovementSpeed = .1f;
+            renderEngine.MainCamara.MovementSpeed = .01f;
 
             var meshPref = MeshPrefab.Cube.Clone();
             var r = new Random();
@@ -87,8 +86,6 @@ namespace ajiva.Application
 
             entityComponentSystem.SetupSystems();
             entityComponentSystem.InitSystems();
-
-            pool.Enabled = true;
 
             for (var i = 0; i < size; i++)
             {
