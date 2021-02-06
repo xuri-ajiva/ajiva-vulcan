@@ -61,7 +61,7 @@ namespace ajiva.Ecs
         public void AddSystem<T>(T system) where T : class, ISystem
         {
             if (system is IComponentSystem)
-                throw new ArgumentException("IComponentSystem should not be assinged as ISystem");
+                throw new ArgumentException("IComponentSystem should not be assigned as ISystem");
             Systems.Add(typeof(T), system);
         }
 
@@ -107,37 +107,24 @@ namespace ajiva.Ecs
                 foreach (var type in dependent.Dependent)
                 {
                     var typeInterfaces = type.GetInterfaces();
-                    var isInitAble = typeInterfaces.Any(x => x == typeof(IInit));
-                    if (!isInitAble)
-                    {
-                        LogHelper.Log($"{type} is not of {nameof(IInit)}");
-                        continue;
-                    }
+                    if (!typeInterfaces.Any(x => x == typeof(IInit))) continue;
 
                     var deps = Inits.Where(x => x.GetType() == type).ToArray();
                     if (deps.Any())
                     {
                         foreach (var dep in deps)
-                        {
-                            if (initDone.Contains(dep)) continue;
-
-                            LogHelper.Log($"DepInit for {toInit.GetType()}: {dep.GetType()}");
-                            InitOne(dep, initDone);
-                        }
+                            if (!initDone.Contains(dep))
+                                InitOne(dep, initDone);
                     }
                     else
                     {
                         var nb = (IInit)Activator.CreateInstance(type)!;
                         // first check IComponentSystem because it inherits from ISystem
                         if (typeInterfaces.Any(x => x == typeof(IComponentSystem)))
-                        {
                             ComponentSystems.Add(((IComponentSystem)nb).ComponentType, (IComponentSystem)nb);
-                        }
                         //last check in an else if the type inherits the heights interface in the hierarchy
                         else if (typeInterfaces.Any(x => x == typeof(ISystem)))
-                        {
                             Systems.Add(nb.GetType(), (ISystem)nb);
-                        }
                         InitOne(nb, initDone);
                     }
                 }
