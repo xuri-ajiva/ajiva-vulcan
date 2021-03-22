@@ -89,7 +89,7 @@ namespace ajiva.Ecs
         public void InitSystems()
         {
             List<IInit> isInti = new();
-            foreach (var init in Inits)
+            foreach (var init in inits.ToArray())
             {
                 InitOne(init, isInti);
             }
@@ -119,6 +119,8 @@ namespace ajiva.Ecs
                     else
                     {
                         var nb = (IInit)Activator.CreateInstance(type)!;
+                        //add it to the list of init systems
+                        inits.Add(nb);
                         // first check IComponentSystem because it inherits from ISystem
                         if (typeInterfaces.Any(x => x == typeof(IComponentSystem)))
                             ComponentSystems.Add(((IComponentSystem)nb).ComponentType, (IComponentSystem)nb);
