@@ -109,7 +109,7 @@ namespace ajiva.Ecs
                     var typeInterfaces = type.GetInterfaces();
                     if (!typeInterfaces.Any(x => x == typeof(IInit))) continue;
 
-                    var deps = Inits.Where(x => x.GetType() == type).ToArray();
+                    var deps = inits.Where(x => x.GetType() == type).ToArray();
                     if (deps.Any())
                     {
                         foreach (var dep in deps)
@@ -153,12 +153,12 @@ namespace ajiva.Ecs
 
         public void Update(UpdateInfo delta)
         {
-            if (Updates.Count < 1) return;
+            if (updates.Count < 1) return;
             lock (@lock)
                 if (multiThreading)
-                    Parallel.ForEach(Updates, d => d.Update(delta));
+                    Parallel.ForEach(updates, d => d.Update(delta));
                 else
-                    foreach (var update in Updates)
+                    foreach (var update in updates)
                         update.Update(delta);
         }
 
@@ -198,22 +198,23 @@ namespace ajiva.Ecs
             }
         }
 
-        private List<IUpdate> Updates = new();
+        private readonly List<IUpdate> updates = new();
 
         public void RegisterUpdate(IUpdate update)
         {
-            lock (regLock) Updates.Add(update);
+            lock (regLock) 
+                updates.Add(update);
         }
 
-        private List<IInit> Inits = new();
+        private readonly List<IInit> inits = new();
 
-        private object regLock = new();
+        private readonly object regLock = new();
 
         public void RegisterInit(IInit init)
         {
             //LogHelper.WriteLine(init.GetHashCode() + " <- "+ phase);
             lock (regLock)
-                Inits.Add(init);
+                inits.Add(init);
         }
     }
 }
