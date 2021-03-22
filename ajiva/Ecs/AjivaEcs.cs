@@ -28,15 +28,15 @@ namespace ajiva.Ecs
         private readonly object @lock = new();
         private uint currentEntityId;
         private Dictionary<uint, IEntity> Entities { get; } = new();
-        private Dictionary<Type, IEntityFactory> Factories { get; } = new();
-        private Dictionary<Type, IComponentSystem> ComponentSystems { get; } = new();
-        private Dictionary<Type, ISystem> Systems { get; } = new();
-        private Dictionary<Type, object> Instances { get; } = new();
+        private Dictionary<TypeKey, IEntityFactory> Factories { get; } = new();
+        private Dictionary<TypeKey, IComponentSystem> ComponentSystems { get; } = new();
+        private Dictionary<TypeKey, ISystem> Systems { get; } = new();
+        private Dictionary<TypeKey, object> Instances { get; } = new();
         private Dictionary<string, object> Params { get; } = new();
 
         public T CreateEntity<T>() where T : class, IEntity
         {
-            foreach (var factory in Factories.Where(factory => factory.Key == typeof(T)))
+            foreach (var factory in Factories.Where(factory => factory.Key == UsVc<T>.Key))
             {
                 lock (@lock)
                 {
@@ -48,24 +48,24 @@ namespace ajiva.Ecs
             return default!;
         }
 
-        public T CreateComponent<T>(IEntity entity) where T : class, IComponent => ((IComponentSystem<T>)ComponentSystems[typeof(T)]).CreateComponent(entity);
+        public T CreateComponent<T>(IEntity entity) where T : class, IComponent => ((IComponentSystem<T>)ComponentSystems[UsVc<T>.Key]).CreateComponent(entity);
 
-        public void AttachComponentToEntity<T>(IEntity entity) where T : class, IComponent => ((IComponentSystem<T>)ComponentSystems[typeof(T)]).AttachNewComponent(entity);
+        public void AttachComponentToEntity<T>(IEntity entity) where T : class, IComponent => ((IComponentSystem<T>)ComponentSystems[UsVc<T>.Key]).AttachNewComponent(entity);
 
-        public void AddEntityFactory<T>(IEntityFactory<T> entityFactory) where T : class, IEntity => Factories.Add(typeof(T), entityFactory);
+        public void AddEntityFactory<T>(IEntityFactory<T> entityFactory) where T : class, IEntity => Factories.Add(UsVc<T>.Key, entityFactory);
 
-        public void AddComponentSystem<T>(IComponentSystem<T> system) where T : class, IComponent => ComponentSystems.Add(typeof(T), system);
-        public IComponentSystem<T> GetComponentSystemByComponent<T>() where T : class, IComponent => (IComponentSystem<T>)ComponentSystems[typeof(T)];
-        public TS GetComponentSystem<TS, TC>() where TS : IComponentSystem<TC> where TC : class, IComponent => (TS)ComponentSystems[typeof(TC)];
+        public void AddComponentSystem<T>(IComponentSystem<T> system) where T : class, IComponent => ComponentSystems.Add(UsVc<T>.Key, system);
+        public IComponentSystem<T> GetComponentSystemByComponent<T>() where T : class, IComponent => (IComponentSystem<T>)ComponentSystems[UsVc<T>.Key];
+        public TS GetComponentSystem<TS, TC>() where TS : IComponentSystem<TC> where TC : class, IComponent => (TS)ComponentSystems[UsVc<TC>.Key];
 
         public void AddSystem<T>(T system) where T : class, ISystem
         {
             if (system is IComponentSystem)
                 throw new ArgumentException("IComponentSystem should not be assigned as ISystem");
-            Systems.Add(typeof(T), system);
+            Systems.Add(UsVc<T>.Key, system);
         }
 
-        public T GetSystem<T>() where T : class, ISystem => (T)Systems[typeof(T)];
+        public T GetSystem<T>() where T : class, ISystem => (T)Systems[UsVc<T>.Key];
 
         public T GetPara<T>(string name) => (T)Params[name];
 
@@ -81,10 +81,10 @@ namespace ajiva.Ecs
 
         public void AddInstance<T>(T instance) where T : class
         {
-            Instances.Add(typeof(T), instance);
+            Instances.Add(UsVc<T>.Key, instance);
         }
 
-        public T GetInstance<T>() where T : class => (T)Instances[typeof(T)];
+        public T GetInstance<T>() where T : class => (T)Instances[UsVc<T>.Key];
 
         public void InitSystems()
         {
@@ -126,7 +126,7 @@ namespace ajiva.Ecs
                             ComponentSystems.Add(((IComponentSystem)nb).ComponentType, (IComponentSystem)nb);
                         //last check in an else if the type inherits the heights interface in the hierarchy
                         else if (typeInterfaces.Any(x => x == typeof(ISystem)))
-                            Systems.Add(nb.GetType(), (ISystem)nb);
+                            Systems.Add(UsVc.TypeKey(nb), (ISystem)nb);
                         InitOne(nb, initDone);
                     }
                 }

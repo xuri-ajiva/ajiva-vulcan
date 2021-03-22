@@ -3,12 +3,13 @@ using System.Collections.Generic;
 using ajiva.Ecs.Component;
 using ajiva.Ecs.Entity;
 using ajiva.Ecs.System;
+using ajiva.Helpers;
 
 namespace ajiva.Ecs.ComponentSytem
 {
     public interface IComponentSystem : ISystem
     {
-        Type ComponentType { get; }
+        TypeKey ComponentType { get; }
         void AttachNewComponent(IEntity entity);
     }
     

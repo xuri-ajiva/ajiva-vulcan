@@ -8,7 +8,7 @@ namespace ajiva.Ecs.ComponentSytem
 {
     public abstract class ComponentSystemBase<T> : DisposingLogger, IComponentSystem<T> where T : class, IComponent
     {
-        public Type ComponentType { get; } = typeof(T);
+        public TypeKey ComponentType { get; } = UsVc<T>.Key;
 
         public Dictionary<T, IEntity> ComponentEntityMap { get; private set; } = new();
 
