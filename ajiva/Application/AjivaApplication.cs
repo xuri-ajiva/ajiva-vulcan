@@ -64,11 +64,11 @@ namespace ajiva.Application
             entityComponentSystem.AddComponentSystem(new ImageSystem());
             entityComponentSystem.AddComponentSystem(new TransformComponentSystem());
 
-            entityComponentSystem.AddEntityFactory(typeof(SdtEntity), new SomeEntityFactory());
+            entityComponentSystem.AddEntityFactory(new SomeEntityFactory());
 
-            entityComponentSystem.AddEntityFactory(typeof(Cube), new CubeFactory());
-            entityComponentSystem.AddEntityFactory(typeof(Rect), new RectFactory());
-            entityComponentSystem.AddEntityFactory(typeof(Cameras.FpsCamera), new Cameras.FpsCamaraFactory());
+            entityComponentSystem.AddEntityFactory(new CubeFactory());
+            entityComponentSystem.AddEntityFactory(new RectFactory());
+            entityComponentSystem.AddEntityFactory(new Cameras.FpsCamaraFactory());
 
             entityComponentSystem.AddParam(nameof(SurfaceHeight), SurfaceHeight);
             entityComponentSystem.AddParam(nameof(SurfaceWidth), SurfaceWidth);

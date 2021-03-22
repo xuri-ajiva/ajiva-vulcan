@@ -52,7 +52,7 @@ namespace ajiva.Ecs
 
         public void AttachComponentToEntity<T>(IEntity entity) where T : class, IComponent => ((IComponentSystem<T>)ComponentSystems[typeof(T)]).AttachNewComponent(entity);
 
-        public void AddEntityFactory(Type type, IEntityFactory entityFactory) => Factories.Add(type, entityFactory);
+        public void AddEntityFactory<T>(IEntityFactory<T> entityFactory) where T : class, IEntity => Factories.Add(typeof(T), entityFactory);
 
         public void AddComponentSystem<T>(IComponentSystem<T> system) where T : class, IComponent => ComponentSystems.Add(typeof(T), system);
         public IComponentSystem<T> GetComponentSystemByComponent<T>() where T : class, IComponent => (IComponentSystem<T>)ComponentSystems[typeof(T)];
