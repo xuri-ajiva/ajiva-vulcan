@@ -41,12 +41,7 @@ namespace ajiva.Models
         public void UpdateCopyOne(T data, uint id)
         {
             Staging.Value[id] = data;
-            Staging.CopyRegions(Uniform, new BufferCopy
-            {
-                Size = Uniform.SizeOfT,
-                DestinationOffset = Uniform.SizeOfT * id,
-                SourceOffset = Uniform.SizeOfT * id
-            }, system);
+            Staging.CopyRegions(Uniform, GetRegion(id), system);
         }
 
         /// <inheritdoc />
@@ -74,13 +69,11 @@ namespace ajiva.Models
 
         public void CopyRegions(List<uint> updated)
         {
+            //todo simplify regions, e.g join neighbors
             Staging.CopySetValueToBuffer(updated);
-            Staging.CopyRegions(Uniform, updated.Select(id=> new BufferCopy
-            {
-                Size = Uniform.SizeOfT,
-                DestinationOffset = Uniform.SizeOfT * id,
-                SourceOffset = Uniform.SizeOfT * id
-            }).ToArray(), system);
+            Staging.CopyRegions(Uniform, updated.Select(GetRegion).ToArray(), system);
         }
+
+        private BufferCopy GetRegion(uint id) => new() {Size = Uniform.SizeOfT, DestinationOffset = Uniform.SizeOfT * id, SourceOffset = Uniform.SizeOfT * id};
     }
 }
