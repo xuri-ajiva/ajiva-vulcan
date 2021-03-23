@@ -132,9 +132,10 @@ namespace ajiva.Systems.VulcanEngine
                 }
             };
 
-            window.OnMouseMove += delegate(object? _, vec2 vec2)
+            window.OnMouseMove += delegate(object? _, AjivaMouseMotionCallbackEventArgs e)
             {
-                MainCamara.OnMouseMoved(vec2.x, vec2.y);
+                if (e.ActiveLayer == AjivaEngineLayer.Layer3d)
+                    MainCamara.OnMouseMoved(e.Delta.x, e.Delta.y);
             };
         }
 

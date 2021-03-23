@@ -133,8 +133,9 @@ namespace ajiva.Systems.VulcanEngine.Systems
             if (mousePos == previousMousePosition)
                 return;
 
-            OnMouseMove?.Invoke(this, -(PreviousMousePosition - mousePos));
-            PreviousMousePosition = mousePos;
+            OnMouseMove?.Invoke(this, new(mousePos, -(previousMousePosition - mousePos), activeLayer));
+            
+            previousMousePosition = mousePos;
         }
 
         private void KeyCallback(WindowHandle windowHandle, Key key, int scancode, InputAction inputAction, Modifier modifiers)
@@ -206,4 +207,6 @@ namespace ajiva.Systems.VulcanEngine.Systems
     }
 
     public delegate void KeyEventHandler(object? sender, Key key, int scancode, InputAction inputAction, Modifier modifiers);
+
+    public record AjivaMouseMotionCallbackEventArgs(vec2 Pos, vec2 Delta, AjivaEngineLayer ActiveLayer);
 }
