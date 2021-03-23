@@ -2,6 +2,7 @@
 using System;
 using System.Diagnostics;
 using System.Threading.Tasks;
+using Ajiva.Wrapper.Logger;
 
 namespace ajiva.Helpers
 {
@@ -10,7 +11,7 @@ namespace ajiva.Helpers
         protected readonly object disposeLock = new();
         public bool Disposed { get; private set; }
 
-        private static readonly ConsoleRolBlock Block = new(10);
+        private static readonly ConsoleRolBlock Block = new(10, nameof(DisposingLogger));
 
         static void Log(string msg)
         {

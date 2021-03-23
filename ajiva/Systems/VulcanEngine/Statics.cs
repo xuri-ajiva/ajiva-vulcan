@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using ajiva.Helpers;
+using Ajiva.Wrapper.Logger;
 using SharpVk;
 using SharpVk.Multivendor;
 
@@ -53,7 +54,7 @@ namespace ajiva.Systems.VulcanEngine
             throw new ArgumentOutOfRangeException(nameof(candidates), candidates, "failed to find supported format!");
         }
 
-        private static readonly ConsoleRolBlock DebugReportBlock = new(5);
+        private static readonly ConsoleRolBlock DebugReportBlock = new(5, nameof(DebugReportBlock));
 
         private static readonly DebugReportCallbackDelegate DebugReportDelegate = (flags, objectType, o, location, messageCode, layerPrefix, message, userData) =>
         {

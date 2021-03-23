@@ -12,6 +12,7 @@ using ajiva.Ecs.System;
 using ajiva.Ecs.Utils;
 using ajiva.Helpers;
 using ajiva.Systems.VulcanEngine.Systems;
+using Ajiva.Wrapper.Logger;
 
 namespace ajiva.Ecs
 {

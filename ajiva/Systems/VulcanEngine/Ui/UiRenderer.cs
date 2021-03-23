@@ -9,6 +9,7 @@ using ajiva.Helpers;
 using ajiva.Models;
 using ajiva.Systems.VulcanEngine.Systems;
 using ajiva.Systems.VulcanEngine.Unions;
+using Ajiva.Wrapper.Logger;
 using GlmSharp;
 
 namespace ajiva.Systems.VulcanEngine.Ui

@@ -61,6 +61,7 @@
     </ItemGroup>
 
     <ItemGroup>
+        <ProjectReference Include="..\lib\ajiva-utils\src\Ajiva.Wrapper\Ajiva.Wrapper.csproj" />
         <ProjectReference Include="..\SharpVk\src\SharpVk.Emit\SharpVk.Emit.csproj" />
         <ProjectReference Include="..\SharpVk\src\SharpVk.Glfw\SharpVk.Glfw.csproj" />
         <ProjectReference Include="..\SharpVk\src\SharpVk.Shanq.GlmSharp\SharpVk.Shanq.GlmSharp.csproj" />

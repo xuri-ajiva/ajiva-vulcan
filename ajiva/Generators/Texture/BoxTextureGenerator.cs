@@ -7,6 +7,7 @@ using ajiva.Ecs.Utils;
 using ajiva.Helpers;
 using ajiva.Systems.VulcanEngine.Systems;
 using ajiva.Worker;
+using Ajiva.Wrapper.Logger;
 
 namespace ajiva.Generators.Texture
 {

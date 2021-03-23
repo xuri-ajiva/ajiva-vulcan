@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Diagnostics;
 using System.Threading;
+using Ajiva.Wrapper.Logger;
 
 namespace ajiva.Helpers
 {

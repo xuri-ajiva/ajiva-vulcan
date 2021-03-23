@@ -2,6 +2,7 @@
 using ajiva.Ecs.Entity;
 using ajiva.Ecs.Utils;
 using ajiva.Helpers;
+using Ajiva.Wrapper.Logger;
 
 namespace ajiva.Ecs.Example
 {
