@@ -5,6 +5,7 @@ using ajiva.Ecs;
 using ajiva.Ecs.System;
 using ajiva.Ecs.Utils;
 using ajiva.Helpers;
+using ajiva.Systems.VulcanEngine.Unions;
 using GlmSharp;
 using SharpVk;
 using SharpVk.Glfw;
@@ -18,15 +19,16 @@ namespace ajiva.Systems.VulcanEngine.Systems
     {
         public event KeyEventHandler? OnKeyEvent;
         public event EventHandler? OnResize;
-        public event EventHandler<vec2>? OnMouseMove;
+        public event EventHandler<AjivaMouseMotionCallbackEventArgs>? OnMouseMove;
         public Surface? Surface { get; private set; }
 
-        public vec2 PreviousMousePosition { get; private set; }
+        private readonly Thread windowThread;
+        private readonly Queue<Action?> windowThreadQueue = new();
 
-        public Thread WindowThread { get; }
-
-        public Queue<Action?> WindowThreadQueue { get; } = new();
-        public bool WindowReady { get; private set; }
+        private bool windowReady;
+        private WindowHandle window;
+        private vec2 previousMousePosition = vec2.Zero;
+        private AjivaEngineLayer activeLayer;
 
         public WindowSystem()
         {
@@ -34,10 +36,9 @@ namespace ajiva.Systems.VulcanEngine.Systems
             cursorPosDelegate = MouseCallback;
             sizeDelegate = SizeCallback;
 
-            PreviousMousePosition = vec2.Zero;
-            mouseMotion = false;
-            WindowThread = new(WindowStartup);
-            WindowThread.SetApartmentState(ApartmentState.STA);
+            activeLayer = AjivaEngineLayer.Layer2d;
+            windowThread = new(WindowStartup);
+            windowThread.SetApartmentState(ApartmentState.STA);
         }
 
         private void WindowStartup()
@@ -53,7 +54,7 @@ namespace ajiva.Systems.VulcanEngine.Systems
 
             UpdateCursor();
 
-            WindowReady = true;
+            windowReady = true;
             while (!Glfw3.WindowShouldClose(window))
             {
                 Thread.Sleep(1);
@@ -67,7 +68,7 @@ namespace ajiva.Systems.VulcanEngine.Systems
                     }
                 }
 
-                while (WindowThreadQueue.TryDequeue(out var action))
+                while (windowThreadQueue.TryDequeue(out var action))
                 {
                     try
                     {
@@ -80,15 +81,13 @@ namespace ajiva.Systems.VulcanEngine.Systems
                 }
                 Glfw3.PollEvents();
 
-                if (WindowReady) continue;
+                if (windowReady) continue;
                 Glfw3.DestroyWindow(window);
                 return;
             }
 
-            WindowReady = false;
+            windowReady = false;
         }
-
-        private WindowHandle window;
 
         public void EnsureSurfaceExists()
         {
@@ -99,15 +98,15 @@ namespace ajiva.Systems.VulcanEngine.Systems
         {
             Width = Ecs.GetPara<int>("SurfaceWidth");
             Height = Ecs.GetPara<int>("SurfaceHeight");
-            WindowThread.Start();
+            windowThread.Start();
 
-            while (!WindowReady)
+            while (!windowReady)
             {
                 Thread.Sleep(1);
             }
         }
 
-        DateTime lastResize = DateTime.MinValue;
+        private DateTime lastResize = DateTime.MinValue;
 
         private void SizeCallback(WindowHandle windowHandle, int width, int height)
         {
@@ -118,9 +117,9 @@ namespace ajiva.Systems.VulcanEngine.Systems
         }
 
         //force NO gc on these delegates by keeping an reference
-        private KeyDelegate keyDelegate;
-        private CursorPosDelegate cursorPosDelegate;
-        private WindowSizeDelegate sizeDelegate;
+        private readonly KeyDelegate keyDelegate;
+        private readonly CursorPosDelegate cursorPosDelegate;
+        private readonly WindowSizeDelegate sizeDelegate;
 
         public int Width { get; set; }
         public int Height { get; set; }
@@ -129,18 +128,14 @@ namespace ajiva.Systems.VulcanEngine.Systems
 
         private void MouseCallback(WindowHandle windowHandle, double xPosition, double yPosition)
         {
-            if (!mouseMotion) return;
-
             var mousePos = new vec2((float)xPosition, (float)yPosition);
 
-            if (mousePos == PreviousMousePosition)
+            if (mousePos == previousMousePosition)
                 return;
 
             OnMouseMove?.Invoke(this, -(PreviousMousePosition - mousePos));
             PreviousMousePosition = mousePos;
         }
-
-        private bool mouseMotion;
 
         private void KeyCallback(WindowHandle windowHandle, Key key, int scancode, InputAction inputAction, Modifier modifiers)
         {
@@ -152,9 +147,14 @@ namespace ajiva.Systems.VulcanEngine.Systems
                     Environment.Exit(0);
                     break;
                 case Key.Tab when inputAction == InputAction.Press:
-                    mouseMotion = !mouseMotion;
+                    activeLayer = activeLayer switch
+                    {
+                        AjivaEngineLayer.Layer3d => AjivaEngineLayer.Layer2d,
+                        AjivaEngineLayer.Layer2d => AjivaEngineLayer.Layer3d,
+                        _ => throw new ArgumentOutOfRangeException()
+                    };
                     UpdateCursor();
-                    LogHelper.WriteLine($"mouseMotion: {mouseMotion}");
+                    LogHelper.WriteLine($"activeLayer: {activeLayer}");
                     break;
             }
 
@@ -163,12 +163,12 @@ namespace ajiva.Systems.VulcanEngine.Systems
 
         private void UpdateCursor()
         {
-            Glfw3.SetInputMode(window, Glfw3Enum.GLFW_CURSOR, mouseMotion ? Glfw3Enum.GLFW_CURSOR_DISABLED : Glfw3Enum.GLFW_CURSOR_NORMAL);
+            Glfw3.SetInputMode(window, Glfw3Enum.GLFW_CURSOR, activeLayer == AjivaEngineLayer.Layer3d ? Glfw3Enum.GLFW_CURSOR_DISABLED : Glfw3Enum.GLFW_CURSOR_NORMAL);
         }
 
         public void CloseWindow()
         {
-            WindowReady = false;
+            windowReady = false;
         }
 
         protected override void ReleaseUnmanagedResources()
@@ -193,7 +193,7 @@ namespace ajiva.Systems.VulcanEngine.Systems
         public void Update(UpdateInfo delta)
         {
             PollEvents();
-            if (!WindowReady)
+            if (!windowReady)
                 Ecs.IssueClose();
         }
 
