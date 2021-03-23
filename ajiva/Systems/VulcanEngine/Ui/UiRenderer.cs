@@ -57,10 +57,11 @@ namespace ajiva.Systems.VulcanEngine.Ui
         /// <inheritdoc />
         public void Init(AjivaEcs ecs)
         {
-            var union = Ecs.GetSystem<ShaderSystem>().ShaderUnions[PipelineName.PipeLine2d];
-            union.ViewProj.UpdateExpresion((int index, ref UniformViewProj value) =>
+            union = Ecs.GetSystem<ShaderSystem>().ShaderUnions[AjivaEngineLayer.Layer2d];
+            union.ViewProj.UpdateExpresion((uint index, ref UniformViewProj value) =>
             {
                 value.View = mat4.Translate(-1, -1, 0) * mat4.Scale(2);
+                return true;
             });
             union.ViewProj.Copy();
         }

@@ -56,15 +56,23 @@ namespace ajiva.Models
             Uniform.Value[id] = data;
         }
 
-        public delegate void BufferValueUpdateDelegate(int index, ref T value);
+        public delegate bool BufferValueUpdateDelegate(uint index, ref T value);
 
         public void UpdateExpresion(BufferValueUpdateDelegate updateFunc)
         {
-            for (int i = 0; i < Staging.Length; i++)
+            List<uint> updated = new();
+            for (uint i = 0; i < Staging.Length; i++)
             {
-                updateFunc(i, ref Staging.Value[i]);
+                if (updateFunc(i, ref Staging.Value[i]))
+                    updated.Add(i);
             }
-            Staging.CopyValueToBuffer();
+            CopyRegions(updated);
+        }
+
+        public void UpdateExpresionOne(uint i, BufferValueUpdateDelegate updateFunc)
+        {
+            if (updateFunc(i, ref Staging.Value[i]))
+                Staging.CopyRegions(Uniform, GetRegion(i), system);
         }
 
         public void CopyRegions(List<uint> updated)

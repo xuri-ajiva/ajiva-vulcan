@@ -34,23 +34,26 @@ namespace ajiva.Systems.VulcanEngine
         private void UpdateCamaraProjView(ShaderSystem shaderSystem)
         {
             var updateCtr = false;
-            shaderSystem.ShaderUnions[PipelineName.PipeLine3d].ViewProj.UpdateExpresion(delegate(int index, ref UniformViewProj value)
+            shaderSystem.ShaderUnions[AjivaEngineLayer.Layer3d].ViewProj.UpdateExpresion(delegate(uint index, ref UniformViewProj value)
             {
-                if (index != 0) return;
+                if (index != 0) return false;
 
                 if (value.View != mainCamara!.View)
                 {
                     updateCtr = true;
                     value.View = MainCamara.View;
                 }
-                if (value.Proj == MainCamara.Projection) return;
+                if (value.Proj == MainCamara.Projection)
+                    return updateCtr;
 
                 updateCtr = true;
                 value.Proj = MainCamara.Projection;
                 value.Proj[1, 1] *= -1;
+
+                return updateCtr;
             });
-            if (updateCtr)
-                shaderSystem.ShaderUnions[PipelineName.PipeLine3d].ViewProj.Copy();
+            /*if (updateCtr)
+                shaderSystem.ShaderUnions[AjivaEngineLayer.Layer3d].ViewProj.Copy();    */
         }
 
         /// <inheritdoc />
