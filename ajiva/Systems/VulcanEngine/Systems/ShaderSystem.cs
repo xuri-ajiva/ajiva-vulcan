@@ -11,7 +11,7 @@ namespace ajiva.Systems.VulcanEngine.Systems
     [Dependent(typeof(DeviceSystem))]
     public class ShaderSystem : SystemBase, IInit
     {
-        public Dictionary<PipelineName, ShaderUnion> ShaderUnions { get; } = new();
+        public Dictionary<AjivaEngineLayer, ShaderUnion> ShaderUnions { get; } = new();
 
         /// <inheritdoc />
         protected override void Setup()
@@ -24,13 +24,13 @@ namespace ajiva.Systems.VulcanEngine.Systems
         {
             var ds = ecs.GetSystem<DeviceSystem>();
 
-            if (!ShaderUnions.ContainsKey(PipelineName.PipeLine2d))
+            if (!ShaderUnions.ContainsKey(AjivaEngineLayer.Layer2d))
             {
-                ShaderUnions.Add(PipelineName.PipeLine2d, ShaderUnion.InitCreate("./Shaders/2d", ds, 10000));
+                ShaderUnions.Add(AjivaEngineLayer.Layer2d, ShaderUnion.InitCreate("./Shaders/2d", ds, 10000));
             }
-            if (!ShaderUnions.ContainsKey(PipelineName.PipeLine3d))
+            if (!ShaderUnions.ContainsKey(AjivaEngineLayer.Layer3d))
             {
-                ShaderUnions.Add(PipelineName.PipeLine3d, ShaderUnion.InitCreate("./Shaders/3d", ds, 25000));
+                ShaderUnions.Add(AjivaEngineLayer.Layer3d, ShaderUnion.InitCreate("./Shaders/3d", ds, 25000));
             }
         }
 

@@ -56,10 +56,10 @@ namespace ajiva.Systems.VulcanEngine.EngineManagers
             renderUnion = RenderUnion.CreateRenderUnion(ds.PhysicalDevice, ds.Device!, wi.Surface!, wi.SurfaceExtent, sh, tx.TextureSamplerImageViews, true, DepthImage!, ds.CommandPool);
 
             //renderUnion.FillFrameBuffers(ar.ComponentEntityMap.Keys.Union<ARenderAble>(ui.ComponentEntityMap.Keys));
-            renderUnion.FillFrameBuffers(new Dictionary<PipelineName, List<ARenderAble>>()
+            renderUnion.FillFrameBuffers(new Dictionary<AjivaEngineLayer, List<ARenderAble>>()
             {
-                [PipelineName.PipeLine2d] = ui.ComponentEntityMap.Keys.Cast<ARenderAble>().ToList(),
-                [PipelineName.PipeLine3d] = ar.ComponentEntityMap.Keys.Cast<ARenderAble>().ToList(),
+                [AjivaEngineLayer.Layer2d] = ui.ComponentEntityMap.Keys.Cast<ARenderAble>().ToList(),
+                [AjivaEngineLayer.Layer3d] = ar.ComponentEntityMap.Keys.Cast<ARenderAble>().ToList(),
             });
         }
 

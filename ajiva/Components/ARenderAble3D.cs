@@ -40,6 +40,6 @@ namespace ajiva.Components
         }
 
         /// <inheritdoc />
-        public override PipelineName PipelineName { get; } = PipelineName.PipeLine3d;
+        public override AjivaEngineLayer AjivaEngineLayer { get; } = AjivaEngineLayer.Layer3d;
     }
 }

@@ -15,6 +15,6 @@ namespace ajiva.Components
 
         public abstract void BindAndDraw(CommandBuffer commandBuffer);
         
-        public abstract PipelineName PipelineName { get; }
+        public abstract AjivaEngineLayer AjivaEngineLayer { get; }
     }
 }

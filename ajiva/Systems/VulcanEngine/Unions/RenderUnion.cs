@@ -14,13 +14,13 @@ namespace ajiva.Systems.VulcanEngine.Unions
     public class RenderUnion : DisposingLogger
     {
         public readonly SwapChainUnion swapChainUnion;
-        public readonly Dictionary<PipelineName, PipelineFrameUnion> Unions;
+        public readonly Dictionary<AjivaEngineLayer, PipelineFrameUnion> Unions;
 
         public Semaphore ImageAvailable { get; }
         public Semaphore RenderFinished { get; }
 
         /// <inheritdoc />
-        public RenderUnion(SwapChainUnion swapChainUnion, Semaphore imageAvailable, Semaphore renderFinished, Dictionary<PipelineName, PipelineFrameUnion> unions)
+        public RenderUnion(SwapChainUnion swapChainUnion, Semaphore imageAvailable, Semaphore renderFinished, Dictionary<AjivaEngineLayer, PipelineFrameUnion> unions)
         {
             this.swapChainUnion = swapChainUnion;
             Unions = unions;
@@ -42,8 +42,8 @@ namespace ajiva.Systems.VulcanEngine.Unions
 
             return new(swap, imageAvailable, renderFinished, new()
             {
-                [PipelineName.PipeLine3d] = new(graph3d, frame3d),
-                [PipelineName.PipeLine2d] = new(graph2d, frame2d),
+                [AjivaEngineLayer.Layer3d] = new(graph3d, frame3d),
+                [AjivaEngineLayer.Layer2d] = new(graph2d, frame2d),
             });
         }
 
@@ -72,7 +72,7 @@ namespace ajiva.Systems.VulcanEngine.Unions
             buffer.End();
         }
 
-        public void FillFrameBuffers(Dictionary<PipelineName, List<ARenderAble>> render)
+        public void FillFrameBuffers(Dictionary<AjivaEngineLayer, List<ARenderAble>> render)
         {
             lock (bufferLock)
             {
@@ -82,12 +82,12 @@ namespace ajiva.Systems.VulcanEngine.Unions
 
                     var clear = pipelineName switch
                     {
-                        PipelineName.PipeLine3d => new ClearValue[]
+                        AjivaEngineLayer.Layer3d => new ClearValue[]
                         {
                             new ClearColorValue(.1f, .1f, .1f, .1f),
                             new ClearDepthStencilValue(1, 0),
                         },
-                        PipelineName.PipeLine2d => Array.Empty<ClearValue>(),
+                        AjivaEngineLayer.Layer2d => Array.Empty<ClearValue>(),
                         _ => Array.Empty<ClearValue>(),
                     };
 
@@ -103,7 +103,7 @@ namespace ajiva.Systems.VulcanEngine.Unions
 
         public void FillFrameBuffers(IEnumerable<ARenderAble> renderAbles)
         {
-            var render = renderAbles.Where(able => able.Render).GroupBy(able => able.PipelineName, able => able).ToDictionary(names => names.Key, names => names.ToList());
+            var render = renderAbles.Where(able => able.Render).GroupBy(able => able.AjivaEngineLayer, able => able).ToDictionary(names => names.Key, names => names.ToList());
 
             FillFrameBuffers(render);
         }
@@ -174,9 +174,9 @@ namespace ajiva.Systems.VulcanEngine.Unions
             }
         }
     }
-    public enum PipelineName
+    public enum AjivaEngineLayer
     {
-        PipeLine3d,
-        PipeLine2d,
+        Layer3d,
+        Layer2d,
     }
 }
