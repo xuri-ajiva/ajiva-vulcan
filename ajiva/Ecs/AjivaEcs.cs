@@ -12,6 +12,7 @@ using ajiva.Ecs.System;
 using ajiva.Ecs.Utils;
 using ajiva.Utils;
 using Ajiva.Wrapper.Logger;
+using Microsoft.CSharp.RuntimeBinder;
 
 namespace ajiva.Ecs
 {
@@ -72,14 +73,14 @@ namespace ajiva.Ecs
             if (typeof(T).FindInterfaces((type, _) => type == typeof(IComponentSystem), null).Length != 0)
                 throw new ArgumentException("IComponentSystem should not be assigned as ISystem");
 
-            T instance;
+            object instance;
             var constructors = typeof(T).GetConstructors(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
 
             if (constructors.FirstOrDefault(x => x.GetParameters() is {Length: >= 1} parameters && parameters.Any(x => x.ParameterType == typeof(AjivaEcs))) is { } ctr)
             {
                 var para = ctr.GetParameters();
                 object?[] args = new object?[para.Length];
-                for (int i = 0; i < para.Length; i++)
+                for (var i = 0; i < para.Length; i++)
                 {
                     var key = UsVc.TypeKeyForType(para[i].ParameterType);
                     if (key == me)
@@ -90,37 +91,35 @@ namespace ajiva.Ecs
 
                     foreach (var dict in new IDictionary[] {ComponentSystems, Systems, Instances})
                     {
-                        if (dict.Contains(key))
-                        {
-                            args[i] = dict[key];
-                            break;
-                        }
+                        if (!dict.Contains(key)) continue;
+                        args[i] = dict[key];
+                        break;
                     }
                     if (args[i] is not null)
                         continue;
 
                     LogHelper.Log($"Creating New Instance of {para[i].ParameterType} for constructor of {typeof(T)}");
                     args[i] = Activator.CreateInstance(para[i].ParameterType);
-
-                    /*if (Systems.TryGetValue(UsVc.TypeKey(para[i].ParameterType), out var argX1))
-                        args[i] = argX1;
-                    else if (ComponentSystems.TryGetValue(UsVc.TypeKey(para[i].ParameterType), out var argX2))
-                        args[i] = argX2;
-                    else if (Instances.TryGetValue(, out var argX3))
-                        args[i] = argX3;*/
                 }
-                instance = (T)ctr.Invoke(args);
+                instance = ctr.Invoke(args);
             }
             else if (constructors.FirstOrDefault(x => x.GetParameters().Length == 0) is { } ctr2)
-                instance = (T)ctr2.Invoke(null);
+                instance = ctr2.Invoke(null);
             else
-                instance = (T)constructors.First().Invoke(new object?[] {this});
+                instance = constructors.First().Invoke(new object?[] {this});
 
-            if (instance is IComponentSystem)
-                throw new ArgumentException("IComponentSystem should not be assigned as ISystem");
-
-            Systems.Add(UsVc<T>.Key, instance);
-            return instance;
+            switch (instance)
+            {
+                case IComponentSystem componentSystem:
+                    ComponentSystems.Add(UsVc<T>.Key, componentSystem);
+                    break;
+                case ISystem system:
+                    Systems.Add(UsVc<T>.Key, system);
+                    break;
+                default:
+                    throw new RuntimeBinderInternalCompilerException("The Compiler has Failed on the T constrain");
+            }
+            return instance as T;
         }
 
         public T GetSystem<T>() where T : class, ISystem => (T)Systems[UsVc<T>.Key];
