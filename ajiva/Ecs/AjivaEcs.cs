@@ -1,6 +1,8 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using System.Threading.Tasks;
 using ajiva.Ecs.Component;
 using ajiva.Ecs.ComponentSytem;
@@ -61,6 +63,64 @@ namespace ajiva.Ecs
             if (system is IComponentSystem)
                 throw new ArgumentException("IComponentSystem should not be assigned as ISystem");
             Systems.Add(UsVc<T>.Key, system);
+        }
+
+        private static TypeKey me = UsVc<AjivaEcs>.Key;
+
+        public T CreateSystem<T>() where T : class, ISystem
+        {
+            if (typeof(T).FindInterfaces((type, _) => type == typeof(IComponentSystem), null).Length != 0)
+                throw new ArgumentException("IComponentSystem should not be assigned as ISystem");
+
+            T instance;
+            var constructors = typeof(T).GetConstructors(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+
+            if (constructors.FirstOrDefault(x => x.GetParameters() is {Length: >= 1} parameters && parameters.Any(x => x.ParameterType == typeof(AjivaEcs))) is { } ctr)
+            {
+                var para = ctr.GetParameters();
+                object?[] args = new object?[para.Length];
+                for (int i = 0; i < para.Length; i++)
+                {
+                    var key = UsVc.TypeKeyForType(para[i].ParameterType);
+                    if (key == me)
+                    {
+                        args[i] = this;
+                        continue;
+                    }
+
+                    foreach (var dict in new IDictionary[] {ComponentSystems, Systems, Instances})
+                    {
+                        if (dict.Contains(key))
+                        {
+                            args[i] = dict[key];
+                            break;
+                        }
+                    }
+                    if (args[i] is not null)
+                        continue;
+
+                    LogHelper.Log($"Creating New Instance of {para[i].ParameterType} for constructor of {typeof(T)}");
+                    args[i] = Activator.CreateInstance(para[i].ParameterType);
+
+                    /*if (Systems.TryGetValue(UsVc.TypeKey(para[i].ParameterType), out var argX1))
+                        args[i] = argX1;
+                    else if (ComponentSystems.TryGetValue(UsVc.TypeKey(para[i].ParameterType), out var argX2))
+                        args[i] = argX2;
+                    else if (Instances.TryGetValue(, out var argX3))
+                        args[i] = argX3;*/
+                }
+                instance = (T)ctr.Invoke(args);
+            }
+            else if (constructors.FirstOrDefault(x => x.GetParameters().Length == 0) is { } ctr2)
+                instance = (T)ctr2.Invoke(null);
+            else
+                instance = (T)constructors.First().Invoke(new object?[] {this});
+
+            if (instance is IComponentSystem)
+                throw new ArgumentException("IComponentSystem should not be assigned as ISystem");
+
+            Systems.Add(UsVc<T>.Key, instance);
+            return instance;
         }
 
         public T GetSystem<T>() where T : class, ISystem => (T)Systems[UsVc<T>.Key];
@@ -124,7 +184,7 @@ namespace ajiva.Ecs
                             ComponentSystems.Add(((IComponentSystem)nb).ComponentType, (IComponentSystem)nb);
                         //last check in an else if the type inherits the heights interface in the hierarchy
                         else if (typeInterfaces.Any(x => x == typeof(ISystem)))
-                            Systems.Add(UsVc.TypeKey(nb), (ISystem)nb);
+                            Systems.Add(UsVc.TypeKeyFor(nb), (ISystem)nb);
                         InitOne(nb, initDone);
                     }
                 }
@@ -200,7 +260,7 @@ namespace ajiva.Ecs
 
         public void RegisterUpdate(IUpdate update)
         {
-            lock (regLock) 
+            lock (regLock)
                 updates.Add(update);
         }
 
