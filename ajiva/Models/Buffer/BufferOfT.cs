@@ -7,7 +7,7 @@ namespace ajiva.Models
     {
         public int Length { get; }
         public uint SizeOfT { get; }
-        public T[] Value { get; protected set; }
+        protected T[] Value { get; set; }
 
         /// <inheritdoc />
         public BufferOfT(T[] val) : base((uint)(Unsafe.SizeOf<T>() * val.Length))
