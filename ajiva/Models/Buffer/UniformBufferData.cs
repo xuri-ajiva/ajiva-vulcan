@@ -21,4 +21,8 @@ namespace ajiva.Models
         public mat4 View;
         public mat4 Proj;
     };
+    public interface IComp<in T>
+    {
+        public bool CompareTo(T other);
+    }
 }

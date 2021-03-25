@@ -1,8 +1,9 @@
-﻿using System.Runtime.CompilerServices;
+﻿using System;
+using System.Runtime.CompilerServices;
 
 namespace ajiva.Models
 {
-    public class BufferOfT<T> : ABuffer where T : notnull
+    public class BufferOfT<T> : ABuffer where T : struct
     {
         public int Length { get; }
         public uint SizeOfT { get; }

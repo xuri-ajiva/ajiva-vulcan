@@ -2,7 +2,7 @@
 
 namespace ajiva.Models
 {
-    public class WritableCopyBuffer<T> : CopyBuffer<T> where T : notnull
+    public class WritableCopyBuffer<T> : CopyBuffer<T> where T : struct, IComp<T>
     {
         /// <inheritdoc />
         public WritableCopyBuffer(T[] val) : base(val)

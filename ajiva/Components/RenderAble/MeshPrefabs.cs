@@ -33,6 +33,6 @@
             0, 1, 3, 2, 3, 0,
         });
 
-        public static Mesh<object>? Empty { get; } = null;
+        public static Mesh<byte>? Empty { get; } = null;
     }
 }

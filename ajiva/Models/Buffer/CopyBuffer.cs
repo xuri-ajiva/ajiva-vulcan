@@ -8,7 +8,7 @@ using SharpVk;
 
 namespace ajiva.Models
 {
-    public class CopyBuffer<T> : BufferOfT<T> where T : notnull
+    public class CopyBuffer<T> : BufferOfT<T> where T : struct
     {
         /// <inheritdoc />
         public CopyBuffer(T[] val) : base(val)

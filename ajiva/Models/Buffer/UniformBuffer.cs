@@ -5,7 +5,7 @@ using SharpVk;
 
 namespace ajiva.Models
 {
-    public class UniformBuffer<T> : ThreadSaveCreatable where T : struct
+    public class UniformBuffer<T> : ThreadSaveCreatable where T : struct, IComp<T>
     {
         private readonly DeviceSystem system;
         public WritableCopyBuffer<T> Staging { get; }

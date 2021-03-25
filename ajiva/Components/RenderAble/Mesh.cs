@@ -5,7 +5,7 @@ using SharpVk;
 
 namespace ajiva.Models
 {
-    public partial class Mesh<T> : DisposingLogger where T : notnull
+    public partial class Mesh<T> : DisposingLogger where T : struct
     {
         public readonly T[] VerticesData;
         public readonly ushort[] IndicesData;
@@ -27,7 +27,7 @@ namespace ajiva.Models
             Indeces = CreateShaderBuffer(IndicesData, BufferUsageFlags.IndexBuffer);
         }
 
-        private BufferOfT<TV> CreateShaderBuffer<TV>(TV[] val, BufferUsageFlags bufferUsage) where TV : notnull
+        private BufferOfT<TV> CreateShaderBuffer<TV>(TV[] val, BufferUsageFlags bufferUsage) where TV : struct
         {
             ATrace.Assert(deviceComponent != null, nameof(deviceComponent) + " != null");
             
