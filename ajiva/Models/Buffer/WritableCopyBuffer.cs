@@ -16,12 +16,38 @@ namespace ajiva.Models
                 throw new ArgumentException("Currently you can only update the data, not add some", nameof(newData));
             }
 
-            for (int i = 0; i < newData.Length; i++)
+            for (var i = 0; i < newData.Length; i++)
             {
                 Value[i] = newData[i];
             }
             //Value = newData;
             CopyValueToBuffer();
+        }
+
+        public new T this[in uint index]
+        {
+            get => this[(int)index];
+            set => this[(int)index] = value;
+        }
+        public new T this[in int index]
+        {
+            get
+            {
+                if (index > Length)
+                    throw new ArgumentOutOfRangeException(nameof(index), index, "");
+                return base[index];
+            }
+            set
+            {
+                if (index > Length)
+                    throw new ArgumentOutOfRangeException(nameof(index), index, "Currently you can only update the data, not add some");
+
+                if (GetRef(index).CompareTo(value))
+                    return;
+
+                base[index] = value;
+                CopySingleValueToBuffer(index);
+            }
         }
 
         public void Update(T newData, int id)
