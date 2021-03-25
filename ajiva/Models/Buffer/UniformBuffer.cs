@@ -40,7 +40,7 @@ namespace ajiva.Models
 
         public void UpdateCopyOne(T data, uint id)
         {
-            Staging.Value[id] = data;
+            Staging[id] = data;
             Staging.CopyRegions(Uniform, GetRegion(id), system);
         }
 
@@ -53,7 +53,7 @@ namespace ajiva.Models
 
         public void UpdateOne(T data, uint id)
         {
-            Uniform.Value[id] = data;
+            Uniform[id] = data;
         }
 
         public delegate bool BufferValueUpdateDelegate(uint index, ref T value);
@@ -63,7 +63,7 @@ namespace ajiva.Models
             List<uint> updated = new();
             for (uint i = 0; i < Staging.Length; i++)
             {
-                if (updateFunc(i, ref Staging.Value[i]))
+                if (updateFunc(i, ref Staging.GetRef(i)))
                     updated.Add(i);
             }
             CopyRegions(updated);
@@ -71,7 +71,7 @@ namespace ajiva.Models
 
         public void UpdateExpresionOne(uint i, BufferValueUpdateDelegate updateFunc)
         {
-            if (updateFunc(i, ref Staging.Value[i]))
+            if (updateFunc(i, ref Staging.GetRef(i)))
                 Staging.CopyRegions(Uniform, GetRegion(i), system);
         }
 

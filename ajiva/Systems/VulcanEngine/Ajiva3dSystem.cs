@@ -69,13 +69,13 @@ namespace ajiva.Systems.VulcanEngine
                 //ATexture? texture = null!;
                 if (entity.TryGetComponent(out transform) && transform!.Dirty)
                 {
-                    shaderSystem.ShaderUnions[AjivaEngineLayer.Layer3d].UniformModels.Staging.Value[renderAble!.Id].Model = transform.ModelMat; // texture?.TextureId ?? 0
+                    shaderSystem.ShaderUnions[AjivaEngineLayer.Layer3d].UniformModels.Staging.GetRef(renderAble!.Id).Model = transform.ModelMat; // texture?.TextureId ?? 0
                     update = true;
                     transform!.Dirty = false;
                 }
                 if (renderAble.Dirty /*entity.TryGetComponent(out texture) && texture!.Dirty ||*/)
                 {
-                    shaderSystem.ShaderUnions[AjivaEngineLayer.Layer3d].UniformModels.Staging.Value[renderAble!.Id].TextureSamplerId = renderAble!.Id; // texture?.TextureId ?? 0
+                    shaderSystem.ShaderUnions[AjivaEngineLayer.Layer3d].UniformModels.Staging.GetRef(renderAble!.Id).TextureSamplerId = renderAble!.Id; // texture?.TextureId ?? 0
                     update = true;
                     renderAble.Dirty = false;
                 }
