@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Runtime.CompilerServices;
 
-namespace ajiva.Models
+namespace ajiva.Models.Buffer
 {
     public class BufferOfT<T> : ABuffer where T : struct
     {

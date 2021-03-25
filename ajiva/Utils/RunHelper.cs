@@ -3,7 +3,7 @@ using System.Diagnostics;
 using System.Threading;
 using Ajiva.Wrapper.Logger;
 
-namespace ajiva.Helpers
+namespace ajiva.Utils
 {
     public record UpdateInfo(TimeSpan Delta, ulong Iteration);
 

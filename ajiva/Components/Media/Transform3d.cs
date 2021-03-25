@@ -2,7 +2,7 @@
 using ajiva.Ecs.Component;
 using GlmSharp;
 
-namespace ajiva.Components
+namespace ajiva.Components.Media
 {
     public class Transform3d : IComponent
     {

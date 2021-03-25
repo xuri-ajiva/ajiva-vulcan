@@ -1,9 +1,8 @@
 ﻿using ajiva.Ecs.Component;
-using ajiva.Helpers;
-using ajiva.Models;
+using ajiva.Utils;
 using SharpVk;
 
-namespace ajiva.Components
+namespace ajiva.Components.Media
 {
     public partial class ATexture : DisposingLogger , IComponent
     {

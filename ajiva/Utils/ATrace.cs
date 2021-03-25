@@ -6,7 +6,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using Ajiva.Wrapper.Logger;
 
-namespace ajiva.Helpers
+namespace ajiva.Utils
 {
     public static class ATrace
     {

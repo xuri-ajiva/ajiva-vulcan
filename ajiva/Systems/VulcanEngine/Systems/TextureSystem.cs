@@ -1,12 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Runtime.InteropServices.ComTypes;
-using ajiva.Components;
+using ajiva.Components.Media;
 using ajiva.Ecs;
 using ajiva.Ecs.ComponentSytem;
 using ajiva.Ecs.Entity;
 using ajiva.Ecs.Utils;
-using ajiva.Helpers;
+using ajiva.Utils;
 using SharpVk;
 
 namespace ajiva.Systems.VulcanEngine.Systems

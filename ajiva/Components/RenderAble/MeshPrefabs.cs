@@ -1,4 +1,6 @@
-﻿namespace ajiva.Models
+﻿using ajiva.Models;
+
+namespace ajiva.Components.RenderAble
 {
     public partial class MeshPrefab
     {

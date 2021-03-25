@@ -1,14 +1,13 @@
 ﻿using System;
-using ajiva.Helpers;
 using ajiva.Systems.VulcanEngine.Systems;
+using ajiva.Utils;
 using SharpVk;
-using Buffer = SharpVk.Buffer;
 
-namespace ajiva.Models
+namespace ajiva.Models.Buffer
 {
     public class ABuffer : DisposingLogger
     {
-        public Buffer? Buffer;
+        public SharpVk.Buffer? Buffer;
         public DeviceMemory? Memory;
         public uint Size { get; protected set; }
 

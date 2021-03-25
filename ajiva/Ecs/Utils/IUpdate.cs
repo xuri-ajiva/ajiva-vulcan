@@ -1,4 +1,4 @@
-﻿using ajiva.Helpers;
+﻿using ajiva.Utils;
 
 namespace ajiva.Ecs.Utils
 {

@@ -1,7 +1,7 @@
 ﻿using ajiva.Ecs.ComponentSytem;
 using ajiva.Ecs.Entity;
 using ajiva.Ecs.Utils;
-using ajiva.Helpers;
+using ajiva.Utils;
 using Ajiva.Wrapper.Logger;
 
 namespace ajiva.Ecs.Example

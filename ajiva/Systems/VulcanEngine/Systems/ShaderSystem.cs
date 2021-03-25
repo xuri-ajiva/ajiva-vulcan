@@ -1,10 +1,11 @@
 ﻿using System.Collections.Generic;
+using ajiva.Components;
 using ajiva.Ecs;
 using ajiva.Ecs.System;
 using ajiva.Ecs.Utils;
-using ajiva.Helpers;
-using ajiva.Models;
+using ajiva.Models.Buffer;
 using ajiva.Systems.VulcanEngine.Unions;
+using ajiva.Utils;
 
 namespace ajiva.Systems.VulcanEngine.Systems
 {

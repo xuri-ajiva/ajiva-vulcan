@@ -1,9 +1,9 @@
 ﻿using ajiva.Ecs.Component;
-using ajiva.Helpers;
 using ajiva.Systems.VulcanEngine;
+using ajiva.Utils;
 using SharpVk;
 
-namespace ajiva.Models
+namespace ajiva.Components.Media
 {
     public class AImage : DisposingLogger, IComponent
     {

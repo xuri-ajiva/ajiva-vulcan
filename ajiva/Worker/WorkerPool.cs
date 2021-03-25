@@ -1,7 +1,6 @@
 ﻿using System.Collections.Concurrent;
 using System.Threading;
 using ajiva.Ecs.System;
-using ajiva.Helpers;
 using Ajiva.Wrapper.Logger;
 
 namespace ajiva.Worker

@@ -1,9 +1,9 @@
 ﻿using ajiva.Ecs.Component;
-using ajiva.Helpers;
 using ajiva.Systems.VulcanEngine.Unions;
+using ajiva.Utils;
 using SharpVk;
 
-namespace ajiva.Components
+namespace ajiva.Components.RenderAble
 {
     public abstract class ARenderAble : DisposingLogger, IComponent
     {

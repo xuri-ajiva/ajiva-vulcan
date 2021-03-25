@@ -2,7 +2,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace ajiva.Helpers
+namespace ajiva.Utils
 {
     public interface INextId<T>
     {

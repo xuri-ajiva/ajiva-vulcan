@@ -1,4 +1,4 @@
-﻿using ajiva.Components;
+﻿using ajiva.Components.Media;
 using ajiva.Ecs.ComponentSytem;
 using ajiva.Ecs.Entity;
 

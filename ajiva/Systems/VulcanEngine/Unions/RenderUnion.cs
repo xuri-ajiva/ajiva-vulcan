@@ -2,10 +2,11 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
-using ajiva.Components;
-using ajiva.Helpers;
-using ajiva.Models;
+using ajiva.Components.Media;
+using ajiva.Components.RenderAble;
+using ajiva.Models.Buffer;
 using ajiva.Systems.VulcanEngine.Systems;
+using ajiva.Utils;
 using SharpVk;
 using SharpVk.Khronos;
 

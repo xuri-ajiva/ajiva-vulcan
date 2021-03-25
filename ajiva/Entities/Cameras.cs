@@ -1,9 +1,10 @@
 ﻿using System;
-using ajiva.Components;
+using ajiva.Components.Media;
+using ajiva.Components.RenderAble;
 using ajiva.Ecs;
 using ajiva.Ecs.Factory;
 using ajiva.Ecs.Utils;
-using ajiva.Helpers;
+using ajiva.Utils;
 using GlmSharp;
 
 namespace ajiva.Entities

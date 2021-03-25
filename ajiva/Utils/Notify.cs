@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Threading;
 
-namespace ajiva.Helpers
+namespace ajiva.Utils
 {
     public class Notify<T>
     {

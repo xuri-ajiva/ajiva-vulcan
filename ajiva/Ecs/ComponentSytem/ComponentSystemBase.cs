@@ -1,8 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using ajiva.Ecs.Component;
 using ajiva.Ecs.Entity;
-using ajiva.Helpers;
+using ajiva.Utils;
 
 namespace ajiva.Ecs.ComponentSytem
 {

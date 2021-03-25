@@ -1,6 +1,6 @@
 ﻿using System;
 using ajiva.Ecs.Entity;
-using ajiva.Helpers;
+using ajiva.Utils;
 
 namespace ajiva.Ecs.Example
 {

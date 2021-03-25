@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace ajiva.Models
+namespace ajiva.Models.Buffer
 {
     public class WritableCopyBuffer<T> : CopyBuffer<T> where T : struct, IComp<T>
     {

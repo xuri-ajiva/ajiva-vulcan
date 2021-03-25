@@ -1,6 +1,6 @@
 ﻿using System.Linq;
-using ajiva.Helpers;
-using ajiva.Models;
+using ajiva.Components.Media;
+using ajiva.Utils;
 using SharpVk;
 using SharpVk.Khronos;
 

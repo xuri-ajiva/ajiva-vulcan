@@ -1,10 +1,10 @@
-﻿using ajiva.Helpers;
-using ajiva.Models;
+﻿using ajiva.Models;
 using ajiva.Systems.VulcanEngine.Systems;
 using ajiva.Systems.VulcanEngine.Unions;
+using ajiva.Utils;
 using SharpVk;
 
-namespace ajiva.Components
+namespace ajiva.Components.RenderAble
 {
     public class ARenderAble2D : ARenderAble
     {

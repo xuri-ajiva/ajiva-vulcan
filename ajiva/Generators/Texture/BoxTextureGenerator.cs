@@ -1,10 +1,8 @@
 ﻿using System.Drawing;
-using System.Threading;
-using ajiva.Components;
+using ajiva.Components.Media;
 using ajiva.Ecs;
 using ajiva.Ecs.System;
 using ajiva.Ecs.Utils;
-using ajiva.Helpers;
 using ajiva.Systems.VulcanEngine.Systems;
 using ajiva.Worker;
 using Ajiva.Wrapper.Logger;

@@ -3,7 +3,7 @@ using System.Linq;
 using ajiva.Systems.VulcanEngine.Systems;
 using SharpVk;
 
-namespace ajiva.Models
+namespace ajiva.Models.Buffer
 {
     public class UniformBuffer<T> : ThreadSaveCreatable where T : struct, IComp<T>
     {

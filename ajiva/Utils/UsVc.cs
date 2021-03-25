@@ -1,8 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Runtime.CompilerServices;
-using ajiva.Ecs.Utils;
 
-namespace ajiva.Helpers
+namespace ajiva.Utils
 {
     //Unique Static Value Cache
     public static class UsVc<T>

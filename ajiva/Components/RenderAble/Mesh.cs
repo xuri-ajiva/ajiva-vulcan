@@ -1,9 +1,10 @@
 ﻿using System.Linq;
-using ajiva.Helpers;
+using ajiva.Models.Buffer;
 using ajiva.Systems.VulcanEngine.Systems;
+using ajiva.Utils;
 using SharpVk;
 
-namespace ajiva.Models
+namespace ajiva.Components.RenderAble
 {
     public partial class Mesh<T> : DisposingLogger where T : struct
     {

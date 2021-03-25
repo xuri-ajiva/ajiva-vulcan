@@ -1,6 +1,6 @@
 ﻿using GlmSharp;
 
-namespace ajiva.Models
+namespace ajiva.Models.Buffer
 {
     public struct UniformBufferData : IComp<UniformBufferData>
     {

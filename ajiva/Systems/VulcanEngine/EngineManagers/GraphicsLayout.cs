@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
-using ajiva.Components;
+using ajiva.Components.Media;
+using ajiva.Components.RenderAble;
 using ajiva.Ecs;
 using ajiva.Models;
 using ajiva.Systems.VulcanEngine.Systems;

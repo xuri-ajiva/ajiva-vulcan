@@ -1,6 +1,6 @@
 ﻿using System.Diagnostics;
 using System.Runtime.CompilerServices;
-using ajiva.Helpers;
+using ajiva.Utils;
 
 namespace ajiva.Models
 {

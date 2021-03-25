@@ -2,10 +2,11 @@
 using System.Drawing.Imaging;
 using ajiva.Ecs;
 using ajiva.Models;
+using ajiva.Models.Buffer;
 using ajiva.Systems.VulcanEngine.Systems;
 using SharpVk;
 
-namespace ajiva.Components
+namespace ajiva.Components.Media
 {
     public partial class ATexture
     {

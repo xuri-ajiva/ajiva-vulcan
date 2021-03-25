@@ -4,7 +4,7 @@ using System.Diagnostics;
 using System.Threading.Tasks;
 using Ajiva.Wrapper.Logger;
 
-namespace ajiva.Helpers
+namespace ajiva.Utils
 {
     public abstract class DisposingLogger : IDisposable
     {

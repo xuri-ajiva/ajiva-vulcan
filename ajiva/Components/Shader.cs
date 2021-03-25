@@ -3,6 +3,8 @@ using System.IO;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using ajiva.Ecs.Component;
+using ajiva.Models;
+using ajiva.Models.Buffer;
 using ajiva.Systems.VulcanEngine;
 using ajiva.Systems.VulcanEngine.Systems;
 using GlmSharp;
@@ -10,7 +12,7 @@ using SharpVk;
 using SharpVk.Shanq;
 using SharpVk.Shanq.GlmSharp;
 
-namespace ajiva.Models
+namespace ajiva.Components
 {
     public class Shader : ThreadSaveCreatable, IComponent
     {

@@ -2,11 +2,11 @@
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
-using ajiva.Helpers;
 using ajiva.Systems.VulcanEngine.Systems;
+using ajiva.Utils;
 using SharpVk;
 
-namespace ajiva.Models
+namespace ajiva.Models.Buffer
 {
     public class CopyBuffer<T> : BufferOfT<T> where T : struct
     {

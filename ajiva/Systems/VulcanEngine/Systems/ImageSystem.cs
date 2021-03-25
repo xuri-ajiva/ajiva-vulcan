@@ -1,10 +1,9 @@
 ﻿using System;
-using ajiva.Components;
+using ajiva.Components.Media;
 using ajiva.Ecs;
 using ajiva.Ecs.ComponentSytem;
 using ajiva.Ecs.Entity;
 using ajiva.Ecs.Utils;
-using ajiva.Models;
 using SharpVk;
 using Buffer = SharpVk.Buffer;
 
