@@ -85,5 +85,10 @@ namespace ajiva.Systems.VulcanEngine.Systems
         {
             Current?.DrawFrame();
         }
+
+        /// <inheritdoc />
+        public GraphicsSystem(AjivaEcs ecs) : base(ecs)
+        {
+        }
     }
 }

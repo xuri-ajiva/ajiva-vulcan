@@ -14,5 +14,11 @@ namespace ajiva.Ecs.System
             Ecs = ecs;
             Setup();
         }
+
+        /// <inheritdoc />
+        public SystemBase(AjivaEcs ecs)
+        {
+            Ecs = ecs;
+        }
     }
 }

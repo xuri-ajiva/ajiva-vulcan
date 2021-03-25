@@ -31,7 +31,7 @@ namespace ajiva.Systems.VulcanEngine.Systems
         private vec2 previousMousePosition = vec2.Zero;
         private AjivaEngineLayer activeLayer;
 
-        public WindowSystem()
+        public WindowSystem(AjivaEcs ecs) : base(ecs)
         {
             keyDelegate = KeyCallback;
             cursorPosDelegate = MouseCallback;

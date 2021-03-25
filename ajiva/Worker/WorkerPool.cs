@@ -1,5 +1,6 @@
 ﻿using System.Collections.Concurrent;
 using System.Threading;
+using ajiva.Ecs;
 using ajiva.Ecs.System;
 using Ajiva.Wrapper.Logger;
 
@@ -7,8 +8,6 @@ namespace ajiva.Worker
 {
     public class WorkerPool : SystemBase
     {
-        private const int DefaultWorkerCount = 16;
-        public static WorkerPool Default = new(DefaultWorkerCount, nameof(Default));
 
         private readonly Worker[] workers;
 
@@ -20,7 +19,7 @@ namespace ajiva.Worker
 
         private CancellationTokenSource cancellationTokenSource = new();
 
-        public WorkerPool(int workerCount, string name)
+        public WorkerPool(int workerCount, string name, AjivaEcs ecs) : base(ecs)
         {
             Name = name;
             workers = new Worker[workerCount];

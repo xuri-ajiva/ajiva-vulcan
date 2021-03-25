@@ -43,6 +43,11 @@ namespace ajiva.Systems.VulcanEngine.Systems
                 value.Dispose();
             }
         }
+
+        /// <inheritdoc />
+        public ShaderSystem(AjivaEcs ecs, DeviceSystem ds) : base(ecs)
+        {
+        }
     }
     public class ShaderUnion : DisposingLogger
     {

@@ -45,5 +45,10 @@ namespace ajiva.Generators.Texture
 
             //Ecs.GetSystem<WorkerPool>().;
         }
+
+        /// <inheritdoc />
+        public BoxTextureGenerator(AjivaEcs ecs) : base(ecs)
+        {
+        }
     }
 }
