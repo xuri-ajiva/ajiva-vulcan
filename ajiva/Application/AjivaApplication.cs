@@ -47,16 +47,15 @@ namespace ajiva.Application
         {
             (vulcanInstance, debugReportCallback) = Statics.CreateInstance(Glfw3.GetRequiredInstanceExtensions());
             var renderEngine = new Ajiva3dSystem();
-            var deviceSystem = new DeviceSystem();
+            var deviceSystem = entityComponentSystem.CreateSystem<DeviceSystem>();
 
             entityComponentSystem.AddInstance(vulcanInstance);
 
-            entityComponentSystem.AddSystem(new WorkerPool(Environment.ProcessorCount / 2, "AjivaWorkerPool") {Enabled = true});
-            entityComponentSystem.AddSystem(deviceSystem);
-            entityComponentSystem.AddSystem(new ShaderSystem());
-            entityComponentSystem.AddSystem(new WindowSystem());
-            entityComponentSystem.AddSystem(new GraphicsSystem());
-            entityComponentSystem.AddSystem(new BoxTextureGenerator());
+            entityComponentSystem.AddSystem(new WorkerPool(Environment.ProcessorCount / 2, "AjivaWorkerPool", entityComponentSystem) {Enabled = true});
+            entityComponentSystem.CreateSystem<ShaderSystem>();
+            entityComponentSystem.CreateSystem<WindowSystem>();
+            entityComponentSystem.CreateSystem<GraphicsSystem>();
+            entityComponentSystem.CreateSystem<BoxTextureGenerator>();
 
             entityComponentSystem.AddComponentSystem(renderEngine);
             entityComponentSystem.AddComponentSystem(new UiRenderer());
