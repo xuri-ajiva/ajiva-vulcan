@@ -22,6 +22,31 @@ namespace ajiva.Models
             Value = null!;
         }
 
+        public ref T GetRef(int index)
+        {
+            if (index > Length)
+                throw new ArgumentOutOfRangeException(nameof(index), index, "");
+            return ref Value[index];
+        }
+
+        public ref T GetRef(uint index)
+        {
+            if (index > Length)
+                throw new ArgumentOutOfRangeException(nameof(index), index, "");
+            return ref Value[index];
+        }
+
+        public unsafe T this[in uint index]
+        {
+            get => Value[index];
+            set => Value[index] = value;
+        }
+        public unsafe T this[in int index]
+        {
+            get => Value[index];
+            set => Value[index] = value;
+        }
+
         /// <inheritdoc />
         protected override void ReleaseUnmanagedResources()
         {
