@@ -73,6 +73,16 @@ namespace ajiva.Systems.VulcanEngine.Unions
             buffer.End();
         }
 
+        private static readonly Dictionary<AjivaEngineLayer, ClearValue[]> ClearValuesMap = new()
+        {
+            [AjivaEngineLayer.Layer3d] = new ClearValue[]
+            {
+                new ClearColorValue(.1f, .1f, .1f, .1f),
+                new ClearDepthStencilValue(1, 0),
+            },
+            [AjivaEngineLayer.Layer2d] = Array.Empty<ClearValue>(),
+        };
+
         public void FillFrameBuffers(Dictionary<AjivaEngineLayer, List<ARenderAble>> render)
         {
             lock (bufferLock)
@@ -80,23 +90,12 @@ namespace ajiva.Systems.VulcanEngine.Unions
                 foreach (var (pipelineName, graphicsFrameUnion) in Unions)
                 {
                     if (!render.ContainsKey(pipelineName)) render.Add(pipelineName, new());
-
-                    var clear = pipelineName switch
-                    {
-                        AjivaEngineLayer.Layer3d => new ClearValue[]
-                        {
-                            new ClearColorValue(.1f, .1f, .1f, .1f),
-                            new ClearDepthStencilValue(1, 0),
-                        },
-                        AjivaEngineLayer.Layer2d => Array.Empty<ClearValue>(),
-                        _ => Array.Empty<ClearValue>(),
-                    };
-
+                    
                     for (var index = 0; index < graphicsFrameUnion.FrameBuffer.FrameBuffers.Length; index++)
                     {
                         var commandBuffer = graphicsFrameUnion.FrameBuffer.RenderBuffers[index];
                         var framebuffer = graphicsFrameUnion.FrameBuffer.FrameBuffers[index];
-                        FillBuffer(commandBuffer, framebuffer, graphicsFrameUnion.PipelineUnion, render[pipelineName], clear);
+                        FillBuffer(commandBuffer, framebuffer, graphicsFrameUnion.PipelineUnion, render[pipelineName], ClearValuesMap[pipelineName]);
                     }
                 }
             }
@@ -104,7 +103,9 @@ namespace ajiva.Systems.VulcanEngine.Unions
 
         public void FillFrameBuffers(IEnumerable<ARenderAble> renderAbles)
         {
-            var render = renderAbles.Where(able => able.Render).GroupBy(able => able.AjivaEngineLayer, able => able).ToDictionary(names => names.Key, names => names.ToList());
+            var render = renderAbles.Where(able => able.Render)
+                .GroupBy(able => able.AjivaEngineLayer, able => able)
+                .ToDictionary(names => names.Key, names => names.ToList());
 
             FillFrameBuffers(render);
         }
