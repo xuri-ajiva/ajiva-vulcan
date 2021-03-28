@@ -134,7 +134,7 @@ namespace ajiva.Systems.VulcanEngine.Systems
                 return;
 
             OnMouseMove?.Invoke(this, new(mousePos, -(previousMousePosition - mousePos), activeLayer));
-            
+
             previousMousePosition = mousePos;
         }
 
@@ -155,7 +155,7 @@ namespace ajiva.Systems.VulcanEngine.Systems
                         _ => throw new ArgumentOutOfRangeException()
                     };
                     UpdateCursor();
-                    LogHelper.WriteLine($"activeLayer: {activeLayer}");
+                    //LogHelper.WriteLine($"activeLayer: {activeLayer}");
                     break;
             }
 

@@ -63,7 +63,7 @@ namespace ajiva.Utils
             KeySet.Add(hc, type);
             KeySetOtherWay.Add(type, hc);
 
-            LogHelper.Log($"TypeKey For: {type} = {hc}");
+            //LogHelper.Log($"TypeKey For: {type} = {hc}");
             return hc;
         }
 

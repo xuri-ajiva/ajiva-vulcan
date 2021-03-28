@@ -188,7 +188,7 @@ namespace ajiva.Ecs
                     }
                 }
             }
-            LogHelper.Log($"Init: {toInit.GetType()}");
+            //LogHelper.Log($"Init: {toInit.GetType()}");
             toInit.Init(this);
             initDone.Add(toInit);
         }
