@@ -17,7 +17,8 @@ namespace ajiva.Systems.VulcanEngine.Systems
         /// <inheritdoc />
         protected override void ReleaseUnmanagedResources()
         {
-            EnsureGraphicsLayoutDeletion();
+            Current?.Dispose();
+            Current = null;
         }
 
         public void EnsureGraphicsLayoutExists()
