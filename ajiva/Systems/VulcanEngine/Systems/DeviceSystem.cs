@@ -129,7 +129,7 @@ namespace ajiva.Systems.VulcanEngine.Systems
         }
 
         /// <inheritdoc />
-        protected override void ReleaseUnmanagedResources()
+        protected override void ReleaseUnmanagedResources(bool disposing)
         {
             TransientCommandPool?.Dispose();
             CommandPool?.FreeCommandBuffers(SingleCommandBuffer);

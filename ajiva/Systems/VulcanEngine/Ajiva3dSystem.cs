@@ -162,14 +162,14 @@ namespace ajiva.Systems.VulcanEngine
         private object MainLock { get; } = new();
 
         /// <inheritdoc />
-        protected override void ReleaseUnmanagedResources()
+        protected override void ReleaseUnmanagedResources(bool disposing)
         {
             lock (MainLock)
             {
                 Ecs.GetSystem<DeviceSystem>().WaitIdle();
                 mainCamara?.Dispose();
             }
-            base.ReleaseUnmanagedResources();
+            base.ReleaseUnmanagedResources(disposing);
         }
     }
 }

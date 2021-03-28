@@ -172,7 +172,7 @@ namespace ajiva.Systems.VulcanEngine.Systems
             windowReady = false;
         }
 
-        protected override void ReleaseUnmanagedResources()
+        protected override void ReleaseUnmanagedResources(bool disposing)
         {
             Canvas.Dispose();
             CloseWindow();

@@ -16,7 +16,7 @@ namespace ajiva.Factories
         }
 
         /// <inheritdoc />
-        protected override void ReleaseUnmanagedResources()
+        protected override void ReleaseUnmanagedResources(bool disposing)
         {
         }
     }

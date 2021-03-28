@@ -24,7 +24,7 @@ namespace ajiva.Systems.VulcanEngine.EngineManagers
         }
 
         /// <inheritdoc />
-        protected override void ReleaseUnmanagedResources()
+        protected override void ReleaseUnmanagedResources(bool disposing)
         {
             DepthImage?.Dispose();
             DepthImage = null;

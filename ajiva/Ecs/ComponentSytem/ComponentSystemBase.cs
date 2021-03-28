@@ -27,7 +27,7 @@ namespace ajiva.Ecs.ComponentSytem
         /// <inheritdoc />
         public abstract T CreateComponent(IEntity entity);
 
-        protected override void ReleaseUnmanagedResources()
+        protected override void ReleaseUnmanagedResources(bool disposing)
         {
             foreach (var (component, entity) in ComponentEntityMap)
             {

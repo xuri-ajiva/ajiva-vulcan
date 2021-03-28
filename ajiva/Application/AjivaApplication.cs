@@ -107,7 +107,7 @@ namespace ajiva.Application
         }
 
         /// <inheritdoc />
-        protected override void ReleaseUnmanagedResources()
+        protected override void ReleaseUnmanagedResources(bool disposing)
         {
             entityComponentSystem.Dispose();
 

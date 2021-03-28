@@ -45,7 +45,7 @@ namespace ajiva.Models.Buffer
         }
 
         /// <inheritdoc />
-        protected override void ReleaseUnmanagedResources()
+        protected override void ReleaseUnmanagedResources(bool disposing)
         {
             Staging.Dispose();
             Uniform.Dispose();

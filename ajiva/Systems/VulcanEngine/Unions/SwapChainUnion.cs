@@ -23,7 +23,7 @@ namespace ajiva.Systems.VulcanEngine.Unions
         }
 
         /// <inheritdoc />
-        protected override void ReleaseUnmanagedResources()
+        protected override void ReleaseUnmanagedResources(bool disposing)
         {
             SwapChain.Dispose();
             foreach (var aImage in SwapChainImage)

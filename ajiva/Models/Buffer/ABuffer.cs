@@ -29,7 +29,7 @@ namespace ajiva.Models.Buffer
         }
 
         /// <inheritdoc />
-        protected override void ReleaseUnmanagedResources()
+        protected override void ReleaseUnmanagedResources(bool disposing)
         {
             Buffer?.Dispose();
             Memory?.Free();

@@ -28,7 +28,7 @@ namespace ajiva.Utils
 #endif
 #region IDisposable
 
-        protected virtual void ReleaseUnmanagedResources() { }
+        protected virtual void ReleaseUnmanagedResources(bool disposing) { }
 
         [DebuggerStepThrough]
         protected virtual void Dispose(bool disposing)
@@ -49,14 +49,14 @@ namespace ajiva.Utils
 #if LOGGING_TRUE
                         Log("Trying to Release resources although we are not disposing!");
 #endif
-                        ReleaseUnmanagedResources();
+                        ReleaseUnmanagedResources(false);
                     }
                     catch (Exception e)
                     {
                         Log("Error releasing unmanaged resources: " + e);
                     }
                 else
-                    ReleaseUnmanagedResources();
+                    ReleaseUnmanagedResources(true);
                 Disposed = true;
             }
         }

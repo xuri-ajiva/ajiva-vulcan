@@ -17,7 +17,7 @@ namespace ajiva.Components.Media
         public AImage Image { get; set; } = null!;
 
         /// <inheritdoc />
-        protected override void ReleaseUnmanagedResources()
+        protected override void ReleaseUnmanagedResources(bool disposing)
         {
             Sampler.Dispose();
             Image.Dispose();

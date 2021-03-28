@@ -6,7 +6,7 @@ namespace ajiva.Entities
     public class DefaultEntity : AEntity
     {
         /// <inheritdoc />
-        protected override void ReleaseUnmanagedResources()
+        protected override void ReleaseUnmanagedResources(bool disposing)
         {
         }
 

@@ -67,7 +67,7 @@ namespace ajiva.Worker
         }
 
         /// <inheritdoc />
-        protected override void ReleaseUnmanagedResources()
+        protected override void ReleaseUnmanagedResources(bool disposing)
         {
             CancellationTokenSource.Cancel();
             Enabled = false;

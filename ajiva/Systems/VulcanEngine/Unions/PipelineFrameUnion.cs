@@ -14,7 +14,7 @@ namespace ajiva.Systems.VulcanEngine.Unions
         }
 
         /// <inheritdoc />
-        protected override void ReleaseUnmanagedResources()
+        protected override void ReleaseUnmanagedResources(bool disposing)
         {
             PipelineUnion.Dispose();
             FrameBuffer.Dispose();

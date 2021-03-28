@@ -110,7 +110,7 @@ namespace ajiva.Components
         }
 
         /// <inheritdoc />
-        protected override void ReleaseUnmanagedResources()
+        protected override void ReleaseUnmanagedResources(bool disposing)
         {
             FragShader?.Dispose();
             VertShader?.Dispose();

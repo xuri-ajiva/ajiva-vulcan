@@ -25,7 +25,7 @@ namespace ajiva.Components.RenderAble
         }
 
         /// <inheritdoc />
-        protected override void ReleaseUnmanagedResources()
+        protected override void ReleaseUnmanagedResources(bool disposing)
         {
             INextId<ARenderAble2D>.Remove(Id);
             Mesh?.Dispose();

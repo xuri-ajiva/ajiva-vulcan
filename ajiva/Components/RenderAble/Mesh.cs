@@ -43,7 +43,7 @@ namespace ajiva.Components.RenderAble
         }
 
         /// <inheritdoc />
-        protected override void ReleaseUnmanagedResources()
+        protected override void ReleaseUnmanagedResources(bool disposing)
         {
             Vertices?.Dispose();
             Indeces?.Dispose();

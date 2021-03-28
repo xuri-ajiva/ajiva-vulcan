@@ -48,10 +48,10 @@ namespace ajiva.Models.Buffer
         }
 
         /// <inheritdoc />
-        protected override void ReleaseUnmanagedResources()
+        protected override void ReleaseUnmanagedResources(bool disposing)
         {
             ClearT();
-            base.ReleaseUnmanagedResources();
+            base.ReleaseUnmanagedResources(disposing);
         }
     }
 }

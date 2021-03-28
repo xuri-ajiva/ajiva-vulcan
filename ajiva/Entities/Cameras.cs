@@ -25,7 +25,7 @@ namespace ajiva.Entities
             }
 
             /// <inheritdoc />
-            protected override void ReleaseUnmanagedResources()
+            protected override void ReleaseUnmanagedResources(bool disposing)
             {
             }
         }

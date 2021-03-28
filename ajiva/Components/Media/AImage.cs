@@ -45,7 +45,7 @@ namespace ajiva.Components.Media
         }
 
         /// <inheritdoc />
-        protected override void ReleaseUnmanagedResources()
+        protected override void ReleaseUnmanagedResources(bool disposing)
         {
             if (disposeImage)
                 Image?.Dispose();

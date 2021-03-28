@@ -15,7 +15,7 @@ namespace ajiva.Systems.VulcanEngine.Systems
         private GraphicsLayout? Current { get; set; }
 
         /// <inheritdoc />
-        protected override void ReleaseUnmanagedResources()
+        protected override void ReleaseUnmanagedResources(bool disposing)
         {
             Current?.Dispose();
             Current = null;

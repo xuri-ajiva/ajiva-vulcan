@@ -60,7 +60,7 @@ namespace ajiva.Systems.VulcanEngine.Systems
         }
 
         /// <inheritdoc />
-        protected override void ReleaseUnmanagedResources()
+        protected override void ReleaseUnmanagedResources(bool disposing)
         {
             for (var i = 0; i < MAX_TEXTURE_SAMPLERS_IN_SHADER; i++)
             {
