@@ -64,7 +64,7 @@ namespace ajiva.Utils
         public void DisposeIn(int delayMs)
         {
             GC.SuppressFinalize(this);
-            Task.Run(async () =>
+            Program.TaskWatcher(async () =>
             {
                 await Task.Delay(delayMs);
                 Dispose(true);
