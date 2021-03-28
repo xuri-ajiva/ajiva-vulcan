@@ -1,12 +1,15 @@
 ﻿//#define TEST_MODE
 using System;
+using System.Collections.Generic;
+using System.Threading;
+using System.Threading.Tasks;
 using ajiva.Application;
 using SharpVk.Glfw;
 using SharpVk.Interop;
 
 namespace ajiva
 {
-    public class Program
+    public static class Program
     {
         private static void Main()
         {
@@ -15,6 +18,10 @@ namespace ajiva
             var app01 = new AjivaApplication();
             app01.Init();
             app01.Run();
+            
+            TaskSource.CancelAfter(3000);
+            Task.WaitAll(Tasks.ToArray(), 4000);
+            
             app01.Dispose();
             app01 = null;
 
@@ -28,6 +35,13 @@ namespace ajiva
             Environment.Exit(0);
         }
 
+        private static readonly CancellationTokenSource TaskSource = new();
+        private static readonly List<Task> Tasks = new();
+        public static void TaskWatcher(Func<Task?> run)
+        {
+            Tasks.Add(Task.Run(run, TaskSource.Token));
+        }
+        
         // private void Menu()
         // {
         //     ConsoleMenu m = new();
