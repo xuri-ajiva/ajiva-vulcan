@@ -1,5 +1,6 @@
 ﻿using System.Linq;
 using ajiva.Components.Media;
+using ajiva.Models;
 using ajiva.Utils;
 using SharpVk;
 
@@ -29,7 +30,7 @@ namespace ajiva.Systems.VulcanEngine.Unions
             }
         }
 
-        public static FrameBufferUnion CreateFrameBufferUnion(SwapChainUnion swapChainRecord, GraphicsPipelineUnion graphicsPipelineUnion, Device device, bool useDepthImage, AImage depthImage, CommandPool commandPool)
+        public static FrameBufferUnion CreateFrameBufferUnion(SwapChainUnion swapChainRecord, GraphicsPipelineUnion graphicsPipelineUnion, Device device, bool useDepthImage, AImage depthImage, CommandPool commandPool, Canvas canvas)
         {
             Framebuffer MakeFrameBuffer(ImageView imageView)
             {
@@ -37,8 +38,8 @@ namespace ajiva.Systems.VulcanEngine.Unions
 
                 return device.CreateFramebuffer(graphicsPipelineUnion.RenderPass,
                     views,
-                    swapChainRecord.SwapChainExtent.Width,
-                    swapChainRecord.SwapChainExtent.Height,
+                    canvas.Width,
+                    canvas.Height,
                     1);
             }
 

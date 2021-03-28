@@ -54,7 +54,7 @@ namespace ajiva.Systems.VulcanEngine.EngineManagers
 
             CreateDepthImage(im, ds.PhysicalDevice!);
 
-            renderUnion = RenderUnion.CreateRenderUnion(ds.PhysicalDevice, ds.Device!, wi.Surface!, wi.SurfaceExtent, sh, tx.TextureSamplerImageViews, true, DepthImage!, ds.CommandPool);
+            renderUnion = RenderUnion.CreateRenderUnion(ds.PhysicalDevice, ds.Device!, wi.Canvas, sh, tx.TextureSamplerImageViews, true, DepthImage!, ds.CommandPool);
 
             //renderUnion.FillFrameBuffers(ar.ComponentEntityMap.Keys.Union<ARenderAble>(ui.ComponentEntityMap.Keys));
             renderUnion.FillFrameBuffers(new Dictionary<AjivaEngineLayer, List<ARenderAble>>()
@@ -70,7 +70,7 @@ namespace ajiva.Systems.VulcanEngine.EngineManagers
         {
             DepthFormat = device.FindDepthFormat();
 
-            DepthImage ??= imageSystem.CreateManagedImage(DepthFormat.Value, ImageAspectFlags.Depth, ecs.GetSystem<WindowSystem>().SurfaceExtent);
+            DepthImage ??= imageSystem.CreateManagedImage(DepthFormat.Value, ImageAspectFlags.Depth, ecs.GetSystem<WindowSystem>().Canvas.Extent);
         }
 
         public void DrawFrame()

@@ -4,6 +4,7 @@ using ajiva.Ecs;
 using ajiva.Ecs.ComponentSytem;
 using ajiva.Ecs.Entity;
 using ajiva.Ecs.Utils;
+using ajiva.Models;
 using SharpVk;
 using Buffer = SharpVk.Buffer;
 
@@ -45,6 +46,14 @@ namespace ajiva.Systems.VulcanEngine.Systems
         public AImage CreateManagedImage(Format format, ImageAspectFlags aspectFlags, Extent2D extent)
         {
             var aImage = CreateImageAndView(extent.Width, extent.Height, format, ImageTiling.Optimal, ImageUsageFlags.DepthStencilAttachment, MemoryPropertyFlags.DeviceLocal, aspectFlags);
+
+            TransitionImageLayout(aImage.Image!, format, ImageLayout.Undefined, ImageLayout.DepthStencilAttachmentOptimal);
+            return aImage;
+        }
+
+        public AImage CreateManagedImage(Format format, ImageAspectFlags aspectFlags, Canvas canvas)
+        {
+            var aImage = CreateImageAndView(canvas.Height, canvas.Height, format, ImageTiling.Optimal, ImageUsageFlags.DepthStencilAttachment, MemoryPropertyFlags.DeviceLocal, aspectFlags);
 
             TransitionImageLayout(aImage.Image!, format, ImageLayout.Undefined, ImageLayout.DepthStencilAttachmentOptimal);
             return aImage;

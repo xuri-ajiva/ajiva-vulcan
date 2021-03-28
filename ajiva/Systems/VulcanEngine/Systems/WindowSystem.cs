@@ -4,6 +4,7 @@ using System.Threading;
 using ajiva.Ecs;
 using ajiva.Ecs.System;
 using ajiva.Ecs.Utils;
+using ajiva.Models;
 using ajiva.Systems.VulcanEngine.Unions;
 using ajiva.Utils;
 using Ajiva.Wrapper.Logger;
@@ -21,7 +22,6 @@ namespace ajiva.Systems.VulcanEngine.Systems
         public event KeyEventHandler? OnKeyEvent;
         public event EventHandler? OnResize;
         public event EventHandler<AjivaMouseMotionCallbackEventArgs>? OnMouseMove;
-        public Surface? Surface { get; private set; }
 
         private readonly Thread windowThread;
         private readonly Queue<Action?> windowThreadQueue = new();
@@ -40,14 +40,15 @@ namespace ajiva.Systems.VulcanEngine.Systems
             activeLayer = AjivaEngineLayer.Layer2d;
             windowThread = new(WindowStartup);
             windowThread.SetApartmentState(ApartmentState.STA);
+            Canvas = new(new());
         }
 
         private void WindowStartup()
         {
             Glfw3.WindowHint(WindowAttribute.ClientApi, 0);
-            window = Glfw3.CreateWindow(Width, Height, "First test", MonitorHandle.Zero, WindowHandle.Zero);
+            window = Glfw3.CreateWindow(Canvas.WidthI, Canvas.HeightI, "First test", MonitorHandle.Zero, WindowHandle.Zero);
 
-            SharpVk.Glfw.extras.Glfw3.Public.SetWindowSizeLimits_0(window.RawHandle, Width / 2, Height / 2, Glfw3Enum.GLFW_DONT_CARE, Glfw3Enum.GLFW_DONT_CARE);
+            SharpVk.Glfw.extras.Glfw3.Public.SetWindowSizeLimits_0(window.RawHandle, Canvas.WidthI / 2, Canvas.HeightI / 2, Glfw3Enum.GLFW_DONT_CARE, Glfw3Enum.GLFW_DONT_CARE);
             Glfw3.SetKeyCallback(window, keyDelegate);
             Glfw3.SetCursorPosCallback(window, cursorPosDelegate);
             Glfw3.SetWindowSizeCallback(window, sizeDelegate);
@@ -92,13 +93,14 @@ namespace ajiva.Systems.VulcanEngine.Systems
 
         public void EnsureSurfaceExists()
         {
-            Surface ??= Ecs.GetInstance<Instance>().CreateGlfw3Surface(window);
+            if (!Canvas.HasSurface)
+                Canvas.SurfaceHandle.Surface = Ecs.GetInstance<Instance>().CreateGlfw3Surface(window);
         }
 
         public void InitWindow()
         {
-            Width = Ecs.GetPara<int>("SurfaceWidth");
-            Height = Ecs.GetPara<int>("SurfaceHeight");
+            Canvas.Width = (uint)Ecs.GetPara<int>("SurfaceWidth");
+            Canvas.Height = (uint)Ecs.GetPara<int>("SurfaceHeight");
             windowThread.Start();
 
             while (!windowReady)
@@ -111,8 +113,8 @@ namespace ajiva.Systems.VulcanEngine.Systems
 
         private void SizeCallback(WindowHandle windowHandle, int width, int height)
         {
-            Height = height;
-            Width = width;
+            Canvas.Height = (uint)height;
+            Canvas.Width = (uint)width;
 
             lastResize = DateTime.Now;
         }
@@ -122,10 +124,7 @@ namespace ajiva.Systems.VulcanEngine.Systems
         private readonly CursorPosDelegate cursorPosDelegate;
         private readonly WindowSizeDelegate sizeDelegate;
 
-        public int Width { get; set; }
-        public int Height { get; set; }
-
-        public Extent2D SurfaceExtent => new((uint)Width, (uint)Height);
+        public Canvas Canvas { get; private set; }
 
         private void MouseCallback(WindowHandle windowHandle, double xPosition, double yPosition)
         {
@@ -175,7 +174,7 @@ namespace ajiva.Systems.VulcanEngine.Systems
 
         protected override void ReleaseUnmanagedResources()
         {
-            Surface?.Dispose();
+            Canvas.Dispose();
             CloseWindow();
         }
 

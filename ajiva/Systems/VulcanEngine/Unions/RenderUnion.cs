@@ -4,6 +4,7 @@ using System.Linq;
 using System.Runtime.CompilerServices;
 using ajiva.Components.Media;
 using ajiva.Components.RenderAble;
+using ajiva.Models;
 using ajiva.Models.Buffer;
 using ajiva.Systems.VulcanEngine.Systems;
 using ajiva.Utils;
@@ -30,13 +31,19 @@ namespace ajiva.Systems.VulcanEngine.Unions
             RenderFinished = renderFinished;
         }
 
-        public static RenderUnion CreateRenderUnion(PhysicalDevice physicalDevice, Device device, Surface surface, Extent2D surfaceExtent, ShaderSystem system, DescriptorImageInfo[] textureSamplerImageViews, bool useDepthImage, AImage depthImage, CommandPool commandPool)
+        public static RenderUnion CreateRenderUnion(PhysicalDevice physicalDevice, Device device, Canvas canvas, ShaderSystem system, DescriptorImageInfo[] textureSamplerImageViews, bool useDepthImage, AImage depthImage, CommandPool commandPool)
         {
-            var swap = SwapChainUnion.CreateSwapChainUnion(physicalDevice, device, surface, surfaceExtent);
-            var graph3d = GraphicsPipelineUnion.CreateGraphicsPipelineUnion3D(swap, physicalDevice, device, system, textureSamplerImageViews);
-            var graph2d = GraphicsPipelineUnion.CreateGraphicsPipelineUnion2D(swap, physicalDevice, device, system, textureSamplerImageViews);
-            var frame3d = FrameBufferUnion.CreateFrameBufferUnion(swap, graph3d, device, useDepthImage, depthImage, commandPool);
-            var frame2d = FrameBufferUnion.CreateFrameBufferUnion(swap, graph2d, device, false, depthImage, commandPool);
+            var swap = SwapChainUnion.CreateSwapChainUnion(physicalDevice, device, canvas);
+
+            //canvas.Offset = new(100, 100);
+            //canvas.Extent = new(500, 500);
+            Canvas canvas3d = canvas.Fork(new(100,100), new(100,100));
+            Canvas canvas2d = canvas;
+            
+            var graph3d = GraphicsPipelineUnion.CreateGraphicsPipelineUnion3D(swap, physicalDevice, device, system, textureSamplerImageViews, canvas3d);
+            var graph2d = GraphicsPipelineUnion.CreateGraphicsPipelineUnion2D(swap, physicalDevice, device, system, textureSamplerImageViews, canvas2d);
+            var frame3d = FrameBufferUnion.CreateFrameBufferUnion(swap, graph3d, device, useDepthImage, depthImage, commandPool, canvas3d);
+            var frame2d = FrameBufferUnion.CreateFrameBufferUnion(swap, graph2d, device, false, depthImage, commandPool, canvas2d);
 
             var imageAvailable = device.CreateSemaphore()!;
             var renderFinished = device.CreateSemaphore()!;
@@ -56,7 +63,7 @@ namespace ajiva.Systems.VulcanEngine.Unions
 
             buffer.BeginRenderPass(graphicsPipelineUnion.RenderPass,
                 framebuffer,
-                new(new(), swapChainUnion.SwapChainExtent),
+                swapChainUnion.Canvas.Rect,
                 clearValues,
                 SubpassContents.Inline);
 

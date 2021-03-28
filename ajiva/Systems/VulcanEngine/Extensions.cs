@@ -78,7 +78,7 @@ namespace ajiva.Systems.VulcanEngine
         }
 
         [MethodImpl(MethodImplOptions.Synchronized)]
-        public static QueueFamilyIndices FindQueueFamilies(this PhysicalDevice device, Surface surface)
+        public static QueueFamilyIndices FindQueueFamilies(this PhysicalDevice device, Canvas canvas)
         {
             var indices = new QueueFamilyIndices();
             lock (VKdeviceLock)
@@ -92,7 +92,7 @@ namespace ajiva.Systems.VulcanEngine
                         indices.GraphicsFamily = index;
                     }
 
-                    if (device.GetSurfaceSupport(index, surface))
+                    if (device.GetSurfaceSupport(index, canvas.SurfaceHandle))
                     {
                         indices.PresentFamily = index;
                     }
@@ -109,7 +109,7 @@ namespace ajiva.Systems.VulcanEngine
         }
 
         [MethodImpl(MethodImplOptions.Synchronized)]
-        public static bool IsSuitableDevice(this PhysicalDevice dvc, Surface surface)
+        public static bool IsSuitableDevice(this PhysicalDevice dvc, Canvas surface)
         {
             var features = dvc.GetFeatures();
 

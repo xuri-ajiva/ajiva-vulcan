@@ -1,5 +1,6 @@
 ﻿using System.Linq;
 using ajiva.Components.Media;
+using ajiva.Models;
 using ajiva.Utils;
 using SharpVk;
 using SharpVk.Khronos;
@@ -9,14 +10,14 @@ namespace ajiva.Systems.VulcanEngine.Unions
     public class SwapChainUnion : DisposingLogger
     {
         public Format SwapChainFormat { get; }
-        public Extent2D SwapChainExtent { get; }
+        public Canvas Canvas { get; }
         public Swapchain SwapChain { get; }
         public AImage[] SwapChainImage { get; }
 
-        public SwapChainUnion(Format swapChainFormat, Extent2D swapChainExtent, Swapchain swapChain, AImage[] swapChainImage)
+        public SwapChainUnion(Format swapChainFormat, Canvas canvas, Swapchain swapChain, AImage[] swapChainImage)
         {
             SwapChainFormat = swapChainFormat;
-            SwapChainExtent = swapChainExtent;
+            Canvas = canvas;
             SwapChain = swapChain;
             SwapChainImage = swapChainImage;
         }
@@ -31,10 +32,10 @@ namespace ajiva.Systems.VulcanEngine.Unions
             }
         }
 
-        public static SwapChainUnion CreateSwapChainUnion(PhysicalDevice physicalDevice, Device device, Surface surface, Extent2D surfaceExtent)
+        public static SwapChainUnion CreateSwapChainUnion(PhysicalDevice physicalDevice, Device device, Canvas canvas)
         {
-            var swapChainSupport = physicalDevice.QuerySwapChainSupport(surface!);
-            var extent = swapChainSupport.Capabilities.ChooseSwapExtent(surfaceExtent);
+            var swapChainSupport = physicalDevice.QuerySwapChainSupport(canvas.SurfaceHandle);
+            var extent = swapChainSupport.Capabilities.ChooseSwapExtent(canvas.Extent);
             var surfaceFormat = swapChainSupport.Formats.ChooseSwapSurfaceFormat();
 
             var imageCount = swapChainSupport.Capabilities.MinImageCount + 1;
@@ -43,11 +44,11 @@ namespace ajiva.Systems.VulcanEngine.Unions
                 imageCount = swapChainSupport.Capabilities.MaxImageCount;
             }
 
-            var queueFamilies = physicalDevice.FindQueueFamilies(surface!);
+            var queueFamilies = physicalDevice.FindQueueFamilies(canvas);
 
             var queueFamilyIndices = queueFamilies.Indices.ToArray();
 
-            Swapchain swapChain = device.CreateSwapchain(surface,
+            Swapchain swapChain = device.CreateSwapchain(canvas.SurfaceHandle,
                 imageCount,
                 surfaceFormat.Format,
                 surfaceFormat.ColorSpace,
@@ -70,7 +71,7 @@ namespace ajiva.Systems.VulcanEngine.Unions
                 View = x.CreateImageView(device, surfaceFormat.Format, ImageAspectFlags.Color)
             }).ToArray();
 
-            return new(surfaceFormat.Format, extent, swapChain, swapChainImage);
+            return new(surfaceFormat.Format, canvas, swapChain, swapChainImage);
         }
     }
 }

@@ -27,12 +27,12 @@ namespace ajiva.Systems.VulcanEngine.Systems
         {
             var availableDevices = instance.EnumeratePhysicalDevices();
 
-            PhysicalDevice = availableDevices.First(x => x.IsSuitableDevice(Ecs.GetSystem<WindowSystem>().Surface));
+            PhysicalDevice = availableDevices.First(x => x.IsSuitableDevice(Ecs.GetSystem<WindowSystem>().Canvas));
         }
 
         private void CreateLogicalDevice()
         {
-            queueFamilies = PhysicalDevice!.FindQueueFamilies(Ecs.GetSystem<WindowSystem>().Surface);
+            queueFamilies = PhysicalDevice!.FindQueueFamilies(Ecs.GetSystem<WindowSystem>().Canvas);
 
             Device = PhysicalDevice!.CreateDevice(queueFamilies.Indices
                     .Select(index => new DeviceQueueCreateInfo

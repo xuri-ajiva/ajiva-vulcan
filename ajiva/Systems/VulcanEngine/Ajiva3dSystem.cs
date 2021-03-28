@@ -105,7 +105,7 @@ namespace ajiva.Systems.VulcanEngine
                         entity.Key.Dirty = true;
                     }
 
-                    mainCamara?.UpdatePerspective(mainCamara.Fov, window.Width, window.Height);
+                    mainCamara?.UpdatePerspective(mainCamara.Fov, window.Canvas.WidthF, window.Canvas.HeightF);
                 }
             };
 
