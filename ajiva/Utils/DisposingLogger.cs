@@ -6,13 +6,14 @@ using Ajiva.Wrapper.Logger;
 
 namespace ajiva.Utils
 {
-    public abstract class DisposingLogger : IDisposable
+    public abstract class DisposingLogger : IDisposingLogger
     {
         protected readonly object disposeLock = new();
         public bool Disposed { get; private set; }
 
         private static readonly ConsoleRolBlock Block = new(10, nameof(DisposingLogger));
 
+        [DebuggerStepThrough]
         static void Log(string msg)
         {
             //LogHelper.Log(msg);
