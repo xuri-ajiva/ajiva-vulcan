@@ -241,18 +241,39 @@ namespace ajiva.Ecs
                 }
                 Entities.Clear();
 
-                foreach (var system in ComponentSystems.Values)
+                IDictionary<TypeKey, ISystem> disposingSet = new Dictionary<TypeKey, ISystem>();
+                foreach (var (key, value) in ComponentSystems)
                 {
-                    system?.Dispose();
+                    disposingSet.Add(key, value);
                 }
-                ComponentSystems.Clear();
+                foreach (var (key, value) in Systems)
+                {
+                    disposingSet.Add(key, value);
+                }
+                foreach (var (_, value) in disposingSet)
+                {
+                    if (!value.Disposed)
+                    {
+                        DisposeRec(value, disposingSet);
+                    }
+                }
 
-                foreach (var system in Systems.Values)
-                {
-                    system?.Dispose();
-                }
+                ComponentSystems.Clear();
                 Systems.Clear();
             }
+        }
+
+        private static void DisposeRec(ISystem toDispose, IDictionary<TypeKey, ISystem> disposingSet)
+        {
+            foreach (var (_, system) in disposingSet)
+            {
+                var attrib = system.GetType().GetCustomAttributes(typeof(DependentAttribute), false).FirstOrDefault();
+                if (attrib is not DependentAttribute dependent) continue;
+                if (!dependent.Dependent.Any(x => x == toDispose.GetType())) continue;
+                
+                DisposeRec(system, disposingSet);
+            }
+            toDispose.Dispose();
         }
 
         private readonly List<IUpdate> updates = new();
