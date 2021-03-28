@@ -17,7 +17,7 @@ namespace ajiva.Worker
 
         private readonly ConcurrentQueue<WorkInfo> concurrentQueue = new();
 
-        private CancellationTokenSource cancellationTokenSource = new();
+        public CancellationTokenSource CancellationTokenSource { get; }= new();
 
         public WorkerPool(int workerCount, string name, AjivaEcs ecs) : base(ecs)
         {
@@ -27,7 +27,7 @@ namespace ajiva.Worker
             for (var i = 0; i < workerCount; i++)
                 workers[i] = new(this, i);
 
-            StartMonitoring(cancellationTokenSource.Token);
+            StartMonitoring(CancellationTokenSource.Token);
 
             for (var i = 0; i < workerCount; i++)
                 workers[i].Start();
@@ -69,9 +69,10 @@ namespace ajiva.Worker
         /// <inheritdoc />
         protected override void ReleaseUnmanagedResources()
         {
-            cancellationTokenSource.Cancel();
+            CancellationTokenSource.Cancel();
             Enabled = false;
             SyncSemaphore.Release(workers.Length * 5);
+            SyncSemaphore.Dispose();
         }
     }
 }

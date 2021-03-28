@@ -33,6 +33,9 @@ namespace ajiva.Worker
                 WorkInfo? work;
                 State.Publish(WorkResult.Waiting);
                 WorkerPool.SyncSemaphore.WaitOne();
+                if (WorkerPool.CancellationTokenSource.IsCancellationRequested)
+                    return;
+                
                 lock (WorkerPool.AvailableLock)
                 {
                     State.Publish(WorkResult.Locking);
