@@ -2,7 +2,6 @@
 using System.Linq;
 using ajiva.Components;
 using ajiva.Models;
-using ajiva.Models.Buffer;
 using ajiva.Systems.VulcanEngine.Systems;
 using ajiva.Utils;
 using SharpVk;
@@ -30,15 +29,15 @@ namespace ajiva.Systems.VulcanEngine.Unions
 
         public static GraphicsPipelineUnion CreateGraphicsPipelineUnion3D(SwapChainUnion swapChainRecord, PhysicalDevice physicalDevice, Device device, ShaderSystem system, DescriptorImageInfo[] textureSamplerImageViews, Canvas canvas)
         {
-            return CreateGraphicsPipelineUnion(swapChainRecord, physicalDevice, device, true, Vertex3D.GetBindingDescription(), Vertex3D.GetAttributeDescriptions(), system.ShaderUnions[AjivaEngineLayer.Layer3d].Main, system.ShaderUnions[AjivaEngineLayer.Layer3d].ViewProj, system.ShaderUnions[AjivaEngineLayer.Layer3d].UniformModels, textureSamplerImageViews,  canvas);
+            return CreateGraphicsPipelineUnion(swapChainRecord, physicalDevice, device, true, Vertex3D.GetBindingDescription(), Vertex3D.GetAttributeDescriptions(), system.ShaderUnions[AjivaEngineLayer.Layer3d].Main, PipelineDescriptorInfos.CreateFrom(system.ShaderUnions[AjivaEngineLayer.Layer3d].ViewProj, system.ShaderUnions[AjivaEngineLayer.Layer3d].UniformModels, textureSamplerImageViews), canvas);
         }
 
         public static GraphicsPipelineUnion CreateGraphicsPipelineUnion2D(SwapChainUnion swapChainRecord, PhysicalDevice physicalDevice, Device device, ShaderSystem system, DescriptorImageInfo[] textureSamplerImageViews, Canvas canvas)
         {
-            return CreateGraphicsPipelineUnion(swapChainRecord, physicalDevice, device, false, Vertex2D.GetBindingDescription(), Vertex2D.GetAttributeDescriptions(), system.ShaderUnions[AjivaEngineLayer.Layer2d].Main, system.ShaderUnions[AjivaEngineLayer.Layer2d].ViewProj, system.ShaderUnions[AjivaEngineLayer.Layer2d].UniformModels, textureSamplerImageViews,  canvas);
+            return CreateGraphicsPipelineUnion(swapChainRecord, physicalDevice, device, false, Vertex2D.GetBindingDescription(), Vertex2D.GetAttributeDescriptions(), system.ShaderUnions[AjivaEngineLayer.Layer2d].Main, PipelineDescriptorInfos.CreateFrom(system.ShaderUnions[AjivaEngineLayer.Layer2d].ViewProj, system.ShaderUnions[AjivaEngineLayer.Layer2d].UniformModels, textureSamplerImageViews), canvas);
         }
 
-        public static GraphicsPipelineUnion CreateGraphicsPipelineUnion(SwapChainUnion swapChainRecord, PhysicalDevice physicalDevice, Device device, bool useDepthImage, VertexInputBindingDescription bindingDescription, VertexInputAttributeDescription[] attributeDescriptions, Shader mainShader, UniformBuffer<UniformViewProj> viewProj, UniformBuffer<UniformModel> uniformModels, DescriptorImageInfo[] textureSamplerImageViews, Canvas canvas)
+        public static GraphicsPipelineUnion CreateGraphicsPipelineUnion(SwapChainUnion swapChainRecord, PhysicalDevice physicalDevice, Device device, bool useDepthImage, VertexInputBindingDescription bindingDescription, VertexInputAttributeDescription[] attributeDescriptions, Shader mainShader, PipelineDescriptorInfos[] descriptorInfos, Canvas canvas)
         {
             var attach = new List<AttachmentDescription>();
             attach.Add(new(AttachmentDescriptionFlags.None, swapChainRecord.SwapChainFormat, SampleCountFlags.SampleCount1, useDepthImage ? AttachmentLoadOp.Clear : AttachmentLoadOp.DontCare, AttachmentStoreOp.Store, AttachmentLoadOp.DontCare, AttachmentStoreOp.DontCare, ImageLayout.Undefined, ImageLayout.PresentSource));
@@ -77,30 +76,13 @@ namespace ajiva.Systems.VulcanEngine.Unions
                 });
 
             DescriptorSetLayout descriptorSetLayout = device.CreateDescriptorSetLayout(
-                new DescriptorSetLayoutBinding[]
+                descriptorInfos.Select(descriptor => new DescriptorSetLayoutBinding()
                 {
-                    new()
-                    {
-                        Binding = 0,
-                        DescriptorType = DescriptorType.UniformBuffer,
-                        StageFlags = ShaderStageFlags.Vertex,
-                        DescriptorCount = 1
-                    },
-                    new()
-                    {
-                        Binding = 1,
-                        DescriptorType = DescriptorType.UniformBufferDynamic,
-                        StageFlags = ShaderStageFlags.Vertex,
-                        DescriptorCount = 1
-                    },
-                    new()
-                    {
-                        Binding = 2,
-                        DescriptorCount = TextureSystem.MAX_TEXTURE_SAMPLERS_IN_SHADER,
-                        DescriptorType = DescriptorType.CombinedImageSampler,
-                        StageFlags = ShaderStageFlags.Fragment,
-                    }
-                });
+                    Binding = descriptor.DestinationBinding,
+                    DescriptorCount = descriptor.DescriptorCount,
+                    DescriptorType = descriptor.DescriptorType,
+                    StageFlags = descriptor.StageFlags
+                }).ToArray());
 
             PipelineLayout pipelineLayout = device.CreatePipelineLayout(descriptorSetLayout, null);
 
@@ -209,73 +191,25 @@ namespace ajiva.Systems.VulcanEngine.Unions
             }).Single();
 
             DescriptorPool descriptorPool = device.CreateDescriptorPool(10000,
-                new DescriptorPoolSize[]
+                descriptorInfos.Select(descriptor => new DescriptorPoolSize
                 {
-                    new()
-                    {
-                        DescriptorCount = 1,
-                        Type = DescriptorType.UniformBuffer
-                    },
-                    new()
-                    {
-                        DescriptorCount = 1,
-                        Type = DescriptorType.UniformBufferDynamic
-                    },
-                    new()
-                    {
-                        DescriptorCount = (uint)textureSamplerImageViews.Length,
-                        Type = DescriptorType.CombinedImageSampler
-                    }
-                });
+                    Type = descriptor.DescriptorType,
+                    DescriptorCount = descriptor.DescriptorCount,
+                }).ToArray());
             DescriptorSet descriptorSet = device!.AllocateDescriptorSets(descriptorPool, descriptorSetLayout).Single();
 
             device.UpdateDescriptorSets(
-                new WriteDescriptorSet[]
+                descriptorInfos.Select(descriptor => new WriteDescriptorSet
                 {
-                    new()
-                    {
-                        BufferInfo = new[]
-                        {
-                            new DescriptorBufferInfo
-                            {
-                                Buffer = viewProj.Uniform.Buffer,
-                                Offset = 0,
-                                Range = viewProj.Uniform.SizeOfT
-                            }
-                        },
-                        DescriptorCount = 1,
-                        DestinationSet = descriptorSet,
-                        DestinationBinding = 0,
-                        DestinationArrayElement = 0,
-                        DescriptorType = DescriptorType.UniformBuffer
-                    },
-                    new()
-                    {
-                        BufferInfo = new[]
-                        {
-                            new DescriptorBufferInfo
-                            {
-                                Buffer = uniformModels.Uniform.Buffer,
-                                Offset = 0,
-                                Range = uniformModels.Uniform.SizeOfT
-                            }
-                        },
-                        DescriptorCount = 1,
-                        DestinationSet = descriptorSet,
-                        DestinationBinding = 1,
-                        DestinationArrayElement = 0,
-                        DescriptorType = DescriptorType.UniformBufferDynamic
-                    },
-                    new()
-                    {
-                        ImageInfo = textureSamplerImageViews,
-                        DescriptorCount = (uint)textureSamplerImageViews.Length,
-                        DestinationSet = descriptorSet,
-                        DestinationBinding = 2,
-                        DestinationArrayElement = 0,
-                        DescriptorType = DescriptorType.CombinedImageSampler,
-                    }
-                }, null);
+                    DestinationSet = descriptorSet,
+                    DescriptorCount = descriptor.DescriptorCount,
+                    DestinationBinding = descriptor.DestinationBinding,
+                    DescriptorType = descriptor.DescriptorType,
+                    DestinationArrayElement = descriptor.DestinationArrayElement,
+                    BufferInfo = descriptor.BufferInfo,
+                    ImageInfo = descriptor.ImageInfo,
+                    TexelBufferView = descriptor.TexelBufferView,
+                }).ToArray(), null);
 
             return new(renderPass, pipeline, pipelineLayout, descriptorPool, descriptorSet, descriptorSetLayout);
         }
