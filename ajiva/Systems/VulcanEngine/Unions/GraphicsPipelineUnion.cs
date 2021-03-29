@@ -188,18 +188,8 @@ namespace ajiva.Systems.VulcanEngine.Unions
                     },
                     Stages = new[]
                     {
-                        new PipelineShaderStageCreateInfo
-                        {
-                            Stage = ShaderStageFlags.Vertex,
-                            Module = mainShader.VertShader,
-                            Name = "main"
-                        },
-                        new PipelineShaderStageCreateInfo
-                        {
-                            Stage = ShaderStageFlags.Fragment,
-                            Module = mainShader.FragShader,
-                            Name = "main"
-                        }
+                        mainShader.VertShaderPipelineStageCreateInfo,
+                        mainShader.FragShaderPipelineStageCreateInfo,
                     },
                     DepthStencilState = useDepthImage
                         ? new()
