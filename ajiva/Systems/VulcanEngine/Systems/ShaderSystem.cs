@@ -65,7 +65,7 @@ namespace ajiva.Systems.VulcanEngine.Systems
 
         public static ShaderUnion InitCreate(string path, DeviceSystem ds, int count)
         {
-            var su = new ShaderUnion(new(ds), new(ds, 1), new(ds, count));
+            var su = new ShaderUnion(new(ds, "main"), new(ds, 1), new(ds, count));
             su.Main.CreateShaderModules(path);
             su.UniformModels.EnsureExists();
             su.ViewProj.EnsureExists();

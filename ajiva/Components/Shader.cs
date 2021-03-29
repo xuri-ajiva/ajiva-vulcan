@@ -20,9 +20,10 @@ namespace ajiva.Components
         public ShaderModule? FragShader { get; private set; }
         public ShaderModule? VertShader { get; private set; }
 
-        public Shader(DeviceSystem system)
+        public Shader(DeviceSystem system, string name)
         {
             this.system = system;
+            Name = name;
         }
 
         private static uint[] LoadShaderData(string filePath, out int codeSize)
@@ -77,21 +78,21 @@ namespace ajiva.Components
             Created = true;
         }
 
-        public static Shader CreateShaderFrom(string dir, DeviceSystem system)
+        public static Shader CreateShaderFrom(string dir, DeviceSystem system, string name)
         {
-            var sh = new Shader(system);
+            var sh = new Shader(system, name);
             sh.CreateShaderModules(dir);
             return sh;
         }
 
-        public static Shader CreateShaderFrom<TV, TF>(Func<IShanqFactory, IQueryable<TV>> vertexShaderFunc, Func<IShanqFactory, IQueryable<TF>> fragmentShaderFunc, DeviceSystem system)
+        public static Shader CreateShaderFrom<TV, TF>(Func<IShanqFactory, IQueryable<TV>> vertexShaderFunc, Func<IShanqFactory, IQueryable<TF>> fragmentShaderFunc, DeviceSystem system, string name)
         {
-            var sh = new Shader(system);
+            var sh = new Shader(system, name);
             sh.CreateShaderModules(vertexShaderFunc, fragmentShaderFunc);
             return sh;
         }
 
-        public static Shader DefaultShader(DeviceSystem system)
+        public static Shader DefaultShader(DeviceSystem system, string name)
         {
             return CreateShaderFrom(shank => from input in shank.GetInput<Vertex3D>()
                 from ubo in shank.GetBinding<UniformBufferData>(0)
@@ -106,7 +107,7 @@ namespace ajiva.Components
                 select new FragmentOutput
                 {
                     Colour = colour
-                }, system);
+                }, system, name);
         }
 
         /// <inheritdoc />
@@ -121,6 +122,8 @@ namespace ajiva.Components
         {
             throw new NotSupportedException("Create with Specific Arguments");
         }
+
+        public string Name { get; }
 
         /// <inheritdoc />
         public bool Dirty { get; set; }
