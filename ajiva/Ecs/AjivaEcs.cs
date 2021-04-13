@@ -127,6 +127,12 @@ namespace ajiva.Ecs
                 default:
                     throw new RuntimeBinderInternalCompilerException("The Compiler has Failed on the T constrain");
             }
+
+            if (instance is IUpdate update)
+                RegisterUpdate(update);
+            if (instance is IInit init)
+                RegisterInit(init);
+            
             return instance as T;
         }
 
