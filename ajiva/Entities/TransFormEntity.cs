@@ -5,11 +5,11 @@ using ajiva.Utils.Changing;
 
 namespace ajiva.Entities
 {
-    public class TransFormEntity : DefaultEntity
+    public class TransFormEntity : ChangingObserverEntity
     {
-        public TransFormEntity()
+        public TransFormEntity() : base(ChangingCacheMode.ThisCycleUpdate)
         {
-            TransformLazy = new(GetComponent<Transform3d>);
+            TransformLazy = new(this.GetComponent<Transform3d>);
         }
 
         public Lazy<Transform3d> TransformLazy { get; }
