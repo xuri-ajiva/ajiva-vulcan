@@ -6,10 +6,6 @@ namespace ajiva.Systems
 {
     public class TransformComponentSystem : ComponentSystemBase<Transform3d>
     {
-        /// <inheritdoc />
-        protected override void Setup()
-        {
-        }
 
         /// <inheritdoc />
         public override Transform3d CreateComponent(IEntity entity)
@@ -23,6 +19,10 @@ namespace ajiva.Systems
         public override void AttachNewComponent(IEntity entity)
         {
             entity.AddComponent(CreateComponent(entity));
+        }
+
+        public TransformComponentSystem(AjivaEcs ecs) : base(ecs)
+        {
         }
     }
 }

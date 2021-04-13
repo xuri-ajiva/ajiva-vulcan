@@ -64,13 +64,6 @@ namespace ajiva.Systems.VulcanEngine.Systems
         }
 
         /// <inheritdoc />
-        protected override void Setup()
-        {
-            Ecs.RegisterInit(this);
-            Ecs.RegisterUpdate(this);
-        }
-
-        /// <inheritdoc />
         public void Init(AjivaEcs ecs)
         {
             RecreateCurrentGraphicsLayout();

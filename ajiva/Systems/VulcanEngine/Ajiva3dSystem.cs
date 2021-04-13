@@ -11,6 +11,7 @@ using ajiva.Models.Buffer;
 using ajiva.Systems.VulcanEngine.Systems;
 using ajiva.Systems.VulcanEngine.Unions;
 using ajiva.Utils;
+using ajiva.Utils.Changing;
 using SharpVk.Glfw;
 
 namespace ajiva.Systems.VulcanEngine
@@ -139,13 +140,6 @@ namespace ajiva.Systems.VulcanEngine
         }
 
         /// <inheritdoc />
-        protected override void Setup()
-        {
-            Ecs.RegisterInit(this);
-            Ecs.RegisterUpdate(this);
-        }
-
-        /// <inheritdoc />
         public override ARenderAble3D CreateComponent(IEntity entity)
         {
             var rnd = new ARenderAble3D();
@@ -170,6 +164,11 @@ namespace ajiva.Systems.VulcanEngine
                 mainCamara?.Dispose();
             }
             base.ReleaseUnmanagedResources(disposing);
+        }
+
+        /// <inheritdoc />
+        public Ajiva3dSystem(AjivaEcs ecs) : base(ecs)
+        {
         }
     }
 }

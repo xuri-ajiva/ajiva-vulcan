@@ -2,6 +2,7 @@
 using ajiva.Components.Media;
 using ajiva.Components.RenderAble;
 using ajiva.Ecs;
+using ajiva.Ecs.Entity;
 using ajiva.Ecs.Example;
 using ajiva.Entities;
 using ajiva.Factories;
@@ -82,7 +83,6 @@ namespace ajiva.Application
             const int posRange = 10;
             const float scale = 0.7f;
 
-            entityComponentSystem.SetupSystems();
             entityComponentSystem.InitSystems();
 
             for (var i = 0; i < size; i++)

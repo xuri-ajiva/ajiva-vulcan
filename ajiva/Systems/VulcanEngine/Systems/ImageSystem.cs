@@ -18,7 +18,7 @@ namespace ajiva.Systems.VulcanEngine.Systems
             var aImage = new AImage(true);
             var deviceSystem = Ecs.GetSystem<DeviceSystem>();
             var device = deviceSystem.Device!;
-
+                
             aImage.Image = device.CreateImage(ImageType.Image2d, format, new(width, height, 1), 1, 1, SampleCountFlags.SampleCount1, tiling, usage, SharingMode.Exclusive, ArrayProxy<uint>.Null, ImageLayout.Undefined);
 
             var memRequirements = device.GetImageMemoryRequirements2(new()
@@ -144,13 +144,7 @@ namespace ajiva.Systems.VulcanEngine.Systems
 
             Ecs.GetSystem<DeviceSystem>().SingleTimeCommand(x => x.GraphicsQueue!, command => command.PipelineBarrier(sourceStage, destinationStage, ArrayProxy<MemoryBarrier>.Null, ArrayProxy<BufferMemoryBarrier>.Null, barrier));
         }
-
-        /// <inheritdoc />
-        protected override void Setup()
-        {
-            Ecs.RegisterInit(this);
-        }
-
+        
         /// <inheritdoc />
         public override void AttachNewComponent(IEntity entity)
         {
@@ -167,6 +161,11 @@ namespace ajiva.Systems.VulcanEngine.Systems
 
         /// <inheritdoc />
         public void Init(AjivaEcs ecs)
+        {
+        }
+
+        /// <inheritdoc />
+        public ImageSystem(AjivaEcs ecs) : base(ecs)
         {
         }
     }

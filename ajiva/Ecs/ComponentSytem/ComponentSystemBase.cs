@@ -11,15 +11,7 @@ namespace ajiva.Ecs.ComponentSytem
 
         public Dictionary<T, IEntity> ComponentEntityMap { get; private set; } = new();
 
-        protected abstract void Setup();
-
-        public void Setup(AjivaEcs ecs)
-        {
-            Ecs = ecs;
-            Setup();
-        }
-
-        protected AjivaEcs Ecs { get; private set; }
+        protected AjivaEcs Ecs { get; }
 
         /// <inheritdoc />
         public abstract void AttachNewComponent(IEntity entity);
@@ -36,6 +28,11 @@ namespace ajiva.Ecs.ComponentSytem
             }
             ComponentEntityMap.Clear();
             ComponentEntityMap = null!;
+        }
+
+        public ComponentSystemBase(AjivaEcs ecs)
+        {
+            Ecs = ecs;
         }
     }
 }

@@ -122,11 +122,6 @@ namespace ajiva.Systems.VulcanEngine.Systems
 
   #endregion
 
-        /// <inheritdoc />
-        protected override void Setup()
-        {
-            Ecs.RegisterInit(this);
-        }
 
         /// <inheritdoc />
         protected override void ReleaseUnmanagedResources(bool disposing)

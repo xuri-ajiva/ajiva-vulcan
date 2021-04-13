@@ -206,22 +206,7 @@ namespace ajiva.Ecs
             toInit.Init(this);
             initDone.Add(toInit);
         }
-
-        public void SetupSystems()
-        {
-            lock (@lock)
-                if (multiThreading)
-                    Parallel.Invoke(
-                        () => Parallel.ForEach(ComponentSystems.Values, s => s.Setup(this)),
-                        () => Parallel.ForEach(Systems.Values, s => s.Setup(this))
-                    );
-                else
-                {
-                    foreach (var system in ComponentSystems.Values) system.Setup(this);
-                    foreach (var system in Systems.Values) system.Setup(this);
-                }
-        }
-
+        
         public void Update(UpdateInfo delta)
         {
             if (updates.Count < 1) return;

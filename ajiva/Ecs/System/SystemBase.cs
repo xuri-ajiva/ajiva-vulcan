@@ -4,21 +4,18 @@ namespace ajiva.Ecs.System
 {
     public abstract class SystemBase : DisposingLogger, ISystem
     {
-        protected AjivaEcs Ecs { get; private set; }
-
-        protected virtual void Setup() { }
+        protected AjivaEcs Ecs { get; }
 
         /// <inheritdoc />
-        public void Setup(AjivaEcs ecs)
+        protected SystemBase(AjivaEcs ecs)
         {
             Ecs = ecs;
-            Setup();
         }
 
         /// <inheritdoc />
-        public SystemBase(AjivaEcs ecs)
+        public virtual void Setup()
         {
-            Ecs = ecs;
+            
         }
     }
 }

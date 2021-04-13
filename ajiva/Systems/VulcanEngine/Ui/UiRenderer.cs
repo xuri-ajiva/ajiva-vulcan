@@ -17,12 +17,6 @@ namespace ajiva.Systems.VulcanEngine.Ui
     [Dependent(typeof(ShaderSystem))]
     public class UiRenderer : ComponentSystemBase<ARenderAble2D>, IUpdate, IInit
     {
-        /// <inheritdoc />
-        protected override void Setup()
-        {
-            Ecs.RegisterUpdate(this);
-            Ecs.RegisterInit(this);
-        }
 
         /// <inheritdoc />
         public override void AttachNewComponent(IEntity entity)
@@ -65,6 +59,11 @@ namespace ajiva.Systems.VulcanEngine.Ui
                 return true;
             });
             union.ViewProj.Copy();
+        }
+
+        /// <inheritdoc />
+        public UiRenderer(AjivaEcs ecs) : base(ecs)
+        {
         }
     }
 }

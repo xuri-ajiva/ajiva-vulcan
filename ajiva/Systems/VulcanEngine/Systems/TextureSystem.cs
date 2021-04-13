@@ -17,7 +17,7 @@ namespace ajiva.Systems.VulcanEngine.Systems
         // ReSharper disable once InconsistentNaming
         public const int MAX_TEXTURE_SAMPLERS_IN_SHADER = 128;
 
-        public TextureSystem()
+        public TextureSystem(AjivaEcs ecs) : base(ecs)
         {
             INextId<ATexture>.MaxId = MAX_TEXTURE_SAMPLERS_IN_SHADER;
             TextureSamplerImageViews = new DescriptorImageInfo[MAX_TEXTURE_SAMPLERS_IN_SHADER];
@@ -52,13 +52,7 @@ namespace ajiva.Systems.VulcanEngine.Systems
         {
             entity.AddComponent(CreateComponent(entity));
         }
-
-        /// <inheritdoc />
-        protected override void Setup()
-        {
-            Ecs.RegisterInit(this);
-        }
-
+        
         /// <inheritdoc />
         protected override void ReleaseUnmanagedResources(bool disposing)
         {

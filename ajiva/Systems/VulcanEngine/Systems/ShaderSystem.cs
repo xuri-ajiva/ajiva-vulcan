@@ -14,11 +14,6 @@ namespace ajiva.Systems.VulcanEngine.Systems
     {
         public Dictionary<AjivaEngineLayer, ShaderUnion> ShaderUnions { get; } = new();
 
-        /// <inheritdoc />
-        protected override void Setup()
-        {
-            Ecs.RegisterInit(this);
-        }
 
         /// <inheritdoc />
         public void Init(AjivaEcs ecs)
@@ -45,16 +40,16 @@ namespace ajiva.Systems.VulcanEngine.Systems
         }
 
         /// <inheritdoc />
-        public ShaderSystem(AjivaEcs ecs, DeviceSystem ds) : base(ecs)
+        public ShaderSystem(AjivaEcs ecs) : base(ecs)
         {
         }
     }
     public class ShaderUnion : DisposingLogger
     {
-        public Shader Main { get; init; }
+        public Shader Main { get; }
 
-        public UniformBuffer<UniformViewProj> ViewProj { get; init; }
-        public UniformBuffer<UniformModel> UniformModels { get; init; }
+        public UniformBuffer<UniformViewProj> ViewProj { get; }
+        public UniformBuffer<UniformModel> UniformModels { get; }
 
         public ShaderUnion(Shader main, UniformBuffer<UniformViewProj> viewProj, UniformBuffer<UniformModel> uniformModels)
         {
@@ -75,9 +70,9 @@ namespace ajiva.Systems.VulcanEngine.Systems
         /// <inheritdoc />
         protected override void ReleaseUnmanagedResources(bool disposing)
         {
-            Main?.Dispose();
-            ViewProj?.Dispose();
-            UniformModels?.Dispose();
+            Main.Dispose();
+            ViewProj.Dispose();
+            UniformModels.Dispose();
         }
     }
 }

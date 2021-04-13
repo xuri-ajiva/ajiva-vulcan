@@ -178,13 +178,6 @@ namespace ajiva.Systems.VulcanEngine.Systems
             CloseWindow();
         }
 
-        /// <inheritdoc />
-        protected override void Setup()
-        {
-            Ecs.RegisterUpdate(this);
-            Ecs.RegisterInit(this);
-        }
-
         public void PollEvents()
         {
             Glfw3.PollEvents();
