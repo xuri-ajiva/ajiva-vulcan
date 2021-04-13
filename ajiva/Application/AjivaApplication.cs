@@ -116,11 +116,25 @@ namespace ajiva.Application
                     render.SetMesh(meshPref, entityComponentSystem.GetSystem<DeviceSystem>());
                     render.Render = true;
 
-            var rect = entityComponentSystem.CreateEntity<Rect>();
+                    var trans = cube.GetComponent<Transform3d>();
+                    trans.Position = new(r.Next(-posRange, posRange), r.Next(-posRange, posRange), r.Next(-posRange, posRange));
+                    trans.Rotation = new(r.Next(0, 100), r.Next(0, 100), r.Next(0, 100));
+                    break;
 
-            var renderRect = rect.GetComponent<ARenderAble2D>();
-            renderRect.SetMesh(MeshPrefab.Rect, deviceSystem);
-            renderRect.Render = true;
+                case Key.R:
+                    var rect = entityComponentSystem.CreateEntity<Rect>();
+
+                    var renderRect = rect.GetComponent<ARenderAble2D>();
+                    renderRect.SetMesh(MeshPrefab.Rect, entityComponentSystem.GetSystem<DeviceSystem>());
+                    renderRect.Render = true;
+                    break;
+                
+                case Key.T:
+                    /*foreach (var keyValuePair in entityComponentSystem.Entities)
+                    {keyValuePair.Value
+                    }*/
+                    break;
+            }
         }
 
         /// <inheritdoc />
