@@ -25,6 +25,7 @@ namespace ajiva.Systems.VulcanEngine.Ui
         /// <inheritdoc />
         public override ARenderAble2D CreateComponent(IEntity entity)
         {
+            Ecs.GetSystem<GraphicsSystem>().ChangingObserver.Changed();
             var comp = new ARenderAble2D();
             ComponentEntityMap.Add(comp, entity);
             return comp;

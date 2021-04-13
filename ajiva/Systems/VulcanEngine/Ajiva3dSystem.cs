@@ -142,6 +142,7 @@ namespace ajiva.Systems.VulcanEngine
         /// <inheritdoc />
         public override ARenderAble3D CreateComponent(IEntity entity)
         {
+            Ecs.GetSystem<GraphicsSystem>().ChangingObserver.Changed();
             var rnd = new ARenderAble3D();
             ComponentEntityMap.Add(rnd, entity);
             return rnd;
