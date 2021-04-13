@@ -12,6 +12,8 @@ namespace ajiva.Systems.VulcanEngine.Systems
     [Dependent(typeof(TextureSystem), typeof(Ajiva3dSystem), typeof(UiRenderer))]
     public class GraphicsSystem : SystemBase, IInit, IUpdate
     {
+        public IChangingObserver ChangingObserver { get; } = new ChangingObserver(ChangingCacheMode.AfterTenCycleUpdate);
+        
         private static readonly object CurrentGraphicsLayoutSwapLock = new();
         private GraphicsLayout? Current { get; set; }
 
@@ -61,7 +63,7 @@ namespace ajiva.Systems.VulcanEngine.Systems
                 old = Current;
                 Current = created;
             }
-
+            ChangingObserver.Updated();
             old?.DisposeIn(1000);
         }
 
@@ -75,6 +77,8 @@ namespace ajiva.Systems.VulcanEngine.Systems
         /// <inheritdoc />
         public void Update(UpdateInfo delta)
         {
+            if(ChangingObserver.UpdateCycle(delta.Iteration))
+                RecreateCurrentGraphicsLayout();
             Current?.DrawFrame();
         }
 
