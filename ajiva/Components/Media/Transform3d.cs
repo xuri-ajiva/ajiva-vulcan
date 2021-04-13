@@ -4,17 +4,17 @@ using GlmSharp;
 
 namespace ajiva.Components.Media
 {
-    public class Transform3d : IComponent
+    public class Transform3d : ChangingComponentBase
     {
         private vec3 position;
         private vec3 rotation;
         private vec3 scale;
 
-        public Transform3d(vec3 position, vec3 rotation, vec3 scale)
+        public Transform3d(vec3 position, vec3 rotation, vec3 scale) : base(ChangingCacheMode.NextCycleUpdate)
         {
-            this.position = position;
-            this.rotation = rotation;
-            this.scale = scale;
+            ChangingObserver.RaiseChanged(ref this.position, position);
+            ChangingObserver.RaiseChanged(ref this.rotation, rotation);
+            ChangingObserver.RaiseChanged(ref this.scale, scale);
         }
 
         public Transform3d(vec3 position, vec3 rotation) : this(position, rotation, Default.Scale) { }
@@ -25,47 +25,38 @@ namespace ajiva.Components.Media
         public vec3 Position
         {
             get => position;
-            set
-            {
-                Dirty = true;
-                position = value;
-            }
+            set => ChangingObserver.RaiseChanged(ref position, value);
         }
         public vec3 Rotation
         {
             get => rotation;
-            set
-            {
-                Dirty = true;
-                rotation = value;
-            }
+            set => ChangingObserver.RaiseChanged(ref rotation, value);
         }
         public vec3 Scale
         {
             get => scale;
-            set
-            {
-                Dirty = true;
-                scale = value;
-            }
+            set => ChangingObserver.RaiseChanged(ref scale, value);
         }
 
         public void RefPosition(ModifyRef mod)
         {
+            var value = position;
             mod?.Invoke(ref position);
-            Dirty = true;
+            ChangingObserver.RaiseChanged(value, ref position);
         }
 
         public void RefRotation(ModifyRef mod)
         {
+            var value = rotation;
             mod?.Invoke(ref rotation);
-            Dirty = true;
+            ChangingObserver.RaiseChanged(value, ref rotation);
         }
 
         public void RefScale(ModifyRef mod)
         {
+            var value = scale;
             mod?.Invoke(ref scale);
-            Dirty = true;
+            ChangingObserver.RaiseChanged(value, ref scale);
         }
 
         public delegate void ModifyRef(ref vec3 vec);
