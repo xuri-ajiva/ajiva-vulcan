@@ -46,22 +46,21 @@ namespace ajiva.Application
         public void Init()
         {
             (vulcanInstance, debugReportCallback) = Statics.CreateInstance(Glfw3.GetRequiredInstanceExtensions());
-            var renderEngine = new Ajiva3dSystem();
-            var deviceSystem = entityComponentSystem.CreateSystem<DeviceSystem>();
+            var deviceSystem = entityComponentSystem.CreateSystemOrComponentSystem<DeviceSystem>();
 
             entityComponentSystem.AddInstance(vulcanInstance);
 
             entityComponentSystem.AddSystem(new WorkerPool(Environment.ProcessorCount / 2, "AjivaWorkerPool", entityComponentSystem) {Enabled = true});
-            entityComponentSystem.CreateSystem<ShaderSystem>();
-            entityComponentSystem.CreateSystem<WindowSystem>();
-            entityComponentSystem.CreateSystem<GraphicsSystem>();
-            entityComponentSystem.CreateSystem<BoxTextureGenerator>();
+            entityComponentSystem.CreateSystemOrComponentSystem<ShaderSystem>();
+            var window = entityComponentSystem.CreateSystemOrComponentSystem<WindowSystem>();
+            entityComponentSystem.CreateSystemOrComponentSystem<GraphicsSystem>();
+            entityComponentSystem.CreateSystemOrComponentSystem<BoxTextureGenerator>();
 
-            entityComponentSystem.AddComponentSystem(renderEngine);
-            entityComponentSystem.AddComponentSystem(new UiRenderer());
-            entityComponentSystem.AddComponentSystem(new TextureSystem());
-            entityComponentSystem.AddComponentSystem(new ImageSystem());
-            entityComponentSystem.AddComponentSystem(new TransformComponentSystem());
+            var renderEngine = entityComponentSystem.CreateSystemOrComponentSystem<Ajiva3dSystem>();
+            entityComponentSystem.CreateSystemOrComponentSystem<UiRenderer>();
+            entityComponentSystem.CreateSystemOrComponentSystem<TextureSystem>();
+            entityComponentSystem.CreateSystemOrComponentSystem<ImageSystem>();
+            entityComponentSystem.CreateSystemOrComponentSystem<TransformComponentSystem>();
 
             entityComponentSystem.AddEntityFactory(new SomeEntityFactory());
 
@@ -113,8 +112,8 @@ namespace ajiva.Application
 
             debugReportCallback.Dispose();
             vulcanInstance.Dispose();
-            debugReportCallback = null;
-            vulcanInstance = null;
+            debugReportCallback = null!;
+            vulcanInstance = null!;
             GC.Collect();
             GC.WaitForPendingFinalizers();
             GC.Collect();

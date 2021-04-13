@@ -68,7 +68,7 @@ namespace ajiva.Ecs
 
         private static readonly TypeKey Me = UsVc<AjivaEcs>.Key;
 
-        public T CreateSystem<T>() where T : class, ISystem
+        public T CreateSystemOrComponentSystem<T>() where T : class, ISystem
         {
             /*if (typeof(T).FindInterfaces((type, _) => type == typeof(IComponentSystem), null).Length != 0)
                 throw new ArgumentException("IComponentSystem should not be assigned as ISystem");*/
