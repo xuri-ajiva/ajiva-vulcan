@@ -26,17 +26,16 @@ namespace ajiva.Ecs.Example
         }
 
         /// <inheritdoc />
-        protected override void Setup()
-        {
-            Ecs.RegisterUpdate(this);
-        }
-
-        /// <inheritdoc />
         public override void AttachNewComponent(IEntity entity)
         {
             var cmp = new StdComponent {Health = 100};
             ComponentEntityMap.Add(cmp, entity);
             entity.AddComponent(cmp);
+        }
+
+        /// <inheritdoc />
+        public StdComponentSystem(AjivaEcs ecs) : base(ecs)
+        {
         }
     }
 }
