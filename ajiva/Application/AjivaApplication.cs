@@ -72,16 +72,14 @@ namespace ajiva.Application
             entityComponentSystem.AddParam(nameof(SurfaceHeight), SurfaceHeight);
             entityComponentSystem.AddParam(nameof(SurfaceWidth), SurfaceWidth);
 
+            window.OnKeyEvent += WindowOnOnKeyEvent;
+
             renderEngine.MainCamara = entityComponentSystem.CreateEntity<Cameras.FpsCamera>();
             renderEngine.MainCamara.UpdatePerspective(90, SurfaceWidth, SurfaceHeight);
             renderEngine.MainCamara.MovementSpeed = .01f;
 
             var meshPref = MeshPrefab.Cube.Clone();
             var r = new Random();
-
-            const int size = 10;
-            const int posRange = 10;
-            const float scale = 0.7f;
 
             entityComponentSystem.InitSystems();
 
@@ -97,6 +95,26 @@ namespace ajiva.Application
                 trans.Position = new(r.Next(-posRange, posRange), r.Next(-posRange, posRange), r.Next(-posRange, posRange));
                 trans.Rotation = new(r.Next(0, 100), r.Next(0, 100), r.Next(0, 100));
             }
+        }
+
+        const int size = 10;
+        const int posRange = 10;
+        const float scale = 0.7f;
+        Random r = new();
+
+        private void WindowOnOnKeyEvent(object? sender, Key key, int scancode, InputAction inputaction, Modifier modifiers)
+        {
+            if(inputaction != InputAction.Press) return;
+            // ReSharper disable once SwitchStatementMissingSomeEnumCasesNoDefault
+            switch (key)
+            {
+                case Key.B:
+                    var meshPref = MeshPrefab.Cube.Clone();
+                    var cube = entityComponentSystem.CreateEntity<Cube>();
+
+                    var render = cube.GetComponent<ARenderAble3D>();
+                    render.SetMesh(meshPref, entityComponentSystem.GetSystem<DeviceSystem>());
+                    render.Render = true;
 
             var rect = entityComponentSystem.CreateEntity<Rect>();
 
