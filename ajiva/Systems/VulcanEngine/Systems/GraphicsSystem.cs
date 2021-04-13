@@ -52,6 +52,7 @@ namespace ajiva.Systems.VulcanEngine.Systems
 
         public void RecreateCurrentGraphicsLayout()
         {
+            Ecs.GetSystem<DeviceSystem>().WaitIdle();
             var created = new GraphicsLayout(Ecs);
             created.EnsureExists();
             GraphicsLayout? old;
@@ -68,11 +69,7 @@ namespace ajiva.Systems.VulcanEngine.Systems
         public void Init(AjivaEcs ecs)
         {
             RecreateCurrentGraphicsLayout();
-            Ecs.GetSystem<WindowSystem>().OnResize += (sender, args) =>
-            {
-                Ecs.GetSystem<DeviceSystem>().WaitIdle();
-                RecreateCurrentGraphicsLayout();
-            };
+            Ecs.GetSystem<WindowSystem>().OnResize += RecreateCurrentGraphicsLayout;
         }
 
         /// <inheritdoc />

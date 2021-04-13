@@ -19,7 +19,7 @@ namespace ajiva.Systems.VulcanEngine.Systems
     public class WindowSystem : SystemBase, IUpdate, IInit
     {
         public event KeyEventHandler? OnKeyEvent;
-        public event EventHandler? OnResize;
+        public event Action? OnResize;
         public event EventHandler<AjivaMouseMotionCallbackEventArgs>? OnMouseMove;
 
         private readonly Thread windowThread;
@@ -64,7 +64,7 @@ namespace ajiva.Systems.VulcanEngine.Systems
                 {
                     if (lastResize.AddSeconds(5) > DateTime.Now)
                     {
-                        OnResize?.Invoke(this, EventArgs.Empty);
+                        OnResize?.Invoke();
                         lastResize = DateTime.MinValue;
                     }
                 }

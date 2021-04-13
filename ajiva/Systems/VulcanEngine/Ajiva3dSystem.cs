@@ -97,7 +97,7 @@ namespace ajiva.Systems.VulcanEngine
         {
             var window = Ecs.GetSystem<WindowSystem>();
 
-            window.OnResize += (_, eventArgs) =>
+            window.OnResize += () =>
             {
                 lock (MainLock)
                 {
