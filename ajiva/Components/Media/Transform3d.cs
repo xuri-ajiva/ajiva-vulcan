@@ -10,7 +10,7 @@ namespace ajiva.Components.Media
         private vec3 rotation;
         private vec3 scale;
 
-        public Transform3d(vec3 position, vec3 rotation, vec3 scale) : base(ChangingCacheMode.NextCycleUpdate)
+        public Transform3d(vec3 position, vec3 rotation, vec3 scale) : base(2)
         {
             ChangingObserver.RaiseChanged(ref this.position, position);
             ChangingObserver.RaiseChanged(ref this.rotation, rotation);

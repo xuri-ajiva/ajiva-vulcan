@@ -9,9 +9,9 @@ namespace ajiva.Components
     public class ChangingComponentBase : DisposingLogger, IComponent
     {
         /// <inheritdoc />
-        public ChangingComponentBase(ChangingCacheMode mode)
+        public ChangingComponentBase(int delayUpdateFor)
         {
-            ChangingObserver = new ChangingObserver(mode);
+            ChangingObserver = new ChangingObserver(delayUpdateFor);
         }
 
         public IChangingObserver ChangingObserver { get; }

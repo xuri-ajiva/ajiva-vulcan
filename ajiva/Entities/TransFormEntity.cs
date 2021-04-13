@@ -7,7 +7,7 @@ namespace ajiva.Entities
 {
     public class TransFormEntity : ChangingObserverEntity
     {
-        public TransFormEntity() : base(ChangingCacheMode.ThisCycleUpdate)
+        public TransFormEntity() : base(0)
         {
             TransformLazy = new(this.GetComponent<Transform3d>);
         }

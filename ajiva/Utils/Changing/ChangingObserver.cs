@@ -1,24 +1,22 @@
-﻿namespace ajiva.Utils.Changing
+﻿using Ajiva.Wrapper.Logger;
+
+namespace ajiva.Utils.Changing
 {
     public class ChangingObserver : IChangingObserver
     {
-        public ChangingObserver(ChangingCacheMode mode)
+        public ChangingObserver(int delayUpdateFor)
         {
-            Mode = mode;
-        }
-
-        public ChangingObserver() : this(ChangingCacheMode.NextCycleUpdate)
-        {
+            DelayUpdateFor = delayUpdateFor;
         }
 
         /// <inheritdoc />
-        public ChangingCacheMode Mode { get; set; }
+        public int DelayUpdateFor { get; }
 
         /// <inheritdoc />
         public int ChangedAmount { get; set; } = 0;
 
         /// <inheritdoc />
-        public ulong ChangeBeginCycle { get; set; } = 0;
+        public long ChangeBeginCycle { get; set; } = 0;
 
         private object _lock { get; } = new();
 
@@ -44,6 +42,7 @@
             lock (_lock)
             {
                 ChangedAmount = 0;
+                ChangeBeginCycle = 0;
             }
             OnUpdate?.Invoke(this);
         }

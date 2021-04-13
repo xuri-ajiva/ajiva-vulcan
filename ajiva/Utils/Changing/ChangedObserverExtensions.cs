@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Diagnostics;
+using Ajiva.Wrapper.Logger;
 
 namespace ajiva.Utils.Changing
 {
@@ -28,22 +30,16 @@ namespace ajiva.Utils.Changing
         /// <param name="cycle"></param>
         /// <returns>If object should be updated</returns>
         /// <exception cref="ArgumentOutOfRangeException"></exception>
-        public static bool UpdateCycle(this IChangingObserver observer, ulong cycle)
+        public static bool UpdateCycle(this IChangingObserver observer, long cycle)
         {
             if (observer.ChangedAmount <= 0) return false;
 
             if (observer.ChangeBeginCycle == 0)
-                observer.ChangeBeginCycle = cycle;
-
-            return observer.Mode switch
             {
-                ChangingCacheMode.DirectUpdate => true,
-                ChangingCacheMode.ThisCycleUpdate => true,
-                ChangingCacheMode.NextCycleUpdate => observer.ChangeBeginCycle + 1 >= cycle,
-                ChangingCacheMode.AfterTenCycleUpdate => observer.ChangeBeginCycle + 10 >= cycle,
-                ChangingCacheMode.ManualUpdate => false,
-                _ => throw new ArgumentOutOfRangeException()
-            };
+                observer.ChangeBeginCycle = cycle;
+            }
+
+            return observer.ChangeBeginCycle + observer.DelayUpdateFor <= cycle;
         }
     }
 }

@@ -16,7 +16,7 @@ namespace ajiva.Components.RenderAble
             private set => ChangingObserver.RaiseChanged(ref mesh, value);
         }
 
-        public ARenderAble3D() : base(ChangingCacheMode.DirectUpdate)
+        public ARenderAble3D()
         {
             Render = false;
             Id = INextId<ARenderAble3D>.Next();

@@ -15,7 +15,7 @@ namespace ajiva.Components.RenderAble
         public abstract AjivaEngineLayer AjivaEngineLayer { get; }
 
         /// <inheritdoc />
-        protected ARenderAble(ChangingCacheMode mode) : base(mode)
+        protected ARenderAble() : base(0)
         {
         }
     }

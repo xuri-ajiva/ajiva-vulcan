@@ -26,7 +26,7 @@ namespace ajiva.Components.Media
             set => ChangingObserver.RaiseChanged(ref memory, value);
         }
 
-        public AImage(bool disposeImage) : base(ChangingCacheMode.AfterTenCycleUpdate)
+        public AImage(bool disposeImage) : base(20)
         {
             this.disposeImage = disposeImage;
         }

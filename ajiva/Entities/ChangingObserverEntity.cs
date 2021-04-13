@@ -5,9 +5,9 @@ namespace ajiva.Entities
     public class ChangingObserverEntity : DefaultEntity
     {
         /// <inheritdoc />
-        public ChangingObserverEntity(ChangingCacheMode mode)
+        public ChangingObserverEntity(int delayUpdateFor)
         {
-            Observer = new ChangingObserver(mode);
+            Observer = new ChangingObserver(delayUpdateFor);
         }
 
         public IChangingObserver Observer { get; }

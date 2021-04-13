@@ -1,4 +1,6 @@
-﻿using System.Threading;
+﻿using System;
+using System.Diagnostics;
+using System.Threading;
 using ajiva.Ecs;
 using ajiva.Ecs.System;
 using ajiva.Ecs.Utils;
@@ -6,14 +8,15 @@ using ajiva.Systems.VulcanEngine.EngineManagers;
 using ajiva.Systems.VulcanEngine.Ui;
 using ajiva.Utils;
 using ajiva.Utils.Changing;
+using Ajiva.Wrapper.Logger;
 
 namespace ajiva.Systems.VulcanEngine.Systems
 {
     [Dependent(typeof(TextureSystem), typeof(Ajiva3dSystem), typeof(UiRenderer))]
     public class GraphicsSystem : SystemBase, IInit, IUpdate
     {
-        public IChangingObserver ChangingObserver { get; } = new ChangingObserver(ChangingCacheMode.AfterTenCycleUpdate);
-        
+        public IChangingObserver ChangingObserver { get; } = new ChangingObserver(100);
+
         private static readonly object CurrentGraphicsLayoutSwapLock = new();
         private GraphicsLayout? Current { get; set; }
 
@@ -77,7 +80,7 @@ namespace ajiva.Systems.VulcanEngine.Systems
         /// <inheritdoc />
         public void Update(UpdateInfo delta)
         {
-            if(ChangingObserver.UpdateCycle(delta.Iteration))
+            if (ChangingObserver.UpdateCycle(delta.Iteration)) 
                 RecreateCurrentGraphicsLayout();
             Current?.DrawFrame();
         }
