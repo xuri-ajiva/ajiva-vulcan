@@ -66,12 +66,12 @@ namespace ajiva.Ecs
             Systems.Add(UsVc<T>.Key, system);
         }
 
-        private static TypeKey me = UsVc<AjivaEcs>.Key;
+        private static readonly TypeKey Me = UsVc<AjivaEcs>.Key;
 
         public T CreateSystem<T>() where T : class, ISystem
         {
-            if (typeof(T).FindInterfaces((type, _) => type == typeof(IComponentSystem), null).Length != 0)
-                throw new ArgumentException("IComponentSystem should not be assigned as ISystem");
+            /*if (typeof(T).FindInterfaces((type, _) => type == typeof(IComponentSystem), null).Length != 0)
+                throw new ArgumentException("IComponentSystem should not be assigned as ISystem");*/
 
             object instance;
             var constructors = typeof(T).GetConstructors(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
@@ -83,18 +83,26 @@ namespace ajiva.Ecs
                 for (var i = 0; i < para.Length; i++)
                 {
                     var key = UsVc.TypeKeyForType(para[i].ParameterType);
-                    if (key == me)
+                    if (key == Me)
                     {
                         args[i] = this;
                         continue;
                     }
 
-                    foreach (var dict in new IDictionary[] {ComponentSystems, Systems, Instances})
+                    bool ContainsArgType<TD>(IDictionary<TypeKey, TD> dict) where TD : class
                     {
-                        if (!dict.Contains(key)) continue;
+                        if (!dict.ContainsKey(key)) return false;
                         args[i] = dict[key];
-                        break;
+                        return true;
                     }
+
+                    if (ContainsArgType(ComponentSystems))
+                        continue;
+                    if (ContainsArgType(Instances))
+                        continue;
+                    if (ContainsArgType(Systems))
+                        continue;
+
                     if (args[i] is not null)
                         continue;
 
@@ -106,12 +114,12 @@ namespace ajiva.Ecs
             else if (constructors.FirstOrDefault(x => x.GetParameters().Length == 0) is { } ctr2)
                 instance = ctr2.Invoke(null);
             else
-                instance = constructors.First().Invoke(new object?[] {this});
+                instance = constructors.First().Invoke(Array.Empty<object?>());
 
             switch (instance)
             {
                 case IComponentSystem componentSystem:
-                    ComponentSystems.Add(UsVc<T>.Key, componentSystem);
+                    ComponentSystems.Add(componentSystem.ComponentType, componentSystem);
                     break;
                 case ISystem system:
                     Systems.Add(UsVc<T>.Key, system);
@@ -270,7 +278,7 @@ namespace ajiva.Ecs
                 var attrib = system.GetType().GetCustomAttributes(typeof(DependentAttribute), false).FirstOrDefault();
                 if (attrib is not DependentAttribute dependent) continue;
                 if (!dependent.Dependent.Any(x => x == toDispose.GetType())) continue;
-                
+
                 DisposeRec(system, disposingSet);
             }
             toDispose.Dispose();
