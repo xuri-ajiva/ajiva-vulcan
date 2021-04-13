@@ -5,7 +5,7 @@ using Ajiva.Wrapper.Logger;
 
 namespace ajiva.Utils
 {
-    public record UpdateInfo(TimeSpan Delta, ulong Iteration);
+    public record UpdateInfo(TimeSpan Delta, long Iteration);
 
     public class RunHelper
     {
@@ -15,7 +15,7 @@ namespace ajiva.Utils
         {
             ConsoleBlock block = new(1);
 
-            var iteration = 0ul;
+            var iteration = 0L;
             var start = DateTime.Now;
 
             var delta = TimeSpan.Zero;
