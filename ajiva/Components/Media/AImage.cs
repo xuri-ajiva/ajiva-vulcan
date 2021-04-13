@@ -4,7 +4,7 @@ using SharpVk;
 
 namespace ajiva.Components.Media
 {
-    public class AImage : DisposingLogger, IComponent
+    public class AImage : ChangingComponentBase
     {
         private readonly bool disposeImage;
         private ImageView? view = null!;
@@ -13,32 +13,20 @@ namespace ajiva.Components.Media
         public ImageView? View
         {
             get => view;
-            set
-            {
-                Dirty = true;
-                view = value;
-            }
+            set => ChangingObserver.RaiseChanged(ref view, value);
         }
         public Image? Image
         {
             get => image;
-            set
-            {
-                Dirty = true;
-                image = value;
-            }
+            set => ChangingObserver.RaiseChanged(ref image, value);
         }
         public DeviceMemory? Memory
         {
             get => memory;
-            set
-            {
-                Dirty = true;
-                memory = value;
-            }
+            set => ChangingObserver.RaiseChanged(ref memory, value);
         }
 
-        public AImage(bool disposeImage)
+        public AImage(bool disposeImage) : base(ChangingCacheMode.AfterTenCycleUpdate)
         {
             this.disposeImage = disposeImage;
         }
