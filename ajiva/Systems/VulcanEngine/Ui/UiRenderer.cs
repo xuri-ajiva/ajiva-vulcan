@@ -1,20 +1,18 @@
-﻿using System;
-using System.Collections.Generic;
-using ajiva.Components;
+﻿using System.Collections.Generic;
+using ajiva.Components.RenderAble;
 using ajiva.Ecs;
 using ajiva.Ecs.ComponentSytem;
 using ajiva.Ecs.Entity;
 using ajiva.Ecs.Utils;
-using ajiva.Helpers;
-using ajiva.Models;
+using ajiva.Models.Buffer;
 using ajiva.Systems.VulcanEngine.Systems;
 using ajiva.Systems.VulcanEngine.Unions;
-using Ajiva.Wrapper.Logger;
+using ajiva.Utils;
 using GlmSharp;
 
 namespace ajiva.Systems.VulcanEngine.Ui
 {
-    [Dependent(typeof(ShaderSystem))]
+    [Dependent(typeof(ShaderSystem), typeof(WindowSystem))]
     public class UiRenderer : ComponentSystemBase<ARenderAble2D>, IUpdate, IInit
     {
 

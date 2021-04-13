@@ -1,5 +1,6 @@
 ﻿using System;
 using ajiva.Ecs.Entity;
+using ajiva.Ecs.Utils;
 using ajiva.Utils;
 
 namespace ajiva.Ecs.Example
@@ -19,5 +20,5 @@ namespace ajiva.Ecs.Example
         protected override void ReleaseUnmanagedResources(bool disposing)
         {
         }
-    };
+    }
 }

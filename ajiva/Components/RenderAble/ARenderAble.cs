@@ -1,6 +1,5 @@
-﻿using ajiva.Ecs.Component;
-using ajiva.Systems.VulcanEngine.Unions;
-using ajiva.Utils;
+﻿using ajiva.Systems.VulcanEngine.Unions;
+using ajiva.Utils.Changing;
 using SharpVk;
 
 namespace ajiva.Components.RenderAble

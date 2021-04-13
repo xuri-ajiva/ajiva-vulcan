@@ -1,6 +1,7 @@
 ﻿using System;
 using ajiva.Components.Media;
-using ajiva.Utils;
+using ajiva.Ecs.Entity;
+using ajiva.Utils.Changing;
 
 namespace ajiva.Entities
 {

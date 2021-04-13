@@ -2,6 +2,7 @@
 using ajiva.Components.Media;
 using ajiva.Components.RenderAble;
 using ajiva.Ecs;
+using ajiva.Ecs.Entity;
 using ajiva.Ecs.Factory;
 using ajiva.Ecs.Utils;
 using ajiva.Utils;
@@ -22,11 +23,6 @@ namespace ajiva.Entities
                 system.RegisterUpdate(cam);
                 cam.OnMouseMoved(0.0f, 0.0f);
                 return cam;
-            }
-
-            /// <inheritdoc />
-            protected override void ReleaseUnmanagedResources(bool disposing)
-            {
             }
         }
 
@@ -68,9 +64,9 @@ namespace ajiva.Entities
 
             public void UpdatePerspective(float fov, float width, float height)
             {
-                this.Fov = fov;
-                this.Width = width;
-                this.Height = height;
+                Fov = fov;
+                Width = width;
+                Height = height;
                 Projection = mat4.Perspective(fov / 2.0F, width / height, .1F, 1000.0F);
                 View = mat4.Identity;
             }
@@ -129,7 +125,7 @@ namespace ajiva.Entities
 
             public void MoveFront(float amount)
             {
-                //								//// not move up and down
+                //                      //// not move up and down
                 Translate((!FreeCam ? (vec3.UnitX * lockAt).Normalized : lockAt) * amount);
 
                 UpdateMatrices();
@@ -152,6 +148,6 @@ namespace ajiva.Entities
             {
                 UpdatePosition((float)info.Delta.TotalMilliseconds);
             }
-        };
+        }
     }
 }

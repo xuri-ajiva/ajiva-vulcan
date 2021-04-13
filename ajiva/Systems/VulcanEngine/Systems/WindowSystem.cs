@@ -11,7 +11,6 @@ using Ajiva.Wrapper.Logger;
 using GlmSharp;
 using SharpVk;
 using SharpVk.Glfw;
-using SharpVk.Khronos;
 using Glfw3 = SharpVk.Glfw.Glfw3;
 using Key = SharpVk.Glfw.Key;
 

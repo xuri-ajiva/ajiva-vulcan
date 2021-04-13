@@ -16,6 +16,7 @@ namespace ajiva.Ecs.Example
                 LogHelper.WriteLine($"[{value}]: " + key);
             }
         }
+
         /// <inheritdoc />
         public override StdComponent CreateComponent(IEntity entity)
         {

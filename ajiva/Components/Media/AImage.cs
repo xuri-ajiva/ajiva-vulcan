@@ -1,6 +1,5 @@
-﻿using ajiva.Ecs.Component;
-using ajiva.Systems.VulcanEngine;
-using ajiva.Utils;
+﻿using ajiva.Systems.VulcanEngine;
+using ajiva.Utils.Changing;
 using SharpVk;
 
 namespace ajiva.Components.Media

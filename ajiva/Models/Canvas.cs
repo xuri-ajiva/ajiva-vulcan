@@ -1,6 +1,5 @@
 ﻿using System;
 using System.ComponentModel.DataAnnotations;
-using System.Drawing;
 using ajiva.Utils;
 using Ajiva.Wrapper.Logger;
 using SharpVk;

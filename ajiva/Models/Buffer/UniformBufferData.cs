@@ -13,7 +13,7 @@ namespace ajiva.Models.Buffer
         {
             return View == other.View && Proj == other.Proj && Model == other.Model;
         }
-    };
+    }
     public struct UniformModel : IComp<UniformModel>
     {
         public mat4 Model;
@@ -31,7 +31,7 @@ namespace ajiva.Models.Buffer
                    && TextureSamplerId3 == other.TextureSamplerId3
                    && TextureSamplerId4 == other.TextureSamplerId4;
         }
-    };
+    }
     public struct UniformViewProj : IComp<UniformViewProj>
     {
         public mat4 View;
@@ -42,7 +42,7 @@ namespace ajiva.Models.Buffer
         {
             return View == other.View && Proj == other.Proj;
         }
-    };
+    }
     public interface IComp<in T>
     {
         public bool CompareTo(T other);

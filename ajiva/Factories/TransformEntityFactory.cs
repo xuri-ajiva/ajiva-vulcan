@@ -10,7 +10,7 @@ namespace ajiva.Factories
         /// <inheritdoc />
         public override TransFormEntity Create(AjivaEcs system, uint id)
         {
-            var entity = new TransFormEntity() {Id = id};
+            var entity = new TransFormEntity {Id = id};
             system.AttachComponentToEntity<Transform3d>(entity);
             return entity;
         }

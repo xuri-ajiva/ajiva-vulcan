@@ -1,5 +1,5 @@
 ﻿using System;
-using ajiva.Ecs.Component;
+using ajiva.Utils.Changing;
 using GlmSharp;
 
 namespace ajiva.Components.Media

@@ -19,5 +19,5 @@ namespace ajiva.Systems.VulcanEngine.Unions
             PipelineUnion.Dispose();
             FrameBuffer.Dispose();
         }
-    };
+    }
 }
