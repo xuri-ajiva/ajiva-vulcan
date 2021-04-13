@@ -40,9 +40,6 @@ namespace ajiva.Components.Media
             Memory?.Free();
         }
 
-        /// <inheritdoc />
-        public bool Dirty { get; set; }
-
         public void CreateView(Device device, Format format, ImageAspectFlags aspectFlags)
         {
             view = image?.CreateImageView(device, format, aspectFlags);

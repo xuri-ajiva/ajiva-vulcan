@@ -77,9 +77,6 @@ namespace ajiva.Components.Media
         }
 
         /// <inheritdoc />
-        public bool Dirty { get; set; }
-
-        /// <inheritdoc />
         public void Dispose()
         {
             GC.SuppressFinalize(this);

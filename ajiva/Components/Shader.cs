@@ -125,9 +125,6 @@ namespace ajiva.Components
 
         public string Name { get; }
 
-        /// <inheritdoc />
-        public bool Dirty { get; set; }
-
         public PipelineShaderStageCreateInfo VertShaderPipelineStageCreateInfo => new() {Stage = ShaderStageFlags.Vertex, Module = VertShader, Name = Name,};
 
         public PipelineShaderStageCreateInfo FragShaderPipelineStageCreateInfo => new() {Stage = ShaderStageFlags.Fragment, Module = FragShader, Name = Name,};

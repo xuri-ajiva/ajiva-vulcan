@@ -13,9 +13,6 @@ namespace ajiva.Ecs.Example
             return $"{nameof(Health)}: {Health}";
         }
 
-        /// <inheritdoc />
-        public bool Dirty { get; set; }
-
 
         void IDisposable.Dispose()
         {

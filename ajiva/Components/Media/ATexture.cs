@@ -25,8 +25,5 @@ namespace ajiva.Components.Media
         }
 
         public DescriptorImageInfo DescriptorImageInfo => new() {Sampler = Sampler, ImageView = Image.View, ImageLayout = ImageLayout.ShaderReadOnlyOptimal};
-
-        /// <inheritdoc />
-        public bool Dirty { get; set; }
     }
 }
