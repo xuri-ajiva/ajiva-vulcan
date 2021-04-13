@@ -21,7 +21,7 @@ namespace ajiva.Systems.VulcanEngine
     {
         public Cameras.Camera MainCamara
         {
-            get => mainCamara;
+            get => mainCamara!;
             set
             {
                 mainCamara?.Dispose();
@@ -67,17 +67,17 @@ namespace ajiva.Systems.VulcanEngine
                 var update = false;
                 Transform3d? transform = null!;
                 //ATexture? texture = null!;
-                if (entity.TryGetComponent(out transform) && transform!.Dirty)
+                if (entity.TryGetComponent(out transform) && transform!.ChangingObserver.UpdateCycle(delta.Iteration))
                 {
                     shaderSystem.ShaderUnions[AjivaEngineLayer.Layer3d].UniformModels.Staging.GetRef(renderAble!.Id).Model = transform.ModelMat; // texture?.TextureId ?? 0
                     update = true;
-                    transform!.Dirty = false;
+                    transform.ChangingObserver.Updated();
                 }
-                if (renderAble.Dirty /*entity.TryGetComponent(out texture) && texture!.Dirty ||*/)
+                if (renderAble.ChangingObserver.UpdateCycle(delta.Iteration) /*entity.TryGetComponent(out texture) && texture!.Dirty ||*/)
                 {
                     shaderSystem.ShaderUnions[AjivaEngineLayer.Layer3d].UniformModels.Staging.GetRef(renderAble!.Id).TextureSamplerId = renderAble!.Id; // texture?.TextureId ?? 0
                     update = true;
-                    renderAble.Dirty = false;
+                    renderAble.ChangingObserver.Updated();
                 }
 
                 if (update)
@@ -103,7 +103,7 @@ namespace ajiva.Systems.VulcanEngine
                 {
                     foreach (var entity in ComponentEntityMap)
                     {
-                        entity.Key.Dirty = true;
+                        entity.Key.ChangingObserver.Changed();
                     }
 
                     mainCamara?.UpdatePerspective(mainCamara.Fov, window.Canvas.WidthF, window.Canvas.HeightF);
