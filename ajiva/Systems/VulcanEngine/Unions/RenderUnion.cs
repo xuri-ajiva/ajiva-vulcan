@@ -35,9 +35,8 @@ namespace ajiva.Systems.VulcanEngine.Unions
         {
             var swap = SwapChainUnion.CreateSwapChainUnion(physicalDevice, device, canvas);
 
-            //canvas.Offset = new(100, 100);
-            //canvas.Extent = new(500, 500);
-            Canvas canvas3d = canvas.Fork(new(100,100), new(100,100));
+            //todo fix error UNASSIGNED-CoreValidation-DrawState-InvalidRenderArea MessageID = 0x44824371 
+            Canvas canvas3d = canvas;//.Fork(new(100,100), new(100,100));
             Canvas canvas2d = canvas;
             
             var graph3d = GraphicsPipelineUnion.CreateGraphicsPipelineUnion3D(swap, physicalDevice, device, system, textureSamplerImageViews, canvas3d);
