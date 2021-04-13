@@ -28,12 +28,12 @@ namespace ajiva.Ecs
         public bool Available { get; private set; }
         private readonly object @lock = new();
         private uint currentEntityId;
-        private Dictionary<uint, IEntity> Entities { get; } = new();
-        private Dictionary<TypeKey, IEntityFactory> Factories { get; } = new();
-        private Dictionary<TypeKey, IComponentSystem> ComponentSystems { get; } = new();
-        private Dictionary<TypeKey, ISystem> Systems { get; } = new();
-        private Dictionary<TypeKey, object> Instances { get; } = new();
-        private Dictionary<string, object> Params { get; } = new();
+        public Dictionary<uint, IEntity> Entities { get; } = new();
+        public Dictionary<TypeKey, IEntityFactory> Factories { get; } = new();
+        public Dictionary<TypeKey, IComponentSystem> ComponentSystems { get; } = new();
+        public Dictionary<TypeKey, ISystem> Systems { get; } = new();
+        public Dictionary<TypeKey, object> Instances { get; } = new();
+        public Dictionary<string, object> Params { get; } = new();
 
         public T CreateEntity<T>() where T : class, IEntity
         {
