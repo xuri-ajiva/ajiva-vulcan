@@ -26,7 +26,7 @@ namespace ajiva.Entities
             }
         }
 
-        public abstract class Camera : TransFormEntity, IUpdate
+        public abstract class Camera : TransFormEntity
         {
             public float Fov;
             public float Width;
@@ -53,7 +53,7 @@ namespace ajiva.Entities
 
             public virtual void Translate(vec3 v)
             {
-                GetComponent<Transform3d>().Position += v;
+                this.GetComponent<Transform3d>().Position += v;
                 View += mat4.Translate(v * -1.0F);
             }
 
@@ -71,7 +71,7 @@ namespace ajiva.Entities
                 View = mat4.Identity;
             }
         }
-        public sealed class FpsCamera : Camera
+        public sealed class FpsCamera : Camera, IUpdate
         {
             public bool FreeCam { get; set; } = true;
             private vec3 lockAt;
@@ -144,7 +144,7 @@ namespace ajiva.Entities
             }
 
             /// <inheritdoc />
-            public override void Update(UpdateInfo info)
+            public void Update(UpdateInfo info)
             {
                 UpdatePosition((float)info.Delta.TotalMilliseconds);
             }

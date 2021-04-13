@@ -5,12 +5,12 @@ using ajiva.Utils;
 
 namespace ajiva.Ecs.Example
 {
-    public class SdtEntity : AEntity
+    public class SdtEntity : AEntity, IUpdate
     {
         /// <inheritdoc />
-        public override void Update(UpdateInfo delta)
+        public void Update(UpdateInfo delta)
         {
-            if (GetComponent<StdComponent>() is { } health)
+            if (this.GetComponent<StdComponent>() is { } health)
             {
                 health.Health += new Random().Next(-10, 10);
             }

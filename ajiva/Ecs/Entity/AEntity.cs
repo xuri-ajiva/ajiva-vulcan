@@ -12,42 +12,6 @@ namespace ajiva.Ecs.Entity
         /// <inheritdoc />
         public uint Id { get; init; } = CurrentId++;
 
-        private IDictionary<TypeKey, IComponent> Components { get; } = new Dictionary<TypeKey, IComponent>();
-
-        /// <inheritdoc />
-        public bool TryGetComponent<T>(out T? value) where T : class, IComponent
-        {
-            if (Components.TryGetValue(UsVc<T>.Key, out var tmp))
-            {
-                value = (T)tmp;
-                return true;
-            }
-            value = default;
-            return false;
-        }
-
-        public T GetComponent<T>() where T : class, IComponent
-        {
-            return (T)Components[UsVc<T>.Key];
-        }
-
-        /// <inheritdoc />
-        public bool HasComponent<T>() where T : class, IComponent
-        {
-            return Components.ContainsKey(UsVc<T>.Key);
-            //return Components.Any(c => c.GetType() == typeof(T));
-        }
-
-        public void AddComponent<T>(T component) where T : class, IComponent
-        {
-            Components.Add(UsVc<T>.Key, component);
-        }
-
-        /// <inheritdoc />
-        public void RemoveComponent<T>() where T : class, IComponent
-        {
-            Components.Remove(UsVc<T>.Key);
-        }
-        public abstract void Update(UpdateInfo delta);
+        public IDictionary<TypeKey, IComponent> Components { get; } = new Dictionary<TypeKey, IComponent>();
     }
 }

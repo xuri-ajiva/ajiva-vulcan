@@ -14,15 +14,5 @@ namespace ajiva.Entities
 
         public Lazy<Transform3d> TransformLazy { get; }
         public Transform3d Transform => TransformLazy.Value;
-
-        /// <inheritdoc />
-        public override void Update(UpdateInfo delta)
-        {
-        }
-
-        /// <inheritdoc />
-        protected override void ReleaseUnmanagedResources(bool disposing)
-        {
-        }
     }
 }
