@@ -9,9 +9,14 @@ namespace ajiva.Components.RenderAble
 {
     public class ARenderAble2D : ARenderAble
     {
-        public Mesh<Vertex2D>? Mesh { get; private set; }
+        private Mesh<Vertex2D>? mesh;
+        public Mesh<Vertex2D>? Mesh
+        {
+            get => mesh;
+            private set => ChangingObserver.RaiseChanged(ref mesh, value);
+        }
 
-        public ARenderAble2D()
+        public ARenderAble2D() : base(ChangingCacheMode.DirectUpdate)
         {
             Render = false;
             Id = INextId<ARenderAble2D>.Next();
