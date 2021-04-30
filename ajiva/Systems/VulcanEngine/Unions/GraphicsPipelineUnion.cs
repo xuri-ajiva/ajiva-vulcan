@@ -62,14 +62,14 @@ namespace ajiva.Systems.VulcanEngine.Unions
                         SourceStageMask = PipelineStageFlags.BottomOfPipe,
                         SourceAccessMask = AccessFlags.MemoryRead,
                         DestinationStageMask = PipelineStageFlags.ColorAttachmentOutput | PipelineStageFlags.EarlyFragmentTests,
-                        DestinationAccessMask = AccessFlags.ColorAttachmentRead | AccessFlags.ColorAttachmentWrite | AccessFlags.DepthStencilAttachmentRead //todo remove some if no depth image
+                        DestinationAccessMask = AccessFlags.ColorAttachmentRead | AccessFlags.ColorAttachmentWrite | (useDepthImage ? AccessFlags.DepthStencilAttachmentRead : 0)
                     },
                     new SubpassDependency
                     {
                         SourceSubpass = 0,
                         DestinationSubpass = Constants.SubpassExternal,
                         SourceStageMask = PipelineStageFlags.ColorAttachmentOutput | PipelineStageFlags.EarlyFragmentTests,
-                        SourceAccessMask = AccessFlags.ColorAttachmentRead | AccessFlags.ColorAttachmentWrite | AccessFlags.DepthStencilAttachmentRead,
+                        SourceAccessMask = AccessFlags.ColorAttachmentRead | AccessFlags.ColorAttachmentWrite | (useDepthImage ? AccessFlags.DepthStencilAttachmentRead : 0),
                         DestinationStageMask = PipelineStageFlags.BottomOfPipe,
                         DestinationAccessMask = AccessFlags.MemoryRead
                     },
@@ -135,7 +135,7 @@ namespace ajiva.Systems.VulcanEngine.Unions
                         RasterizerDiscardEnable = false,
                         PolygonMode = PolygonMode.Fill,
                         LineWidth = 1,
-                        //CullMode = CullModeFlags.Back,          // rnable to make faces only visible from one side
+                        //CullMode = CullModeFlags.Back,          // reenable to make faces only visible from one side
                         //FrontFace = FrontFace.CounterClockwise,
                         DepthBiasEnable = false
                     },
