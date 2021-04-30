@@ -4,6 +4,7 @@ using ajiva.Ecs;
 using ajiva.Ecs.System;
 using ajiva.Ecs.Utils;
 using ajiva.Models;
+using Ajiva.Wrapper.Logger;
 using SharpVk;
 using SharpVk.Khronos;
 
@@ -18,6 +19,10 @@ namespace ajiva.Systems.VulcanEngine.Systems
         internal Queue? GraphicsQueue { get; private set; }
         internal Queue? PresentQueue { get; private set; }
         internal Queue? TransferQueue { get; private set; }
+
+        public Fence TransferQueueFence { get; private set; }
+        public Fence PresentQueueFence { get; private set; }
+        public Fence GraphicsQueueFence { get; private set; }
 
         public CommandBuffer? SingleCommandBuffer { get; private set; }
 
@@ -52,6 +57,10 @@ namespace ajiva.Systems.VulcanEngine.Systems
             GraphicsQueue = Device.GetQueue(queueFamilies.GraphicsFamily!.Value, 0);
             PresentQueue = Device.GetQueue(queueFamilies.PresentFamily!.Value, 0);
             TransferQueue = Device.GetQueue(queueFamilies.TransferFamily!.Value, 0);
+
+            GraphicsQueueFence = Device.CreateFence();
+            PresentQueueFence = Device.CreateFence();
+            TransferQueueFence = Device.CreateFence();
         }
 
         public void WaitIdle()
@@ -93,7 +102,7 @@ namespace ajiva.Systems.VulcanEngine.Systems
             SingleCommandBuffer ??= Device!.AllocateCommandBuffers(CommandPool, CommandBufferLevel.Primary, 1).Single();
         }
 
-        public void SingleTimeCommand(Func<DeviceSystem, Queue> queueSelector, Action<CommandBuffer> action)
+        public void SingleTimeCommand(QueueType queueType, Action<CommandBuffer> action)
         {
             EnsureCommandPoolsExists();
 
@@ -105,23 +114,49 @@ namespace ajiva.Systems.VulcanEngine.Systems
 
                 SingleCommandBuffer.End();
 
-                var queue = queueSelector(this);
-
-                queue.Submit(new SubmitInfo
+                var queue = queueType switch
                 {
-                    CommandBuffers = new[]
-                    {
-                        SingleCommandBuffer
-                    },
-                }, null);
+                    QueueType.GraphicsQueue => GraphicsQueue,
+                    QueueType.PresentQueue => PresentQueue,
+                    QueueType.TransferQueue => TransferQueue,
+                    _ => throw new ArgumentOutOfRangeException(nameof(queueType), queueType, null)
+                };
+                var fence = queueType switch
+                {
+                    QueueType.GraphicsQueue => GraphicsQueueFence,
+                    QueueType.PresentQueue => PresentQueueFence,
+                    QueueType.TransferQueue => TransferQueueFence,
+                    _ => throw new ArgumentOutOfRangeException(nameof(queueType), queueType, null)
+                };
 
-                queue.WaitIdle();
+                if (queue is null)
+                    throw new("Init not done!");
+                lock (queue)
+                {
+                    if (fence.GetStatus() == Result.Success)
+                    {
+                        LogHelper.Log("Fence Error");
+                    }
+
+                    queue.Submit(new SubmitInfo
+                    {
+                        CommandBuffers = new[]
+                        {
+                            SingleCommandBuffer
+                        },
+                    }, null);
+
+                    queue.WaitIdle();
+                    fence.Wait(DEFAULT_TIMEOUT);
+                    fence.Reset();
+                }
                 SingleCommandBuffer.Reset(CommandBufferResetFlags.ReleaseResources);
             }
         }
 
-  #endregion
+        private const ulong DEFAULT_TIMEOUT = 10_000_000UL; // 10 ms in ns
 
+  #endregion
 
         /// <inheritdoc />
         protected override void ReleaseUnmanagedResources(bool disposing)
@@ -149,5 +184,12 @@ namespace ajiva.Systems.VulcanEngine.Systems
         public DeviceSystem(AjivaEcs ecs) : base(ecs)
         {
         }
+    }
+
+    public enum QueueType
+    {
+        GraphicsQueue,
+        PresentQueue,
+        TransferQueue,
     }
 }

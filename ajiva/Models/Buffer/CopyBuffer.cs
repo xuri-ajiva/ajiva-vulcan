@@ -66,7 +66,7 @@ namespace ajiva.Models.Buffer
 
             if (aBuffer.Size < Size) throw new ArgumentException("The Destination Buffer is smaller than the Source Buffer", nameof(aBuffer));
 
-            system.SingleTimeCommand(x => x.GraphicsQueue!, command =>
+            system.SingleTimeCommand(QueueType.GraphicsQueue, command =>
             {
                 command.CopyBuffer(Buffer, aBuffer.Buffer, new BufferCopy
                 {
@@ -81,7 +81,7 @@ namespace ajiva.Models.Buffer
 
             if (aBuffer.Size < Size) throw new ArgumentException("The Destination Buffer is smaller than the Source Buffer", nameof(aBuffer));
 
-            system.SingleTimeCommand(x => x.GraphicsQueue!, command =>
+            system.SingleTimeCommand(QueueType.GraphicsQueue, command =>
             {
                 command.CopyBuffer(Buffer, aBuffer.Buffer, regions);
             });
