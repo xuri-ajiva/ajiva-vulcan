@@ -32,11 +32,9 @@ namespace ajiva.Systems.VulcanEngine.EngineManagers
             renderUnion?.Dispose();
             renderUnion = null!;
         }
-        
+
         private Queue render;
         private Queue presentation;
-
-        private static int i = 0;
 
         /// <inheritdoc />
         protected override void Create()
@@ -57,10 +55,10 @@ namespace ajiva.Systems.VulcanEngine.EngineManagers
             renderUnion = RenderUnion.CreateRenderUnion(ds.PhysicalDevice, ds.Device!, wi.Canvas, sh, tx.TextureSamplerImageViews, true, DepthImage!, ds.CommandPool);
 
             //renderUnion.FillFrameBuffers(ar.ComponentEntityMap.Keys.Union<ARenderAble>(ui.ComponentEntityMap.Keys));
-            renderUnion.FillFrameBuffers(new Dictionary<AjivaEngineLayer, List<ARenderAble>>()
+            renderUnion.FillFrameBuffers(new Dictionary<AjivaVulkanPipeline, List<ARenderAble>>()
             {
-                [AjivaEngineLayer.Layer2d] = ui.ComponentEntityMap.Keys.Cast<ARenderAble>().ToList(),
-                [AjivaEngineLayer.Layer3d] = ar.ComponentEntityMap.Keys.Cast<ARenderAble>().ToList(),
+                [AjivaVulkanPipeline.Pipeline2d] = ui.ComponentEntityMap.Keys.Cast<ARenderAble>().ToList(),
+                [AjivaVulkanPipeline.Pipeline3d] = ar.ComponentEntityMap.Keys.Cast<ARenderAble>().ToList(),
             });
         }
 

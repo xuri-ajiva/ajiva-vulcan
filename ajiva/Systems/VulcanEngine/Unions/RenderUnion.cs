@@ -16,13 +16,13 @@ namespace ajiva.Systems.VulcanEngine.Unions
     public class RenderUnion : DisposingLogger
     {
         public readonly SwapChainUnion swapChainUnion;
-        public readonly Dictionary<AjivaEngineLayer, PipelineFrameUnion> Unions;
+        public readonly Dictionary<AjivaVulkanPipeline, PipelineFrameUnion> Unions;
 
         public Semaphore ImageAvailable { get; }
         public Semaphore RenderFinished { get; }
 
         /// <inheritdoc />
-        public RenderUnion(SwapChainUnion swapChainUnion, Semaphore imageAvailable, Semaphore renderFinished, Dictionary<AjivaEngineLayer, PipelineFrameUnion> unions)
+        public RenderUnion(SwapChainUnion swapChainUnion, Semaphore imageAvailable, Semaphore renderFinished, Dictionary<AjivaVulkanPipeline, PipelineFrameUnion> unions)
         {
             this.swapChainUnion = swapChainUnion;
             Unions = unions;
@@ -36,12 +36,23 @@ namespace ajiva.Systems.VulcanEngine.Unions
             var swap = SwapChainUnion.CreateSwapChainUnion(physicalDevice, device, canvas);
 
             //todo fix error UNASSIGNED-CoreValidation-DrawState-InvalidRenderArea MessageID = 0x44824371 
-            Canvas canvas3d = canvas;//.Fork(new(100,100), new(100,100));
+            Canvas canvas3d = canvas; //.Fork(new(100,100), new(100,100));
             Canvas canvas2d = canvas;
-            
+
+            /*var clearGraph = GraphicsPipelineUnion.CreateGraphicsPipelineUnion(swap, physicalDevice, device, false,
+                Vertex2D.GetBindingDescription(), Vertex2D.GetAttributeDescriptions(),
+                system.ShaderUnions[AjivaEngineLayer.Layer2d].Main,
+                PipelineDescriptorInfos<UniformViewProj, UniformModel>.CreateFrom(
+                    system.ShaderUnions[AjivaEngineLayer.Layer2d].ViewProj,
+                    system.ShaderUnions[AjivaEngineLayer.Layer2d].UniformModels,
+                    textureSamplerImageViews
+                ), canvas);
+            var clearFrame = FrameBufferUnion.CreateFrameBufferUnion(swap, clearGraph, device, true, depthImage, commandPool, canvas);*/
+
             var graph3d = GraphicsPipelineUnion.CreateGraphicsPipelineUnion3D(swap, physicalDevice, device, system, textureSamplerImageViews, canvas3d);
-            var graph2d = GraphicsPipelineUnion.CreateGraphicsPipelineUnion2D(swap, physicalDevice, device, system, textureSamplerImageViews, canvas2d);
             var frame3d = FrameBufferUnion.CreateFrameBufferUnion(swap, graph3d, device, useDepthImage, depthImage, commandPool, canvas3d);
+
+            var graph2d = GraphicsPipelineUnion.CreateGraphicsPipelineUnion2D(swap, physicalDevice, device, system, textureSamplerImageViews, canvas2d);
             var frame2d = FrameBufferUnion.CreateFrameBufferUnion(swap, graph2d, device, false, depthImage, commandPool, canvas2d);
 
             var imageAvailable = device.CreateSemaphore()!;
@@ -49,8 +60,9 @@ namespace ajiva.Systems.VulcanEngine.Unions
 
             return new(swap, imageAvailable, renderFinished, new()
             {
-                [AjivaEngineLayer.Layer3d] = new(graph3d, frame3d),
-                [AjivaEngineLayer.Layer2d] = new(graph2d, frame2d),
+                [AjivaVulkanPipeline.Pipeline3d] = new(graph3d, frame3d),
+                [AjivaVulkanPipeline.Pipeline2d] = new(graph2d, frame2d),
+               // [AjivaVulkanPipeline.ClearPipeline] = new(clearGraph, clearFrame),
             });
         }
 
@@ -79,24 +91,26 @@ namespace ajiva.Systems.VulcanEngine.Unions
             buffer.End();
         }
 
-        private static readonly Dictionary<AjivaEngineLayer, ClearValue[]> ClearValuesMap = new()
+        private static readonly Dictionary<AjivaVulkanPipeline, ClearValue[]> ClearValuesMap = new()
         {
-            [AjivaEngineLayer.Layer3d] = new ClearValue[]
+            [AjivaVulkanPipeline.Pipeline3d] = new ClearValue[]
             {
                 new ClearColorValue(.1f, .1f, .1f, .1f),
                 new ClearDepthStencilValue(1, 0),
             },
-            [AjivaEngineLayer.Layer2d] = Array.Empty<ClearValue>(),
+           // [AjivaVulkanPipeline.Pipeline3d] = Array.Empty<ClearValue>(),
+            [AjivaVulkanPipeline.Pipeline2d] = Array.Empty<ClearValue>(),
         };
 
-        public void FillFrameBuffers(Dictionary<AjivaEngineLayer, List<ARenderAble>> render)
+        public void FillFrameBuffers(Dictionary<AjivaVulkanPipeline, List<ARenderAble>> render)
         {
             lock (bufferLock)
             {
                 foreach (var (pipelineName, graphicsFrameUnion) in Unions)
                 {
-                    if (!render.ContainsKey(pipelineName)) render.Add(pipelineName, new());
-                    
+                    if (!render.ContainsKey(pipelineName))
+                        render.Add(pipelineName, new());
+
                     for (var index = 0; index < graphicsFrameUnion.FrameBuffer.FrameBuffers.Length; index++)
                     {
                         var commandBuffer = graphicsFrameUnion.FrameBuffer.RenderBuffers[index];
@@ -107,14 +121,14 @@ namespace ajiva.Systems.VulcanEngine.Unions
             }
         }
 
-        public void FillFrameBuffers(IEnumerable<ARenderAble> renderAbles)
+        /*public void FillFrameBuffers(IEnumerable<ARenderAble> renderAbles)
         {
             var render = renderAbles.Where(able => able.Render)
                 .GroupBy(able => able.AjivaEngineLayer, able => able)
                 .ToDictionary(names => names.Key, names => names.ToList());
 
             FillFrameBuffers(render);
-        }
+        }*/
 
         private readonly object bufferLock = new();
 
@@ -181,6 +195,13 @@ namespace ajiva.Systems.VulcanEngine.Unions
                 RenderFinished.Dispose();
             }
         }
+    }
+
+    public enum AjivaVulkanPipeline
+    {
+        //ClearPipeline,
+        Pipeline3d,
+        Pipeline2d,
     }
     public enum AjivaEngineLayer
     {
