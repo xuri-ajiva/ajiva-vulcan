@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using ajiva.Application;
+using Ajiva.Wrapper.Logger;
 using SharpVk.Glfw;
 using SharpVk.Interop;
 
@@ -13,15 +14,22 @@ namespace ajiva
     {
         private static void Main()
         {
+            LogHelper.UseConsoleCursorPos = false;
+            Console.WriteLine($"ProcessId: {Environment.ProcessId}");
+            Console.WriteLine($"Version: {Environment.Version}");
+            Console.WriteLine($"Is64BitProcess: {Environment.Is64BitProcess}");
+            Console.WriteLine($"Is64BitOperatingSystem: {Environment.Is64BitOperatingSystem}");
+            Console.WriteLine($"OSVersion: {Environment.OSVersion}");
+            
             Glfw3.Init();
 
             var app01 = new AjivaApplication();
             app01.Init();
             app01.Run();
-            
+
             TaskSource.CancelAfter(3000);
             Task.WaitAll(Tasks.ToArray(), 4000);
-            
+
             app01.Dispose();
             app01 = null;
 
@@ -37,11 +45,12 @@ namespace ajiva
 
         private static readonly CancellationTokenSource TaskSource = new();
         private static readonly List<Task> Tasks = new();
+
         public static void TaskWatcher(Func<Task?> run)
         {
             Tasks.Add(Task.Run(run, TaskSource.Token));
         }
-        
+
         // private void Menu()
         // {
         //     ConsoleMenu m = new();
