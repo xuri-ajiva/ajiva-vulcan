@@ -54,7 +54,6 @@ namespace ajiva.Application
             entityComponentSystem.AddSystem(new WorkerPool(Environment.ProcessorCount / 2, "AjivaWorkerPool", entityComponentSystem) {Enabled = true});
             entityComponentSystem.CreateSystemOrComponentSystem<ShaderSystem>();
             var window = entityComponentSystem.CreateSystemOrComponentSystem<WindowSystem>();
-            entityComponentSystem.CreateSystemOrComponentSystem<GraphicsSystem>();
             entityComponentSystem.CreateSystemOrComponentSystem<BoxTextureGenerator>();
 
             var renderEngine = entityComponentSystem.CreateSystemOrComponentSystem<Ajiva3dSystem>();
@@ -63,6 +62,7 @@ namespace ajiva.Application
             entityComponentSystem.CreateSystemOrComponentSystem<ImageSystem>();
             entityComponentSystem.CreateSystemOrComponentSystem<TransformComponentSystem>();
 
+            entityComponentSystem.CreateSystemOrComponentSystem<GraphicsSystem>();
             entityComponentSystem.AddEntityFactory(new SomeEntityFactory());
 
             entityComponentSystem.AddEntityFactory(new CubeFactory());
