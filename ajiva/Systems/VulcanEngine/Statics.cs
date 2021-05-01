@@ -1,6 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using ajiva.Components.Media;
+using ajiva.Models;
+using ajiva.Systems.VulcanEngine.Systems;
 using Ajiva.Wrapper.Logger;
 using SharpVk;
 using SharpVk.Multivendor;
@@ -59,7 +62,7 @@ namespace ajiva.Systems.VulcanEngine
         {
             DebugReportBlock.WriteNext($"[{flags}] ({objectType}) {layerPrefix}");
             DebugReportBlock.WriteNext(message);
-
+            
             return false;
         };
 
@@ -87,6 +90,7 @@ namespace ajiva.Systems.VulcanEngine
             AddAvailableLayer("VK_LAYER_LUNARG_parameter_validation");
             AddAvailableLayer("VK_LAYER_LUNARG_swapchain");
             AddAvailableLayer("VK_LAYER_GOOGLE_threading");
+            AddAvailableLayer("VK_LAYER_RENDERDOC_Capture");
 
             var instance = Instance.Create(
                 enabledLayers.ToArray(),
@@ -108,6 +112,11 @@ namespace ajiva.Systems.VulcanEngine
         public static bool HasStencilComponent(this Format format)
         {
             return format == Format.D32SFloatS8UInt || format == Format.D24UNormS8UInt;
+        }
+
+        public static AImage CreateDepthImage(this PhysicalDevice device, ImageSystem imageSystem, Canvas canvas)
+        {
+            return imageSystem.CreateManagedImage(device.FindDepthFormat(), ImageAspectFlags.Depth, canvas);
         }
     }
 }
