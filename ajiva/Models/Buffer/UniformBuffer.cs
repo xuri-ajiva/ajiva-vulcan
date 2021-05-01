@@ -79,9 +79,69 @@ namespace ajiva.Models.Buffer
         {
             //todo simplify regions, e.g join neighbors
             Staging.CopySetValueToBuffer(updated);
-            Staging.CopyRegions(Uniform, updated.Select(GetRegion).ToArray(), system);
+            Staging.CopyRegions(Uniform, SimplifyFyRegions(updated), system);
         }
 
+        private BufferCopy[] RegionsToBufferCopy(List<uint> updated)
+            //stupid idea
+            => updated.Select(GetRegion).ToArray();
+        private BufferCopy[] SimplifyFyRegions(List<uint> updated)
+        {
+            updated.Sort();
+
+            List<Regions> simple = new();
+
+            Regions cur = new();
+            foreach (var u in updated)
+            {
+                if (u - cur.End > cur.Length)
+                {
+                    simple.Add(cur);
+                    cur = new(u, u);
+                }
+                else
+                {
+                    cur.Extend(u);
+                }
+            }
+
+            simple.Add(cur);
+            
+            return simple
+                .Where(x => x.Length > 0)
+                .Select(x => new BufferCopy
+                {
+                    Size = Uniform.SizeOfT * x.Length,
+                    DestinationOffset = Uniform.SizeOfT * x.Begin,
+                    SourceOffset = Uniform.SizeOfT * x.Begin,
+                }).ToArray();
+        }
+        
+
+        private struct Regions
+        {
+            public Regions(uint begin, uint end)
+            {
+                Begin = begin;
+                End = end;
+                initialized = true;
+            }
+
+            public uint Begin;
+            public uint End;
+            private bool initialized;
+            public uint Length => End - Begin + 1;
+
+            public void Extend(uint end)
+            {
+                if (!initialized)
+                {
+                    Begin = end;
+                    initialized = true;
+                }
+                End = end;
+            }
+        }
         private BufferCopy GetRegion(uint id) => new() {Size = Uniform.SizeOfT, DestinationOffset = Uniform.SizeOfT * id, SourceOffset = Uniform.SizeOfT * id};
     }
 }
