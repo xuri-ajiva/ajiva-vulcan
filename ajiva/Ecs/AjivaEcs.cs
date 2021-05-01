@@ -70,13 +70,65 @@ namespace ajiva.Ecs
 
         public T CreateSystemOrComponentSystem<T>() where T : class, ISystem
         {
-            /*if (typeof(T).FindInterfaces((type, _) => type == typeof(IComponentSystem), null).Length != 0)
-                throw new ArgumentException("IComponentSystem should not be assigned as ISystem");*/
+            return (T)CreateSystemOrComponentSystemIfNotExitsRecursive(typeof(T));
+        }
 
+        public T GetSystem<T>() where T : class, ISystem => (T)Systems[UsVc<T>.Key];
+
+        private object CreateSystemOrComponentSystemIfNotExitsRecursive(Type type)
+        {
+            var typeKey = UsVc.TypeKeyForType(type);
+
+            if (type.FindInterfaces((tpe, _) => tpe == typeof(ISystem) && tpe != typeof(IComponentSystem<>), null).Any())
+                if (Systems.ContainsKey(typeKey))
+                    return Systems[typeKey];
+
+            var instance = CreateObjectAndInject(type, missing =>
+            {
+                var iFaces = missing.GetInterfaces();
+                if (iFaces.Contains(typeof(ISystem)) && !iFaces.Contains(typeof(IComponentSystem)))
+                {
+                    return CreateSystemOrComponentSystemIfNotExitsRecursive(missing);
+                }
+                LogHelper.Log($"Error Cannot instantiate {missing}!");
+                return null;
+            });
+
+
+            switch (instance)
+            {
+                case IComponentSystem componentSystem:
+                    if (ComponentSystems.ContainsKey(componentSystem.ComponentType))
+                    {
+                        LogHelper.Log($"Dup Component System Creation: {componentSystem.GetHashCode()}");
+                        componentSystem.Dispose();
+                        return ComponentSystems[componentSystem.ComponentType];
+                    }
+                    ComponentSystems.Add(componentSystem.ComponentType, componentSystem);
+                    break;
+                case ISystem system:
+                    Systems.Add(UsVc.TypeKeyForType(type), system);
+                    break;
+                default:
+                    throw new RuntimeBinderInternalCompilerException("The Compiler has Failed on the T constrain");
+            }
+
+            if (instance is IUpdate update)
+                RegisterUpdate(update);
+            if (instance is IInit init)
+                RegisterInit(init);
+
+            return instance;
+        }
+
+        public T CreateObjectAndInject<T>(Func<Type, object?> missing) where T : class => (T)CreateObjectAndInject(typeof(T), missing);
+
+        private object CreateObjectAndInject(Type type, Func<Type, object?> missing)
+        {
             object instance;
-            var constructors = typeof(T).GetConstructors(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+            var constructors = type.GetConstructors(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
 
-            if (constructors.FirstOrDefault(x => x.GetParameters() is {Length: >= 1} parameters && parameters.Any(x => x.ParameterType == typeof(AjivaEcs))) is { } ctr)
+            if (constructors.FirstOrDefault(x => x.GetParameters() is {Length: >= 1} parameters && parameters.Any(y => y.ParameterType == typeof(AjivaEcs))) is { } ctr)
             {
                 var para = ctr.GetParameters();
                 object?[] args = new object?[para.Length];
@@ -89,25 +141,39 @@ namespace ajiva.Ecs
                         continue;
                     }
 
-                    bool ContainsArgType<TD>(IDictionary<TypeKey, TD> dict) where TD : class
+                    bool ContainsArgTypeAndFill<TD>(IDictionary<TypeKey, TD> dict) where TD : class
                     {
-                        if (!dict.ContainsKey(key)) return false;
+                        if (!dict.ContainsKey(key))
+                        {
+                            foreach (var (_, value) in dict)
+                            {
+                                if (value.GetType() != para[i].ParameterType) continue;
+                                args[i] = value;
+                                return true;
+                            }
+                            return false;
+                        }
                         args[i] = dict[key];
                         return true;
                     }
 
-                    if (ContainsArgType(ComponentSystems))
+                    if (ContainsArgTypeAndFill(ComponentSystems))
                         continue;
-                    if (ContainsArgType(Instances))
+                    if (ContainsArgTypeAndFill(Instances))
                         continue;
-                    if (ContainsArgType(Systems))
+                    if (ContainsArgTypeAndFill(Systems))
                         continue;
-
+                    
                     if (args[i] is not null)
                         continue;
 
-                    LogHelper.Log($"Creating New Instance of {para[i].ParameterType} for constructor of {typeof(T)}");
-                    args[i] = Activator.CreateInstance(para[i].ParameterType);
+                    args[i] = missing(para[i].ParameterType);
+                    
+                    /*if (args[i] is not null)
+                        continue;
+                    
+                    LogHelper.Log($"Creating New Instance of {para[i].ParameterType} for constructor of {type}");
+                    args[i] = Activator.CreateInstance(para[i].ParameterType);*/
                 }
                 instance = ctr.Invoke(args);
             }
@@ -115,29 +181,9 @@ namespace ajiva.Ecs
                 instance = ctr2.Invoke(null);
             else
                 instance = constructors.First().Invoke(Array.Empty<object?>());
-
-            switch (instance)
-            {
-                case IComponentSystem componentSystem:
-                    ComponentSystems.Add(componentSystem.ComponentType, componentSystem);
-                    break;
-                case ISystem system:
-                    Systems.Add(UsVc<T>.Key, system);
-                    break;
-                default:
-                    throw new RuntimeBinderInternalCompilerException("The Compiler has Failed on the T constrain");
-            }
-
-            if (instance is IUpdate update)
-                RegisterUpdate(update);
-            if (instance is IInit init)
-                RegisterInit(init);
-            
-            return instance as T;
+            return instance;
         }
-
-        public T GetSystem<T>() where T : class, ISystem => (T)Systems[UsVc<T>.Key];
-
+        
         public T GetPara<T>(string name) => (T)Params[name];
 
         public bool TryGetPara<T>(string name, out T? value)
@@ -206,7 +252,7 @@ namespace ajiva.Ecs
             toInit.Init(this);
             initDone.Add(toInit);
         }
-        
+
         public void Update(UpdateInfo delta)
         {
             if (updates.Count < 1) return;
