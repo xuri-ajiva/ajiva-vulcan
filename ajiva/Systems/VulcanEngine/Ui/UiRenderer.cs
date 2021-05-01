@@ -31,21 +31,18 @@ namespace ajiva.Systems.VulcanEngine.Ui
             return comp;
         }
 
-        private Random r = new();
 
         /// <inheritdoc />
         public void Update(UpdateInfo delta)
         {
-            var union = Ecs.GetSystem<ShaderSystem>().ShaderUnions[PipelineName.PipeLine2d];
-
-            var ids = new List<uint>();
+            /*var ids = new List<uint>();
             foreach (var entity in ComponentEntityMap.Keys)
             {
                 ids.Add(entity.Id);
                 union.UniformModels.UpdateOne(new() {Model = mat4.Scale(.1f)}, entity.Id);
             }
-
-            union.UniformModels.CopyRegions(ids);
+    
+            union.UniformModels.CopyRegions(ids);      */
         }
 
         /// <inheritdoc />
@@ -58,6 +55,59 @@ namespace ajiva.Systems.VulcanEngine.Ui
                 return true;
             });
             union.ViewProj.Copy();
+
+            union.UniformModels.UpdateExpresion((uint index, ref UniformModel value) =>
+            {
+                value.Model = mat4.Translate(.5f, .5f, 0) * mat4.Scale(0.1f);
+                return true;
+            });
+            union.UniformModels.Copy();
+
+            window = Ecs.GetSystem<WindowSystem>();
+
+            window.OnMouseMove += delegate(object? sender, AjivaMouseMotionCallbackEventArgs args)
+            {
+                if (args.ActiveLayer == AjivaEngineLayer.Layer2d)
+                {
+                    MouseMoved(args.Pos);
+                }
+            };
+        }
+
+        private ShaderUnion? union;
+        private WindowSystem window;
+
+        private void MouseMoved(vec2 pos)
+        {
+            var posNew = new vec2(pos.x / window.Canvas.WidthF, pos.y / window.Canvas.HeightF);
+            //LogHelper.Log(posNew);
+            if (ComponentEntityMap.Count > 0)
+            {
+                var ids = new List<uint>();
+                foreach (var entity in ComponentEntityMap.Keys)
+                {
+                    ids.Add(entity.Id);
+                    union.UniformModels.UpdateExpresionOne(entity.Id, (uint index, ref UniformModel value) =>
+                    {
+                        value.Model = mat4.Translate(posNew.x, posNew.y, 0) * mat4.Scale(.1f);
+                        return true;
+                    });
+                    union.UniformModels.UpdateOne(new() {Model = mat4.Translate(posNew.x, posNew.y, 0) * mat4.Scale(.1f)}, entity.Id);
+                }
+
+                union.UniformModels.CopyRegions(ids);
+
+                /*var cmp = ComponentEntityMap.Keys.First();
+
+                union.UniformModels.UpdateExpresionOne(cmp.Id, delegate(uint index, ref UniformModel value)
+                {
+                    value.Model.m30 = pos.x / window.Width;
+                    value.Model.m31 = pos.y / window.Height;
+                    //value.Model.m32 = z;
+                    return true;
+                });
+                union.UniformModels.Copy();*/
+            }
         }
 
         /// <inheritdoc />
