@@ -11,7 +11,7 @@ namespace ajiva.Factories
         public override Rect Create(AjivaEcs system, uint id)
         {
             var rect = new Rect();
-            system.AttachComponentToEntity<ARenderAble2D>(rect);
+            system.AttachComponentToEntity<RenderMesh2D>(rect);
             //system.AttachComponentToEntity<ATexture>(cube);
             return rect;
         }
