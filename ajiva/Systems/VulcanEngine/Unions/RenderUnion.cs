@@ -233,16 +233,4 @@ namespace ajiva.Systems.VulcanEngine.Unions
             }
         }
     }
-
-    public enum AjivaVulkanPipeline
-    {
-        //ClearPipeline,
-        Pipeline3d,
-        Pipeline2d,
-    }
-    public enum AjivaEngineLayer
-    {
-        Layer3d,
-        Layer2d,
-    }
 }
