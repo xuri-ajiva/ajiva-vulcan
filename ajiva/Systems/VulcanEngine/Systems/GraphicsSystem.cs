@@ -1,12 +1,10 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
 using ajiva.Components.Media;
 using ajiva.Components.RenderAble;
 using ajiva.Ecs;
 using ajiva.Ecs.System;
 using ajiva.Ecs.Utils;
-using ajiva.Systems.VulcanEngine.Ui;
+using ajiva.Systems.VulcanEngine.Layer;
 using ajiva.Systems.VulcanEngine.Unions;
 using ajiva.Utils;
 using ajiva.Utils.Changing;

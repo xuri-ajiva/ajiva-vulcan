@@ -1,6 +1,4 @@
-﻿using Ajiva.Wrapper.Logger;
-
-namespace ajiva.Utils.Changing
+﻿namespace ajiva.Utils.Changing
 {
     public class ChangingObserver : IChangingObserver
     {

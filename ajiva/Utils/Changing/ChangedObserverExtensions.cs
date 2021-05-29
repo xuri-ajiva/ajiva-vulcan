@@ -1,6 +1,4 @@
 ﻿using System;
-using System.Diagnostics;
-using Ajiva.Wrapper.Logger;
 
 namespace ajiva.Utils.Changing
 {

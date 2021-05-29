@@ -9,6 +9,7 @@ using ajiva.Factories;
 using ajiva.Generators.Texture;
 using ajiva.Systems;
 using ajiva.Systems.VulcanEngine;
+using ajiva.Systems.VulcanEngine.Layer;
 using ajiva.Systems.VulcanEngine.Systems;
 using ajiva.Systems.VulcanEngine.Ui;
 using ajiva.Utils;

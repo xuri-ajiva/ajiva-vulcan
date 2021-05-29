@@ -19,7 +19,7 @@ namespace ajiva.Models.Buffer
         public void Create(DeviceSystem system, BufferUsageFlags usage, MemoryPropertyFlags flags)
         {
             //todo: system.EnsureDevicesExist();
-            
+
             Buffer = system.Device!.CreateBuffer(Size, usage, SharingMode.Exclusive, null);
 
             var memRequirements = Buffer.GetMemoryRequirements();
