@@ -51,8 +51,10 @@ namespace ajiva.Systems.VulcanEngine.EngineManagers
             presentation = ds.PresentQueue!;
 
             CreateDepthImage(im, ds.PhysicalDevice!);
-
-            renderUnion = RenderUnion.CreateRenderUnion(ds.PhysicalDevice, ds.Device!, wi.Canvas, sh, tx.TextureSamplerImageViews, true, DepthImage!, ds.CommandPool);
+            ds.UseCommandPool(x =>
+            {
+                renderUnion = RenderUnion.CreateRenderUnion(ds.PhysicalDevice, ds.Device!, wi.Canvas, sh, tx.TextureSamplerImageViews, true, DepthImage!, x);
+            });
 
             //renderUnion.FillFrameBuffers(ar.ComponentEntityMap.Keys.Union<ARenderAble>(ui.ComponentEntityMap.Keys));
             renderUnion.FillFrameBuffers(new Dictionary<AjivaVulkanPipeline, List<ARenderAble>>()

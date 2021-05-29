@@ -25,8 +25,11 @@ namespace ajiva.Systems.VulcanEngine.Systems
         public Fence GraphicsQueueFence { get; private set; }
 
         public CommandBuffer? SingleCommandBuffer { get; private set; }
+        public CommandPool? TransientCommandPool { get; private set; }
+        private CommandPool? CommandPool { get; set; }
 
         private QueueFamilyIndices queueFamilies;
+        private readonly object commandPoolLock = new();
 
         private void PickPhysicalDevice(Instance instance)
         {
@@ -90,8 +93,13 @@ namespace ajiva.Systems.VulcanEngine.Systems
 
         #region CommandPool
 
-        internal CommandPool? TransientCommandPool;
-        public CommandPool? CommandPool;
+        public void UseCommandPool(Action<CommandPool> action)
+        {
+            lock (commandPoolLock)
+            {
+                action?.Invoke(CommandPool);
+            }
+        }
 
         private void EnsureCommandPoolsExists()
         {
