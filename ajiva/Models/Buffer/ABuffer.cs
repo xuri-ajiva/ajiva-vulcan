@@ -7,8 +7,8 @@ namespace ajiva.Models.Buffer
 {
     public class ABuffer : DisposingLogger
     {
-        public SharpVk.Buffer? Buffer;
-        public DeviceMemory? Memory;
+        public SharpVk.Buffer? Buffer { get; private set; }
+        public DeviceMemory? Memory { get; private set; }
         public uint Size { get; protected set; }
 
         public ABuffer(uint size)

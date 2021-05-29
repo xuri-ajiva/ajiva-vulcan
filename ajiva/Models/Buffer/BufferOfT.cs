@@ -3,7 +3,7 @@ using System.Runtime.CompilerServices;
 
 namespace ajiva.Models.Buffer
 {
-    public class BufferOfT<T> : ABuffer where T : struct
+    public class BufferOfT<T> : ABuffer, IBufferOfT where T : struct
     {
         public int Length { get; }
         public uint SizeOfT { get; }
