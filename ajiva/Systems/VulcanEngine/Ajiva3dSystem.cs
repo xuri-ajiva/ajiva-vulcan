@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
+using ajiva.Components;
 using ajiva.Components.Media;
 using ajiva.Components.RenderAble;
 using ajiva.Ecs;
@@ -7,17 +8,20 @@ using ajiva.Ecs.ComponentSytem;
 using ajiva.Ecs.Entity;
 using ajiva.Ecs.Utils;
 using ajiva.Entities;
+using ajiva.Models;
 using ajiva.Models.Buffer;
+using ajiva.Systems.VulcanEngine.Layer;
 using ajiva.Systems.VulcanEngine.Systems;
 using ajiva.Systems.VulcanEngine.Unions;
 using ajiva.Utils;
 using ajiva.Utils.Changing;
+using SharpVk;
 using SharpVk.Glfw;
 
 namespace ajiva.Systems.VulcanEngine
 {
     [Dependent(typeof(WindowSystem))]
-    public class Ajiva3dSystem : ComponentSystemBase<ARenderAble3D>, IInit, IUpdate
+    public class Ajiva3dSystem : ComponentSystemBase<RenderMesh3D>, IInit, IUpdate, IAjivaLayer
     {
         public Cameras.Camera MainCamara
         {
@@ -137,13 +141,20 @@ namespace ajiva.Systems.VulcanEngine
                 if (e.ActiveLayer == AjivaEngineLayer.Layer3d)
                     MainCamara.OnMouseMoved(e.Delta.x, e.Delta.y);
             };
+
+            PipelineDescriptorInfos = ajiva.Systems.VulcanEngine.Unions.PipelineDescriptorInfos.CreateFrom(
+                Ecs.GetSystem<ShaderSystem>().ShaderUnions[AjivaEngineLayer.Layer3d].ViewProj,
+                Ecs.GetSystem<ShaderSystem>().ShaderUnions[AjivaEngineLayer.Layer3d].UniformModels,
+                Ecs.GetComponentSystem<TextureSystem, ATexture>().TextureSamplerImageViews
+            );
+            Canvas = window.Canvas;
         }
 
         /// <inheritdoc />
-        public override ARenderAble3D CreateComponent(IEntity entity)
+        public override RenderMesh3D CreateComponent(IEntity entity)
         {
             Ecs.GetSystem<GraphicsSystem>().ChangingObserver.Changed();
-            var rnd = new ARenderAble3D();
+            var rnd = new RenderMesh3D();
             ComponentEntityMap.Add(rnd, entity);
             return rnd;
         }
@@ -171,5 +182,50 @@ namespace ajiva.Systems.VulcanEngine
         public Ajiva3dSystem(AjivaEcs ecs) : base(ecs)
         {
         }
+
+#region Layer
+
+        /// <inheritdoc />
+        public AjivaVulkanPipeline PipelineLayer { get; } = AjivaVulkanPipeline.Pipeline3d;
+
+        /// <inheritdoc />
+        public AImage DepthImage { get; set; }
+
+        /// <inheritdoc />
+        public Shader MainShader
+        {
+            get => Ecs.GetSystem<ShaderSystem>().ShaderUnions[AjivaEngineLayer.Layer3d].Main;
+            set => throw new System.NotImplementedException();
+        }
+
+        /// <inheritdoc />
+        public PipelineDescriptorInfos[] PipelineDescriptorInfos { get; set; }
+
+        /// <inheritdoc />
+        public bool DepthEnabled { get; set; }  = true;
+
+        /// <inheritdoc />
+        public Canvas Canvas { get; set; }
+
+        /// <inheritdoc />
+        public VertexInputBindingDescription VertexInputBindingDescription { get; } = Vertex3D.GetBindingDescription();
+
+        /// <inheritdoc />
+        public VertexInputAttributeDescription[] VertexInputAttributeDescriptions { get; } = Vertex3D.GetAttributeDescriptions();
+
+        /// <inheritdoc />
+        public ClearValue[] ClearValues { get; set; } =
+        {
+            new ClearColorValue(.1f, .1f, .1f, .1f),
+            new ClearDepthStencilValue(1, 0),
+        };
+
+        /// <inheritdoc />
+        public List<IRenderMesh> GetRenders()
+        {
+            return ComponentEntityMap.Keys.Cast<IRenderMesh>().ToList();
+        }
+
+  #endregion
     }
 }
