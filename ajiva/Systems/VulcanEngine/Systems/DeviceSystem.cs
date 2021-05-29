@@ -152,7 +152,7 @@ namespace ajiva.Systems.VulcanEngine.Systems
                         {
                             SingleCommandBuffer
                         },
-                    }, null);
+                    }, fence);
 
                     queue.WaitIdle();
                     fence.Wait(DEFAULT_TIMEOUT);
