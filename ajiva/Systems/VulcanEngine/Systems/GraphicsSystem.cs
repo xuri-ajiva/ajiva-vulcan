@@ -13,7 +13,7 @@ using SharpVk;
 
 namespace ajiva.Systems.VulcanEngine.Systems
 {
-    [Dependent(typeof(TextureSystem), typeof(Ajiva3dSystem), typeof(UiRenderer))]
+    [Dependent(typeof(TextureSystem))]
     public class GraphicsSystem : SystemBase, IInit, IUpdate
     {
         public IChangingObserver ChangingObserver { get; } = new ChangingObserver(100);
@@ -23,8 +23,6 @@ namespace ajiva.Systems.VulcanEngine.Systems
         /// <inheritdoc />
         protected override void ReleaseUnmanagedResources(bool disposing)
         {
-            DepthImage?.Dispose();
-            DepthImage = null!;
             renderUnion?.Dispose();
             renderUnion = null!;
         }
@@ -64,8 +62,6 @@ namespace ajiva.Systems.VulcanEngine.Systems
 
         #region gl
 
-        private AImage DepthImage { get; set; }
-
         private Format DepthFormat { get; set; }
 
         private RenderUnion renderUnion;
@@ -81,45 +77,36 @@ namespace ajiva.Systems.VulcanEngine.Systems
         private DeviceSystem deviceSystem;
         private ImageSystem imageSystem;
         private WindowSystem windowSystem;
-        private ShaderSystem shaderSystem;
-        private TextureSystem textureSystem;
-        private Ajiva3dSystem ajiva3dSystem;
-        private UiRenderer uiRenderer;
-        private const int DISPOSE_DALEY = 1000;
+        private LayerSystem layerSystem;
+        private IRenderMeshPool meshPool;
 
         public void ResolveDeps()
         {
             deviceSystem = Ecs.GetSystem<DeviceSystem>();
             imageSystem = Ecs.GetComponentSystem<ImageSystem, AImage>();
             windowSystem = Ecs.GetSystem<WindowSystem>();
-            shaderSystem = Ecs.GetSystem<ShaderSystem>();
-            textureSystem = Ecs.GetComponentSystem<TextureSystem, ATexture>();
-            ajiva3dSystem = Ecs.GetComponentSystem<Ajiva3dSystem, ARenderAble3D>();
-            uiRenderer = Ecs.GetComponentSystem<UiRenderer, ARenderAble2D>();
+            layerSystem = Ecs.GetSystem<LayerSystem>();
+            meshPool = Ecs.GetInstance<MeshPool>();
 
             render = deviceSystem.GraphicsQueue!;
             presentation = deviceSystem.PresentQueue!;
             DepthFormat = (deviceSystem.PhysicalDevice ?? throw new InvalidOperationException()).FindDepthFormat();
         }
 
+        private const int DISPOSE_DALEY = 1000;
+
         protected void ReCreateRenderUnion()
         {
-            ReCreateDepthImage();
-
             renderUnion?.DisposeIn(DISPOSE_DALEY);
-            deviceSystem.UseCommandPool(x =>
+
+            renderUnion = RenderUnion.CreateRenderUnion(deviceSystem, windowSystem.Canvas);
+
+            foreach (var (_, layer) in layerSystem.Layers)
             {
-                renderUnion = RenderUnion.CreateRenderUnion(
-                    deviceSystem.PhysicalDevice ?? throw new InvalidOperationException(),
-                    deviceSystem.Device!,
-                    windowSystem.Canvas,
-                    shaderSystem,
-                    textureSystem.TextureSamplerImageViews,
-                    true,
-                    DepthImage!,
-                    x
-                );
-            });
+                layer.ReCreateDepthImage(imageSystem, DepthFormat, windowSystem.Canvas);
+                renderUnion.AddUpdateLayer(layer, deviceSystem);
+            }
+
             UpdateGraphicsData();
         }
 
@@ -127,18 +114,11 @@ namespace ajiva.Systems.VulcanEngine.Systems
         {
             LogHelper.Log("Updating BufferData");
             ChangingObserver.Updated();
-            //renderUnion.FillFrameBuffers(ar.ComponentEntityMap.Keys.Union<ARenderAble>(ui.ComponentEntityMap.Keys));
-            renderUnion.FillFrameBuffers(new Dictionary<AjivaVulkanPipeline, List<ARenderAble>>()
-            {
-                [AjivaVulkanPipeline.Pipeline2d] = uiRenderer.ComponentEntityMap.Keys.Cast<ARenderAble>().ToList(),
-                [AjivaVulkanPipeline.Pipeline3d] = ajiva3dSystem.ComponentEntityMap.Keys.Cast<ARenderAble>().ToList(),
-            });
-        }
 
-        private void ReCreateDepthImage()
-        {
-            DepthImage?.DisposeIn(DISPOSE_DALEY);
-            DepthImage = imageSystem.CreateManagedImage(DepthFormat, ImageAspectFlags.Depth, windowSystem.Canvas);
+            foreach (var (_, layer) in layerSystem.Layers)
+            {
+                renderUnion.FillFrameBuffer(layer.PipelineLayer, layer.GetRenders(), meshPool);
+            }
         }
 
   #endregion
