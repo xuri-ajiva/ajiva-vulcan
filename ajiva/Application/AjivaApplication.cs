@@ -50,6 +50,9 @@ namespace ajiva.Application
             (vulcanInstance, debugReportCallback) = Statics.CreateInstance(Glfw3.GetRequiredInstanceExtensions());
             var deviceSystem = entityComponentSystem.CreateSystemOrComponentSystem<DeviceSystem>();
 
+            var meshPool = new MeshPool(deviceSystem);
+            entityComponentSystem.AddInstance(meshPool);
+
             entityComponentSystem.AddInstance(vulcanInstance);
 
             entityComponentSystem.AddSystem(new WorkerPool(Environment.ProcessorCount / 2, "AjivaWorkerPool", entityComponentSystem) {Enabled = true});
@@ -57,8 +60,12 @@ namespace ajiva.Application
             var window = entityComponentSystem.CreateSystemOrComponentSystem<WindowSystem>();
             entityComponentSystem.CreateSystemOrComponentSystem<BoxTextureGenerator>();
 
+            var layerSystem = entityComponentSystem.CreateSystemOrComponentSystem<LayerSystem>();
             var renderEngine = entityComponentSystem.CreateSystemOrComponentSystem<Ajiva3dSystem>();
-            entityComponentSystem.CreateSystemOrComponentSystem<UiRenderer>();
+            var uiLayer = entityComponentSystem.CreateSystemOrComponentSystem<UiRenderer>();
+            layerSystem.AddUpdateLayer(renderEngine);
+            layerSystem.AddUpdateLayer(uiLayer);
+
             entityComponentSystem.CreateSystemOrComponentSystem<TextureSystem>();
             entityComponentSystem.CreateSystemOrComponentSystem<ImageSystem>();
             entityComponentSystem.CreateSystemOrComponentSystem<TransformComponentSystem>();
@@ -79,17 +86,20 @@ namespace ajiva.Application
             renderEngine.MainCamara.UpdatePerspective(90, SurfaceWidth, SurfaceHeight);
             renderEngine.MainCamara.MovementSpeed = .01f;
 
-            var meshPref = MeshPrefab.Cube.Clone();
+            var meshPref = MeshPrefab.Cube;
             var r = new Random();
 
             entityComponentSystem.InitSystems();
 
-            for (var i = 0; i < size; i++)
+            meshPool.AddMesh(MeshPrefab.Cube);
+            meshPool.AddMesh(MeshPrefab.Rect);
+
+            for (var i = 0; i < 10; i++)
             {
                 var cube = entityComponentSystem.CreateEntity<Cube>();
 
-                var render = cube.GetComponent<ARenderAble3D>();
-                render.SetMesh(meshPref, deviceSystem);
+                var render = cube.GetComponent<RenderMesh3D>();
+                render.SetMesh(meshPref);
                 render.Render = true;
 
                 var trans = cube.GetComponent<Transform3d>();
@@ -98,38 +108,41 @@ namespace ajiva.Application
             }
         }
 
-        const int size = 10;
-        const int posRange = 10;
+        const int size = 100;
+        const int posRange = 100;
         const float scale = 0.7f;
         Random r = new();
 
         private void WindowOnOnKeyEvent(object? sender, Key key, int scancode, InputAction inputaction, Modifier modifiers)
         {
-            if(inputaction != InputAction.Press) return;
+            if (inputaction != InputAction.Press) return;
             // ReSharper disable once SwitchStatementMissingSomeEnumCasesNoDefault
             switch (key)
             {
                 case Key.B:
-                    var meshPref = MeshPrefab.Cube.Clone();
-                    var cube = entityComponentSystem.CreateEntity<Cube>();
+                    for (var i = 0; i < 100; i++)
+                    {
+                        var meshPref = MeshPrefab.Cube;
+                        var cube = entityComponentSystem.CreateEntity<Cube>();
 
-                    var render = cube.GetComponent<ARenderAble3D>();
-                    render.SetMesh(meshPref, entityComponentSystem.GetSystem<DeviceSystem>());
-                    render.Render = true;
+                        var render = cube.GetComponent<RenderMesh3D>();
+                        render.SetMesh(meshPref);
+                        render.Render = true;
 
-                    var trans = cube.GetComponent<Transform3d>();
-                    trans.Position = new(r.Next(-posRange, posRange), r.Next(-posRange, posRange), r.Next(-posRange, posRange));
-                    trans.Rotation = new(r.Next(0, 100), r.Next(0, 100), r.Next(0, 100));
+                        var trans = cube.GetComponent<Transform3d>();
+                        trans.Position = new(r.Next(-posRange, posRange), r.Next(-posRange, posRange), r.Next(-posRange, posRange));
+                        trans.Rotation = new(r.Next(0, 100), r.Next(0, 100), r.Next(0, 100));
+                    }
                     break;
 
                 case Key.R:
                     var rect = entityComponentSystem.CreateEntity<Rect>();
 
-                    var renderRect = rect.GetComponent<ARenderAble2D>();
-                    renderRect.SetMesh(MeshPrefab.Rect, entityComponentSystem.GetSystem<DeviceSystem>());
+                    var renderRect = rect.GetComponent<RenderMesh2D>();
+                    renderRect.SetMesh(MeshPrefab.Rect);
                     renderRect.Render = true;
                     break;
-                
+
                 case Key.T:
                     /*foreach (var keyValuePair in entityComponentSystem.Entities)
                     {keyValuePair.Value
