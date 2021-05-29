@@ -2,10 +2,12 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
+using ajiva.Components;
 using ajiva.Components.Media;
 using ajiva.Components.RenderAble;
 using ajiva.Models;
 using ajiva.Models.Buffer;
+using ajiva.Systems.VulcanEngine.Layer;
 using ajiva.Systems.VulcanEngine.Systems;
 using ajiva.Utils;
 using SharpVk;
@@ -31,104 +33,139 @@ namespace ajiva.Systems.VulcanEngine.Unions
             RenderFinished = renderFinished;
         }
 
-        public static RenderUnion CreateRenderUnion(PhysicalDevice physicalDevice, Device device, Canvas canvas, ShaderSystem system, DescriptorImageInfo[] textureSamplerImageViews, bool useDepthImage, AImage depthImage, CommandPool commandPool)
+        public static RenderUnion CreateRenderUnion(DeviceSystem deviceSystem, Canvas canvas)
         {
-            var swap = SwapChainUnion.CreateSwapChainUnion(physicalDevice, device, canvas);
+            var swap = SwapChainUnion.CreateSwapChainUnion(deviceSystem.PhysicalDevice!, deviceSystem.Device!, canvas);
 
-            //todo fix error UNASSIGNED-CoreValidation-DrawState-InvalidRenderArea MessageID = 0x44824371 
-            Canvas canvas3d = canvas; //.Fork(new(100,100), new(100,100));
-            Canvas canvas2d = canvas;
+            var imageAvailable = deviceSystem.Device!.CreateSemaphore()!;
+            var renderFinished = deviceSystem.Device!.CreateSemaphore()!;
 
-            /*var clearGraph = GraphicsPipelineUnion.CreateGraphicsPipelineUnion(swap, physicalDevice, device, false,
-                Vertex2D.GetBindingDescription(), Vertex2D.GetAttributeDescriptions(),
-                system.ShaderUnions[AjivaEngineLayer.Layer2d].Main,
-                PipelineDescriptorInfos<UniformViewProj, UniformModel>.CreateFrom(
-                    system.ShaderUnions[AjivaEngineLayer.Layer2d].ViewProj,
-                    system.ShaderUnions[AjivaEngineLayer.Layer2d].UniformModels,
-                    textureSamplerImageViews
-                ), canvas);
-            var clearFrame = FrameBufferUnion.CreateFrameBufferUnion(swap, clearGraph, device, true, depthImage, commandPool, canvas);*/
-
-            var graph3d = GraphicsPipelineUnion.CreateGraphicsPipelineUnion3D(swap, physicalDevice, device, system, textureSamplerImageViews, canvas3d);
-            var frame3d = FrameBufferUnion.CreateFrameBufferUnion(swap, graph3d, device, useDepthImage, depthImage, commandPool, canvas3d);
-
-            var graph2d = GraphicsPipelineUnion.CreateGraphicsPipelineUnion2D(swap, physicalDevice, device, system, textureSamplerImageViews, canvas2d);
-            var frame2d = FrameBufferUnion.CreateFrameBufferUnion(swap, graph2d, device, false, depthImage, commandPool, canvas2d);
-
-            var imageAvailable = device.CreateSemaphore()!;
-            var renderFinished = device.CreateSemaphore()!;
-
-            return new(swap, imageAvailable, renderFinished, new()
-            {
-                [AjivaVulkanPipeline.Pipeline3d] = new(graph3d, frame3d),
-                [AjivaVulkanPipeline.Pipeline2d] = new(graph2d, frame2d),
-               // [AjivaVulkanPipeline.ClearPipeline] = new(clearGraph, clearFrame),
-            });
+            return new(swap, imageAvailable, renderFinished, new());
         }
 
-        private void FillBuffer(CommandBuffer buffer, Framebuffer framebuffer, GraphicsPipelineUnion graphicsPipelineUnion, IEnumerable<ARenderAble> renders, ClearValue[] clearValues)
+        public void AddUpdateLayer3D(AjivaVulkanPipeline layer, DeviceSystem deviceSystem, ShaderSystem system, DescriptorImageInfo[] textureSamplerImageViews, bool useDepthImage, AImage depthImage, CommandPool commandPool, Canvas canvas)
         {
-            buffer.Reset();
+            var graph3d = GraphicsPipelineUnion.CreateGraphicsPipelineUnion3D(swapChainUnion, deviceSystem.PhysicalDevice!, deviceSystem.Device!, system, textureSamplerImageViews, canvas);
+            var frame3d = FrameBufferUnion.CreateFrameBufferUnion(swapChainUnion, graph3d, deviceSystem.Device!, useDepthImage, depthImage, commandPool, canvas);
 
-            buffer.Begin(CommandBufferUsageFlags.SimultaneousUse);
-
-            buffer.BeginRenderPass(graphicsPipelineUnion.RenderPass,
-                framebuffer,
-                swapChainUnion.Canvas.Rect,
-                clearValues,
-                SubpassContents.Inline);
-
-            buffer.BindPipeline(PipelineBindPoint.Graphics, graphicsPipelineUnion.Pipeline);
-
-            foreach (var renderAble in renders)
+            lock (bufferLock)
             {
-                if (!renderAble.Render) continue;
-                buffer.BindDescriptorSets(PipelineBindPoint.Graphics, graphicsPipelineUnion.PipelineLayout, 0, graphicsPipelineUnion.DescriptorSet, renderAble.Id * (uint)Unsafe.SizeOf<UniformModel>());
-                renderAble.BindAndDraw(buffer);
+                Unions[layer] = new(graph3d, frame3d);
             }
-
-            buffer.EndRenderPass();
-            buffer.End();
         }
 
-        private static readonly Dictionary<AjivaVulkanPipeline, ClearValue[]> ClearValuesMap = new()
+        public void AddUpdateLayer2D(AjivaVulkanPipeline layer, DeviceSystem deviceSystem, ShaderSystem system, DescriptorImageInfo[] textureSamplerImageViews, bool useDepthImage, AImage depthImage, CommandPool commandPool, Canvas canvas)
+        {
+            var graph2d = GraphicsPipelineUnion.CreateGraphicsPipelineUnion2D(swapChainUnion, deviceSystem.PhysicalDevice!, deviceSystem.Device!, system, textureSamplerImageViews, canvas);
+            var frame2d = FrameBufferUnion.CreateFrameBufferUnion(swapChainUnion, graph2d, deviceSystem.Device!, useDepthImage, depthImage, commandPool, canvas);
+            lock (bufferLock)
+            {
+                Unions[layer] = new(graph2d, frame2d);
+            }
+        }
+
+        public void AddUpdateLayer(AjivaVulkanPipeline layer, DeviceSystem deviceSystem, Shader shaderMain, PipelineDescriptorInfos[] pipelineDescriptorInfos, bool useDepthImage, AImage depthImage, Canvas canvas, VertexInputBindingDescription vertexInputBindingDescription, VertexInputAttributeDescription[] vertexInputAttributeDescription)
+        {
+            var graph2d = GraphicsPipelineUnion.CreateGraphicsPipelineUnion(swapChainUnion, deviceSystem.PhysicalDevice!, deviceSystem.Device!, useDepthImage, vertexInputBindingDescription, vertexInputAttributeDescription, shaderMain, pipelineDescriptorInfos, canvas);
+            FrameBufferUnion frame2d = default!;
+            deviceSystem.UseCommandPool(commandPool =>
+            {
+                frame2d = FrameBufferUnion.CreateFrameBufferUnion(swapChainUnion, graph2d, deviceSystem.Device!, useDepthImage, depthImage, commandPool, canvas);
+            });
+            lock (bufferLock)
+            {
+                Unions[layer] = new(graph2d, frame2d);
+            }
+        }
+
+        public void AddUpdateLayer(AjivaVulkanPipeline layer, DeviceSystem deviceSystem, Shader shaderMain, IBufferOfT viewProj, IBufferOfT uniformModels, DescriptorImageInfo[] textureSamplerImageViews, VertexInputBindingDescription vertexInputBindingDescription, VertexInputAttributeDescription[] vertexInputAttributeDescription, bool useDepthImage, AImage depthImage,  Canvas canvas)
+        {
+            AddUpdateLayer(layer, deviceSystem, shaderMain, PipelineDescriptorInfos.CreateFrom(viewProj, uniformModels, textureSamplerImageViews), useDepthImage, depthImage, canvas, vertexInputBindingDescription, vertexInputAttributeDescription);
+        }
+
+        public void AddUpdateLayer(IAjivaLayer layer, DeviceSystem deviceSystem)
+        {
+            AddUpdateLayer(layer.PipelineLayer, deviceSystem, layer.MainShader,layer.PipelineDescriptorInfos, layer.DepthEnabled, layer.DepthImage, layer.Canvas, layer.VertexInputBindingDescription, layer.VertexInputAttributeDescriptions);
+            AddUpdateClearValue(layer.PipelineLayer, layer.ClearValues);
+        }
+
+        private void AddUpdateClearValue(AjivaVulkanPipeline layer, ClearValue[] clearValues)
+        {
+            ClearValuesMap[layer] = clearValues;
+        }
+
+        private  readonly Dictionary<AjivaVulkanPipeline, ClearValue[]> ClearValuesMap = new()
         {
             [AjivaVulkanPipeline.Pipeline3d] = new ClearValue[]
             {
                 new ClearColorValue(.1f, .1f, .1f, .1f),
                 new ClearDepthStencilValue(1, 0),
             },
-           // [AjivaVulkanPipeline.Pipeline3d] = Array.Empty<ClearValue>(),
+            // [AjivaVulkanPipeline.Pipeline3d] = Array.Empty<ClearValue>(),
             [AjivaVulkanPipeline.Pipeline2d] = Array.Empty<ClearValue>(),
         };
+        
 
-        public void FillFrameBuffers(Dictionary<AjivaVulkanPipeline, List<ARenderAble>> render)
+        public void FillFrameBuffers(Dictionary<AjivaVulkanPipeline, List<IRenderMesh>> render, IRenderMeshPool pool)
         {
             lock (bufferLock)
             {
                 foreach (var (pipelineName, graphicsFrameUnion) in Unions)
                 {
                     if (!render.ContainsKey(pipelineName))
-                        render.Add(pipelineName, new());
+                        render.Add(pipelineName, new()); //todo: can we just continue and leave the old stuff in the buffer
 
-                    for (var index = 0; index < graphicsFrameUnion.FrameBuffer.FrameBuffers.Length; index++)
-                    {
-                        var commandBuffer = graphicsFrameUnion.FrameBuffer.RenderBuffers[index];
-                        var framebuffer = graphicsFrameUnion.FrameBuffer.FrameBuffers[index];
-                        FillBuffer(commandBuffer, framebuffer, graphicsFrameUnion.PipelineUnion, render[pipelineName], ClearValuesMap[pipelineName]);
-                    }
+                    FillUnionBuffers(render[pipelineName], ClearValuesMap[pipelineName], graphicsFrameUnion, pool);
                 }
             }
         }
 
-        /*public void FillFrameBuffers(IEnumerable<ARenderAble> renderAbles)
+        public void FillFrameBuffer(AjivaVulkanPipeline layer, List<IRenderMesh> renders, IRenderMeshPool pool)
         {
-            var render = renderAbles.Where(able => able.Render)
-                .GroupBy(able => able.AjivaEngineLayer, able => able)
-                .ToDictionary(names => names.Key, names => names.ToList());
+            lock (bufferLock)
+            {
+                FillUnionBuffers(renders, ClearValuesMap[layer], Unions[layer], pool);
+            }
+        }
 
-            FillFrameBuffers(render);
-        }*/
+        private void FillUnionBuffers(IReadOnlyCollection<IRenderMesh> renders, ClearValue[] clearValues, PipelineFrameUnion graphicsFrameUnion, IRenderMeshPool pool)
+        {
+            for (var index = 0; index < graphicsFrameUnion.FrameBuffer.FrameBuffers.Length; index++)
+            {
+                var commandBuffer = graphicsFrameUnion.FrameBuffer.RenderBuffers[index];
+                var framebuffer = graphicsFrameUnion.FrameBuffer.FrameBuffers[index];
+                FillUnionBuffer(graphicsFrameUnion, commandBuffer, framebuffer, clearValues, renders.OrderBy(x => x.MeshId), pool);
+            }
+        }
+
+        private void FillUnionBuffer(PipelineFrameUnion graphicsFrameUnion, CommandBuffer commandBuffer, Framebuffer framebuffer, ClearValue[] clearValues, IOrderedEnumerable<IRenderMesh> renders, IRenderMeshPool pool)
+        {
+            commandBuffer.Reset();
+
+            commandBuffer.Begin(CommandBufferUsageFlags.SimultaneousUse);
+
+            commandBuffer.BeginRenderPass(graphicsFrameUnion.PipelineUnion.RenderPass,
+                framebuffer,
+                swapChainUnion.Canvas.Rect,
+                clearValues,
+                SubpassContents.Inline);
+
+            commandBuffer.BindPipeline(PipelineBindPoint.Graphics, graphicsFrameUnion.PipelineUnion.Pipeline);
+
+            pool.Reset();
+            foreach (var renderIt in renders)
+            {
+                if (!renderIt.Render) continue;
+
+                commandBuffer.BindDescriptorSets(PipelineBindPoint.Graphics, graphicsFrameUnion.PipelineUnion.PipelineLayout, 0, graphicsFrameUnion.PipelineUnion.DescriptorSet, renderIt.Id * (uint)Unsafe.SizeOf<UniformModel>());
+
+                pool.DrawMesh(commandBuffer, renderIt.MeshId);
+            }
+
+            commandBuffer.EndRenderPass();
+            commandBuffer.End();
+        }
+        
 
         private readonly object bufferLock = new();
 
