@@ -10,6 +10,7 @@ using ajiva.Ecs.Utils;
 using ajiva.Entities;
 using ajiva.Models;
 using ajiva.Models.Buffer;
+using ajiva.Models.Buffer.ChangeAware;
 using ajiva.Systems.VulcanEngine.Layer;
 using ajiva.Systems.VulcanEngine.Systems;
 using ajiva.Systems.VulcanEngine.Unions;
@@ -35,65 +36,53 @@ namespace ajiva.Systems.VulcanEngine
 
         private Cameras.Camera? mainCamara;
 
-        private void UpdateCamaraProjView(ShaderSystem shaderSystem)
+        private void UpdateCamaraProjView()
         {
-            var updateCtr = false;
-            shaderSystem.ShaderUnions[AjivaEngineLayer.Layer3d].ViewProj.UpdateExpresion(delegate(uint index, ref UniformViewProj value)
+            ref var value = ref ViewProj.GetRef(0);
+            var changed = false;
+            if (value.View != mainCamara!.View)
             {
-                if (index != 0) return false;
-
-                if (value.View != mainCamara!.View)
-                {
-                    updateCtr = true;
-                    value.View = MainCamara.View;
-                }
-                if (value.Proj == MainCamara.Projection)
-                    return updateCtr;
-
-                updateCtr = true;
+                changed = true;
+                value.View = MainCamara.View;
+            }
+            if (value.Proj != MainCamara.Projection) //todo: we flip the [1,1] value sow it is never the same
+            {
                 value.Proj = MainCamara.Projection;
                 value.Proj[1, 1] *= -1;
 
-                return updateCtr;
-            });
-            /*if (updateCtr)
-                shaderSystem.ShaderUnions[AjivaEngineLayer.Layer3d].ViewProj.Copy();    */
+                changed = true;
+            }
+            if (changed)
+                    ViewProj.Commit((0));
         }
 
         /// <inheritdoc />
         public void Update(UpdateInfo delta)
         {
-            ShaderSystem shaderSystem = Ecs.GetSystem<ShaderSystem>();
-
             var updated = new List<uint>();
             foreach (var (renderAble, entity) in ComponentEntityMap)
             {
-                var update = false;
                 Transform3d? transform = null!;
-                //ATexture? texture = null!;
                 if (entity.TryGetComponent(out transform) && transform!.ChangingObserver.UpdateCycle(delta.Iteration))
                 {
-                    shaderSystem.ShaderUnions[AjivaEngineLayer.Layer3d].UniformModels.Staging.GetRef(renderAble!.Id).Model = transform.ModelMat; // texture?.TextureId ?? 0
-                    update = true;
+                        
+                    Models.Value[(int)renderAble.Id].Model = transform.ModelMat;
+                    Models.SetChanged((int)renderAble.Id, true);
                     transform.ChangingObserver.Updated();
                 }
                 if (renderAble.ChangingObserver.UpdateCycle(delta.Iteration) /*entity.TryGetComponent(out texture) && texture!.Dirty ||*/)
                 {
-                    shaderSystem.ShaderUnions[AjivaEngineLayer.Layer3d].UniformModels.Staging.GetRef(renderAble!.Id).TextureSamplerId = renderAble!.Id; // texture?.TextureId ?? 0
-                    update = true;
+                    Models.Value[(int)renderAble.Id].TextureSamplerId = renderAble!.Id; // texture?.TextureId ?? 0
+                    Models.SetChanged((int)renderAble.Id, true);
                     renderAble.ChangingObserver.Updated();
                 }
-
-                if (update)
-                    updated.Add(renderAble.Id);
             }
 
-            if (updated.Any())
-                lock (MainLock)
-                    shaderSystem.ShaderUnions[AjivaEngineLayer.Layer3d].UniformModels.CopyRegions(updated);
+            lock (MainLock)
+                Models.CommitChanges();
 
             lock (MainLock)
-                UpdateCamaraProjView(shaderSystem);
+                UpdateCamaraProjView();
         }
 
         /// <inheritdoc />
@@ -142,13 +131,23 @@ namespace ajiva.Systems.VulcanEngine
                     MainCamara.OnMouseMoved(e.Delta.x, e.Delta.y);
             };
 
+            var deviceSystem = Ecs.GetSystem<DeviceSystem>();
+
+            Canvas = window.Canvas;
+
+            MainShader = Shader.CreateShaderFrom("./Shaders/3d", deviceSystem, "main");
+            Models = new AChangeAwareBackupBufferOfT<UniformModel>(25000, deviceSystem);
+            ViewProj = new AChangeAwareBackupBufferOfT<UniformViewProj>(1, deviceSystem);
+
             PipelineDescriptorInfos = ajiva.Systems.VulcanEngine.Unions.PipelineDescriptorInfos.CreateFrom(
-                Ecs.GetSystem<ShaderSystem>().ShaderUnions[AjivaEngineLayer.Layer3d].ViewProj,
-                Ecs.GetSystem<ShaderSystem>().ShaderUnions[AjivaEngineLayer.Layer3d].UniformModels,
+                ViewProj.Uniform.Buffer!, (uint)ViewProj.SizeOfT,
+                Models.Uniform.Buffer!, (uint)Models.SizeOfT,
                 Ecs.GetComponentSystem<TextureSystem, ATexture>().TextureSamplerImageViews
             );
-            Canvas = window.Canvas;
         }
+
+        public IAChangeAwareBackupBufferOfT<UniformViewProj> ViewProj { get; set; }
+        public IAChangeAwareBackupBufferOfT<UniformModel> Models { get; set; }
 
         /// <inheritdoc />
         public override RenderMesh3D CreateComponent(IEntity entity)
@@ -192,17 +191,13 @@ namespace ajiva.Systems.VulcanEngine
         public AImage DepthImage { get; set; }
 
         /// <inheritdoc />
-        public Shader MainShader
-        {
-            get => Ecs.GetSystem<ShaderSystem>().ShaderUnions[AjivaEngineLayer.Layer3d].Main;
-            set => throw new System.NotImplementedException();
-        }
+        public Shader MainShader { get; set; }
 
         /// <inheritdoc />
         public PipelineDescriptorInfos[] PipelineDescriptorInfos { get; set; }
 
         /// <inheritdoc />
-        public bool DepthEnabled { get; set; }  = true;
+        public bool DepthEnabled { get; set; } = true;
 
         /// <inheritdoc />
         public Canvas Canvas { get; set; }
