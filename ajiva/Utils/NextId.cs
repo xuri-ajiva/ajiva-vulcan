@@ -8,18 +8,23 @@ namespace ajiva.Utils
     {
         private static readonly HashSet<uint> UsedIds = new();
 
+
         public static uint Next()
         {
-            for (uint i = 0; i < MaxId; i++)
+            for (var i = lastId + 1; i != lastId; i++)
             {
+                if (i >= MaxId) i = 0;
+                
                 if (UsedIds.Contains(i)) continue;
 
                 UsedIds.Add(i);
+                lastId = i;
                 return i;
             }
             throw new IndexOutOfRangeException($"For {typeof(T).FullName} the Maximum Id Limit is Reached!");
         }
 
+        public static uint lastId;
         public static uint MaxId = int.MaxValue;
 
         // ReSharper disable once UnusedMember.Global
