@@ -78,14 +78,14 @@ namespace ajiva.Systems.VulcanEngine.Unions
             }
         }
 
-        public void AddUpdateLayer(AjivaVulkanPipeline layer, DeviceSystem deviceSystem, Shader shaderMain, IBufferOfT viewProj, IBufferOfT uniformModels, DescriptorImageInfo[] textureSamplerImageViews, VertexInputBindingDescription vertexInputBindingDescription, VertexInputAttributeDescription[] vertexInputAttributeDescription, bool useDepthImage, AImage depthImage,  Canvas canvas)
+        public void AddUpdateLayer(AjivaVulkanPipeline layer, DeviceSystem deviceSystem, Shader shaderMain, IBufferOfT viewProj, IBufferOfT uniformModels, DescriptorImageInfo[] textureSamplerImageViews, VertexInputBindingDescription vertexInputBindingDescription, VertexInputAttributeDescription[] vertexInputAttributeDescription, bool useDepthImage, AImage depthImage, Canvas canvas)
         {
             AddUpdateLayer(layer, deviceSystem, shaderMain, PipelineDescriptorInfos.CreateFrom(viewProj, uniformModels, textureSamplerImageViews), useDepthImage, depthImage, canvas, vertexInputBindingDescription, vertexInputAttributeDescription);
         }
 
         public void AddUpdateLayer(IAjivaLayer layer, DeviceSystem deviceSystem)
         {
-            AddUpdateLayer(layer.PipelineLayer, deviceSystem, layer.MainShader,layer.PipelineDescriptorInfos, layer.DepthEnabled, layer.DepthImage, layer.Canvas, layer.VertexInputBindingDescription, layer.VertexInputAttributeDescriptions);
+            AddUpdateLayer(layer.PipelineLayer, deviceSystem, layer.MainShader, layer.PipelineDescriptorInfos, layer.DepthEnabled, layer.DepthImage, layer.Canvas, layer.VertexInputBindingDescription, layer.VertexInputAttributeDescriptions);
             AddUpdateClearValue(layer.PipelineLayer, layer.ClearValues);
         }
 
@@ -94,17 +94,7 @@ namespace ajiva.Systems.VulcanEngine.Unions
             ClearValuesMap[layer] = clearValues;
         }
 
-        private  readonly Dictionary<AjivaVulkanPipeline, ClearValue[]> ClearValuesMap = new()
-        {
-            [AjivaVulkanPipeline.Pipeline3d] = new ClearValue[]
-            {
-                new ClearColorValue(.1f, .1f, .1f, .1f),
-                new ClearDepthStencilValue(1, 0),
-            },
-            // [AjivaVulkanPipeline.Pipeline3d] = Array.Empty<ClearValue>(),
-            [AjivaVulkanPipeline.Pipeline2d] = Array.Empty<ClearValue>(),
-        };
-        
+        private readonly Dictionary<AjivaVulkanPipeline, ClearValue[]> ClearValuesMap = new();
 
         public void FillFrameBuffers(Dictionary<AjivaVulkanPipeline, List<IRenderMesh>> render, IRenderMeshPool pool)
         {
@@ -165,7 +155,6 @@ namespace ajiva.Systems.VulcanEngine.Unions
             commandBuffer.EndRenderPass();
             commandBuffer.End();
         }
-        
 
         private readonly object bufferLock = new();
 
