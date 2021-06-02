@@ -9,17 +9,21 @@ using SharpVk;
 
 namespace ajiva.Models.Buffer.ChangeAware
 {
-    public class AChangeAwareBackupBufferOfT<T> : DisposingLogger, IAChangeAwareBackupBufferOfT<T> where T : struct, IComp<T>
+    public class AChangeAwareBackupBufferOfT<T> : DisposingLogger, IAChangeAwareBackupBufferOfT<T> where T : unmanaged
     {
         public AChangeAwareBackupBufferOfT(int length, DeviceSystem deviceSystem)
         {
             Length = length;
             Changed = new(length);
-            Value = new T[length];
+            Value = new ByRef<T>[length];
+
+            for (var i = 0; i < length; i++)
+                Value[i] = new(new());
+
             SizeOfT = UsVc<T>.Size;
 
             this.deviceSystem = deviceSystem;
-            currentMax = length;
+            currentMax = 0;
 
             Staging = new((uint)(Length * SizeOfT));
             Uniform = new((uint)(Length * SizeOfT));
@@ -32,12 +36,12 @@ namespace ajiva.Models.Buffer.ChangeAware
 
         private int currentMax;
 
-        public T this[in int index]
+        public ByRef<T> this[in int index]
         {
             get => Value[index];
             set => Set(index, value);
         }
-        
+
         /// <inheritdoc />
         public int Length { get; }
 
@@ -51,7 +55,7 @@ namespace ajiva.Models.Buffer.ChangeAware
         public ABuffer Staging { get; }
 
         /// <inheritdoc />
-        public T[] Value { get; }
+        public ByRef<T>[] Value { get; }
 
         /// <inheritdoc />
         public BitArray Changed { get; }
@@ -59,17 +63,16 @@ namespace ajiva.Models.Buffer.ChangeAware
         /// <inheritdoc />
         public void Set(int index, T value)
         {
-            if (index > currentMax)
-            {
-                if (index > Length)
-                {
-                    //todo resize array if to small
-                    throw new IndexOutOfRangeException("Currently not resizable!");
-                }
-                currentMax = index;
-            }
+            CheckBounds(index);
             Value[index] = value;
             Changed[index] = true;
+        }
+
+        /// <inheritdoc />
+        public ByRef<T> Get(int index)
+        {
+            CheckBounds(index);
+            return Value[index];
         }
 
         /// <inheritdoc />
@@ -84,7 +87,7 @@ namespace ajiva.Models.Buffer.ChangeAware
             {
                 if (!Changed[i]) continue; // skip if not changed
 
-                Marshal.StructureToPtr(Value[i], memPtr.Ptr + SizeOfT * i, true); // update value in Staging buffer
+                CopyValue(i, memPtr.Ptr); // update value in Staging buffer
 
                 if (i - cur.End > cur.Length) // check if last region is close enough
                 {
@@ -115,25 +118,39 @@ namespace ajiva.Models.Buffer.ChangeAware
             Changed.SetAll(false);
         }
 
+        private void CopyValue(int index, IntPtr ptr)
+        {
+            unsafe
+            {
+                fixed (T* src = &Value[index].Value)
+                {
+                    *(T*)(ptr + SizeOfT * index) = *src;
+                }
+            }
+            //Marshal.StructureToPtr(Value[index].Value, ptr + SizeOfT * index, true);
+        }
+
         /// <inheritdoc />
         public void Commit(int index)
         {
             var memPtr = Staging.MapDisposer();
-            Marshal.StructureToPtr(Value[index], memPtr.Ptr + SizeOfT * index, true);
+            CopyValue(index, memPtr.Ptr);
             memPtr.Dispose();
             Staging.CopyRegions(Uniform, GetRegion(index), deviceSystem);
-        }
-
-        /// <inheritdoc />
-        public ref T GetRef(int index)
-        {
-            return ref Value[index];
         }
 
         /// <inheritdoc />
         public void SetChanged(int index, bool changed)
         {
             Changed[index] = changed;
+        }
+
+        /// <inheritdoc />
+        public ByRef<T> GetForChange(int index)
+        {
+            CheckBounds(index);
+            Changed[index] = true;
+            return Value[index];
         }
 
         private BufferCopy GetRegion(int index)
@@ -151,6 +168,19 @@ namespace ajiva.Models.Buffer.ChangeAware
         {
             Staging.Dispose();
             Uniform.Dispose();
+        }
+
+        private void CheckBounds(int index)
+        {
+            if (index > currentMax)
+            {
+                if (index > Length)
+                {
+                    //todo resize array if to small
+                    throw new IndexOutOfRangeException("Currently not resizable!");
+                }
+                currentMax = index;
+            }
         }
 
         private struct Regions
