@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Threading;
+using System.Threading.Tasks;
 using ajiva.Components.Media;
 using ajiva.Components.RenderAble;
 using ajiva.Ecs;
@@ -14,6 +16,9 @@ using ajiva.Systems.VulcanEngine.Systems;
 using ajiva.Systems.VulcanEngine.Ui;
 using ajiva.Utils;
 using ajiva.Worker;
+using Ajiva.Wrapper.Logger;
+using GlmSharp;
+using Remotion.Linq.Parsing.Structure.IntermediateModel;
 using SharpVk;
 using SharpVk.Glfw;
 using SharpVk.Multivendor;
@@ -30,8 +35,13 @@ namespace ajiva.Application
         {
             Running = true;
 
+            ConsoleBlock block = new(1);
+
             RunHelper.RunDelta(delegate(UpdateInfo info)
             {
+                if (info.Iteration % 100 == 0)
+                    block.WriteAt($"iteration: {info.Iteration}, delta: {info.Delta}, FPS: {1000.0f / info.Delta.TotalMilliseconds:F4}, PendingWorkItemCount: {ThreadPool.PendingWorkItemCount}, Entities.Count: {entityComponentSystem.Entities.Count}", 0);
+
                 entityComponentSystem.Update(info);
                 return entityComponentSystem.Available;
             }, TimeSpan.MaxValue);
@@ -56,7 +66,6 @@ namespace ajiva.Application
             entityComponentSystem.AddInstance(vulcanInstance);
 
             entityComponentSystem.AddSystem(new WorkerPool(Environment.ProcessorCount / 2, "AjivaWorkerPool", entityComponentSystem) {Enabled = true});
-            entityComponentSystem.CreateSystemOrComponentSystem<ShaderSystem>();
             var window = entityComponentSystem.CreateSystemOrComponentSystem<WindowSystem>();
             entityComponentSystem.CreateSystemOrComponentSystem<BoxTextureGenerator>();
 
@@ -117,12 +126,39 @@ namespace ajiva.Application
         {
             if (inputaction != InputAction.Press) return;
             // ReSharper disable once SwitchStatementMissingSomeEnumCasesNoDefault
+            var meshPref = MeshPrefab.Cube;
+
+            if (key is > Key.Num0 and <= Key.Num9)
+            {
+                Task.Run(() =>
+                {
+                    var index = key - Key.Num0 + 1;
+                    var rep = 1 << index;
+                    const float sz = .5f;
+                    for (var i = 0; i < rep; i++)
+                    {
+                        for (int j = 0; j < rep; j++)
+                        {
+                            var cube = entityComponentSystem.CreateEntity<Cube>();
+
+                            var render = cube.GetComponent<RenderMesh3D>();
+                            render.SetMesh(meshPref);
+                            render.Render = true;
+
+                            var trans = cube.GetComponent<Transform3d>();
+                            trans.Position = new(i * sz, -index * 2, j * sz);
+                            trans.Rotation = new(i * 90, j * 90, 0);
+                            trans.Scale = new(sz / 2);
+                        }
+                    }
+                });
+            }
+
             switch (key)
             {
                 case Key.B:
                     for (var i = 0; i < 100; i++)
                     {
-                        var meshPref = MeshPrefab.Cube;
                         var cube = entityComponentSystem.CreateEntity<Cube>();
 
                         var render = cube.GetComponent<RenderMesh3D>();
