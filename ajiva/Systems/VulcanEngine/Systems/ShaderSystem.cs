@@ -9,7 +9,7 @@ using ajiva.Utils;
 
 namespace ajiva.Systems.VulcanEngine.Systems
 {
-    [Dependent(typeof(DeviceSystem))]
+    /*[Dependent(typeof(DeviceSystem))]
     public class ShaderSystem : SystemBase, IInit
     {
         public Dictionary<AjivaEngineLayer, ShaderUnion> ShaderUnions { get; } = new();
@@ -74,5 +74,5 @@ namespace ajiva.Systems.VulcanEngine.Systems
             ViewProj.Dispose();
             UniformModels.Dispose();
         }
-    }
+    }*/
 }

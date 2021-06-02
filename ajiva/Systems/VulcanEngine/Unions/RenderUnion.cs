@@ -42,28 +42,7 @@ namespace ajiva.Systems.VulcanEngine.Unions
 
             return new(swap, imageAvailable, renderFinished, new());
         }
-
-        public void AddUpdateLayer3D(AjivaVulkanPipeline layer, DeviceSystem deviceSystem, ShaderSystem system, DescriptorImageInfo[] textureSamplerImageViews, bool useDepthImage, AImage depthImage, CommandPool commandPool, Canvas canvas)
-        {
-            var graph3d = GraphicsPipelineUnion.CreateGraphicsPipelineUnion3D(swapChainUnion, deviceSystem.PhysicalDevice!, deviceSystem.Device!, system, textureSamplerImageViews, canvas);
-            var frame3d = FrameBufferUnion.CreateFrameBufferUnion(swapChainUnion, graph3d, deviceSystem.Device!, useDepthImage, depthImage, commandPool, canvas);
-
-            lock (bufferLock)
-            {
-                Unions[layer] = new(graph3d, frame3d);
-            }
-        }
-
-        public void AddUpdateLayer2D(AjivaVulkanPipeline layer, DeviceSystem deviceSystem, ShaderSystem system, DescriptorImageInfo[] textureSamplerImageViews, bool useDepthImage, AImage depthImage, CommandPool commandPool, Canvas canvas)
-        {
-            var graph2d = GraphicsPipelineUnion.CreateGraphicsPipelineUnion2D(swapChainUnion, deviceSystem.PhysicalDevice!, deviceSystem.Device!, system, textureSamplerImageViews, canvas);
-            var frame2d = FrameBufferUnion.CreateFrameBufferUnion(swapChainUnion, graph2d, deviceSystem.Device!, useDepthImage, depthImage, commandPool, canvas);
-            lock (bufferLock)
-            {
-                Unions[layer] = new(graph2d, frame2d);
-            }
-        }
-
+        
         public void AddUpdateLayer(AjivaVulkanPipeline layer, DeviceSystem deviceSystem, Shader shaderMain, PipelineDescriptorInfos[] pipelineDescriptorInfos, bool useDepthImage, AImage depthImage, Canvas canvas, VertexInputBindingDescription vertexInputBindingDescription, VertexInputAttributeDescription[] vertexInputAttributeDescription)
         {
             var graph2d = GraphicsPipelineUnion.CreateGraphicsPipelineUnion(swapChainUnion, deviceSystem.PhysicalDevice!, deviceSystem.Device!, useDepthImage, vertexInputBindingDescription, vertexInputAttributeDescription, shaderMain, pipelineDescriptorInfos, canvas);

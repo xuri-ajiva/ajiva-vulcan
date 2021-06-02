@@ -27,17 +27,7 @@ namespace ajiva.Systems.VulcanEngine.Unions
             DescriptorSet = descriptorSet;
             DescriptorSetLayout = descriptorSetLayout;
         }
-
-        public static GraphicsPipelineUnion CreateGraphicsPipelineUnion3D(SwapChainUnion swapChainRecord, PhysicalDevice physicalDevice, Device device, ShaderSystem system, DescriptorImageInfo[] textureSamplerImageViews, Canvas canvas)
-        {
-            return CreateGraphicsPipelineUnion(swapChainRecord, physicalDevice, device, true, Vertex3D.GetBindingDescription(), Vertex3D.GetAttributeDescriptions(), system.ShaderUnions[AjivaEngineLayer.Layer3d].Main, PipelineDescriptorInfos.CreateFrom(system.ShaderUnions[AjivaEngineLayer.Layer3d].ViewProj, system.ShaderUnions[AjivaEngineLayer.Layer3d].UniformModels, textureSamplerImageViews), canvas);
-        }
-
-        public static GraphicsPipelineUnion CreateGraphicsPipelineUnion2D(SwapChainUnion swapChainRecord, PhysicalDevice physicalDevice, Device device, ShaderSystem system, DescriptorImageInfo[] textureSamplerImageViews, Canvas canvas)
-        {
-            return CreateGraphicsPipelineUnion(swapChainRecord, physicalDevice, device, false, Vertex2D.GetBindingDescription(), Vertex2D.GetAttributeDescriptions(), system.ShaderUnions[AjivaEngineLayer.Layer2d].Main, PipelineDescriptorInfos.CreateFrom(system.ShaderUnions[AjivaEngineLayer.Layer2d].ViewProj, system.ShaderUnions[AjivaEngineLayer.Layer2d].UniformModels, textureSamplerImageViews), canvas);
-        }
-
+        
         public static GraphicsPipelineUnion CreateGraphicsPipelineUnion(SwapChainUnion swapChainRecord, PhysicalDevice physicalDevice, Device device, bool useDepthImage, VertexInputBindingDescription bindingDescription, VertexInputAttributeDescription[] attributeDescriptions, Shader mainShader, PipelineDescriptorInfos[] descriptorInfos, Canvas canvas)
         {
             var attach = new List<AttachmentDescription>();
