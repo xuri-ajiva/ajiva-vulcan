@@ -12,6 +12,12 @@ namespace ajiva.Models.Buffer.ChangeAware
             changeAwareBufferOfT.Commit(index);
         }
 
+        public static void SetAndCommit<T>(this IAChangeAwareBackupBufferOfT<T> changeAwareBufferOfT, int index, T value) where T : unmanaged
+        {
+            changeAwareBufferOfT.Set(index, value);
+            changeAwareBufferOfT.Commit(index);
+        }
+
         public static void CopyTo<T>(this IAChangeAwareBufferOfT<T> from, IAChangeAwareBufferOfT<T> to, DeviceSystem system) where T : struct
         {
             from.Buffer.CopyTo(to.Buffer, system);
@@ -36,7 +42,7 @@ namespace ajiva.Models.Buffer.ChangeAware
             });
         }
 
-        public static void CopyRegions(this ABuffer from, ABuffer to, ArrayProxy<BufferCopy> regions, DeviceSystem system) 
+        public static void CopyRegions(this ABuffer from, ABuffer to, ArrayProxy<BufferCopy> regions, DeviceSystem system)
         {
             if (from.Size > to.Size)
                 throw new ArgumentException("The Destination Buffer is smaller than the Source Buffer", nameof(to));
