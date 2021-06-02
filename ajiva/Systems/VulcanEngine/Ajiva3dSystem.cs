@@ -38,42 +38,37 @@ namespace ajiva.Systems.VulcanEngine
 
         private void UpdateCamaraProjView()
         {
-            ref var value = ref ViewProj.GetRef(0);
+            var byRef = ViewProj.GetForChange(0);
             var changed = false;
-            if (value.View != mainCamara!.View)
+            if (byRef.Value.View != mainCamara!.View)
             {
                 changed = true;
-                value.View = MainCamara.View;
+                byRef.Value.View = MainCamara.View;
             }
-            if (value.Proj != MainCamara.Projection) //todo: we flip the [1,1] value sow it is never the same
+            if (byRef.Value.Proj != MainCamara.Projection) //todo: we flip the [1,1] value sow it is never the same
             {
-                value.Proj = MainCamara.Projection;
-                value.Proj[1, 1] *= -1;
+                byRef.Value.Proj = MainCamara.Projection;
+                byRef.Value.Proj[1, 1] *= -1;
 
                 changed = true;
             }
             if (changed)
-                    ViewProj.Commit((0));
+                ViewProj.Commit(0);
         }
 
         /// <inheritdoc />
         public void Update(UpdateInfo delta)
         {
-            var updated = new List<uint>();
             foreach (var (renderAble, entity) in ComponentEntityMap)
             {
-                Transform3d? transform = null!;
-                if (entity.TryGetComponent(out transform) && transform!.ChangingObserver.UpdateCycle(delta.Iteration))
+                if (entity.TryGetComponent(out Transform3d? transform) && transform!.ChangingObserver.UpdateCycle(delta.Iteration))
                 {
-                        
-                    Models.Value[(int)renderAble.Id].Model = transform.ModelMat;
-                    Models.SetChanged((int)renderAble.Id, true);
+                    Models.GetForChange((int)renderAble.Id).Value.Model = transform.ModelMat;
                     transform.ChangingObserver.Updated();
                 }
                 if (renderAble.ChangingObserver.UpdateCycle(delta.Iteration) /*entity.TryGetComponent(out texture) && texture!.Dirty ||*/)
                 {
-                    Models.Value[(int)renderAble.Id].TextureSamplerId = renderAble!.Id; // texture?.TextureId ?? 0
-                    Models.SetChanged((int)renderAble.Id, true);
+                    Models.GetForChange((int)renderAble.Id).Value.TextureSamplerId = renderAble.Id;
                     renderAble.ChangingObserver.Updated();
                 }
             }
@@ -136,7 +131,7 @@ namespace ajiva.Systems.VulcanEngine
             Canvas = window.Canvas;
 
             MainShader = Shader.CreateShaderFrom("./Shaders/3d", deviceSystem, "main");
-            Models = new AChangeAwareBackupBufferOfT<UniformModel>(25000, deviceSystem);
+            Models = new AChangeAwareBackupBufferOfT<UniformModel>(1000000, deviceSystem);
             ViewProj = new AChangeAwareBackupBufferOfT<UniformViewProj>(1, deviceSystem);
 
             PipelineDescriptorInfos = ajiva.Systems.VulcanEngine.Unions.PipelineDescriptorInfos.CreateFrom(
