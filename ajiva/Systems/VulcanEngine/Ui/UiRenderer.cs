@@ -10,6 +10,7 @@ using ajiva.Ecs.Entity;
 using ajiva.Ecs.Utils;
 using ajiva.Models;
 using ajiva.Models.Buffer;
+using ajiva.Models.Buffer.ChangeAware;
 using ajiva.Systems.VulcanEngine.Layer;
 using ajiva.Systems.VulcanEngine.Systems;
 using ajiva.Systems.VulcanEngine.Unions;
@@ -19,7 +20,7 @@ using SharpVk;
 
 namespace ajiva.Systems.VulcanEngine.Ui
 {
-    [Dependent(typeof(ShaderSystem), typeof(WindowSystem))]
+    [Dependent(typeof(WindowSystem))]
     public class UiRenderer : ComponentSystemBase<RenderMesh2D>, IUpdate, IInit, IAjivaLayer
     {
         /// <inheritdoc />
@@ -49,34 +50,14 @@ namespace ajiva.Systems.VulcanEngine.Ui
     
             union.UniformModels.CopyRegions(ids);      */
 
-            lock (updatedIds)
+            lock (interruptLock)
             {
-                if (updatedIds.Count != 0)
-                {
-                    union.UniformModels.CopyRegions(updatedIds);
-                    updatedIds.Clear();
-                }
             }
         }
 
         /// <inheritdoc />
         public void Init(AjivaEcs ecs)
         {
-            union = Ecs.GetSystem<ShaderSystem>().ShaderUnions[AjivaEngineLayer.Layer2d];
-            union.ViewProj.UpdateExpresion((uint index, ref UniformViewProj value) =>
-            {
-                value.View = mat4.Translate(-1, -1, 0) * mat4.Scale(2);
-                return true;
-            });
-            union.ViewProj.Copy();
-
-            union.UniformModels.UpdateExpresion((uint index, ref UniformModel value) =>
-            {
-                value.Model = mat4.Translate(.5f, .5f, 0) * mat4.Scale(0.1f);
-                return true;
-            });
-            union.UniformModels.Copy();
-
             window = Ecs.GetSystem<WindowSystem>();
 
             window.OnMouseMove += delegate(object? sender, AjivaMouseMotionCallbackEventArgs args)
@@ -87,18 +68,31 @@ namespace ajiva.Systems.VulcanEngine.Ui
                 }
             };
 
+            var deviceSystem = Ecs.GetSystem<DeviceSystem>();
+
+            Canvas = window.Canvas;
+
+            MainShader = Shader.CreateShaderFrom("./Shaders/2d", deviceSystem, "main");
+            Models = new AChangeAwareBackupBufferOfT<UniformModel>(25000, deviceSystem);
+            ViewProj = new AChangeAwareBackupBufferOfT<UniformViewProj>(1, deviceSystem);
+
             PipelineDescriptorInfos = ajiva.Systems.VulcanEngine.Unions.PipelineDescriptorInfos.CreateFrom(
-                Ecs.GetSystem<ShaderSystem>().ShaderUnions[AjivaEngineLayer.Layer2d].ViewProj,
-                Ecs.GetSystem<ShaderSystem>().ShaderUnions[AjivaEngineLayer.Layer2d].UniformModels,
+                ViewProj.Uniform.Buffer!, (uint)ViewProj.SizeOfT,
+                Models.Uniform.Buffer!, (uint)Models.SizeOfT,
                 Ecs.GetComponentSystem<TextureSystem, ATexture>().TextureSamplerImageViews
             );
+
             Canvas = window.Canvas;
+
+            ViewProj.SetAndCommit(0, new() {View = mat4.Translate(-1, -1, 0) * mat4.Scale(2)});
         }
 
-        private ShaderUnion? union;
+        public IAChangeAwareBackupBufferOfT<UniformViewProj> ViewProj { get; set; }
+        public IAChangeAwareBackupBufferOfT<UniformModel> Models { get; set; }
+
         private WindowSystem window;
 
-        public List<uint> updatedIds = new();
+        public object interruptLock = new();
 
         private void MouseMoved(vec2 pos)
         {
@@ -106,16 +100,10 @@ namespace ajiva.Systems.VulcanEngine.Ui
             //LogHelper.Log(posNew);
             if (ComponentEntityMap.Count > 0)
             {
-                lock (updatedIds)
+                lock (interruptLock)
                     foreach (var entity in ComponentEntityMap.Keys)
                     {
-                        updatedIds.Add(entity.Id);
-                        union.UniformModels.UpdateExpresionOne(entity.Id, (uint index, ref UniformModel value) =>
-                        {
-                            value.Model = mat4.Translate(posNew.x, posNew.y, 0) * mat4.Scale(.1f);
-                            return true;
-                        });
-                        union.UniformModels.UpdateOne(new() {Model = mat4.Translate(posNew.x, posNew.y, 0) * mat4.Scale(.1f)}, entity.Id);
+                        Models.GetForChange((int)entity.Id).Value.Model = mat4.Translate(posNew.x, posNew.y, 0) * mat4.Scale(.1f);
                     }
 
                 /*var cmp = ComponentEntityMap.Keys.First();
@@ -145,11 +133,7 @@ namespace ajiva.Systems.VulcanEngine.Ui
         public AImage DepthImage { get; set; }
 
         /// <inheritdoc />
-        public Shader MainShader
-        {
-            get => Ecs.GetSystem<ShaderSystem>().ShaderUnions[AjivaEngineLayer.Layer2d].Main;
-            set => throw new System.NotImplementedException();
-        }
+        public Shader MainShader { get; set; }
 
         /// <inheritdoc />
         public PipelineDescriptorInfos[] PipelineDescriptorInfos { get; set; }
