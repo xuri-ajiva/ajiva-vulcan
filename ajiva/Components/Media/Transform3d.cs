@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using ajiva.Utils.Changing;
 using GlmSharp;
 
@@ -83,3 +83,4 @@ namespace ajiva.Components.Media
         }
     }
 }
+
