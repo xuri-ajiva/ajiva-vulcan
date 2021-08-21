@@ -1,19 +1,21 @@
 ﻿using System;
 using System.ComponentModel.DataAnnotations;
+using ajiva.Components;
 using ajiva.Utils;
+using ajiva.Utils.Changing;
 using Ajiva.Wrapper.Logger;
 using SharpVk;
 using SharpVk.Khronos;
 
 namespace ajiva.Models
 {
-    public class SurfaceHandle : DisposingLogger
+    public class SurfaceHandle : ChangingComponentBase
     {
         private Surface? surface;
         public Surface Surface
         {
             get => surface!;
-            set => surface = value;
+            set => ChangingObserver.RaiseChanged(ref surface , value);
         }
 
         /// <param name="disposing"></param>
@@ -31,6 +33,11 @@ namespace ajiva.Models
         }
 
         public static implicit operator Surface(SurfaceHandle handle) => handle.Surface;
+
+        /// <inheritdoc />
+        public SurfaceHandle() : base(0)
+        {
+        }
     }
     public class Canvas : DisposingLogger
     {
