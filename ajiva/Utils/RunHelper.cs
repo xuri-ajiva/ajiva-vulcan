@@ -13,8 +13,6 @@ namespace ajiva.Utils
 
         public static void RunDelta(DeltaRun action, TimeSpan maxToRun)
         {
-            ConsoleBlock block = new(1);
-
             var iteration = 0L;
             var start = DateTime.Now;
 
@@ -32,8 +30,6 @@ namespace ajiva.Utils
 
                 if (iteration % 100 == 0)
                 {
-                    block.WriteAt($"iteration: {iteration}, delta: {delta}, FPS: {1000.0f / delta.TotalMilliseconds}, PendingWorkItemCount: {ThreadPool.PendingWorkItemCount}",0);
-
                     if (DateTime.Now - start > maxToRun)
                     {
                         return;
