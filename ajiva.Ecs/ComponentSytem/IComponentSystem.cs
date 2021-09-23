@@ -1,15 +1,14 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using ajiva.Ecs.Component;
 using ajiva.Ecs.Entity;
 using ajiva.Ecs.System;
-using ajiva.Utils;
 
 namespace ajiva.Ecs.ComponentSytem
 {
     public interface IComponentSystem : ISystem
     {
-        TypeKey ComponentType { get; }
-        void AttachNewComponent(IEntity entity);
+        Type ComponentType { get; }
     }
     
     
@@ -17,5 +16,8 @@ namespace ajiva.Ecs.ComponentSytem
     {
         Dictionary<T, IEntity> ComponentEntityMap { get; }
         T CreateComponent(IEntity entity);
+
+        T RegisterComponent(IEntity entity, T component);
+        T RemoveComponent(IEntity entity, T component);
     }
 }

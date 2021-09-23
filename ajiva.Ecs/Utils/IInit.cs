@@ -2,6 +2,6 @@
 {
     public interface IInit
     {
-        public void Init(AjivaEcs ecs);
+        public void Init(IAjivaEcs ecs);
     }
 }

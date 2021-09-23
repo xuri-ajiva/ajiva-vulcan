@@ -4,10 +4,10 @@ namespace ajiva.Ecs.System
 {
     public abstract class SystemBase : DisposingLogger, ISystem
     {
-        protected AjivaEcs Ecs { get; }
+        protected IAjivaEcs Ecs { get; }
 
         /// <inheritdoc />
-        protected SystemBase(AjivaEcs ecs)
+        protected SystemBase(IAjivaEcs ecs)
         {
             Ecs = ecs;
         }

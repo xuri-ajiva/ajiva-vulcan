@@ -1,6 +1,6 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
@@ -16,7 +16,7 @@ using Microsoft.CSharp.RuntimeBinder;
 
 namespace ajiva.Ecs
 {
-    public class AjivaEcs : DisposingLogger
+    public class AjivaEcs : DisposingLogger, IAjivaEcs
     {
         private readonly bool multiThreading;
 
@@ -25,63 +25,150 @@ namespace ajiva.Ecs
             this.multiThreading = multiThreading;
         }
 
+        /// <inheritdoc />
         public bool Available { get; private set; }
-        private readonly object @lock = new();
-        private uint currentEntityId;
-        public Dictionary<uint, IEntity> Entities { get; } = new();
-        public Dictionary<TypeKey, IEntityFactory> Factories { get; } = new();
-        public Dictionary<TypeKey, IComponentSystem> ComponentSystems { get; } = new();
-        public Dictionary<TypeKey, ISystem> Systems { get; } = new();
-        public Dictionary<TypeKey, object> Instances { get; } = new();
-        public Dictionary<string, object> Params { get; } = new();
 
-        public T CreateEntity<T>() where T : class, IEntity
+        private readonly object @lock = new object();
+        private uint currentEntityId;
+        public Dictionary<uint, IEntity> Entities { get; } = new Dictionary<uint, IEntity>();
+
+        public Dictionary<Type, IEntityFactory> Factories { get; } = new();
+
+        public Dictionary<Type, IComponentSystem> ComponentSystems { get; } = new();
+
+        public Dictionary<Type, ISystem> Systems { get; } = new();
+
+        public Dictionary<Type, object> Instances { get; } = new();
+
+        public Dictionary<string, object> Params { get; } = new Dictionary<string, object>();
+        private static readonly Type Me = typeof(AjivaEcs);
+
+#region Add
+
+        /// <inheritdoc />
+        public void RegisterEntity<T>(T entity) where T : class, IEntity
         {
-            foreach (var factory in Factories.Where(factory => factory.Key == UsVc<T>.Key))
-            {
-                lock (@lock)
-                {
-                    var entity = factory.Value.Create(this, currentEntityId++);
-                    Entities.Add(entity.Id, entity);
-                    return (T)entity;
-                }
-            }
-            return default!;
+            Entities.Add(entity.Id, entity);
         }
 
-        public T CreateComponent<T>(IEntity entity) where T : class, IComponent => ((IComponentSystem<T>)ComponentSystems[UsVc<T>.Key]).CreateComponent(entity);
+        /// <inheritdoc />
+        public T RegisterComponent<T>(IEntity entity, T component) where T : class, IComponent
+        {
+            return GetComponentSystemByComponent<T>().RegisterComponent(entity, component);
+        }
 
-        public void AttachComponentToEntity<T>(IEntity entity) where T : class, IComponent => ((IComponentSystem<T>)ComponentSystems[UsVc<T>.Key]).AttachNewComponent(entity);
+        /// <inheritdoc />
+        public void AttachNewComponentToEntity<T>(IEntity entity) where T : class, IComponent
+        {
+            entity.AddComponent(CreateComponent<T>(entity));
+        }
 
-        public void AddEntityFactory<T>(IEntityFactory<T> entityFactory) where T : class, IEntity => Factories.Add(UsVc<T>.Key, entityFactory);
+        /// <inheritdoc />
+        public void AttachComponentToEntity<T>(IEntity entity, T component) where T : class, IComponent
+        {
+            entity.AddComponent(component);
+            RegisterComponent(entity, component);
+        }
 
-        public void AddComponentSystem<T>(IComponentSystem<T> system) where T : class, IComponent => ComponentSystems.Add(UsVc<T>.Key, system);
-        public IComponentSystem<T> GetComponentSystemByComponent<T>() where T : class, IComponent => (IComponentSystem<T>)ComponentSystems[UsVc<T>.Key];
-        public TS GetComponentSystem<TS, TC>() where TS : IComponentSystem<TC> where TC : class, IComponent => (TS)ComponentSystems[UsVc<TC>.Key];
+        /// <inheritdoc />
+        public void AddEntityFactory<T>(IEntityFactory<T> entityFactory) where T : class, IEntity
+        {
+            Factories.Add(typeof(T), entityFactory);
+        }
 
+        /// <inheritdoc />
+        public void AddComponentSystem<T>(IComponentSystem<T> system) where T : class, IComponent
+        {
+            ComponentSystems.Add(system.GetType(), system);
+        }
+
+        /// <inheritdoc />
         public void AddSystem<T>(T system) where T : class, ISystem
         {
             if (system is IComponentSystem)
                 throw new ArgumentException("IComponentSystem should not be assigned as ISystem");
-            Systems.Add(UsVc<T>.Key, system);
+            Systems.Add(system.GetType(), system);
         }
 
-        private static readonly TypeKey Me = UsVc<AjivaEcs>.Key;
+        /// <inheritdoc />
+        public void AddInstance<T>(T instance) where T : class
+        {
+            Instances.Add(instance.GetType(), instance);
+        }
 
+        /// <inheritdoc />
+        public void AddParam(string name, object data)
+        {
+            Params.Add(name, data);
+        }
+
+#endregion
+
+#region Get
+
+        /// <inheritdoc />
+        public IComponentSystem<T> GetComponentSystemByComponent<T>() where T : class, IComponent
+        {
+            return (IComponentSystem<T>)ComponentSystems[typeof(T)];
+        }
+
+        /// <inheritdoc />
+        public TS GetComponentSystem<TS, TC>() where TS : IComponentSystem<TC> where TC : class, IComponent
+        {
+            return (TS)ComponentSystems[typeof(TC)];
+        }
+
+        /// <inheritdoc />
+        public T GetSystem<T>() where T : class, ISystem
+        {
+            return (T)Systems[typeof(T)];
+        }
+
+        /// <inheritdoc />
+        public T GetPara<T>(string name)
+        {
+            return (T)Params[name];
+        }
+
+        /// <inheritdoc />
+        public bool TryGetPara<T>(string name, [MaybeNullWhen(false)] out T value)
+        {
+            value = default;
+            if (!Params.TryGetValue(name, out var tmp)) return false;
+            value = (T)tmp;
+            return true;
+        }
+
+        /// <inheritdoc />
+        public T GetInstance<T>() where T : class
+        {
+            return (T)Instances[typeof(T)];
+        }
+
+        /// <inheritdoc />
+        public bool TryGetInstance<T>([MaybeNullWhen(false)] out T value) where T : class
+        {
+            value = default;
+            if (!Instances.TryGetValue(typeof(T), out var tmp)) return false;
+            value = (T)tmp;
+            return true;
+        }
+
+#endregion
+
+#region Create
+
+        /// <inheritdoc />
         public T CreateSystemOrComponentSystem<T>() where T : class, ISystem
         {
             return (T)CreateSystemOrComponentSystemIfNotExitsRecursive(typeof(T));
         }
 
-        public T GetSystem<T>() where T : class, ISystem => (T)Systems[UsVc<T>.Key];
-
         private object CreateSystemOrComponentSystemIfNotExitsRecursive(Type type)
         {
-            var typeKey = UsVc.TypeKeyForType(type);
-
             if (type.FindInterfaces((tpe, _) => tpe == typeof(ISystem) && tpe != typeof(IComponentSystem<>), null).Any())
-                if (Systems.ContainsKey(typeKey))
-                    return Systems[typeKey];
+                if (Systems.ContainsKey(type))
+                    return Systems[type];
 
             var instance = CreateObjectAndInject(type, missing =>
             {
@@ -93,7 +180,6 @@ namespace ajiva.Ecs
                 LogHelper.Log($"Error Cannot instantiate {missing}!");
                 return null;
             });
-
 
             switch (instance)
             {
@@ -107,7 +193,7 @@ namespace ajiva.Ecs
                     ComponentSystems.Add(componentSystem.ComponentType, componentSystem);
                     break;
                 case ISystem system:
-                    Systems.Add(UsVc.TypeKeyForType(type), system);
+                    AddSystem(system);
                     break;
                 default:
                     throw new RuntimeBinderInternalCompilerException("The Compiler has Failed on the T constrain");
@@ -121,39 +207,38 @@ namespace ajiva.Ecs
             return instance;
         }
 
-        public T CreateObjectAndInject<T>(Func<Type, object?> missing) where T : class => (T)CreateObjectAndInject(typeof(T), missing);
+        /// <inheritdoc />
+        public T CreateObjectAndInject<T>(Func<Type, object?> missing) where T : class
+        {
+            return (T)CreateObjectAndInject(typeof(T), missing);
+        }
 
         private object CreateObjectAndInject(Type type, Func<Type, object?> missing)
         {
             object instance;
             var constructors = type.GetConstructors(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
 
-            if (constructors.FirstOrDefault(x => x.GetParameters() is {Length: >= 1} parameters && parameters.Any(y => y.ParameterType == typeof(AjivaEcs))) is { } ctr)
+            if (constructors.FirstOrDefault(x =>
+                x.GetParameters() is { Length: >= 1 } parameters
+                && parameters.Any(y =>
+                    y.ParameterType.IsAssignableFrom(Me)
+                )) is { } ctr)
             {
                 var para = ctr.GetParameters();
                 object?[] args = new object?[para.Length];
                 for (var i = 0; i < para.Length; i++)
                 {
-                    var key = UsVc.TypeKeyForType(para[i].ParameterType);
-                    if (key == Me)
+                    var key = para[i].ParameterType;
+                    if (key.IsAssignableFrom(Me))
                     {
                         args[i] = this;
                         continue;
                     }
 
-                    bool ContainsArgTypeAndFill<TD>(IDictionary<TypeKey, TD> dict) where TD : class
+                    bool ContainsArgTypeAndFill<TD>(IDictionary<Type, TD> dict) where TD : class
                     {
-                        if (!dict.ContainsKey(key))
-                        {
-                            foreach (var (_, value) in dict)
-                            {
-                                if (value.GetType() != para[i].ParameterType) continue;
-                                args[i] = value;
-                                return true;
-                            }
-                            return false;
-                        }
-                        args[i] = dict[key];
+                        if (dict.SingleOrDefault(x => x.Key.IsAssignableTo(key)) is not TD inject) return false;
+                        args[i] = inject;
                         return true;
                     }
 
@@ -163,12 +248,12 @@ namespace ajiva.Ecs
                         continue;
                     if (ContainsArgTypeAndFill(Systems))
                         continue;
-                    
+
                     if (args[i] is not null)
                         continue;
 
                     args[i] = missing(para[i].ParameterType);
-                    
+
                     /*if (args[i] is not null)
                         continue;
                     
@@ -183,29 +268,57 @@ namespace ajiva.Ecs
                 instance = constructors.First().Invoke(Array.Empty<object?>());
             return instance;
         }
-        
-        public T GetPara<T>(string name) => (T)Params[name];
 
-        public bool TryGetPara<T>(string name, out T? value)
+        /// <inheritdoc />
+        public T CreateComponent<T>(IEntity entity) where T : class, IComponent
         {
-            value = default;
-            if (!Params.TryGetValue(name, out var tmp)) return false;
-            value = (T)tmp;
-            return true;
+            return ((IComponentSystem<T>)ComponentSystems[typeof(T)]).CreateComponent(entity);
         }
 
-        public void AddParam(string name, object data) => Params.Add(name, data);
-
-        public void AddInstance<T>(T instance) where T : class
+        /// <inheritdoc />
+        public T CreateEntity<T>() where T : class, IEntity
         {
-            Instances.Add(UsVc<T>.Key, instance);
+            foreach (var factory in Factories.Where(factory => factory.Key == typeof(T)))
+            {
+                lock (@lock)
+                {
+                    var entity = factory.Value.Create(this, currentEntityId++);
+                    Entities.Add(entity.Id, entity);
+                    return (T)entity;
+                }
+            }
+            return default!;
         }
 
-        public T GetInstance<T>() where T : class => (T)Instances[UsVc<T>.Key];
+#endregion
 
+#region Delete
+
+        public IEntity? DeleteEntity(uint id)
+        {
+            if (!Entities.TryGetValue(id, out var entity)) return default;
+
+            foreach (var (_, value) in entity.Components)
+            {
+                RemoveComponent(entity, value);
+            }
+            return entity;
+        }
+
+        /// <inheritdoc />
+        public T RemoveComponent<T>(IEntity entity, T component) where T : class, IComponent
+        {
+            return ((IComponentSystem<T>)ComponentSystems[typeof(T)]).RemoveComponent(entity, component);
+        }
+
+#endregion
+
+#region Live
+
+        /// <inheritdoc />
         public void InitSystems()
         {
-            List<IInit> isInti = new();
+            List<IInit> isInti = new List<IInit>();
             foreach (var init in inits.ToArray())
             {
                 InitOne(init, isInti);
@@ -214,6 +327,7 @@ namespace ajiva.Ecs
             Available = true;
         }
 
+        /// <inheritdoc />
         private void InitOne(IInit toInit, ICollection<IInit> initDone)
         {
             if (initDone.Contains(toInit)) return;
@@ -243,7 +357,7 @@ namespace ajiva.Ecs
                             ComponentSystems.Add(((IComponentSystem)nb).ComponentType, (IComponentSystem)nb);
                         //last check in an else if the type inherits the heights interface in the hierarchy
                         else if (typeInterfaces.Any(x => x == typeof(ISystem)))
-                            Systems.Add(UsVc.TypeKeyFor(nb), (ISystem)nb);
+                            Systems.Add(nb.GetType(), (ISystem)nb);
                         InitOne(nb, initDone);
                     }
                 }
@@ -253,6 +367,7 @@ namespace ajiva.Ecs
             initDone.Add(toInit);
         }
 
+        /// <inheritdoc />
         public void Update(UpdateInfo delta)
         {
             if (updates.Count < 1) return;
@@ -264,6 +379,7 @@ namespace ajiva.Ecs
                         update.Update(delta);
         }
 
+        /// <inheritdoc />
         public void IssueClose()
         {
             lock (@lock) Available = false;
@@ -276,7 +392,7 @@ namespace ajiva.Ecs
             {
                 foreach (var factory in Factories.Values)
                 {
-                    factory?.Dispose();
+                    factory.Dispose();
                 }
                 Factories.Clear();
 
@@ -286,7 +402,7 @@ namespace ajiva.Ecs
                 }
                 Entities.Clear();
 
-                IDictionary<TypeKey, ISystem> disposingSet = new Dictionary<TypeKey, ISystem>();
+                IDictionary<Type, ISystem> disposingSet = new Dictionary<Type, ISystem>();
                 foreach (var (key, value) in ComponentSystems)
                 {
                     disposingSet.Add(key, value);
@@ -308,7 +424,8 @@ namespace ajiva.Ecs
             }
         }
 
-        private static void DisposeRec(ISystem toDispose, IDictionary<TypeKey, ISystem> disposingSet)
+        /// <inheritdoc />
+        private static void DisposeRec(ISystem toDispose, IDictionary<Type, ISystem> disposingSet)
         {
             foreach (var (_, system) in disposingSet)
             {
@@ -321,23 +438,27 @@ namespace ajiva.Ecs
             toDispose.Dispose();
         }
 
-        private readonly List<IUpdate> updates = new();
+        private readonly List<IUpdate> updates = new List<IUpdate>();
 
+        /// <inheritdoc />
         public void RegisterUpdate(IUpdate update)
         {
             lock (regLock)
                 updates.Add(update);
         }
 
-        private readonly List<IInit> inits = new();
+        private readonly List<IInit> inits = new List<IInit>();
 
-        private readonly object regLock = new();
+        private readonly object regLock = new object();
 
+        /// <inheritdoc />
         public void RegisterInit(IInit init)
         {
             //LogHelper.WriteLine(init.GetHashCode() + " <- "+ phase);
             lock (regLock)
                 inits.Add(init);
         }
+
+#endregion
     }
 }
