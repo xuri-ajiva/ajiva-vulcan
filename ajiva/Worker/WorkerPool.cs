@@ -19,7 +19,7 @@ namespace ajiva.Worker
 
         public CancellationTokenSource CancellationTokenSource { get; }= new();
 
-        public WorkerPool(int workerCount, string name, AjivaEcs ecs) : base(ecs)
+        public WorkerPool(int workerCount, string name, IAjivaEcs ecs) : base(ecs)
         {
             Name = name;
             workers = new Worker[workerCount];

@@ -28,7 +28,7 @@ namespace ajiva.Systems.VulcanEngine.Layer3d
         private WindowSystem window;
 
         /// <inheritdoc />
-        public Ajiva3dLayerSystem(AjivaEcs ecs) : base(ecs)
+        public Ajiva3dLayerSystem(IAjivaEcs ecs) : base(ecs)
         {
         }
 
@@ -69,7 +69,7 @@ namespace ajiva.Systems.VulcanEngine.Layer3d
         }
 
         /// <inheritdoc />
-        public void Init(AjivaEcs ecs)
+        public void Init(IAjivaEcs ecs)
         {
             window = Ecs.GetSystem<WindowSystem>();
 

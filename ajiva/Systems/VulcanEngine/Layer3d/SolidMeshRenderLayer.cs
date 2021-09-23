@@ -39,13 +39,7 @@ namespace ajiva.Systems.VulcanEngine.Layer3d
         }
 
         /// <inheritdoc />
-        public override void AttachNewComponent(IEntity entity)
-        {
-            entity.AddComponent(CreateComponent(entity));
-        }
-
-        /// <inheritdoc />
-        public SolidMeshRenderLayer(AjivaEcs ecs) : base(ecs)
+        public SolidMeshRenderLayer(IAjivaEcs ecs) : base(ecs)
         {
         }
 
@@ -73,7 +67,7 @@ namespace ajiva.Systems.VulcanEngine.Layer3d
         }
 
         /// <inheritdoc />
-        public void Init(AjivaEcs ecs)
+        public void Init(IAjivaEcs ecs)
         {
             var deviceSystem = Ecs.GetSystem<DeviceSystem>();
 

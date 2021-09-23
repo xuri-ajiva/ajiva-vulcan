@@ -39,13 +39,7 @@ namespace ajiva.Systems.VulcanEngine.Layer2d
         }
 
         /// <inheritdoc />
-        public override void AttachNewComponent(IEntity entity)
-        {
-            entity.AddComponent(CreateComponent(entity));
-        }
-
-        /// <inheritdoc />
-        public Mesh2dRenderLayer(AjivaEcs ecs) : base(ecs)
+        public Mesh2dRenderLayer(IAjivaEcs ecs) : base(ecs)
         {
         }
 
@@ -73,7 +67,7 @@ namespace ajiva.Systems.VulcanEngine.Layer2d
         }
 
         /// <inheritdoc />
-        public void Init(AjivaEcs ecs)
+        public void Init(IAjivaEcs ecs)
         {
             var deviceSystem = Ecs.GetSystem<DeviceSystem>();
 

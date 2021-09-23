@@ -10,11 +10,11 @@ namespace ajiva.Factories
     public class RectFactory : EntityFactoryBase<Rect>
     {
         /// <inheritdoc />
-        public override Rect Create(AjivaEcs system, uint id)
+        public override Rect Create(IAjivaEcs system, uint id)
         {
             var rect = new Rect();
-            system.AttachComponentToEntity<RenderMesh2D>(rect);
-            system.AttachComponentToEntity<Transform2d>(rect);
+            system.AttachNewComponentToEntity<RenderMesh2D>(rect);
+            system.AttachNewComponentToEntity<Transform2d>(rect);
             //system.AttachComponentToEntity<ATexture>(cube);
             return rect;
         }

@@ -182,14 +182,14 @@ namespace ajiva.Systems.VulcanEngine.Systems
         }
 
         /// <inheritdoc />
-        public void Init(AjivaEcs ecs)
+        public void Init(IAjivaEcs ecs)
         {
             PickPhysicalDevice(ecs.GetInstance<Instance>());
             CreateLogicalDevice();
         }
 
         /// <inheritdoc />
-        public DeviceSystem(AjivaEcs ecs) : base(ecs)
+        public DeviceSystem(IAjivaEcs ecs) : base(ecs)
         {
         }
     }

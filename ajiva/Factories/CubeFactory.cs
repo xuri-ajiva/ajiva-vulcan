@@ -10,12 +10,12 @@ namespace ajiva.Factories
     public class CubeFactory : EntityFactoryBase<Cube>
     {
         /// <inheritdoc />
-        public override Cube Create(AjivaEcs system, uint id)
+        public override Cube Create(IAjivaEcs system, uint id)
         {
             var cube = new Cube();
             //return cube.Create3DRenderedObject(system);
-            system.AttachComponentToEntity<Transform3d>(cube);
-            system.AttachComponentToEntity<RenderMesh3D>(cube);
+            system.AttachNewComponentToEntity<Transform3d>(cube);
+            system.AttachNewComponentToEntity<RenderMesh3D>(cube);
             //system.AttachComponentToEntity<ATexture>(cube);
             return cube;
         }

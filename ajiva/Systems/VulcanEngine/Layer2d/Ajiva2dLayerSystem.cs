@@ -26,12 +26,12 @@ namespace ajiva.Systems.VulcanEngine.Layer2d
         private object MainLock { get; } = new object();
 
         /// <inheritdoc />
-        public Ajiva2dLayerSystem(AjivaEcs ecs) : base(ecs)
+        public Ajiva2dLayerSystem(IAjivaEcs ecs) : base(ecs)
         {
         }
 
         /// <inheritdoc />
-        public void Init(AjivaEcs ecs)
+        public void Init(IAjivaEcs ecs)
         {
             window = Ecs.GetSystem<WindowSystem>();
 

@@ -16,11 +16,11 @@ namespace ajiva.Entities
         public class FpsCamaraFactory : EntityFactoryBase<FpsCamera>
         {
             /// <inheritdoc />
-            public override FpsCamera Create(AjivaEcs system, uint id)
+            public override FpsCamera Create(IAjivaEcs system, uint id)
             {
                 var cam = new FpsCamera();
-                system.AttachComponentToEntity<Transform3d>(cam);
-                system.AttachComponentToEntity<RenderMesh3D>(cam);
+                system.AttachComponentToEntity(cam, new Transform3d());
+                system.AttachNewComponentToEntity<RenderMesh3D>(cam);
                 system.RegisterUpdate(cam);
                 cam.OnMouseMoved(0.0f, 0.0f);
                 return cam;
@@ -84,7 +84,6 @@ namespace ajiva.Entities
                     y: glm.Sin(glm.Radians(Transform.Rotation.x)),
                     z: glm.Cos(glm.Radians(Transform.Rotation.x)) * glm.Cos(glm.Radians(Transform.Rotation.y))
                 ).Normalized;
-            
 
             public override void OnMouseMoved(float xRel, float yRel)
             {

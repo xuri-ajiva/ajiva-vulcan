@@ -10,12 +10,9 @@ namespace ajiva.Entities
     {
         public TransformFormEntity() : base(0)
         {
-            TransformLazy = new Lazy<T>(() =>
-            {
-                return this.GetComponent<T>();
-            });
+            TransformLazy = new Lazy<T>(this.GetComponent<T>);
         }
-
+                                                        
         public Lazy<T> TransformLazy { get; }
         public T Transform => TransformLazy.Value;
     }

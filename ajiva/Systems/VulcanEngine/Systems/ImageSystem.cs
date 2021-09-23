@@ -18,7 +18,7 @@ namespace ajiva.Systems.VulcanEngine.Systems
             var aImage = new AImage(true);
             var deviceSystem = Ecs.GetSystem<DeviceSystem>();
             var device = deviceSystem.Device!;
-                
+
             aImage.Image = device.CreateImage(ImageType.Image2d, format, new(width, height, 1), 1, 1, SampleCountFlags.SampleCount1, tiling, usage, SharingMode.Exclusive, ArrayProxy<uint>.Null, ImageLayout.Undefined);
 
             var memRequirements = device.GetImageMemoryRequirements2(new()
@@ -59,7 +59,7 @@ namespace ajiva.Systems.VulcanEngine.Systems
             return aImage;
         }
 
-        #region imageHelp
+#region imageHelp
 
         public void CopyBufferToImage(Buffer buffer, Image image, uint width, uint height)
         {
@@ -144,12 +144,6 @@ namespace ajiva.Systems.VulcanEngine.Systems
 
             Ecs.GetSystem<DeviceSystem>().SingleTimeCommand(QueueType.GraphicsQueue, command => command.PipelineBarrier(sourceStage, destinationStage, ArrayProxy<MemoryBarrier>.Null, ArrayProxy<BufferMemoryBarrier>.Null, barrier));
         }
-        
-        /// <inheritdoc />
-        public override void AttachNewComponent(IEntity entity)
-        {
-            throw new NotImplementedException();
-        }
 
         /// <inheritdoc />
         public override AImage CreateComponent(IEntity entity)
@@ -157,15 +151,15 @@ namespace ajiva.Systems.VulcanEngine.Systems
             throw new NotImplementedException();
         }
 
-  #endregion
+#endregion
 
         /// <inheritdoc />
-        public void Init(AjivaEcs ecs)
+        public void Init(IAjivaEcs ecs)
         {
         }
 
         /// <inheritdoc />
-        public ImageSystem(AjivaEcs ecs) : base(ecs)
+        public ImageSystem(IAjivaEcs ecs) : base(ecs)
         {
         }
     }

@@ -16,13 +16,7 @@ namespace ajiva.Systems
             return tra;
         }
 
-        /// <inheritdoc />
-        public override void AttachNewComponent(IEntity entity)
-        {
-            entity.AddComponent(CreateComponent(entity));
-        }
-
-        public TransformComponentSystem(AjivaEcs ecs) : base(ecs)
+        public TransformComponentSystem(IAjivaEcs ecs) : base(ecs)
         {
         }
     }
@@ -35,14 +29,9 @@ namespace ajiva.Systems
             ComponentEntityMap.Add(tra, entity);
             return tra;
         }
+        
 
-        /// <inheritdoc />
-        public override void AttachNewComponent(IEntity entity)
-        {
-            entity.AddComponent(CreateComponent(entity));
-        }
-
-        public Transform2dComponentSystem(AjivaEcs ecs) : base(ecs)
+        public Transform2dComponentSystem(IAjivaEcs ecs) : base(ecs)
         {
         }
     }

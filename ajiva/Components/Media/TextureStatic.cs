@@ -10,7 +10,7 @@ namespace ajiva.Components.Media
 {
     public partial class ATexture
     {
-        public static ATexture FromFile(AjivaEcs ecs, string path)
+        public static ATexture FromFile(IAjivaEcs ecs, string path)
         {
             return new()
             {
@@ -19,7 +19,7 @@ namespace ajiva.Components.Media
             };
         }
 
-        public static ATexture FromBitmap(AjivaEcs ecs, Bitmap bitmap)
+        public static ATexture FromBitmap(IAjivaEcs ecs, Bitmap bitmap)
         {
             return new()
             {
@@ -28,14 +28,14 @@ namespace ajiva.Components.Media
             };
         }
 
-        private static AImage CreateTextureImageFromFile(AjivaEcs ecs, string fileName)
+        private static AImage CreateTextureImageFromFile(IAjivaEcs ecs, string fileName)
         {
             var img = System.Drawing.Image.FromFile(fileName);
             var bm = new Bitmap(img);
             return CreateTextureImageFromBitmap(ecs, bm);
         }
 
-        private static AImage CreateTextureImageFromBitmap(AjivaEcs ecs, Bitmap bm)
+        private static AImage CreateTextureImageFromBitmap(IAjivaEcs ecs, Bitmap bm)
         {
             var texWidth = (uint)bm.Width;
             var texHeight = (uint)bm.Height;
