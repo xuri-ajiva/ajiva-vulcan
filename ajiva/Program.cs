@@ -8,6 +8,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using ajiva.Application;
 using ajiva.Ecs.Utils;
+using ajiva.Utils;
 using Ajiva.Wrapper.Logger;
 using SharpVk.Glfw;
 using SharpVk.Interop;
@@ -33,8 +34,7 @@ namespace ajiva
             app01.Init();
             app01.Run();
 
-            TaskSource.CancelAfter(3000);
-            Task.WaitAll(Tasks.ToArray(), 4000);
+            TaskWatcher.Cancel();
 
             app01.Dispose();
             app01 = null;
@@ -121,13 +121,9 @@ namespace ajiva
         }
 
         private static object ConsoleLock = new();
-        private static readonly CancellationTokenSource TaskSource = new();
-        private static readonly List<Task> Tasks = new();
 
-        public static void TaskWatcher(Func<Task?> run)
-        {
-            Tasks.Add(Task.Run(run, TaskSource.Token));
-        }
+
+
 
         // private void Menu()
         // {
