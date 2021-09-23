@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections;
+using ajiva.Utils;
 
 namespace ajiva.Models.Buffer.ChangeAware
 {
@@ -19,17 +20,5 @@ namespace ajiva.Models.Buffer.ChangeAware
         void Commit(int index);
         void SetChanged(int index, bool changed);
         ByRef<T> GetForChange(int index);
-    }
-    public class ByRef<T> where T : unmanaged
-    {
-        public T Value;
-
-        public ByRef(T value)
-        {
-            Value = value;
-        }
-
-        public static implicit operator T(ByRef<T> byRef) => byRef.Value;
-        public static implicit operator ByRef<T>(T value) => new ByRef<T>(value);
     }
 }
