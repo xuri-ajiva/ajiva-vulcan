@@ -11,11 +11,5 @@ namespace ajiva.Ecs.System
         {
             Ecs = ecs;
         }
-
-        /// <inheritdoc />
-        public virtual void Setup()
-        {
-            
-        }
     }
 }
