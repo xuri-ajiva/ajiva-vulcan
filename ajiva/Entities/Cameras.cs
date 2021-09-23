@@ -1,6 +1,7 @@
 ﻿using System;
 using ajiva.Components.Media;
 using ajiva.Components.RenderAble;
+using ajiva.Components.Transform;
 using ajiva.Ecs;
 using ajiva.Ecs.Entity;
 using ajiva.Ecs.Factory;
@@ -26,7 +27,7 @@ namespace ajiva.Entities
             }
         }
 
-        public abstract class Camera : TransFormEntity
+        public abstract class Camera : TransformFormEntity<Transform3d, vec3, mat4>
         {
             public float Fov;
             public float Width;
