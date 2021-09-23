@@ -1,11 +1,12 @@
 ﻿using System;
+using System.Collections.Generic;
 using ajiva.Components.Media;
 using ajiva.Components.RenderAble;
 using ajiva.Ecs;
 using ajiva.Ecs.System;
 using ajiva.Ecs.Utils;
 using ajiva.Systems.VulcanEngine.Layer;
-using ajiva.Systems.VulcanEngine.Unions;
+using ajiva.Systems.VulcanEngine.Layers;
 using ajiva.Utils;
 using ajiva.Utils.Changing;
 using Ajiva.Wrapper.Logger;
@@ -18,13 +19,15 @@ namespace ajiva.Systems.VulcanEngine.Systems
     {
         public IChangingObserver ChangingObserver { get; } = new ChangingObserver(100);
 
+        public Dictionary<AjivaVulkanPipeline, IAjivaLayer> Layers { get; } = new();
+
         private static readonly object CurrentGraphicsLayoutSwapLock = new();
 
         /// <inheritdoc />
         protected override void ReleaseUnmanagedResources(bool disposing)
         {
-            renderUnion?.Dispose();
-            renderUnion = null!;
+            ajivaLayerRenderer?.Dispose();
+            ajivaLayerRenderer = null!;
         }
 
         public void RecreateCurrentGraphicsLayout()
@@ -38,17 +41,30 @@ namespace ajiva.Systems.VulcanEngine.Systems
             }
         }
 
+        private bool recreateCurrentGraphicsLayoutNeeded = true;
+
         /// <inheritdoc />
         public void Init(AjivaEcs ecs)
         {
             ResolveDeps();
+            //RecreateCurrentGraphicsLayout();
+            ChangingObserver.Changed();
+            windowSystem.OnResize += WindowResized;
+        }
+
+        private void WindowResized()
+        {
             RecreateCurrentGraphicsLayout();
-            windowSystem.OnResize += RecreateCurrentGraphicsLayout;
         }
 
         /// <inheritdoc />
         public void Update(UpdateInfo delta)
         {
+            if (recreateCurrentGraphicsLayoutNeeded)
+            {
+                RecreateCurrentGraphicsLayout();
+                recreateCurrentGraphicsLayoutNeeded = false;
+            }
             if (ChangingObserver.UpdateCycle(delta.Iteration))
                 UpdateGraphicsData();
             lock (CurrentGraphicsLayoutSwapLock)
@@ -64,32 +80,29 @@ namespace ajiva.Systems.VulcanEngine.Systems
 
         private Format DepthFormat { get; set; }
 
-        private RenderUnion renderUnion;
-
-        private Queue render;
-        private Queue presentation;
+        private AjivaLayerRenderer ajivaLayerRenderer;
 
         public void DrawFrame()
         {
-            renderUnion.DrawFrame(render, presentation);
+            var render = deviceSystem.GraphicsQueue!;
+            var presentation = deviceSystem.PresentQueue!;
+            lock (presentation)
+            {
+                lock (render)
+                {
+                    ajivaLayerRenderer.DrawFrame(render, presentation);
+                }
+            }
         }
 
         private DeviceSystem deviceSystem;
-        private ImageSystem imageSystem;
         private WindowSystem windowSystem;
-        private LayerSystem layerSystem;
-        private IRenderMeshPool meshPool;
 
         public void ResolveDeps()
         {
             deviceSystem = Ecs.GetSystem<DeviceSystem>();
-            imageSystem = Ecs.GetComponentSystem<ImageSystem, AImage>();
             windowSystem = Ecs.GetSystem<WindowSystem>();
-            layerSystem = Ecs.GetSystem<LayerSystem>();
-            meshPool = Ecs.GetInstance<MeshPool>();
 
-            render = deviceSystem.GraphicsQueue!;
-            presentation = deviceSystem.PresentQueue!;
             DepthFormat = (deviceSystem.PhysicalDevice ?? throw new InvalidOperationException()).FindDepthFormat();
         }
 
@@ -97,15 +110,14 @@ namespace ajiva.Systems.VulcanEngine.Systems
 
         protected void ReCreateRenderUnion()
         {
-            renderUnion?.DisposeIn(DISPOSE_DALEY);
+            ajivaLayerRenderer?.DisposeIn(DISPOSE_DALEY);
 
-            renderUnion = RenderUnion.CreateRenderUnion(deviceSystem, windowSystem.Canvas);
+            var imageAvailable = deviceSystem.Device!.CreateSemaphore()!;
+            var renderFinished = deviceSystem.Device!.CreateSemaphore()!;
 
-            foreach (var (_, layer) in layerSystem.Layers)
-            {
-                layer.ReCreateDepthImage(imageSystem, DepthFormat, windowSystem.Canvas);
-                renderUnion.AddUpdateLayer(layer, deviceSystem);
-            }
+            ajivaLayerRenderer = new AjivaLayerRenderer(imageAvailable, renderFinished);
+
+            ajivaLayerRenderer.PrepareRenderSubmitInfo(deviceSystem, windowSystem.Canvas, Layers);
 
             UpdateGraphicsData();
         }
@@ -115,12 +127,18 @@ namespace ajiva.Systems.VulcanEngine.Systems
             LogHelper.Log("Updating BufferData");
             ChangingObserver.Updated();
 
-            foreach (var (_, layer) in layerSystem.Layers)
+            ajivaLayerRenderer.FillBuffers();
+            /*foreach (var (_, layer) in layerSystem.Layers)
             {
                 renderUnion.FillFrameBuffer(layer.PipelineLayer, layer.GetRenders(), meshPool);
-            }
+            }*/
         }
 
   #endregion
+
+        public void AddUpdateLayer(IAjivaLayer layer)
+        {
+            Layers.Add(layer.PipelineLayer, layer);
+        }
     }
 }
