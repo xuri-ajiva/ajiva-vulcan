@@ -1,4 +1,5 @@
 ﻿using System;
+using ajiva.Utils;
 
 namespace ajiva.Models.Buffer
 {
