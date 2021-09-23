@@ -1,40 +1,28 @@
 ﻿using System.Linq;
 using ajiva.Components.Media;
 using ajiva.Models;
+using ajiva.Systems.VulcanEngine.Layers.Models;
+using ajiva.Systems.VulcanEngine.Systems;
 using ajiva.Utils;
 using SharpVk;
 using SharpVk.Khronos;
 
-namespace ajiva.Systems.VulcanEngine.Unions
+namespace ajiva.Systems.VulcanEngine.Layers.Creation
 {
-    public class SwapChainUnion : DisposingLogger
+    public static class SwapChainLayerCreator
     {
-        public Format SwapChainFormat { get; }
-        public Canvas Canvas { get; }
-        public Swapchain SwapChain { get; }
-        public AImage[] SwapChainImage { get; }
-
-        public SwapChainUnion(Format swapChainFormat, Canvas canvas, Swapchain swapChain, AImage[] swapChainImage)
+        public static SwapChainLayer DefaultChecked(DeviceSystem deviceSystem, Canvas canvas)
         {
-            SwapChainFormat = swapChainFormat;
-            Canvas = canvas;
-            SwapChain = swapChain;
-            SwapChainImage = swapChainImage;
-        }
-
-        /// <inheritdoc />
-        protected override void ReleaseUnmanagedResources(bool disposing)
-        {
-            SwapChain.Dispose();
-            foreach (var aImage in SwapChainImage)
+            if (deviceSystem.Device is null || deviceSystem.PhysicalDevice is null)
             {
-                aImage.Dispose();
+                throw new NotInitializedException(nameof(deviceSystem), deviceSystem);
             }
+            return Default(deviceSystem, canvas);
         }
 
-        public static SwapChainUnion CreateSwapChainUnion(PhysicalDevice physicalDevice, Device device, Canvas canvas)
+        public static SwapChainLayer Default(DeviceSystem deviceSystem, Canvas canvas)
         {
-            var swapChainSupport = physicalDevice.QuerySwapChainSupport(canvas.SurfaceHandle);
+            var swapChainSupport = deviceSystem.PhysicalDevice!.QuerySwapChainSupport(canvas.SurfaceHandle);
             var extent = swapChainSupport.Capabilities.ChooseSwapExtent(canvas.Extent);
             var surfaceFormat = swapChainSupport.Formats.ChooseSwapSurfaceFormat();
 
@@ -44,11 +32,11 @@ namespace ajiva.Systems.VulcanEngine.Unions
                 imageCount = swapChainSupport.Capabilities.MaxImageCount;
             }
 
-            var queueFamilies = physicalDevice.FindQueueFamilies(canvas);
+            var queueFamilies = deviceSystem.PhysicalDevice!.FindQueueFamilies(canvas);
 
             var queueFamilyIndices = queueFamilies.Indices.ToArray();
 
-            Swapchain swapChain = device.CreateSwapchain(canvas.SurfaceHandle,
+            Swapchain swapChain = deviceSystem.Device!.CreateSwapchain(canvas.SurfaceHandle,
                 imageCount,
                 surfaceFormat.Format,
                 surfaceFormat.ColorSpace,
@@ -68,10 +56,10 @@ namespace ajiva.Systems.VulcanEngine.Unions
             AImage[] swapChainImage = swapChain.GetImages().Select(x => new AImage(false)
             {
                 Image = x,
-                View = x.CreateImageView(device, surfaceFormat.Format, ImageAspectFlags.Color)
+                View = x.CreateImageView(deviceSystem.Device!, surfaceFormat.Format, ImageAspectFlags.Color)
             }).ToArray();
 
-            return new(surfaceFormat.Format, canvas, swapChain, swapChainImage);
+            return new SwapChainLayer(surfaceFormat.Format, canvas, swapChain, swapChainImage);
         }
     }
 }
