@@ -1,11 +1,12 @@
 ﻿using ajiva.Models.Buffer;
+using ajiva.Models.Layers.Layer3d;
 using SharpVk;
 
-namespace ajiva.Systems.VulcanEngine.Unions
+namespace ajiva.Systems.VulcanEngine.Layers
 {
     public record PipelineDescriptorInfos(DescriptorType DescriptorType, ShaderStageFlags StageFlags, uint DestinationBinding, uint DescriptorCount, uint DestinationArrayElement = 0, DescriptorImageInfo[]? ImageInfo = default, BufferView[]? TexelBufferView = default, DescriptorBufferInfo[]? BufferInfo = default)
     {
-        public static PipelineDescriptorInfos[] CreateFrom(UniformBuffer<UniformViewProj> viewProj, UniformBuffer<UniformModel> uniformModels, DescriptorImageInfo[] textureSamplerImageViews)
+        public static PipelineDescriptorInfos[] CreateFrom(UniformBuffer<UniformViewProj3d> viewProj, UniformBuffer<SolidUniformModel> uniformModels, DescriptorImageInfo[] textureSamplerImageViews)
         {
             return new PipelineDescriptorInfos[]
             {
