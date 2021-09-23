@@ -85,31 +85,6 @@ namespace ajiva.Components
             return sh;
         }
 
-        public static Shader CreateShaderFrom<TV, TF>(Func<IShanqFactory, IQueryable<TV>> vertexShaderFunc, Func<IShanqFactory, IQueryable<TF>> fragmentShaderFunc, DeviceSystem system, string name)
-        {
-            var sh = new Shader(system, name);
-            sh.CreateShaderModules(vertexShaderFunc, fragmentShaderFunc);
-            return sh;
-        }
-
-        public static Shader DefaultShader(DeviceSystem system, string name)
-        {
-            return CreateShaderFrom(shank => from input in shank.GetInput<Vertex3D>()
-                from ubo in shank.GetBinding<UniformBufferData>(0)
-                let transform = ubo.Proj * ubo.View * ubo.Model
-                select new VertexOutput
-                {
-                    Position = transform * new vec4(input.Position, 1),
-                    Colour = input.Colour
-                }, shank => from input in shank.GetInput<FragmentInput>()
-                from sampler in shank.GetSampler2d<vec4, vec2>(1, 1)
-                let colour = sampler.Sample(input.Position.xy) //new vec4(input.Color,1)
-                select new FragmentOutput
-                {
-                    Colour = colour
-                }, system, name);
-        }
-
         /// <inheritdoc />
         protected override void ReleaseUnmanagedResources(bool disposing)
         {

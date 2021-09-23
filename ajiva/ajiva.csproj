@@ -23,30 +23,28 @@
         <None Update="logo2.png">
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         </None>
-        <None Update="Shaders\3d\frag.spv">
-          <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-        </None>
-        <None Update="Shaders\3d\shader.frag">
-          <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-        </None>
-        <None Update="Shaders\3d\shader.vert">
-          <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-        </None>
-        <None Update="Shaders\3d\vert.spv">
-          <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-        </None>
         <None Update="Shaders\2d\shader.frag">
           <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         </None>
-        <None Update="Shaders\2d\shader.vert">
+        <None Update="Shaders\3d\Soild\shader.frag">
           <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         </None>
-        <None Update="Shaders\2d\vert.spv">
+        <None Update="Shaders\3d\Soild\shader.vert">
           <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         </None>
-        <None Update="Shaders\2d\frag.spv">
+        <None Update="Shaders\3d\base.vert">
           <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         </None>
+        <None Update="Shaders\3d\base.frag">
+          <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </None>
+        <None Update="tools\spirv\glslangValidator.exe">
+          <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </None>
+        <None Update="tools\spirv\spirv-remap.exe">
+          <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </None>
+        <None Remove="Systems\VulcanEngine\Layer2d\UiRenderer.acs" />
     </ItemGroup>
 
     <ItemGroup>
@@ -58,4 +56,14 @@
         <ProjectReference Include="..\SharpVk\src\SharpVk.Shanq\SharpVk.Shanq.csproj" />
         <ProjectReference Include="..\SharpVk\src\SharpVk\SharpVk.csproj" />
     </ItemGroup>
+
+    <ItemGroup>
+      <Compile Remove="Systems\VulcanEngine\SpirV-ShaderHelper\VertexOutput.cs" />
+      <Compile Remove="Systems\VulcanEngine\Layer2d\UiRenderer.cs" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <Folder Include="Systems\VulcanEngine\SpirV-ShaderHelper" />
+    </ItemGroup>
+    
 </Project>
