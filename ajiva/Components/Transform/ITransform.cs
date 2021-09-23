@@ -1,10 +1,11 @@
 ﻿using System.Collections.Generic;
+using ajiva.Ecs.Component;
 using ajiva.Utils;
 using ajiva.Utils.Changing;
 
 namespace ajiva.Components.Transform
 {
-    public interface ITransform<TV, TM> : IDisposingLogger where TV : struct, IReadOnlyList<float> where TM : struct, IReadOnlyList<float>
+    public interface ITransform<TV, TM> : IDisposingLogger, IComponent where TV : struct, IReadOnlyList<float> where TM : struct, IReadOnlyList<float>
     {
         TV Position { get; set; }
         TV Rotation { get; set; }
