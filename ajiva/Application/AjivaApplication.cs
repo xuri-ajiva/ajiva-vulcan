@@ -3,6 +3,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using ajiva.Components.Media;
 using ajiva.Components.RenderAble;
+using ajiva.Components.Transform;
 using ajiva.Ecs;
 using ajiva.Ecs.Entity;
 using ajiva.Ecs.Example;
@@ -12,13 +13,13 @@ using ajiva.Generators.Texture;
 using ajiva.Systems;
 using ajiva.Systems.VulcanEngine;
 using ajiva.Systems.VulcanEngine.Layer;
+using ajiva.Systems.VulcanEngine.Layer2d;
+using ajiva.Systems.VulcanEngine.Layer3d;
 using ajiva.Systems.VulcanEngine.Systems;
-using ajiva.Systems.VulcanEngine.Ui;
 using ajiva.Utils;
 using ajiva.Worker;
 using Ajiva.Wrapper.Logger;
 using GlmSharp;
-using Remotion.Linq.Parsing.Structure.IntermediateModel;
 using SharpVk;
 using SharpVk.Glfw;
 using SharpVk.Multivendor;
@@ -65,21 +66,18 @@ namespace ajiva.Application
 
             entityComponentSystem.AddInstance(vulcanInstance);
 
-            entityComponentSystem.AddSystem(new WorkerPool(Environment.ProcessorCount / 2, "AjivaWorkerPool", entityComponentSystem) {Enabled = true});
+            entityComponentSystem.AddSystem(new WorkerPool(Environment.ProcessorCount / 2, "AjivaWorkerPool", entityComponentSystem) { Enabled = true });
             var window = entityComponentSystem.CreateSystemOrComponentSystem<WindowSystem>();
             entityComponentSystem.CreateSystemOrComponentSystem<BoxTextureGenerator>();
 
-            var layerSystem = entityComponentSystem.CreateSystemOrComponentSystem<LayerSystem>();
-            var renderEngine = entityComponentSystem.CreateSystemOrComponentSystem<Ajiva3dSystem>();
-            var uiLayer = entityComponentSystem.CreateSystemOrComponentSystem<UiRenderer>();
-            layerSystem.AddUpdateLayer(renderEngine);
-            layerSystem.AddUpdateLayer(uiLayer);
+            //var layerSystem = entityComponentSystem.CreateSystemOrComponentSystem<LayerSystem>();
 
             entityComponentSystem.CreateSystemOrComponentSystem<TextureSystem>();
             entityComponentSystem.CreateSystemOrComponentSystem<ImageSystem>();
             entityComponentSystem.CreateSystemOrComponentSystem<TransformComponentSystem>();
+            entityComponentSystem.CreateSystemOrComponentSystem<Transform2dComponentSystem>();
 
-            entityComponentSystem.CreateSystemOrComponentSystem<GraphicsSystem>();
+            var graphicsSystem = entityComponentSystem.CreateSystemOrComponentSystem<GraphicsSystem>();
             entityComponentSystem.AddEntityFactory(new SomeEntityFactory());
 
             entityComponentSystem.AddEntityFactory(new CubeFactory());
@@ -90,10 +88,16 @@ namespace ajiva.Application
             entityComponentSystem.AddParam(nameof(SurfaceWidth), SurfaceWidth);
 
             window.OnKeyEvent += WindowOnOnKeyEvent;
+            var ajiva3dLayerSystem = entityComponentSystem.CreateSystemOrComponentSystem<Ajiva3dLayerSystem>();
+            var ajiva2dLayerSystem = entityComponentSystem.CreateSystemOrComponentSystem<Ajiva2dLayerSystem>();
+            var solidMeshRenderLayer = entityComponentSystem.CreateSystemOrComponentSystem<SolidMeshRenderLayer>();
+            var rectRender = entityComponentSystem.CreateSystemOrComponentSystem<Mesh2dRenderLayer>();
 
-            renderEngine.MainCamara = entityComponentSystem.CreateEntity<Cameras.FpsCamera>();
-            renderEngine.MainCamara.UpdatePerspective(90, SurfaceWidth, SurfaceHeight);
-            renderEngine.MainCamara.MovementSpeed = .01f;
+            graphicsSystem.AddUpdateLayer(ajiva3dLayerSystem);
+            graphicsSystem.AddUpdateLayer(ajiva2dLayerSystem);
+
+            ajiva3dLayerSystem.AddLayer(solidMeshRenderLayer);
+            ajiva2dLayerSystem.AddLayer(rectRender);
 
             var meshPref = MeshPrefab.Cube;
             var r = new Random();
@@ -102,6 +106,15 @@ namespace ajiva.Application
 
             meshPool.AddMesh(MeshPrefab.Cube);
             meshPool.AddMesh(MeshPrefab.Rect);
+
+            var rect = entityComponentSystem.CreateEntity<Rect>();
+
+            var rectMesh = rect.GetComponent<RenderMesh2D>();
+            rectMesh.SetMesh(MeshPrefab.Rect);
+            rectMesh.Render = true;
+            var rectTrans = rect.GetComponent<Transform2d>();
+            rectTrans.Scale = new vec2(.1f);
+            
 
             for (var i = 0; i < 10; i++)
             {
