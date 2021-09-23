@@ -83,7 +83,7 @@ namespace ajiva.Models.Buffer.ChangeAware
 
             Regions cur = new();
 
-            for (var i = 0; i < currentMax; i++) // go throw all known values
+            for (var i = 0; i <= currentMax; i++) // go throw all known values
             {
                 if (!Changed[i]) continue; // skip if not changed
 
