@@ -17,7 +17,7 @@ namespace ajiva.Systems.VulcanEngine.Systems
     [Dependent(typeof(TextureSystem))]
     public class GraphicsSystem : SystemBase, IInit, IUpdate
     {
-        public IChangingObserver ChangingObserver { get; } = new ChangingObserver(100);
+        public IOverTimeChangingObserver ChangingObserver { get; } = new OverTimeChangingObserver(100);
 
         public Dictionary<AjivaVulkanPipeline, IAjivaLayer> Layers { get; } = new();
 
@@ -35,7 +35,6 @@ namespace ajiva.Systems.VulcanEngine.Systems
             lock (CurrentGraphicsLayoutSwapLock)
             {
                 deviceSystem.WaitIdle();
-                ChangingObserver.Updated();
 
                 ReCreateRenderUnion();
             }
@@ -49,6 +48,7 @@ namespace ajiva.Systems.VulcanEngine.Systems
             ResolveDeps();
             //RecreateCurrentGraphicsLayout();
             ChangingObserver.Changed();
+            //ChangingObserver.OnUpdate += _ => UpdateGraphicsData();
             windowSystem.OnResize += WindowResized;
         }
 
@@ -76,7 +76,7 @@ namespace ajiva.Systems.VulcanEngine.Systems
         {
         }
 
-        #region gl
+#region gl
 
         private Format DepthFormat { get; set; }
 
@@ -124,9 +124,8 @@ namespace ajiva.Systems.VulcanEngine.Systems
 
         private void UpdateGraphicsData()
         {
-            LogHelper.Log("Updating BufferData");
-            ChangingObserver.Updated();
-
+            //LogHelper.Log("Updating BufferData");
+                ChangingObserver.Updated();
             ajivaLayerRenderer.FillBuffers();
             /*foreach (var (_, layer) in layerSystem.Layers)
             {
@@ -134,7 +133,7 @@ namespace ajiva.Systems.VulcanEngine.Systems
             }*/
         }
 
-  #endregion
+#endregion
 
         public void AddUpdateLayer(IAjivaLayer layer)
         {

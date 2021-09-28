@@ -14,7 +14,7 @@ namespace ajiva.Components.Transform
         TM RotationMat { get; }
         TM PositionMat { get; }
         TM ModelMat { get; }
-        IChangingObserver ChangingObserver { get; }
+        IChangingObserverOnlyAfter<ITransform<TV, TM>, TM> ChangingObserver { get; }
         void RefPosition(ModifyRef mod);
         void RefRotation(ModifyRef mod);
         void RefScale(ModifyRef mod);

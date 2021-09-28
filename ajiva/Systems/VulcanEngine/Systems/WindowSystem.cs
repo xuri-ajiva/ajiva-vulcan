@@ -123,7 +123,7 @@ namespace ajiva.Systems.VulcanEngine.Systems
         private readonly CursorPosDelegate cursorPosDelegate;
         private readonly WindowSizeDelegate sizeDelegate;
 
-        public Canvas Canvas { get; private set; }
+        public Canvas Canvas { get; }
 
         private void MouseCallback(WindowHandle windowHandle, double xPosition, double yPosition)
         {
@@ -132,7 +132,7 @@ namespace ajiva.Systems.VulcanEngine.Systems
             if (mousePos == previousMousePosition)
                 return;
 
-            OnMouseMove?.Invoke(this, new(mousePos, -(previousMousePosition - mousePos), activeLayer));
+            OnMouseMove?.Invoke(this, new AjivaMouseMotionCallbackEventArgs(mousePos, -(previousMousePosition - mousePos), activeLayer));
 
             previousMousePosition = mousePos;
         }

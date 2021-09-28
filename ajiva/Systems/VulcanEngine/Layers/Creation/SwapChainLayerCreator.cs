@@ -51,7 +51,7 @@ namespace ajiva.Systems.VulcanEngine.Layers.Creation
                 CompositeAlphaFlags.Opaque,
                 swapChainSupport.PresentModes.ChooseSwapPresentMode(),
                 true,
-                null);
+                null); //todo take old swapchain
 
             AImage[] swapChainImage = swapChain.GetImages().Select(x => new AImage(false)
             {

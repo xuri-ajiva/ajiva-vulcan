@@ -1,19 +1,22 @@
-﻿using ajiva.Utils.Changing;
+﻿using ajiva.Ecs.Component;
+using ajiva.Utils;
+using ajiva.Utils.Changing;
 using GlmSharp;
 
 namespace ajiva.Components.Transform
 {
-    public class Transform2d : ChangingComponentBase, ITransform<vec2, mat4>
+    public class Transform2d : DisposingLogger, IComponent, ITransform<vec2, mat4>
     {
         private vec2 position;
         private vec2 rotation;
         private vec2 scale;
 
-        public Transform2d(vec2 position, vec2 rotation, vec2 scale) : base(0)
+        public Transform2d(vec2 position, vec2 rotation, vec2 scale)
         {
-            ChangingObserver.RaiseChanged(ref this.position, position);
-            ChangingObserver.RaiseChanged(ref this.rotation, rotation);
-            ChangingObserver.RaiseChanged(ref this.scale, scale);
+            ChangingObserver = new ChangingObserverOnlyAfter<ITransform<vec2, mat4>, mat4>(this, () => ModelMat, 0);
+            ChangingObserver.RaiseAndSetIfChanged(ref this.position, position);
+            ChangingObserver.RaiseAndSetIfChanged(ref this.rotation, rotation);
+            ChangingObserver.RaiseAndSetIfChanged(ref this.scale, scale);
         }
 
         public Transform2d(vec2 position, vec2 rotation) : this(position, rotation, vec2.Ones) { }
@@ -25,41 +28,44 @@ namespace ajiva.Components.Transform
         public vec2 Position
         {
             get => position;
-            set => ChangingObserver.RaiseChanged(ref position, value);
+            set => ChangingObserver.RaiseAndSetIfChanged(ref position, value);
         }
         public vec2 Rotation
         {
             get => rotation;
-            set => ChangingObserver.RaiseChanged(ref rotation, value);
+            set => ChangingObserver.RaiseAndSetIfChanged(ref rotation, value);
         }
         public vec2 Scale
         {
             get => scale;
-            set => ChangingObserver.RaiseChanged(ref scale, value);
+            set => ChangingObserver.RaiseAndSetIfChanged(ref scale, value);
         }
+
+        /// <inheritdoc />
+        public IChangingObserverOnlyAfter<ITransform<vec2, mat4>, mat4> ChangingObserver { get; }
 
         public void RefPosition(ITransform<vec2, mat4>.ModifyRef mod)
         {
             var value = position;
             mod?.Invoke(ref position);
-            ChangingObserver.RaiseChanged(value, ref position);
+            ChangingObserver.RaiseIfChanged(position, value);
         }
 
         public void RefRotation(ITransform<vec2, mat4>.ModifyRef mod)
         {
             var value = rotation;
             mod?.Invoke(ref rotation);
-            ChangingObserver.RaiseChanged(value, ref rotation);
+            ChangingObserver.RaiseIfChanged(rotation, value);
         }
 
         public void RefScale(ITransform<vec2, mat4>.ModifyRef mod)
         {
             var value = scale;
             mod?.Invoke(ref scale);
-            ChangingObserver.RaiseChanged(value, ref scale);
+            ChangingObserver.RaiseIfChanged(scale, value);
         }
 
-  #endregion
+#endregion
 
         public mat4 ScaleMat => mat4.Scale(Scale.x, scale.y, 1);
         public mat4 RotationMat => mat4.RotateX(glm.Radians(Rotation.x)) * mat4.RotateY(glm.Radians(Rotation.y));

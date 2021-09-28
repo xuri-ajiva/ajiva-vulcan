@@ -7,28 +7,32 @@ namespace ajiva.Components.Media
     public class AImage : ChangingComponentBase
     {
         private readonly bool disposeImage;
-        private ImageView? view = null!;
-        private Image? image = null!;
-        private DeviceMemory? memory = null!;
-        public ImageView? View
+        private ImageView view = null!;
+        private Image image = null!;
+        private DeviceMemory memory = null!;
+        public ImageView View
         {
             get => view;
-            set => ChangingObserver.RaiseChanged(ref view, value);
+            init => ChangingObserver.RaiseAndSetIfChanged(ref view, value);
         }
-        public Image? Image
+        public Image Image
         {
             get => image;
-            set => ChangingObserver.RaiseChanged(ref image, value);
+            set => ChangingObserver.RaiseAndSetIfChanged(ref image, value);
         }
-        public DeviceMemory? Memory
+        public DeviceMemory Memory
         {
             get => memory;
-            set => ChangingObserver.RaiseChanged(ref memory, value);
+            set => ChangingObserver.RaiseAndSetIfChanged(ref memory, value);
         }
 
         public AImage(bool disposeImage) : base(20)
         {
             this.disposeImage = disposeImage;
+        }
+
+        public AImage() : this(false)
+        {
         }
 
         /// <inheritdoc />

@@ -15,7 +15,7 @@ namespace ajiva.Models
         public Surface Surface
         {
             get => surface!;
-            set => ChangingObserver.RaiseChanged(ref surface , value);
+            set => ChangingObserver.RaiseAndSetIfChanged(ref surface , value);
         }
 
         /// <param name="disposing"></param>

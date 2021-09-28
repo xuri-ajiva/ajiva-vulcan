@@ -125,7 +125,7 @@ namespace ajiva.Systems.VulcanEngine.Layer3d
                 LayerUniform.Commit(0);
         }
 
-        private void OnWindowMouseMove(object _, AjivaMouseMotionCallbackEventArgs e)
+        private void OnWindowMouseMove(object? _, AjivaMouseMotionCallbackEventArgs e)
         {
             lock (MainLock)
             {
@@ -134,7 +134,7 @@ namespace ajiva.Systems.VulcanEngine.Layer3d
             }
         }
 
-        private void OnWindowKeyEvent(object _, Key key, int scancode, InputAction action, Modifier modifier)
+        private void OnWindowKeyEvent(object? _, Key key, int scancode, InputAction action, Modifier modifier)
         {
             lock (MainLock)
             {

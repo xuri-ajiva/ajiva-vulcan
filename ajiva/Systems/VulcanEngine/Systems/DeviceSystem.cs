@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Linq;
+using ajiva.Components.Transform;
 using ajiva.Ecs;
 using ajiva.Ecs.System;
 using ajiva.Ecs.Utils;
@@ -55,6 +56,7 @@ namespace ajiva.Systems.VulcanEngine.Systems
                 KhrExtensions.Swapchain, DeviceCreateFlags.None, new PhysicalDeviceFeatures()
                 {
                     SamplerAnisotropy = true,
+                    FillModeNonSolid = true,
                 });
 
             GraphicsQueue = Device.GetQueue(queueFamilies.GraphicsFamily!.Value, 0);
