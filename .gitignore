@@ -18,3 +18,6 @@ riderModule.iml
 
 # compiled vulcan shaders
 *.spv
+
+# ignore all ueer files
+*.user
