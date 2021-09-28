@@ -67,7 +67,14 @@ namespace ajiva.Systems.VulcanEngine.Layer2d
         /// <inheritdoc />
         public GraphicsPipelineLayer CreateGraphicsPipelineLayer(RenderPassLayer renderPassLayer)
         {
-            return GraphicsPipelineLayerCreator.Default(renderPassLayer.Parent, renderPassLayer, Ecs.GetSystem<DeviceSystem>(), true, Vertex2D.GetBindingDescription(), Vertex2D.GetAttributeDescriptions(), MainShader, PipelineDescriptorInfos);
+            var res = GraphicsPipelineLayerCreator.Default(renderPassLayer.Parent, renderPassLayer, Ecs.GetSystem<DeviceSystem>(), true, Vertex2D.GetBindingDescription(), Vertex2D.GetAttributeDescriptions(), MainShader, PipelineDescriptorInfos);
+
+            foreach (var entity in ComponentEntityMap)
+            {
+                entity.Key.ChangingObserver.Changed();
+            }
+
+            return res;
         }
 
         /// <inheritdoc />
@@ -89,19 +96,6 @@ namespace ajiva.Systems.VulcanEngine.Layer2d
         /// <inheritdoc />
         public void Update(UpdateInfo delta)
         {
-            foreach (var (renderAble, entity) in ComponentEntityMap)
-            {
-                if (entity.TryGetComponent(out Transform2d? transform) && transform!.ChangingObserver.UpdateCycle(delta.Iteration))
-                {
-                    Models.GetForChange((int)renderAble.Id).Value.Model = transform.ModelMat;
-                    transform.ChangingObserver.Updated();
-                }
-                /*if (renderAble.ChangingObserver.UpdateCycle(delta.Iteration) /*entity.TryGetComponent(out texture) && texture!.Dirty ||#1#)
-                {
-                    renderAble.ChangingObserver.Updated();
-                }*/
-            }
-
             lock (mainLock)
                 Models.CommitChanges();
         }

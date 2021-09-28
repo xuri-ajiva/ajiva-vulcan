@@ -1,4 +1,5 @@
-﻿using System.Runtime.CompilerServices;
+﻿using System;
+using System.Runtime.CompilerServices;
 using ajiva.Components;
 using ajiva.Components.Media;
 using ajiva.Components.RenderAble;
@@ -28,14 +29,21 @@ namespace ajiva.Systems.VulcanEngine.Layer3d
         private readonly object mainLock = new();
 
         public IAChangeAwareBackupBufferOfT<SolidUniformModel> Models { get; set; }
-
+        
         /// <inheritdoc />
-        public override RenderMesh3D CreateComponent(IEntity entity)
+        public override RenderMesh3D RegisterComponent(IEntity entity, RenderMesh3D component)
         {
+            if (!entity.TryGetComponent<Transform3d>(out var transform))
+                throw new ArgumentException("Entity needs and transform in order to be rendered as debug");
+
+            transform.ChangingObserver.OnChanged += (_, model) => Models.GetForChange((int)component.Id).Value.Model = model;
+            //if (entity.TryGetComponent<TextureComponent>(out var texture))
+            //    texture.ChangingObserver.OnChanged += _ => Models.GetForChange((int)component.Id).Value.fragtexSamplerId = texture.TextureId;
+
+            component.ChangingObserver.OnChanged += _ => Models.GetForChange((int)component.Id).Value.TextureSamplerId = component.Id;
+
             Ecs.GetSystem<GraphicsSystem>().ChangingObserver.Changed();
-            var rnd = new RenderMesh3D();
-            ComponentEntityMap.Add(rnd, entity);
-            return rnd;
+            return base.RegisterComponent(entity, component);
         }
 
         /// <inheritdoc />
@@ -63,7 +71,14 @@ namespace ajiva.Systems.VulcanEngine.Layer3d
         /// <inheritdoc />
         public GraphicsPipelineLayer CreateGraphicsPipelineLayer(RenderPassLayer renderPassLayer)
         {
-            return GraphicsPipelineLayerCreator.Default(renderPassLayer.Parent, renderPassLayer, Ecs.GetSystem<DeviceSystem>(), true, Vertex3D.GetBindingDescription(), Vertex3D.GetAttributeDescriptions(), MainShader, PipelineDescriptorInfos);
+            var res = GraphicsPipelineLayerCreator.Default(renderPassLayer.Parent, renderPassLayer, Ecs.GetSystem<DeviceSystem>(), true, Vertex3D.GetBindingDescription(), Vertex3D.GetAttributeDescriptions(), MainShader, PipelineDescriptorInfos);
+
+            foreach (var entity in ComponentEntityMap)
+            {
+                entity.Key.ChangingObserver.Changed();
+            }
+
+            return res;
         }
 
         /// <inheritdoc />
@@ -85,20 +100,6 @@ namespace ajiva.Systems.VulcanEngine.Layer3d
         /// <inheritdoc />
         public void Update(UpdateInfo delta)
         {
-            foreach (var (renderAble, entity) in ComponentEntityMap)
-            {
-                if (entity.TryGetComponent(out Transform3d? transform) && transform!.ChangingObserver.UpdateCycle(delta.Iteration))
-                {
-                    Models.GetForChange((int)renderAble.Id).Value.Model = transform.ModelMat;
-                    transform.ChangingObserver.Updated();
-                }
-                if (renderAble.ChangingObserver.UpdateCycle(delta.Iteration) /*entity.TryGetComponent(out texture) && texture!.Dirty ||*/)
-                {
-                    Models.GetForChange((int)renderAble.Id).Value.TextureSamplerId = renderAble.Id;
-                    renderAble.ChangingObserver.Updated();
-                }
-            }
-
             lock (mainLock)
                 Models.CommitChanges();
         }
