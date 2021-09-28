@@ -6,7 +6,7 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\lib\ajiva-utils\src\Ajiva.Include\Ajiva.Include.csproj" />
+      <ProjectReference Include="..\libs\ajiva-utils\src\Ajiva.Include\Ajiva.Include.csproj" />
     </ItemGroup>
 
 </Project>
