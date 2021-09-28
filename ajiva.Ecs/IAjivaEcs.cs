@@ -39,17 +39,17 @@ namespace ajiva.Ecs
 
 #region Entity
 
-        T CreateEntity<T>() where T : class, IEntity;
+        bool TryCreateEntity<T>([MaybeNullWhen(false)] out T entity) where T : class, IEntity;
         void RegisterEntity<T>(T entity) where T : class, IEntity;
 
 #endregion
 
 #region Component
 
-        T CreateComponent<T>(IEntity entity) where T : class, IComponent;
+        bool TryCreateComponent<T>(IEntity entity, [MaybeNullWhen(false)] out T component) where T : class, IComponent;
         T RegisterComponent<T>(IEntity entity, T component) where T : class, IComponent;
-        void AttachNewComponentToEntity<T>(IEntity entity) where T : class, IComponent;
-        void AttachComponentToEntity<T>(IEntity entity, T component) where T : class, IComponent;
+        bool TryAttachNewComponentToEntity<T>(IEntity entity) where T : class, IComponent;
+        bool TryAttachComponentToEntity<T>(IEntity entity, T component) where T : class, IComponent;
 
 #endregion
 

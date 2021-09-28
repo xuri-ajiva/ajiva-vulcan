@@ -1,4 +1,5 @@
-﻿using System.Diagnostics.CodeAnalysis;
+﻿using System;
+using System.Diagnostics.CodeAnalysis;
 using ajiva.Ecs.Component;
 using ajiva.Utils;
 using Ajiva.Wrapper.Logger;
@@ -18,6 +19,7 @@ namespace ajiva.Ecs.Entity
             return false;
         }
 
+        [Obsolete("UnSave use TryGetComponent", true)]
         public static T GetComponent<T>(this IEntity entity) where T : class, IComponent
         {
             return (T)entity.Components[UsVc<T>.Key];

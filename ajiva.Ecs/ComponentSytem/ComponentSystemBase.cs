@@ -7,7 +7,7 @@ using Ajiva.Wrapper.Logger;
 
 namespace ajiva.Ecs.ComponentSytem
 {
-    public abstract class ComponentSystemBase<T> : DisposingLogger, IComponentSystem<T> where T : class, IComponent
+    public abstract class ComponentSystemBase<T> : DisposingLogger, IComponentSystem<T> where T : class, IComponent, new()
     {
         public Type ComponentType { get; } = typeof(T);
 
@@ -16,17 +16,20 @@ namespace ajiva.Ecs.ComponentSytem
         protected IAjivaEcs Ecs { get; }
 
         /// <inheritdoc />
-        public abstract T CreateComponent(IEntity entity);
+        public virtual T CreateComponent(IEntity entity)
+        {
+            return RegisterComponent(entity, new T()); 
+        }
 
         /// <inheritdoc />
-        public T RegisterComponent(IEntity entity, T component)
+        public virtual T RegisterComponent(IEntity entity, T component)
         {
             ComponentEntityMap.Add(component, entity);
             return component;
         }
 
         /// <inheritdoc />
-        public T RemoveComponent(IEntity entity, T component)
+        public virtual T RemoveComponent(IEntity entity, T component)
         {
             if (ComponentEntityMap.Remove(component, out var entity1))
             {

@@ -13,6 +13,7 @@ using ajiva.Ecs.Utils;
 using ajiva.Utils;
 using Ajiva.Wrapper.Logger;
 using Microsoft.CSharp.RuntimeBinder;
+using Microsoft.VisualBasic;
 
 namespace ajiva.Ecs
 {
@@ -58,16 +59,20 @@ namespace ajiva.Ecs
         }
 
         /// <inheritdoc />
-        public void AttachNewComponentToEntity<T>(IEntity entity) where T : class, IComponent
+        public bool TryAttachNewComponentToEntity<T>(IEntity entity) where T : class, IComponent
         {
-            entity.AddComponent(CreateComponent<T>(entity));
+            if (!TryCreateComponent<T>(entity, out var component)) return false;
+            entity.AddComponent(component);
+            return true;
         }
 
         /// <inheritdoc />
-        public void AttachComponentToEntity<T>(IEntity entity, T component) where T : class, IComponent
+        public bool TryAttachComponentToEntity<T>(IEntity entity, T component) where T : class, IComponent
         {
+            if (!ComponentSystems.ContainsKey(typeof(T))) return false;
             entity.AddComponent(component);
             RegisterComponent(entity, component);
+            return true;
         }
 
         /// <inheritdoc />
@@ -270,24 +275,31 @@ namespace ajiva.Ecs
         }
 
         /// <inheritdoc />
-        public T CreateComponent<T>(IEntity entity) where T : class, IComponent
+        public bool TryCreateComponent<T>(IEntity entity, [MaybeNullWhen(false)] out T component) where T : class, IComponent
         {
-            return ((IComponentSystem<T>)ComponentSystems[typeof(T)]).CreateComponent(entity);
+            if (ComponentSystems.TryGetValue(typeof(T), out var cTmp) && cTmp is IComponentSystem<T> componentSystem)
+            {
+                component = componentSystem.CreateComponent(entity);
+                return true;
+            }
+            component = default;
+            return false;
         }
 
         /// <inheritdoc />
-        public T CreateEntity<T>() where T : class, IEntity
+        public bool TryCreateEntity<T>([MaybeNullWhen(false)] out T entity) where T : class, IEntity
         {
             foreach (var factory in Factories.Where(factory => factory.Key == typeof(T)))
             {
                 lock (@lock)
                 {
-                    var entity = factory.Value.Create(this, currentEntityId++);
+                    entity = (T)factory.Value.Create(this, currentEntityId++);
                     Entities.Add(entity.Id, entity);
-                    return (T)entity;
+                    return true;
                 }
             }
-            return default!;
+            entity = default;
+            return false;
         }
 
 #endregion
