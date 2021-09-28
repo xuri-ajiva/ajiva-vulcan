@@ -5,6 +5,5 @@
         bool Render { get; set; }
         uint MeshId { get; set; }
         uint Id { get; set; }
-        void SetMesh(IMesh mesh);
     }
 }
