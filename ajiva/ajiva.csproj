@@ -45,6 +45,12 @@
           <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         </None>
         <None Remove="Systems\VulcanEngine\Layer2d\UiRenderer.acs" />
+        <None Update="Shaders\3d\debug\shader.frag">
+          <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </None>
+        <None Update="Shaders\3d\debug\shader.vert">
+          <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </None>
     </ItemGroup>
 
     <ItemGroup>

@@ -79,7 +79,8 @@ namespace ajiva.Systems.VulcanEngine
                 if (props.Any(x => x.LayerName == layerName))
                     enabledLayers.Add(layerName);
             }
-
+#if DEBUG
+            
             AddAvailableLayer("VK_LAYER_LUNARG_standard_validation");
             AddAvailableLayer("VK_LAYER_KHRONOS_validation");
             AddAvailableLayer("VK_LAYER_GOOGLE_unique_objects");
@@ -91,6 +92,7 @@ namespace ajiva.Systems.VulcanEngine
             AddAvailableLayer("VK_LAYER_LUNARG_swapchain");
             AddAvailableLayer("VK_LAYER_GOOGLE_threading");
             AddAvailableLayer("VK_LAYER_RENDERDOC_Capture");
+#endif
 
             var instance = Instance.Create(
                 enabledLayers.ToArray(),
