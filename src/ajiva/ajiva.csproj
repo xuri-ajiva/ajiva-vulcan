@@ -52,19 +52,7 @@
           <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         </None>
     </ItemGroup>
-
-    <ItemGroup>
-        <ProjectReference Include="..\ajiva.Ecs\ajiva.Ecs.csproj" />
-        <ProjectReference Include="..\libs\ajiva-utils\src\Ajiva.Include\Ajiva.Include.csproj" />
-        <ProjectReference Include="..\libs\ajiva-utils\src\Ajiva.Wrapper\Ajiva.Wrapper.csproj" />
-        <ProjectReference Include="..\SharpVk\src\SharpVk.Emit\SharpVk.Emit.csproj" />
-        <ProjectReference Include="..\SharpVk\src\SharpVk.Glfw\SharpVk.Glfw.csproj" />
-        <ProjectReference Include="..\SharpVk\src\SharpVk.Shanq.GlmSharp\SharpVk.Shanq.GlmSharp.csproj" />
-        <ProjectReference Include="..\SharpVk\src\SharpVk.Shanq.Numerics\SharpVk.Shanq.Numerics.csproj" />
-        <ProjectReference Include="..\SharpVk\src\SharpVk.Shanq\SharpVk.Shanq.csproj" />
-        <ProjectReference Include="..\SharpVk\src\SharpVk\SharpVk.csproj" />
-    </ItemGroup>
-
+    
     <ItemGroup>
       <Compile Remove="Systems\VulcanEngine\SpirV-ShaderHelper\VertexOutput.cs" />
       <Compile Remove="Systems\VulcanEngine\Layer2d\UiRenderer.cs" />
@@ -73,6 +61,15 @@
 
     <ItemGroup>
       <Folder Include="Systems\VulcanEngine\SpirV-ShaderHelper" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\..\libs\ajiva-utils\src\Ajiva.Include\Ajiva.Include.csproj" />
+      <ProjectReference Include="..\..\libs\ajiva-utils\src\Ajiva.Wrapper\Ajiva.Wrapper.csproj" />
+      <ProjectReference Include="..\..\libs\SharpVk\src\SharpVk.Glfw\SharpVk.Glfw.csproj" />
+      <ProjectReference Include="..\..\libs\SharpVk\src\SharpVk.Shanq.GlmSharp\SharpVk.Shanq.GlmSharp.csproj" />
+      <ProjectReference Include="..\..\libs\SharpVk\src\SharpVk\SharpVk.csproj" />
+      <ProjectReference Include="..\ajiva.Ecs\ajiva.Ecs.csproj" />
     </ItemGroup>
     
 </Project>
