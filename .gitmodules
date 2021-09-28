@@ -1,5 +1,5 @@
 [submodule "SharpVk"]
-	path = SharpVk
+	path = libs/SharpVk
 	url = git@github.com:xuri02/SharpVk.git
 [submodule "libs/ajiva-utils"]
 	path = libs/ajiva-utils
