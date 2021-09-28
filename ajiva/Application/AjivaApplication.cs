@@ -44,7 +44,7 @@ namespace ajiva.Application
                 if (info.Iteration % 100 == 0)
                     block.WriteAt($"iteration: {info.Iteration}, delta: {info.Delta}, FPS: {1000.0f / info.Delta.TotalMilliseconds:F4}, PendingWorkItemCount: {ThreadPool.PendingWorkItemCount}, Entities.Count: {entityComponentSystem.Entities.Count}", 0);
 
-                entityComponentSystem.Update(info);
+                entityComponentSystem.Update(info);           
                 return entityComponentSystem.Available;
             }, TimeSpan.MaxValue);
 
@@ -91,13 +91,15 @@ namespace ajiva.Application
             window.OnKeyEvent += WindowOnOnKeyEvent;
             var ajiva3dLayerSystem = entityComponentSystem.CreateSystemOrComponentSystem<Ajiva3dLayerSystem>();
             var ajiva2dLayerSystem = entityComponentSystem.CreateSystemOrComponentSystem<Ajiva2dLayerSystem>();
-            var solidMeshRenderLayer = entityComponentSystem.CreateSystemOrComponentSystem<SolidMeshRenderLayer>();
+            //var solidMeshRenderLayer = entityComponentSystem.CreateSystemOrComponentSystem<SolidMeshRenderLayer>();
+            var debugLayer = entityComponentSystem.CreateSystemOrComponentSystem<DebugLayer>();
             var rectRender = entityComponentSystem.CreateSystemOrComponentSystem<Mesh2dRenderLayer>();
 
             graphicsSystem.AddUpdateLayer(ajiva3dLayerSystem);
             graphicsSystem.AddUpdateLayer(ajiva2dLayerSystem);
 
-            ajiva3dLayerSystem.AddLayer(solidMeshRenderLayer);
+            //ajiva3dLayerSystem.AddLayer(solidMeshRenderLayer);
+            ajiva3dLayerSystem.AddLayer(debugLayer);
             ajiva2dLayerSystem.AddLayer(rectRender);
 
             var meshPref = MeshPrefab.Cube;
@@ -146,7 +148,7 @@ namespace ajiva.Application
         }
 
         const int size = 100;
-        const int posRange = 100;
+        const int posRange = 10;
         const float scale = 0.7f;
         Random r = new();
 
