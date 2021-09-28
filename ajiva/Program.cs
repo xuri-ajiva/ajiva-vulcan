@@ -1,9 +1,11 @@
 ﻿//#define TEST_MODE
 using System;
 using System.Collections.Generic;
+using System.ComponentModel.Design;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Reflection.Metadata;
 using System.Threading;
 using System.Threading.Tasks;
 using ajiva.Application;
@@ -117,13 +119,14 @@ namespace ajiva
                 if (!string.IsNullOrEmpty(errors))
                     Console.WriteLine($"[COMPILE/RESULT/ERROR] {errors}");
                 Console.WriteLine($"[COMPILE/RESULT/EXIT] Compiler Process has exited with code {compiler.ExitCode}");
+                if (compiler.ExitCode != 0)
+                {
+                    Environment.Exit((int)(compiler.ExitCode + Const.ExitCode.ShaderCompile));
+                }
             }
         }
 
         private static object ConsoleLock = new();
-
-
-
 
         // private void Menu()
         // {
@@ -174,5 +177,12 @@ namespace ajiva
              while (applicationQueue.TryDequeue(out var action))
                  action.Invoke();
          }  */
+    }
+    internal static class Const
+    {
+        public enum ExitCode : long
+        {
+            ShaderCompile = 10000,
+        }
     }
 }
