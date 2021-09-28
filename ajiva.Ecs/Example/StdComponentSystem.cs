@@ -21,8 +21,7 @@ namespace ajiva.Ecs.Example
         public override StdComponent CreateComponent(IEntity entity)
         {
             var cmp = new StdComponent {Health = 100};
-            ComponentEntityMap.Add(cmp, entity);
-            return cmp;
+            return RegisterComponent(entity, cmp);
         }
 
         /// <inheritdoc />

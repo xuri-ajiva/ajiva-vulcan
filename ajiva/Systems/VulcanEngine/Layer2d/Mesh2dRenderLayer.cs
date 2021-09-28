@@ -28,15 +28,19 @@ namespace ajiva.Systems.VulcanEngine.Layer2d
         private readonly object mainLock = new();
 
         public IAChangeAwareBackupBufferOfT<SolidUniformModel2d> Models { get; set; }
-
+        
         /// <inheritdoc />
-        public override RenderMesh2D CreateComponent(IEntity entity)
+        public override RenderMesh2D RegisterComponent(IEntity entity, RenderMesh2D component)
         {
             Ecs.GetSystem<GraphicsSystem>().ChangingObserver.Changed(); //todo some changes on a single layer
-            var rnd = new RenderMesh2D();
-            ComponentEntityMap.Add(rnd, entity);
-            return rnd;
-        }
+            
+            if (!entity.TryGetComponent<Transform2d>(out var transform))
+                throw new ArgumentException("Entity needs and transform in order to be rendered as debug");
+
+            transform.ChangingObserver.OnChanged += (_, model) => Models.GetForChange((int)component.Id).Value.Model = model;
+
+            return base.RegisterComponent(entity, component);
+        }                                                                           
 
         /// <inheritdoc />
         public Mesh2dRenderLayer(IAjivaEcs ecs) : base(ecs)

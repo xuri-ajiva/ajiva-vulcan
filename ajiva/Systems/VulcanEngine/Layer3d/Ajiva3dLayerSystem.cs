@@ -14,6 +14,7 @@ using ajiva.Systems.VulcanEngine.Layers.Creation;
 using ajiva.Systems.VulcanEngine.Layers.Models;
 using ajiva.Systems.VulcanEngine.Systems;
 using ajiva.Utils;
+using Ajiva.Wrapper.Logger;
 using SharpVk;
 using SharpVk.Glfw;
 
@@ -83,7 +84,14 @@ namespace ajiva.Systems.VulcanEngine.Layer3d
 
             LayerUniform = new AChangeAwareBackupBufferOfT<UniformViewProj3d>(1, deviceSystem);
 
-            MainCamara = ecs.CreateEntity<Cameras.FpsCamera>();
+            if (ecs.TryCreateEntity<Cameras.FpsCamera>(out var mCamTmp))
+            {
+                MainCamara = mCamTmp;
+            }
+            else
+            {
+                LogHelper.Log("Error: cam not created");
+            }
             MainCamara.UpdatePerspective(90, window.Canvas.Width, window.Canvas.Height);
             MainCamara.MovementSpeed = .01f;
         }

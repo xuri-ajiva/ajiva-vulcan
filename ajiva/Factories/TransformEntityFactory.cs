@@ -14,7 +14,7 @@ namespace ajiva.Factories
         {
             var entity = new TransformFormEntity<Transform3d, vec3, mat4>
                 {Id = id};
-            system.AttachNewComponentToEntity<Transform3d>(entity);
+            system.TryAttachNewComponentToEntity<Transform3d>(entity);
             return entity;
         }
 

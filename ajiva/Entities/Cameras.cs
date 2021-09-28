@@ -19,8 +19,8 @@ namespace ajiva.Entities
             public override FpsCamera Create(IAjivaEcs system, uint id)
             {
                 var cam = new FpsCamera();
-                system.AttachComponentToEntity(cam, new Transform3d());
-                system.AttachNewComponentToEntity<RenderMesh3D>(cam);
+                system.TryAttachComponentToEntity(cam, new Transform3d());
+                system.TryAttachNewComponentToEntity<RenderMesh3D>(cam);
                 system.RegisterUpdate(cam);
                 cam.OnMouseMoved(0.0f, 0.0f);
                 return cam;
@@ -54,7 +54,10 @@ namespace ajiva.Entities
 
             public virtual void Translate(vec3 v)
             {
-                this.GetComponent<Transform3d>().Position += v;
+                if (this.TryGetComponent<Transform3d>(out var transfrom))
+                {
+                    transfrom.Position += v;
+                }
                 View += mat4.Translate(v * -1.0F);
             }
 

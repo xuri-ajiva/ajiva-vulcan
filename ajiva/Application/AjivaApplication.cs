@@ -12,6 +12,7 @@ using ajiva.Factories;
 using ajiva.Generators.Texture;
 using ajiva.Systems;
 using ajiva.Systems.VulcanEngine;
+using ajiva.Systems.VulcanEngine.Debug;
 using ajiva.Systems.VulcanEngine.Layer;
 using ajiva.Systems.VulcanEngine.Layer2d;
 using ajiva.Systems.VulcanEngine.Layer3d;
@@ -107,27 +108,41 @@ namespace ajiva.Application
             meshPool.AddMesh(MeshPrefab.Cube);
             meshPool.AddMesh(MeshPrefab.Rect);
 
-            var rect = entityComponentSystem.CreateEntity<Rect>();
-
-            var rectMesh = rect.GetComponent<RenderMesh2D>();
-            rectMesh.SetMesh(MeshPrefab.Rect);
-            rectMesh.Render = true;
-            var rectTrans = rect.GetComponent<Transform2d>();
-            rectTrans.Scale = new vec2(.1f);
-            
+            if (entityComponentSystem.TryCreateEntity<Rect>(out var rect))
+            {
+                if (rect.TryGetComponent<RenderMesh2D>(out var rectMesh))
+                {
+                    rectMesh.SetMesh(MeshPrefab.Rect);
+                    rectMesh.Render = true;
+                }
+                if (rect.TryGetComponent<Transform2d>(out var rectTrans))
+                {
+                    rectTrans.Scale = new vec2(.05f);
+                }
+            }
+            else
+            {
+            }
 
             for (var i = 0; i < 10; i++)
             {
-                var cube = entityComponentSystem.CreateEntity<Cube>();
-
-                var render = cube.GetComponent<RenderMesh3D>();
-                render.SetMesh(meshPref);
-                render.Render = true;
-
-                var trans = cube.GetComponent<Transform3d>();
-                trans.Position = new(r.Next(-posRange, posRange), r.Next(-posRange, posRange), r.Next(-posRange, posRange));
-                trans.Rotation = new(r.Next(0, 100), r.Next(0, 100), r.Next(0, 100));
-            }
+                if (!entityComponentSystem.TryCreateEntity<Cube>(out var cube)) continue;
+                if (cube.TryGetComponent<RenderMesh3D>(out var render))
+                {
+                    render.SetMesh(meshPref);
+                    render.Render = true;
+                }
+                if (cube.TryGetComponent<DebugComponent>(out var debug))
+                {
+                    debug.SetMesh(meshPref);
+                    debug.Render = true;
+                }
+                if (cube.TryGetComponent<Transform3d>(out var trans))
+                {
+                    trans.Position = new(r.Next(-posRange, posRange), r.Next(-posRange, posRange), r.Next(-posRange, posRange));
+                    trans.Rotation = new(r.Next(0, 100), r.Next(0, 100), r.Next(0, 100));
+                }
+            }   
         }
 
         const int size = 100;
@@ -145,6 +160,8 @@ namespace ajiva.Application
             {
                 Task.Run(() =>
                 {
+                    using var change = entityComponentSystem.GetSystem<GraphicsSystem>().ChangingObserver.BeginBigChange();
+
                     var index = key - Key.Num0 + 1;
                     var rep = 1 << index;
                     const float sz = .5f;
@@ -152,44 +169,65 @@ namespace ajiva.Application
                     {
                         for (int j = 0; j < rep; j++)
                         {
-                            var cube = entityComponentSystem.CreateEntity<Cube>();
+                            if (!entityComponentSystem.TryCreateEntity<Cube>(out var cube)) continue;
 
-                            var render = cube.GetComponent<RenderMesh3D>();
-                            render.SetMesh(meshPref);
-                            render.Render = true;
+                            if (cube.TryGetComponent<RenderMesh3D>(out var render))
+                            {
+                                render.SetMesh(meshPref);
+                                render.Render = true;
+                            }
+                            if (cube.TryGetComponent<DebugComponent>(out var debug))
+                            {
+                                debug.SetMesh(meshPref);
+                                debug.Render = true;
+                            }
 
-                            var trans = cube.GetComponent<Transform3d>();
-                            trans.Position = new(i * sz, -index * 2, j * sz);
-                            trans.Rotation = new(i * 90, j * 90, 0);
-                            trans.Scale = new(sz / 2);
+                            if (cube.TryGetComponent<Transform3d>(out var trans))
+                            {
+                                trans.Position = new(i * sz, -index * 2, j * sz);
+                                trans.Rotation = new(i * 90, j * 90, 0);
+                                trans.Scale = new(sz / 2);
+                            }
                         }
                     }
+                    change.Dispose();
                 });
             }
 
             switch (key)
             {
                 case Key.B:
-                    for (var i = 0; i < 100; i++)
                     {
-                        var cube = entityComponentSystem.CreateEntity<Cube>();
+                        using var change = entityComponentSystem.GetSystem<GraphicsSystem>().ChangingObserver.BeginBigChange();
 
-                        var render = cube.GetComponent<RenderMesh3D>();
-                        render.SetMesh(meshPref);
-                        render.Render = true;
+                        for (var i = 0; i < 100; i++)
+                        {
+                            if (!entityComponentSystem.TryCreateEntity<Cube>(out var cube)) continue;
 
-                        var trans = cube.GetComponent<Transform3d>();
-                        trans.Position = new(r.Next(-posRange, posRange), r.Next(-posRange, posRange), r.Next(-posRange, posRange));
-                        trans.Rotation = new(r.Next(0, 100), r.Next(0, 100), r.Next(0, 100));
+                            if (cube.TryGetComponent<RenderMesh3D>(out var render))
+                            {
+                                render.SetMesh(meshPref);
+                                render.Render = true;
+                            }
+
+                            if (cube.TryGetComponent<Transform3d>(out var trans))
+                            {
+                                trans.Position = new(r.Next(-posRange, posRange), r.Next(-posRange, posRange), r.Next(-posRange, posRange));
+                                trans.Rotation = new(r.Next(0, 100), r.Next(0, 100), r.Next(0, 100));
+                            }
+                        }
+                        change.Dispose();
+                        break;
                     }
-                    break;
 
                 case Key.R:
-                    var rect = entityComponentSystem.CreateEntity<Rect>();
+                    if (!entityComponentSystem.TryCreateEntity<Rect>(out var rect)) break;
 
-                    var renderRect = rect.GetComponent<RenderMesh2D>();
-                    renderRect.SetMesh(MeshPrefab.Rect);
-                    renderRect.Render = true;
+                    if (rect.TryGetComponent<RenderMesh2D>(out var renderRect))
+                    {
+                        renderRect.SetMesh(MeshPrefab.Rect);
+                        renderRect.Render = true;
+                    }
                     break;
 
                 case Key.T:

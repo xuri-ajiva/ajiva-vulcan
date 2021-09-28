@@ -4,6 +4,7 @@ using ajiva.Components.Transform;
 using ajiva.Ecs;
 using ajiva.Ecs.Factory;
 using ajiva.Entities;
+using ajiva.Systems.VulcanEngine.Debug;
 
 namespace ajiva.Factories
 {
@@ -14,8 +15,13 @@ namespace ajiva.Factories
         {
             var cube = new Cube();
             //return cube.Create3DRenderedObject(system);
-            system.AttachNewComponentToEntity<Transform3d>(cube);
-            system.AttachNewComponentToEntity<RenderMesh3D>(cube);
+            system.TryAttachNewComponentToEntity<Transform3d>(cube);
+            system.TryAttachNewComponentToEntity<RenderMesh3D>(cube);
+            system.TryAttachComponentToEntity(cube, new DebugComponent()
+            {
+                DrawTransform = true,
+                DrawWireframe = true,
+            });
             //system.AttachComponentToEntity<ATexture>(cube);
             return cube;
         }

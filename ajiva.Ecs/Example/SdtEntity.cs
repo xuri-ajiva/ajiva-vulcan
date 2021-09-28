@@ -10,7 +10,7 @@ namespace ajiva.Ecs.Example
         /// <inheritdoc />
         public void Update(UpdateInfo delta)
         {
-            if (this.GetComponent<StdComponent>() is { } health)
+            if (this.TryGetComponent<StdComponent>(out var health))
             {
                 health.Health += new Random().Next(-10, 10);
             }
