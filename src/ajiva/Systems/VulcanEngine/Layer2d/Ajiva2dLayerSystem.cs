@@ -31,7 +31,7 @@ namespace ajiva.Systems.VulcanEngine.Layer2d
         }
 
         /// <inheritdoc />
-        public void Init(IAjivaEcs ecs)
+        public void Init()
         {
             window = Ecs.GetSystem<WindowSystem>();
 

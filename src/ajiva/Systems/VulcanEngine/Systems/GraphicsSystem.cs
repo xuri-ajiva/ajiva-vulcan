@@ -43,7 +43,7 @@ namespace ajiva.Systems.VulcanEngine.Systems
         private bool recreateCurrentGraphicsLayoutNeeded = true;
 
         /// <inheritdoc />
-        public void Init(IAjivaEcs ecs)
+        public void Init()
         {
             ResolveDeps();
             //RecreateCurrentGraphicsLayout();

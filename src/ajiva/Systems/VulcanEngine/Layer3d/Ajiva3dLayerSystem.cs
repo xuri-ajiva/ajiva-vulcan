@@ -70,7 +70,7 @@ namespace ajiva.Systems.VulcanEngine.Layer3d
         }
 
         /// <inheritdoc />
-        public void Init(IAjivaEcs ecs)
+        public void Init()
         {
             window = Ecs.GetSystem<WindowSystem>();
 
@@ -84,7 +84,7 @@ namespace ajiva.Systems.VulcanEngine.Layer3d
 
             LayerUniform = new AChangeAwareBackupBufferOfT<UniformViewProj3d>(1, deviceSystem);
 
-            if (ecs.TryCreateEntity<Cameras.FpsCamera>(out var mCamTmp))
+            if (Ecs.TryCreateEntity<Cameras.FpsCamera>(out var mCamTmp))
             {
                 MainCamara = mCamTmp;
             }

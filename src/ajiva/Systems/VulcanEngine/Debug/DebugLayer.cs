@@ -57,7 +57,7 @@ namespace ajiva.Systems.VulcanEngine.Debug
         }
 
         /// <inheritdoc />
-        public void Init(IAjivaEcs ecs)
+        public void Init()
         {
             var deviceSystem = Ecs.GetSystem<DeviceSystem>();
 

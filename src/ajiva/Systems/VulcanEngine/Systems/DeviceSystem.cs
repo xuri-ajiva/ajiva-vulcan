@@ -184,9 +184,9 @@ namespace ajiva.Systems.VulcanEngine.Systems
         }
 
         /// <inheritdoc />
-        public void Init(IAjivaEcs ecs)
+        public void Init()
         {
-            PickPhysicalDevice(ecs.GetInstance<Instance>());
+            PickPhysicalDevice(Ecs.GetInstance<Instance>());
             CreateLogicalDevice();
         }
 

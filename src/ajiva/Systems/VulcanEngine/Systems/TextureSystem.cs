@@ -82,9 +82,9 @@ namespace ajiva.Systems.VulcanEngine.Systems
         }
 
         /// <inheritdoc />
-        public void Init(IAjivaEcs ecs)
+        public void Init()
         {
-            EnsureDefaultImagesExists(ecs);
+            EnsureDefaultImagesExists(Ecs);
         }
     }
 }

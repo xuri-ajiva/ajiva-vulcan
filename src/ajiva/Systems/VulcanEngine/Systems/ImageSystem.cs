@@ -154,7 +154,7 @@ namespace ajiva.Systems.VulcanEngine.Systems
 #endregion
 
         /// <inheritdoc />
-        public void Init(IAjivaEcs ecs)
+        public void Init()
         {
         }
 

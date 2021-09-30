@@ -15,7 +15,7 @@ namespace ajiva.Generators.Texture
         public ATexture MissingTexture { get; private set; }
 
         /// <inheritdoc />
-        public void Init(IAjivaEcs ecs)
+        public void Init()
         {
             Ecs.GetSystem<WorkerPool>().EnqueueWork(delegate
             {

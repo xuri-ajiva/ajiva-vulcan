@@ -375,7 +375,7 @@ namespace ajiva.Ecs
                 }
             }
             //LogHelper.Log($"Init: {toInit.GetType()}");
-            toInit.Init(this);
+            toInit.Init();
             initDone.Add(toInit);
         }
 
