@@ -76,6 +76,7 @@ namespace ajiva.Application
             entityComponentSystem.CreateSystemOrComponentSystem<ImageSystem>();
             entityComponentSystem.CreateSystemOrComponentSystem<TransformComponentSystem>();
             entityComponentSystem.CreateSystemOrComponentSystem<Transform2dComponentSystem>();
+            entityComponentSystem.CreateSystemOrComponentSystem<AssetManager>();
 
             var graphicsSystem = entityComponentSystem.CreateSystemOrComponentSystem<GraphicsSystem>();
             entityComponentSystem.AddEntityFactory(new SomeEntityFactory());

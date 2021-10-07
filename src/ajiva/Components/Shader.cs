@@ -2,9 +2,12 @@
 using System.IO;
 using System.Linq;
 using System.Runtime.CompilerServices;
+using ajiva.Ecs;
 using ajiva.Ecs.Component;
 using ajiva.Models;
 using ajiva.Models.Buffer;
+using ajiva.Systems.Assets;
+using ajiva.Systems.Assets.Contracts;
 using ajiva.Systems.VulcanEngine;
 using ajiva.Systems.VulcanEngine.Systems;
 using GlmSharp;
@@ -26,9 +29,9 @@ namespace ajiva.Components
             Name = name;
         }
 
-        private static uint[] LoadShaderData(string filePath, out int codeSize)
+        private static uint[] LoadShaderData(AssetManager assetManager, string assetName, out int codeSize)
         {
-            var fileBytes = File.ReadAllBytes(filePath);
+            var fileBytes = assetManager.GetAsset(AssetType.Shader, assetName);
             var shaderData = new uint[(int)MathF.Ceiling(fileBytes.Length / 4f)];
 
             System.Buffer.BlockCopy(fileBytes, 0, shaderData, 0, fileBytes.Length);
@@ -38,15 +41,15 @@ namespace ajiva.Components
             return shaderData;
         }
 
-        private ShaderModule? CreateShader(string path)
+        private ShaderModule? CreateShader(AssetManager assetManager, string assetName)
         {
-            var shaderData = LoadShaderData(path, out var codeSize);
+            var shaderData = LoadShaderData(assetManager, assetName, out var codeSize);
 
             return system.Device!.CreateShaderModule(codeSize, shaderData);
         }
 
         [MethodImpl(MethodImplOptions.Synchronized)]
-        public void CreateShaderModules(string dir)
+        public void CreateShaderModules(AssetManager assetManager, string assetDir)
         {
             if (Created) return;
             VertShader = CreateShader(assetManager, AssetHelper.Combine(assetDir, Const.Default.VertexShaderName));
@@ -56,12 +59,12 @@ namespace ajiva.Components
         }
 
         [MethodImpl(MethodImplOptions.Synchronized)]
-        public void CreateShaderModules(string vertexShaderName, string fragmentShaderName)
+        public void CreateShaderModules(AssetManager assetManager, string vertexShaderName, string fragmentShaderName)
         {
             if (Created) return;
-            VertShader = CreateShader(vertexShaderName);
+            VertShader = CreateShader(assetManager, vertexShaderName);
 
-            FragShader = CreateShader(fragmentShaderName);
+            FragShader = CreateShader(assetManager, fragmentShaderName);
             Created = true;
         }
 
@@ -75,10 +78,10 @@ namespace ajiva.Components
             Created = true;
         }
 
-        public static Shader CreateShaderFrom(string dir, DeviceSystem system, string name)
+        public static Shader CreateShaderFrom(AssetManager assetManager, string dir, DeviceSystem system, string name)
         {
             var sh = new Shader(system, name);
-            sh.CreateShaderModules(dir);
+            sh.CreateShaderModules(assetManager, dir);
             return sh;
         }
 
@@ -97,8 +100,8 @@ namespace ajiva.Components
 
         public string Name { get; }
 
-        public PipelineShaderStageCreateInfo VertShaderPipelineStageCreateInfo => new() {Stage = ShaderStageFlags.Vertex, Module = VertShader, Name = Name,};
+        public PipelineShaderStageCreateInfo VertShaderPipelineStageCreateInfo => new() { Stage = ShaderStageFlags.Vertex, Module = VertShader, Name = Name, };
 
-        public PipelineShaderStageCreateInfo FragShaderPipelineStageCreateInfo => new() {Stage = ShaderStageFlags.Fragment, Module = FragShader, Name = Name,};
+        public PipelineShaderStageCreateInfo FragShaderPipelineStageCreateInfo => new() { Stage = ShaderStageFlags.Fragment, Module = FragShader, Name = Name, };
     }
 }

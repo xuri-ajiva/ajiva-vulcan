@@ -9,16 +9,15 @@ using ajiva.Ecs.ComponentSytem;
 using ajiva.Ecs.Entity;
 using ajiva.Ecs.Utils;
 using ajiva.Models;
-using ajiva.Models.Buffer;
 using ajiva.Models.Buffer.ChangeAware;
 using ajiva.Models.Layers.Layer3d;
+using ajiva.Systems.Assets;
 using ajiva.Systems.VulcanEngine.Layer;
 using ajiva.Systems.VulcanEngine.Layers;
 using ajiva.Systems.VulcanEngine.Layers.Creation;
 using ajiva.Systems.VulcanEngine.Layers.Models;
 using ajiva.Systems.VulcanEngine.Systems;
 using ajiva.Utils;
-using ajiva.Utils.Changing;
 
 namespace ajiva.Systems.VulcanEngine.Layer3d
 {
@@ -29,7 +28,7 @@ namespace ajiva.Systems.VulcanEngine.Layer3d
         private readonly object mainLock = new();
 
         public IAChangeAwareBackupBufferOfT<SolidUniformModel> Models { get; set; }
-        
+
         /// <inheritdoc />
         public override RenderMesh3D RegisterComponent(IEntity entity, RenderMesh3D component)
         {
@@ -86,7 +85,7 @@ namespace ajiva.Systems.VulcanEngine.Layer3d
         {
             var deviceSystem = Ecs.GetSystem<DeviceSystem>();
 
-            MainShader = Shader.CreateShaderFrom("./Shaders/3d/Soild/", deviceSystem, "main");
+            MainShader = Shader.CreateShaderFrom(Ecs.GetSystem<AssetManager>(), "3d/Solid", deviceSystem, "main");
             Models = new AChangeAwareBackupBufferOfT<SolidUniformModel>(1000000, deviceSystem);
             meshPool = Ecs.GetInstance<MeshPool>();
 

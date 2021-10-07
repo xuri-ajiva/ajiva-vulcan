@@ -83,7 +83,7 @@ namespace ajiva.Systems.VulcanEngine.Layer2d
         {
             var deviceSystem = Ecs.GetSystem<DeviceSystem>();
 
-            MainShader = Shader.CreateShaderFrom("./Shaders/2d/", deviceSystem, "main");
+            MainShader = Shader.CreateShaderFrom(Ecs.GetSystem<AssetManager>(), "2d", deviceSystem, "main");
             Models = new AChangeAwareBackupBufferOfT<SolidUniformModel2d>(1000000, deviceSystem);
             meshPool = Ecs.GetInstance<MeshPool>();
 

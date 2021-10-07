@@ -6,12 +6,13 @@ using ajiva.Ecs;
 using ajiva.Ecs.ComponentSytem;
 using ajiva.Ecs.Entity;
 using ajiva.Ecs.Utils;
+using ajiva.Systems.Assets;
 using ajiva.Utils;
 using SharpVk;
 
 namespace ajiva.Systems.VulcanEngine.Systems
 {
-    [Dependent(typeof(ImageSystem))]
+    [Dependent(typeof(ImageSystem), typeof(AssetManager))]
     public class TextureSystem : ComponentSystemBase<ATexture>, IInit
     {
         // ReSharper disable once InconsistentNaming
@@ -65,7 +66,7 @@ namespace ajiva.Systems.VulcanEngine.Systems
         {
             if (Default != null) return;
 
-            Default = ATexture.FromFile(ecs, "logo.png");
+            Default = ATexture.FromFile(ecs, "Logos:logo.png");
             Textures.Add(Default);
 
             for (var i = 0; i < MAX_TEXTURE_SAMPLERS_IN_SHADER; i++)

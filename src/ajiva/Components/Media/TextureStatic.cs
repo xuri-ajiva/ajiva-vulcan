@@ -3,6 +3,8 @@ using System.Drawing.Imaging;
 using ajiva.Ecs;
 using ajiva.Models;
 using ajiva.Models.Buffer;
+using ajiva.Systems.Assets;
+using ajiva.Systems.Assets.Contracts;
 using ajiva.Systems.VulcanEngine.Systems;
 using SharpVk;
 
@@ -10,11 +12,11 @@ namespace ajiva.Components.Media
 {
     public partial class ATexture
     {
-        public static ATexture FromFile(IAjivaEcs ecs, string path)
+        public static ATexture FromFile(IAjivaEcs ecs, string assetName)
         {
             return new()
             {
-                Image = CreateTextureImageFromFile(ecs, path),
+                Image = CreateTextureImageFromAsset(ecs, assetName),
                 Sampler = CreateTextureSampler(ecs.GetSystem<DeviceSystem>())
             };
         }
@@ -28,9 +30,9 @@ namespace ajiva.Components.Media
             };
         }
 
-        private static AImage CreateTextureImageFromFile(IAjivaEcs ecs, string fileName)
+        private static AImage CreateTextureImageFromAsset(IAjivaEcs ecs, string assetName)
         {
-            var img = System.Drawing.Image.FromFile(fileName);
+            var img = System.Drawing.Image.FromStream(ecs.GetSystem<AssetManager>().GetAssetAsStream(AssetType.Texture, assetName));
             var bm = new Bitmap(img);
             return CreateTextureImageFromBitmap(ecs, bm);
         }
