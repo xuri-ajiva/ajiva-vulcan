@@ -14,6 +14,7 @@ using ajiva.Ecs.Utils;
 using ajiva.Models;
 using ajiva.Models.Buffer.ChangeAware;
 using ajiva.Models.Layers.Layer3d;
+using ajiva.Systems.Assets;
 using ajiva.Systems.VulcanEngine.Layer;
 using ajiva.Systems.VulcanEngine.Layers;
 using ajiva.Systems.VulcanEngine.Layers.Creation;
@@ -42,18 +43,30 @@ namespace ajiva.Systems.VulcanEngine.Debug
         public DebugLayer(IAjivaEcs ecs) : base(ecs)
         {
         }
-        
+
         /// <inheritdoc />
         public override DebugComponent RegisterComponent(IEntity entity, DebugComponent component)
         {
             if (!entity.TryGetComponent<Transform3d>(out var transform))
                 throw new ArgumentException("Entity needs and transform in order to be rendered as debug");
 
-            transform.ChangingObserver.OnChanged += (_, after) =>
-                Models.GetForChange((int)component.Id).Value.Model = after;
+            component.Models = Models;
+            transform.ChangingObserver.OnChanged += component.OnTransformChange;
 
             Ecs.GetSystem<GraphicsSystem>().ChangingObserver.Changed();
             return base.RegisterComponent(entity, component);
+        }
+
+        /// <inheritdoc />
+        public override DebugComponent UnRegisterComponent(IEntity entity, DebugComponent component)
+        {
+            if (!entity.TryGetComponent<Transform3d>(out var transform))
+                throw new ArgumentException("Entity needs and transform in order to be rendered as debug");
+
+            transform.ChangingObserver.OnChanged -= component.OnTransformChange;
+
+            Ecs.GetSystem<GraphicsSystem>().ChangingObserver.Changed();
+            return base.UnRegisterComponent(entity, component);
         }
 
         /// <inheritdoc />
@@ -113,6 +126,20 @@ namespace ajiva.Systems.VulcanEngine.Debug
 
     public class DebugComponent : RenderMeshIdUnique<DebugComponent>
     {
+        public IChangingObserverOnlyAfter<ITransform<vec3, mat4>, mat4>.OnChangedDelegate OnTransformChange { get; private set; }
+
+        public DebugComponent()
+        {
+            OnTransformChange = TransformChange;
+        }
+
+        private void TransformChange(ITransform<vec3, mat4> _, mat4 after)
+        {
+            Models.GetForChange((int)Id).Value.Model = after;
+        }
+
+        public IAChangeAwareBackupBufferOfT<DebugUniformModel> Models { get; set; }
+
         public bool DrawTransform { get; set; }
         public bool DrawWireframe { get; set; }
         public bool NoDepthTest { get; set; }

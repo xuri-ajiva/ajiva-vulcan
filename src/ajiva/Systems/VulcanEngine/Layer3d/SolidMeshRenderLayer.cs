@@ -35,11 +35,12 @@ namespace ajiva.Systems.VulcanEngine.Layer3d
             if (!entity.TryGetComponent<Transform3d>(out var transform))
                 throw new ArgumentException("Entity needs and transform in order to be rendered as debug");
 
-            transform.ChangingObserver.OnChanged += (_, model) => Models.GetForChange((int)component.Id).Value.Model = model;
+            component.Models = Models;
+            transform.ChangingObserver.OnChanged += component.OnTransformChange;
             //if (entity.TryGetComponent<TextureComponent>(out var texture))
             //    texture.ChangingObserver.OnChanged += _ => Models.GetForChange((int)component.Id).Value.fragtexSamplerId = texture.TextureId;
 
-            component.ChangingObserver.OnChanged += _ => Models.GetForChange((int)component.Id).Value.TextureSamplerId = component.Id;
+            //component.ChangingObserver.OnChanged += _ => Models.GetForChange((int)component.Id).Value.TextureSamplerId = component.Id;
 
             Ecs.GetSystem<GraphicsSystem>().ChangingObserver.Changed();
             return base.RegisterComponent(entity, component);

@@ -11,6 +11,7 @@ using ajiva.Ecs.Utils;
 using ajiva.Models;
 using ajiva.Models.Buffer.ChangeAware;
 using ajiva.Models.Layers.Layer2d;
+using ajiva.Systems.Assets;
 using ajiva.Systems.VulcanEngine.Layer;
 using ajiva.Systems.VulcanEngine.Layer3d;
 using ajiva.Systems.VulcanEngine.Layers;
@@ -29,19 +30,31 @@ namespace ajiva.Systems.VulcanEngine.Layer2d
         private readonly object mainLock = new();
 
         public IAChangeAwareBackupBufferOfT<SolidUniformModel2d> Models { get; set; }
-        
+
         /// <inheritdoc />
         public override RenderMesh2D RegisterComponent(IEntity entity, RenderMesh2D component)
         {
-            Ecs.GetSystem<GraphicsSystem>().ChangingObserver.Changed(); //todo some changes on a single layer
-            
+
             if (!entity.TryGetComponent<Transform2d>(out var transform))
                 throw new ArgumentException("Entity needs and transform in order to be rendered as debug");
 
-            transform.ChangingObserver.OnChanged += (_, model) => Models.GetForChange((int)component.Id).Value.Model = model;
+            component.Models = Models;
+            transform.ChangingObserver.OnChanged += component.OnTransformChange;
 
+            Ecs.GetSystem<GraphicsSystem>().ChangingObserver.Changed(); //todo some changes on a single layer
             return base.RegisterComponent(entity, component);
-        }                                                                           
+        }
+
+        /// <inheritdoc />
+        public override RenderMesh2D UnRegisterComponent(IEntity entity, RenderMesh2D component)
+        {
+            if (!entity.TryGetComponent<Transform2d>(out var transform))
+                throw new ArgumentException("Entity needs and transform in order to be rendered as debug");
+
+            transform.ChangingObserver.OnChanged -= component.OnTransformChange;
+            
+            return base.UnRegisterComponent(entity, component);
+        }
 
         /// <inheritdoc />
         public Mesh2dRenderLayer(IAjivaEcs ecs) : base(ecs)
