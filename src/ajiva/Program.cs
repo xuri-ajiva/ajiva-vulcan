@@ -10,6 +10,8 @@ using System.Threading;
 using System.Threading.Tasks;
 using ajiva.Application;
 using ajiva.Ecs.Utils;
+using ajiva.Systems.Assets;
+using ajiva.Systems.Assets.Contracts;
 using ajiva.Utils;
 using Ajiva.Wrapper.Logger;
 using SharpVk.Glfw;
@@ -21,7 +23,8 @@ namespace ajiva
     {
         private static void Main()
         {
-            CompileShaders();
+            //CompileShaders();
+            PackAssets();
 
             LogHelper.UseConsoleCursorPos = false;
             Console.WriteLine($"ProcessId: {Environment.ProcessId}");
@@ -51,6 +54,16 @@ namespace ajiva
             Environment.Exit(0);
         }
 
+        private static async void PackAssets()
+        {
+            await AssetPacker.Pack(Const.Default.AssetsFile, new AssetSpecification(Const.Default.AssetsPath, new Dictionary<AssetType, string>()
+            {
+                [AssetType.Shader] = "Shaders",
+                [AssetType.Texture] = "Textures",
+                [AssetType.Model] = "Models",
+            }), overide: true);
+        }
+
         private static void CompileShaders()
         {
             /*
@@ -58,7 +71,7 @@ namespace ajiva
              */
 
             Task.WaitAll(
-                new DirectoryInfo("Shaders")
+                new DirectoryInfo(Path.Combine(Const.Default.AssetsPath, "Shaders"))
                     .EnumerateDirectories("", SearchOption.AllDirectories)
                     .Select(shaderDirectory =>
                         Task.Run(
@@ -177,12 +190,5 @@ namespace ajiva
              while (applicationQueue.TryDequeue(out var action))
                  action.Invoke();
          }  */
-    }
-    internal static class Const
-    {
-        public enum ExitCode : long
-        {
-            ShaderCompile = 10000,
-        }
     }
 }
