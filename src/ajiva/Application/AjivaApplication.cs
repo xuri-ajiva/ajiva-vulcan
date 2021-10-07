@@ -32,23 +32,24 @@ namespace ajiva.Application
     {
         private bool Running { get; set; }
 
-        private readonly AjivaEcs entityComponentSystem = new(false);
+        private readonly IAjivaEcs entityComponentSystem = new AjivaEcs(false);
+        private readonly ConsoleBlock block = new ConsoleBlock(1);
+
+        private bool FrameLoop(UpdateInfo info)
+        {
+            if (info.Iteration % 100 == 0)
+                block.WriteAt($"iteration: {info.Iteration}, delta: {info.Delta}, FPS: {1000.0f / info.Delta.TotalMilliseconds:F4}," +
+                              $" PendingWorkItemCount: {ThreadPool.PendingWorkItemCount}, EntitiesCount: {entityComponentSystem.EntitiesCount}," +
+                              $"  ComponentsCount: {entityComponentSystem.ComponentsCount}", 0);
+
+            entityComponentSystem.Update(info);
+            return entityComponentSystem.Available;
+        }
 
         public void Run()
         {
             Running = true;
-
-            ConsoleBlock block = new(1);
-
-            RunHelper.RunDelta(delegate(UpdateInfo info)
-            {
-                if (info.Iteration % 100 == 0)
-                    block.WriteAt($"iteration: {info.Iteration}, delta: {info.Delta}, FPS: {1000.0f / info.Delta.TotalMilliseconds:F4}, PendingWorkItemCount: {ThreadPool.PendingWorkItemCount}, Entities.Count: {entityComponentSystem.Entities.Count}", 0);
-
-                entityComponentSystem.Update(info);           
-                return entityComponentSystem.Available;
-            }, TimeSpan.MaxValue);
-
+            RunHelper.RunDelta(FrameLoop, TimeSpan.MaxValue);
             Running = false;
         }
 
