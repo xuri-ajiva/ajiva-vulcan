@@ -62,7 +62,7 @@ namespace ajiva.Systems.VulcanEngine
         {
             DebugReportBlock.WriteNext($"[{flags}] ({objectType}) {layerPrefix}");
             DebugReportBlock.WriteNext(message);
-            
+
             return false;
         };
 
@@ -80,7 +80,7 @@ namespace ajiva.Systems.VulcanEngine
                     enabledLayers.Add(layerName);
             }
 #if DEBUG
-            
+
             AddAvailableLayer("VK_LAYER_LUNARG_standard_validation");
             AddAvailableLayer("VK_LAYER_KHRONOS_validation");
             AddAvailableLayer("VK_LAYER_GOOGLE_unique_objects");

@@ -11,6 +11,7 @@ using ajiva.Entities;
 using ajiva.Factories;
 using ajiva.Generators.Texture;
 using ajiva.Systems;
+using ajiva.Systems.Assets;
 using ajiva.Systems.VulcanEngine;
 using ajiva.Systems.VulcanEngine.Debug;
 using ajiva.Systems.VulcanEngine.Layer;
@@ -53,11 +54,11 @@ namespace ajiva.Application
 
         private Instance vulcanInstance;
         private DebugReportCallback debugReportCallback;
-        
+
         public void Init()
         {
             entityComponentSystem.AddParam(Const.Default.Config, Config.Default);
-            
+
             (vulcanInstance, debugReportCallback) = Statics.CreateInstance(Glfw3.GetRequiredInstanceExtensions());
             var deviceSystem = entityComponentSystem.CreateSystemOrComponentSystem<DeviceSystem>();
 
@@ -84,7 +85,7 @@ namespace ajiva.Application
             entityComponentSystem.AddEntityFactory(new CubeFactory());
             entityComponentSystem.AddEntityFactory(new RectFactory());
             entityComponentSystem.AddEntityFactory(new Cameras.FpsCamaraFactory());
-            
+
             window.OnKeyEvent += WindowOnOnKeyEvent;
             var ajiva3dLayerSystem = entityComponentSystem.CreateSystemOrComponentSystem<Ajiva3dLayerSystem>();
             var ajiva2dLayerSystem = entityComponentSystem.CreateSystemOrComponentSystem<Ajiva2dLayerSystem>();
@@ -126,22 +127,12 @@ namespace ajiva.Application
             for (var i = 0; i < 10; i++)
             {
                 if (!entityComponentSystem.TryCreateEntity<Cube>(out var cube)) continue;
-                if (cube.TryGetComponent<RenderMesh3D>(out var render))
-                {
-                    render.SetMesh(meshPref);
-                    render.Render = true;
-                }
-                if (cube.TryGetComponent<DebugComponent>(out var debug))
-                {
-                    debug.SetMesh(meshPref);
-                    debug.Render = true;
-                }
                 if (cube.TryGetComponent<Transform3d>(out var trans))
                 {
                     trans.Position = new(r.Next(-posRange, posRange), r.Next(-posRange, posRange), r.Next(-posRange, posRange));
                     trans.Rotation = new(r.Next(0, 100), r.Next(0, 100), r.Next(0, 100));
                 }
-            }   
+            }
         }
 
         const int size = 100;
@@ -169,17 +160,6 @@ namespace ajiva.Application
                         for (int j = 0; j < rep; j++)
                         {
                             if (!entityComponentSystem.TryCreateEntity<Cube>(out var cube)) continue;
-
-                            if (cube.TryGetComponent<RenderMesh3D>(out var render))
-                            {
-                                render.SetMesh(meshPref);
-                                render.Render = true;
-                            }
-                            if (cube.TryGetComponent<DebugComponent>(out var debug))
-                            {
-                                debug.SetMesh(meshPref);
-                                debug.Render = true;
-                            }
 
                             if (cube.TryGetComponent<Transform3d>(out var trans))
                             {

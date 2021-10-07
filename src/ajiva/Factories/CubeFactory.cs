@@ -13,15 +13,22 @@ namespace ajiva.Factories
         /// <inheritdoc />
         public override Cube Create(IAjivaEcs system, uint id)
         {
-            var cube = new Cube();
+            var cube = new Cube { Id = id };
             //return cube.Create3DRenderedObject(system);
-            system.TryAttachNewComponentToEntity<Transform3d>(cube);
-            system.TryAttachNewComponentToEntity<RenderMesh3D>(cube);
-            system.TryAttachComponentToEntity(cube, new DebugComponent()
+            system.TryAttachNewComponentToEntity<Transform3d>(cube, out _);
+            if (system.TryAttachNewComponentToEntity<RenderMesh3D>(cube, out var renderMesh))
             {
-                DrawTransform = true,
-                DrawWireframe = true,
-            });
+                renderMesh.Render = true;
+                renderMesh.SetMesh(MeshPrefab.Cube);
+            }
+            if (system.TryAttachNewComponentToEntity<DebugComponent>(cube, out var debugComponent))
+            {
+                debugComponent.DrawTransform = true;
+                debugComponent.DrawWireframe = true;
+                debugComponent.Render = true;
+                debugComponent.SetMesh(MeshPrefab.Cube);
+            }
+
             //system.AttachComponentToEntity<ATexture>(cube);
             return cube;
         }

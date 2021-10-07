@@ -18,9 +18,9 @@ namespace ajiva.Entities
             /// <inheritdoc />
             public override FpsCamera Create(IAjivaEcs system, uint id)
             {
-                var cam = new FpsCamera();
+                var cam = new FpsCamera {Id = id};
                 system.TryAttachComponentToEntity(cam, new Transform3d());
-                system.TryAttachNewComponentToEntity<RenderMesh3D>(cam);
+                system.TryAttachNewComponentToEntity<RenderMesh3D>(cam, out _);
                 system.RegisterUpdate(cam);
                 cam.OnMouseMoved(0.0f, 0.0f);
                 return cam;
