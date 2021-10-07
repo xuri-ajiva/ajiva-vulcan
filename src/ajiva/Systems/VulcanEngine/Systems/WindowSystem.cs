@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Threading;
+using ajiva.Application;
 using ajiva.Ecs;
 using ajiva.Ecs.System;
 using ajiva.Ecs.Utils;
@@ -51,7 +52,7 @@ namespace ajiva.Systems.VulcanEngine.Systems
             Glfw3.SetKeyCallback(window, keyDelegate);
             Glfw3.SetCursorPosCallback(window, cursorPosDelegate);
             Glfw3.SetWindowSizeCallback(window, sizeDelegate);
-            SharpVk.Glfw.extras.Glfw3.Public.SetWindowPos_0(window.RawHandle, 2800, 500);
+            SharpVk.Glfw.extras.Glfw3.Public.SetWindowPos_0(window.RawHandle, windowConfig.PosX, windowConfig.PosY);
 
             UpdateCursor();
 
@@ -96,10 +97,14 @@ namespace ajiva.Systems.VulcanEngine.Systems
                 Canvas.SurfaceHandle.Surface = Ecs.GetInstance<Instance>().CreateGlfw3Surface(window);
         }
 
+        private WindowConfig windowConfig;
+
         public void InitWindow()
         {
-            Canvas.Width = (uint)Ecs.GetPara<int>("SurfaceWidth");
-            Canvas.Height = (uint)Ecs.GetPara<int>("SurfaceHeight");
+            windowConfig = Ecs.TryGetPara<Config>(Const.Default.Config, out var config) ? config.Window : new WindowConfig();
+
+            Canvas.Height = windowConfig.Height;
+            Canvas.Width = windowConfig.Width;
             windowThread.Start();
 
             while (!windowReady)
@@ -139,7 +144,7 @@ namespace ajiva.Systems.VulcanEngine.Systems
 
         private void KeyCallback(WindowHandle windowHandle, Key key, int scancode, InputAction inputAction, Modifier modifiers)
         {
-            // ReSharper disable once SwitchStatementMissingSomeEnumCasesNoDefault
+            // ReSharper disable once SwitchStatementMissingSomeEnumCasesNoDefault.
             switch (key)
             {
                 //todo dev only

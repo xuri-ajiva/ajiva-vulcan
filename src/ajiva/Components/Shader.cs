@@ -45,16 +45,13 @@ namespace ajiva.Components
             return system.Device!.CreateShaderModule(codeSize, shaderData);
         }
 
-        public const string DefaultVertexShaderName = "vert.spv";
-        public const string DefaultFragmentShaderName = "frag.spv";
-
         [MethodImpl(MethodImplOptions.Synchronized)]
         public void CreateShaderModules(string dir)
         {
             if (Created) return;
-            VertShader = CreateShader($"{dir}/{DefaultVertexShaderName}");
+            VertShader = CreateShader(assetManager, AssetHelper.Combine(assetDir, Const.Default.VertexShaderName));
 
-            FragShader = CreateShader($"{dir}/{DefaultFragmentShaderName}");
+            FragShader = CreateShader(assetManager, AssetHelper.Combine(assetDir, Const.Default.FragmentShaderName));
             Created = true;
         }
 

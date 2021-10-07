@@ -53,10 +53,7 @@ namespace ajiva.Application
 
         private Instance vulcanInstance;
         private DebugReportCallback debugReportCallback;
-
-        private const int SurfaceWidth = 800;
-        private const int SurfaceHeight = 600;
-
+        
         public void Init()
         {
             entityComponentSystem.AddParam(Const.Default.Config, Config.Default);
@@ -86,10 +83,7 @@ namespace ajiva.Application
             entityComponentSystem.AddEntityFactory(new CubeFactory());
             entityComponentSystem.AddEntityFactory(new RectFactory());
             entityComponentSystem.AddEntityFactory(new Cameras.FpsCamaraFactory());
-
-            entityComponentSystem.AddParam(nameof(SurfaceHeight), SurfaceHeight);
-            entityComponentSystem.AddParam(nameof(SurfaceWidth), SurfaceWidth);
-
+            
             window.OnKeyEvent += WindowOnOnKeyEvent;
             var ajiva3dLayerSystem = entityComponentSystem.CreateSystemOrComponentSystem<Ajiva3dLayerSystem>();
             var ajiva2dLayerSystem = entityComponentSystem.CreateSystemOrComponentSystem<Ajiva2dLayerSystem>();
