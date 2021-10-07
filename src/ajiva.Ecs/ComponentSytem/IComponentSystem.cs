@@ -18,6 +18,7 @@ namespace ajiva.Ecs.ComponentSytem
         T CreateComponent(IEntity entity);
 
         T RegisterComponent(IEntity entity, T component);
-        T RemoveComponent(IEntity entity, T component);
+        T UnRegisterComponent(IEntity entity, T component);
+        IEntity DeleteComponent(IEntity entity, T component);
     }
 }

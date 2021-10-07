@@ -8,7 +8,7 @@ namespace ajiva.Ecs.Example
         public override SdtEntity Create(IAjivaEcs system, uint id)
         {
             var ent = new SdtEntity {Id = id};
-            system.TryAttachNewComponentToEntity<StdComponent>(ent);
+            system.TryAttachNewComponentToEntity<StdComponent>(ent, out _);
             return ent;
         }
 

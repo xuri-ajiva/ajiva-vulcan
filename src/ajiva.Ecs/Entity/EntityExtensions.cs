@@ -1,8 +1,10 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using ajiva.Ecs.Component;
 using ajiva.Utils;
 using Ajiva.Wrapper.Logger;
+using Microsoft.VisualBasic;
 
 namespace ajiva.Ecs.Entity
 {
@@ -41,9 +43,14 @@ namespace ajiva.Ecs.Entity
             return component;
         }
 
-        public static void RemoveComponent<T>(this IEntity entity) where T : class, IComponent
+        public static T? RemoveComponent<T>(this IEntity entity) where T : class, IComponent
         {
-            entity.Components.Remove(UsVc<T>.Key);
+            return entity.Components.Remove(UsVc<T>.Key, out var component) ? (T)component : default;
+        }
+
+        public static bool TryRemoveComponent<T>(this IEntity entity, [MaybeNullWhen(false)] out IComponent component) where T : class, IComponent
+        {
+            return entity.Components.Remove(UsVc<T>.Key, out component);
         }
     }
 }

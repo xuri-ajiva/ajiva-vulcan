@@ -13,7 +13,6 @@ using ajiva.Ecs.Utils;
 using ajiva.Utils;
 using Ajiva.Wrapper.Logger;
 using Microsoft.CSharp.RuntimeBinder;
-using Microsoft.VisualBasic;
 
 namespace ajiva.Ecs
 {
@@ -25,6 +24,12 @@ namespace ajiva.Ecs
         {
             this.multiThreading = multiThreading;
         }
+
+        /// <inheritdoc />
+        public long EntitiesCount => Entities.Count;
+
+        /// <inheritdoc />
+        public long ComponentsCount => 0; /* Entities.Sum(x => x.Value.Components.Count);*/ //sequence failed
 
         /// <inheritdoc />
         public bool Available { get; private set; }
@@ -59,9 +64,9 @@ namespace ajiva.Ecs
         }
 
         /// <inheritdoc />
-        public bool TryAttachNewComponentToEntity<T>(IEntity entity) where T : class, IComponent
+        public bool TryAttachNewComponentToEntity<T>(IEntity entity, [MaybeNullWhen(false)] out T component) where T : class, IComponent
         {
-            if (!TryCreateComponent<T>(entity, out var component)) return false;
+            if (!TryCreateComponent<T>(entity, out component)) return false;
             entity.AddComponent(component);
             return true;
         }
@@ -72,6 +77,26 @@ namespace ajiva.Ecs
             if (!ComponentSystems.ContainsKey(typeof(T))) return false;
             entity.AddComponent(component);
             RegisterComponent(entity, component);
+            return true;
+        }
+
+        /// <inheritdoc />
+        public bool TryDetachComponentFromEntityAndDelete<T>(IEntity entity) where T : class, IComponent
+        {
+            if (!entity.TryRemoveComponent<T>(out var component)) return false;
+            DeleteComponent(entity, component);
+            return true;
+        }
+
+        /// <inheritdoc />
+        public bool TryDetachComponentFromEntity<T>(IEntity entity, [MaybeNullWhen(false)] out T component) where T : class, IComponent
+        {
+            if (!entity.TryRemoveComponent<T>(out var ctnt))
+            {
+                component = default;
+                return false;
+            }
+            component = UnRegisterComponent(entity, (T)ctnt);
             return true;
         }
 
@@ -102,8 +127,9 @@ namespace ajiva.Ecs
         }
 
         /// <inheritdoc />
-        public void AddParam(string name, object data)
+        public void AddParam(string name, object? data)
         {
+            if (data is null) return;
             Params.Add(name, data);
         }
 
@@ -306,21 +332,34 @@ namespace ajiva.Ecs
 
 #region Delete
 
-        public IEntity? DeleteEntity(uint id)
+        public bool TryUnRegisterEntity(uint id, [MaybeNullWhen(false)] out IEntity entity)
         {
-            if (!Entities.TryGetValue(id, out var entity)) return default;
+            if (!Entities.TryGetValue(id, out entity)) return false;
 
             foreach (var (_, value) in entity.Components)
             {
-                RemoveComponent(entity, value);
+                DeleteComponent(entity, value);
             }
-            return entity;
+            return true;
         }
 
         /// <inheritdoc />
-        public T RemoveComponent<T>(IEntity entity, T component) where T : class, IComponent
+        /// <inheritdoc />
+        public bool TryDeleteEntity(uint id, [MaybeNullWhen(false)] out IEntity entity)
         {
-            return ((IComponentSystem<T>)ComponentSystems[typeof(T)]).RemoveComponent(entity, component);
+            return Entities.Remove(id, out entity);
+        }
+
+        /// <inheritdoc />
+        public T UnRegisterComponent<T>(IEntity entity, T component) where T : class, IComponent
+        {
+            return GetComponentSystemByComponent<T>().UnRegisterComponent(entity, component);
+        }
+
+        /// <inheritdoc />
+        public IEntity DeleteComponent<T>(IEntity entity, T component) where T : class, IComponent
+        {
+            return GetComponentSystemByComponent<T>().DeleteComponent(entity, component);
         }
 
 #endregion

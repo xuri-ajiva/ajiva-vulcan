@@ -29,7 +29,7 @@ namespace ajiva.Ecs.ComponentSytem
         }
 
         /// <inheritdoc />
-        public virtual T RemoveComponent(IEntity entity, T component)
+        public virtual T UnRegisterComponent(IEntity entity, T component)
         {
             if (ComponentEntityMap.Remove(component, out var entity1))
             {
@@ -39,6 +39,14 @@ namespace ajiva.Ecs.ComponentSytem
                 }
             }
             return component;
+        }
+
+        /// <inheritdoc />
+        public virtual IEntity DeleteComponent(IEntity entity, T component)
+        {
+            var cmp = UnRegisterComponent(entity, component);
+            cmp?.Dispose();
+            return entity;
         }
 
         protected override void ReleaseUnmanagedResources(bool disposing)

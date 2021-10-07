@@ -17,7 +17,7 @@ namespace ajiva.Ecs
 
         void AddEntityFactory<T>(IEntityFactory<T> entityFactory) where T : class, IEntity;
         void AddComponentSystem<T>(IComponentSystem<T> system) where T : class, IComponent;
-        void AddParam(string name, object data);
+        void AddParam(string name, object? data);
         void AddInstance<T>(T instance) where T : class;
         void AddSystem<T>(T system) where T : class, ISystem;
 
@@ -25,6 +25,7 @@ namespace ajiva.Ecs
 
 #region Get
 
+        [Obsolete("Use Try Get Param")]
         T GetPara<T>(string name);
         bool TryGetPara<T>(string name, [MaybeNullWhen(false)] out T value);
         T GetInstance<T>() where T : class;
@@ -48,8 +49,10 @@ namespace ajiva.Ecs
 
         bool TryCreateComponent<T>(IEntity entity, [MaybeNullWhen(false)] out T component) where T : class, IComponent;
         T RegisterComponent<T>(IEntity entity, T component) where T : class, IComponent;
-        bool TryAttachNewComponentToEntity<T>(IEntity entity) where T : class, IComponent;
+        bool TryAttachNewComponentToEntity<T>(IEntity entity, out T component) where T : class, IComponent;
         bool TryAttachComponentToEntity<T>(IEntity entity, T component) where T : class, IComponent;
+        bool TryDetachComponentFromEntityAndDelete<T>(IEntity entity) where T : class, IComponent;
+        bool TryDetachComponentFromEntity<T>(IEntity entity, [MaybeNullWhen(false)] out T component) where T : class, IComponent;
 
 #endregion
 
@@ -62,14 +65,22 @@ namespace ajiva.Ecs
 
 #region Delete
 
-        IEntity? DeleteEntity(uint id);
+        bool TryDeleteEntity(uint id, [MaybeNullWhen(false)] out IEntity entity);
+        bool TryUnRegisterEntity(uint id, [MaybeNullWhen(false)] out IEntity entity);
 
-        T RemoveComponent<T>(IEntity entity, T component) where T : class, IComponent;
+        T UnRegisterComponent<T>(IEntity entity, T component) where T : class, IComponent;
+        IEntity DeleteComponent<T>(IEntity entity, T component) where T : class, IComponent;
 
 #endregion
 
 #region Live
 
+#region Count
+
+        long EntitiesCount { get; }
+        long ComponentsCount { get; }
+
+#endregion
         bool Available { get; }
         void InitSystems();
         void Update(UpdateInfo delta);
