@@ -11,48 +11,12 @@
     
     <ItemGroup>
         <PackageReference Include="GlmSharp" Version="0.9.8.0" />
+        <PackageReference Include="protobuf-net" Version="3.0.101" />
         <PackageReference Include="System.Drawing.Common" Version="5.0.0" />
         <PackageReference Include="System.Linq.Async" Version="5.0.0" />
         <PackageReference Include="System.Reactive.Linq" Version="5.0.0" />
     </ItemGroup>
-
-    <ItemGroup>
-        <None Update="logo.png">
-            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-        </None>
-        <None Update="logo2.png">
-            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-        </None>
-        <None Update="Shaders\2d\shader.frag">
-          <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-        </None>
-        <None Update="Shaders\3d\Soild\shader.frag">
-          <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-        </None>
-        <None Update="Shaders\3d\Soild\shader.vert">
-          <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-        </None>
-        <None Update="Shaders\3d\base.vert">
-          <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-        </None>
-        <None Update="Shaders\3d\base.frag">
-          <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-        </None>
-        <None Update="tools\spirv\glslangValidator.exe">
-          <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-        </None>
-        <None Update="tools\spirv\spirv-remap.exe">
-          <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-        </None>
-        <None Remove="Systems\VulcanEngine\Layer2d\UiRenderer.acs" />
-        <None Update="Shaders\3d\debug\shader.frag">
-          <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-        </None>
-        <None Update="Shaders\3d\debug\shader.vert">
-          <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-        </None>
-    </ItemGroup>
-    
+        
     <ItemGroup>
       <Compile Remove="Systems\VulcanEngine\SpirV-ShaderHelper\VertexOutput.cs" />
       <Compile Remove="Systems\VulcanEngine\Layer2d\UiRenderer.cs" />
