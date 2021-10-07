@@ -59,6 +59,8 @@ namespace ajiva.Application
 
         public void Init()
         {
+            entityComponentSystem.AddParam(Const.Default.Config, Config.Default);
+            
             (vulcanInstance, debugReportCallback) = Statics.CreateInstance(Glfw3.GetRequiredInstanceExtensions());
             var deviceSystem = entityComponentSystem.CreateSystemOrComponentSystem<DeviceSystem>();
 
