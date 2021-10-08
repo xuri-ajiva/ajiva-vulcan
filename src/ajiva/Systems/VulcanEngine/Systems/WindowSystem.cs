@@ -41,6 +41,8 @@ namespace ajiva.Systems.VulcanEngine.Systems
             windowThread = new(WindowStartup);
             windowThread.SetApartmentState(ApartmentState.STA);
             Canvas = new(new());
+            
+            windowConfig = Ecs.TryGetPara<Config>(Const.Default.Config, out var config) ? config.Window : new WindowConfig();
         }
 
         private void WindowStartup()
@@ -101,8 +103,6 @@ namespace ajiva.Systems.VulcanEngine.Systems
 
         public void InitWindow()
         {
-            windowConfig = Ecs.TryGetPara<Config>(Const.Default.Config, out var config) ? config.Window : new WindowConfig();
-
             Canvas.Height = windowConfig.Height;
             Canvas.Width = windowConfig.Width;
             windowThread.Start();
