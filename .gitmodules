@@ -4,3 +4,6 @@
 [submodule "libs/SharpVk"]
 	path = libs/SharpVk
 	url = git@github.com:xuri02/SharpVk.git
+[submodule "libs/GlmSharp"]
+	path = libs/GlmSharp
+	url = git@github.com:xuri02/GlmSharp.git
