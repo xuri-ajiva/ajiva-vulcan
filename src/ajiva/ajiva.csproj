@@ -10,7 +10,6 @@
     </PropertyGroup>
     
     <ItemGroup>
-        <PackageReference Include="GlmSharp" Version="0.9.8.0" />
         <PackageReference Include="protobuf-net" Version="3.0.101" />
         <PackageReference Include="System.Drawing.Common" Version="5.0.0" />
         <PackageReference Include="System.Linq.Async" Version="5.0.0" />
@@ -30,6 +29,7 @@
     <ItemGroup>
       <ProjectReference Include="..\..\libs\ajiva-utils\src\Ajiva.Include\Ajiva.Include.csproj" />
       <ProjectReference Include="..\..\libs\ajiva-utils\src\Ajiva.Wrapper\Ajiva.Wrapper.csproj" />
+      <ProjectReference Include="..\..\Libs\GlmSharp\GlmSharp\GlmSharp\GlmSharp.csproj" />
       <ProjectReference Include="..\..\libs\SharpVk\src\SharpVk.Glfw\SharpVk.Glfw.csproj" />
       <ProjectReference Include="..\..\libs\SharpVk\src\SharpVk.Shanq.GlmSharp\SharpVk.Shanq.GlmSharp.csproj" />
       <ProjectReference Include="..\..\libs\SharpVk\src\SharpVk\SharpVk.csproj" />
