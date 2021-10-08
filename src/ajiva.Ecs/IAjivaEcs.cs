@@ -49,7 +49,7 @@ namespace ajiva.Ecs
 
         bool TryCreateComponent<T>(IEntity entity, [MaybeNullWhen(false)] out T component) where T : class, IComponent;
         T RegisterComponent<T>(IEntity entity, T component) where T : class, IComponent;
-        bool TryAttachNewComponentToEntity<T>(IEntity entity, out T component) where T : class, IComponent;
+        bool TryAttachNewComponentToEntity<T>(IEntity entity,[MaybeNullWhen(false)]  out T component) where T : class, IComponent;
         bool TryAttachComponentToEntity<T>(IEntity entity, T component) where T : class, IComponent;
         bool TryDetachComponentFromEntityAndDelete<T>(IEntity entity) where T : class, IComponent;
         bool TryDetachComponentFromEntity<T>(IEntity entity, [MaybeNullWhen(false)] out T component) where T : class, IComponent;

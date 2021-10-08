@@ -66,7 +66,7 @@ namespace ajiva.Ecs
         /// <inheritdoc />
         public bool TryAttachNewComponentToEntity<T>(IEntity entity, [MaybeNullWhen(false)] out T component) where T : class, IComponent
         {
-            if (!TryCreateComponent<T>(entity, out component)) return false;
+            if (!TryCreateComponent(entity, out component)) return false;
             entity.AddComponent(component);
             return true;
         }
