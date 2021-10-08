@@ -10,6 +10,7 @@ namespace ajiva.Systems.VulcanEngine.Layers.Creation
     {
         public static GraphicsPipelineLayer Default(SwapChainLayer swapChainLayer, RenderPassLayer renderPassLayer, DeviceSystem deviceSystem, bool useDepthImage, VertexInputBindingDescription bindingDescription, VertexInputAttributeDescription[] attributeDescriptions, Shader mainShader, PipelineDescriptorInfos[] descriptorInfos)
         {
+            System.Diagnostics.Debug.Assert(deviceSystem.Device != null, "deviceSystem.Device != null");
             DescriptorSetLayout descriptorSetLayout = deviceSystem.Device.CreateDescriptorSetLayout(
                 descriptorInfos.Select(descriptor => new DescriptorSetLayoutBinding()
                 {

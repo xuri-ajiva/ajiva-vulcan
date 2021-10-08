@@ -30,10 +30,21 @@ namespace ajiva.Systems.VulcanEngine.Layers
         public class AjivaLayerData
         {
             public RenderPassLayer RenderPass;
+
+            public AjivaLayerData(RenderPassLayer renderPass)
+            {
+                RenderPass = renderPass;
+            }
+
             public Dictionary<IAjivaLayerRenderSystem, AjivaLayerRenderSystemData> LayerMaps { get; } = new();
             public class AjivaLayerRenderSystemData
             {
                 public GraphicsPipelineLayer GraphicsPipeline;
+
+                public AjivaLayerRenderSystemData(GraphicsPipelineLayer graphicsPipeline)
+                {
+                    GraphicsPipeline = graphicsPipeline;
+                }
             }
         }
 
@@ -55,14 +66,12 @@ namespace ajiva.Systems.VulcanEngine.Layers
             foreach (var ajivaLayer in layers.Values)
             {
                 var renderPassLayer = ajivaLayer.CreateRenderPassLayer(SwapChainLayer);
-                var data = new AjivaLayerData
-                    { RenderPass = renderPassLayer };
+                var data = new AjivaLayerData(renderPassLayer);
 
                 foreach (var layer in ajivaLayer.LayerRenderComponentSystems)
                 {
                     var graphicsPipelineLayer = layer.CreateGraphicsPipelineLayer(data.RenderPass);
-                    data.LayerMaps.Add(layer, new AjivaLayerData.AjivaLayerRenderSystemData
-                        { GraphicsPipeline = graphicsPipelineLayer });
+                    data.LayerMaps.Add(layer, new AjivaLayerData.AjivaLayerRenderSystemData(graphicsPipelineLayer));
                 }
                 mostPasses = Math.Max((byte)data.RenderPass.FrameBuffers.Length, mostPasses);
                 LayerMaps.Add(ajivaLayer, data);

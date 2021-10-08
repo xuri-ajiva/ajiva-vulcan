@@ -138,7 +138,7 @@ namespace ajiva.Systems.VulcanEngine.Debug
             Models.GetForChange((int)Id).Value.Model = after;
         }
 
-        public IAChangeAwareBackupBufferOfT<DebugUniformModel> Models { get; set; }
+        public IAChangeAwareBackupBufferOfT<DebugUniformModel> Models { get; set; } = null!;
 
         public bool DrawTransform { get; set; }
         public bool DrawWireframe { get; set; }

@@ -102,6 +102,8 @@ namespace ajiva.Systems.VulcanEngine.Systems
 
         public void UseCommandPool(Action<CommandPool> action)
         {
+            EnsureCommandPoolsExists();
+            System.Diagnostics.Debug.Assert(CommandPool != null, nameof(CommandPool) + " != null");
             lock (commandPoolLock)
             {
                 action?.Invoke(CommandPool);
