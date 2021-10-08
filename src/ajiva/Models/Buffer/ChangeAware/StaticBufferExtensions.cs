@@ -33,7 +33,7 @@ namespace ajiva.Models.Buffer.ChangeAware
             if (from.Size > to.Size)
                 throw new ArgumentException("The Destination Buffer is smaller than the Source Buffer", nameof(to));
 
-            system.SingleTimeCommand(QueueType.GraphicsQueue, command =>
+            system.QueueSingleTimeCommand(QueueType.GraphicsQueue, command =>
             {
                 command.CopyBuffer(from.Buffer, to.Buffer, new BufferCopy
                 {
@@ -47,7 +47,7 @@ namespace ajiva.Models.Buffer.ChangeAware
             if (from.Size > to.Size)
                 throw new ArgumentException("The Destination Buffer is smaller than the Source Buffer", nameof(to));
 
-            system.SingleTimeCommand(QueueType.GraphicsQueue, command =>
+            system.QueueSingleTimeCommand(QueueType.GraphicsQueue, command =>
             {
                 command.CopyBuffer(from.Buffer, to.Buffer, regions);
             });

@@ -63,7 +63,7 @@ namespace ajiva.Systems.VulcanEngine.Systems
 
         public void CopyBufferToImage(Buffer buffer, Image image, uint width, uint height)
         {
-            Ecs.GetSystem<DeviceSystem>().SingleTimeCommand(QueueType.GraphicsQueue, command =>
+            Ecs.GetSystem<DeviceSystem>().ExecuteSingleTimeCommand(QueueType.GraphicsQueue, command =>
             {
                 command.CopyBufferToImage(buffer, image, ImageLayout.TransferDestinationOptimal, new BufferImageCopy()
                 {
@@ -142,7 +142,7 @@ namespace ajiva.Systems.VulcanEngine.Systems
                     throw new ArgumentException("unsupported layout transition!");
             }
 
-            Ecs.GetSystem<DeviceSystem>().SingleTimeCommand(QueueType.GraphicsQueue, command => command.PipelineBarrier(sourceStage, destinationStage, ArrayProxy<MemoryBarrier>.Null, ArrayProxy<BufferMemoryBarrier>.Null, barrier));
+            Ecs.GetSystem<DeviceSystem>().ExecuteSingleTimeCommand(QueueType.GraphicsQueue, command => command.PipelineBarrier(sourceStage, destinationStage, ArrayProxy<MemoryBarrier>.Null, ArrayProxy<BufferMemoryBarrier>.Null, barrier));
         }
 
         /// <inheritdoc />

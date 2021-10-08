@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using ajiva.Components.Transform;
 using ajiva.Ecs;
@@ -20,6 +21,10 @@ namespace ajiva.Systems.VulcanEngine.Systems
         internal Queue? GraphicsQueue { get; private set; }
         internal Queue? PresentQueue { get; private set; }
         internal Queue? TransferQueue { get; private set; }
+
+        internal Queue<Action<CommandBuffer>> GraphicsQueueQueue { get; private set; } = new();
+        internal Queue<Action<CommandBuffer>> PresentQueueQueue { get; private set; } = new();
+        internal Queue<Action<CommandBuffer>> TransferQueueQueue { get; private set; } = new();
 
         public Fence TransferQueueFence { get; private set; }
         public Fence PresentQueueFence { get; private set; }
@@ -73,7 +78,7 @@ namespace ajiva.Systems.VulcanEngine.Systems
             Device?.WaitIdle();
         }
 
-        #region BufferAndMemory
+#region BufferAndMemory
 
         public uint FindMemoryType(uint typeFilter, MemoryPropertyFlags flags)
         {
@@ -91,9 +96,9 @@ namespace ajiva.Systems.VulcanEngine.Systems
             throw new("No compatible memory type.");
         }
 
-        #endregion
+#endregion
 
-        #region CommandPool
+#region CommandPool
 
         public void UseCommandPool(Action<CommandPool> action)
         {
@@ -112,61 +117,103 @@ namespace ajiva.Systems.VulcanEngine.Systems
             SingleCommandBuffer ??= Device!.AllocateCommandBuffers(CommandPool, CommandBufferLevel.Primary, 1).Single();
         }
 
-        public void SingleTimeCommand(QueueType queueType, Action<CommandBuffer> action)
+        public void ExecuteSingleTimeCommand(QueueType queueType, Action<CommandBuffer> action)
         {
             EnsureCommandPoolsExists();
 
-            lock (SingleCommandBuffer!)
+            System.Diagnostics.Debug.Assert(SingleCommandBuffer != null, nameof(SingleCommandBuffer) + " != null");
+
+            GetQueusByType(queueType, out var queue, out Fence fence, out Queue<Action<CommandBuffer>> queueQueue);
+            lock (SingleCommandBuffer)
+            lock (queue)
+                ExecuteOnQueueWithFence(action, queue, fence);
+        }
+
+        public void QueueSingleTimeCommand(QueueType queueType, Action<CommandBuffer> action)
+        {
+            GetQueusByType(queueType, out _, out _, out Queue<Action<CommandBuffer>> queueQueue);
+            queueQueue.Enqueue(action);
+        }
+
+        public void ExecuteSingleTimeCommands(QueueType queueType)
+        {
+            EnsureCommandPoolsExists();
+            System.Diagnostics.Debug.Assert(SingleCommandBuffer != null, nameof(SingleCommandBuffer) + " != null");
+
+            GetQueusByType(queueType, out var queue, out Fence fence, out Queue<Action<CommandBuffer>> queueQueue);
+
+            lock (SingleCommandBuffer)
             {
-                SingleCommandBuffer.Begin(CommandBufferUsageFlags.OneTimeSubmit);
-
-                action.Invoke(SingleCommandBuffer);
-
-                SingleCommandBuffer.End();
-
-                var queue = queueType switch
-                {
-                    QueueType.GraphicsQueue => GraphicsQueue,
-                    QueueType.PresentQueue => PresentQueue,
-                    QueueType.TransferQueue => TransferQueue,
-                    _ => throw new ArgumentOutOfRangeException(nameof(queueType), queueType, null)
-                };
-                var fence = queueType switch
-                {
-                    QueueType.GraphicsQueue => GraphicsQueueFence,
-                    QueueType.PresentQueue => PresentQueueFence,
-                    QueueType.TransferQueue => TransferQueueFence,
-                    _ => throw new ArgumentOutOfRangeException(nameof(queueType), queueType, null)
-                };
-
                 if (queue is null)
                     throw new("Init not done!");
+
                 lock (queue)
                 {
-                    if (fence.GetStatus() == Result.Success)
+                    while (queueQueue.Count != 0)
                     {
-                        LogHelper.Log("Fence Error");
-                    }
-
-                    queue.Submit(new SubmitInfo
-                    {
-                        CommandBuffers = new[]
+                        if (fence.GetStatus() == Result.Success)
                         {
-                            SingleCommandBuffer
-                        },
-                    }, fence);
+                            LogHelper.Log("Fence Error");
+                        }
 
-                    queue.WaitIdle();
-                    fence.Wait(DEFAULT_TIMEOUT);
-                    fence.Reset();
+                        var action = queueQueue.Dequeue();
+
+                        ExecuteOnQueueWithFence(action, queue, fence);
+                    }
                 }
-                SingleCommandBuffer.Reset(CommandBufferResetFlags.ReleaseResources);
+            }
+        }
+
+        private void ExecuteOnQueueWithFence(Action<CommandBuffer> action, Queue queue, Fence fence)
+        {
+            System.Diagnostics.Debug.Assert(SingleCommandBuffer != null, nameof(SingleCommandBuffer) + " != null");
+            SingleCommandBuffer.Begin(CommandBufferUsageFlags.OneTimeSubmit);
+
+            action.Invoke(SingleCommandBuffer);
+
+            SingleCommandBuffer.End();
+
+            queue.Submit(new SubmitInfo
+            {
+                CommandBuffers = new[]
+                {
+                    SingleCommandBuffer
+                },
+            }, fence);
+
+            queue.WaitIdle();
+            fence.Wait(DEFAULT_TIMEOUT);
+            fence.Reset();
+            SingleCommandBuffer.Reset(CommandBufferResetFlags.ReleaseResources);
+        }
+
+        private void GetQueusByType(QueueType queueType, out Queue queue, out Fence fence, out Queue<Action<CommandBuffer>> queueQueue)
+        {
+            switch (queueType)
+            {
+                case QueueType.GraphicsQueue:
+                    queue = GraphicsQueue!;
+                    queueQueue = GraphicsQueueQueue;
+                    fence = GraphicsQueueFence;
+                    break;
+                case QueueType.PresentQueue:
+                    queue = PresentQueue!;
+                    queueQueue = PresentQueueQueue;
+                    fence = PresentQueueFence;
+                    break;
+                case QueueType.TransferQueue:
+                    queueQueue = TransferQueueQueue;
+                    queue = TransferQueue!;
+                    fence = TransferQueueFence;
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(queueType), queueType, null);
             }
         }
 
         private const ulong DEFAULT_TIMEOUT = 10_000_000UL; // 10 ms in ns
 
-  #endregion
+#endregion
 
         /// <inheritdoc />
         protected override void ReleaseUnmanagedResources(bool disposing)

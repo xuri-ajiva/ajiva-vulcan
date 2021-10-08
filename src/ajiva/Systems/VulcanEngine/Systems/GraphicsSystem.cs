@@ -86,6 +86,9 @@ namespace ajiva.Systems.VulcanEngine.Systems
         {
             var render = deviceSystem.GraphicsQueue!;
             var presentation = deviceSystem.PresentQueue!;
+
+            deviceSystem.ExecuteSingleTimeCommands(QueueType.GraphicsQueue);
+            
             lock (presentation)
             {
                 lock (render)
