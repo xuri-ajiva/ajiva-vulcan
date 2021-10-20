@@ -81,7 +81,7 @@ namespace ajiva.Systems.VulcanEngine.Debug
             PipelineDescriptorInfos = Layers.PipelineDescriptorInfos.CreateFrom(
                 AjivaLayer.LayerUniform.Uniform.Buffer!, (uint)AjivaLayer.LayerUniform.SizeOfT,
                 Models.Uniform.Buffer!, (uint)Models.SizeOfT,
-                Ecs.GetComponentSystem<TextureSystem, ATexture>().TextureSamplerImageViews
+                Ecs.GetComponentSystem<TextureSystem, TextureComponent>().TextureSamplerImageViews
             );
         }
 
@@ -135,10 +135,14 @@ namespace ajiva.Systems.VulcanEngine.Debug
 
         private void TransformChange(ITransform<vec3, mat4> _, mat4 after)
         {
-            Models.GetForChange((int)Id).Value.Model = after;
+            if (Models is null) return;
+
+            var change = Models.GetForChange((int)Id);
+
+            change.Value.Model = after;
         }
 
-        public IAChangeAwareBackupBufferOfT<DebugUniformModel> Models { get; set; } = null!;
+        public IAChangeAwareBackupBufferOfT<DebugUniformModel>? Models { get; set; } = null!;
 
         public bool DrawTransform { get; set; }
         public bool DrawWireframe { get; set; }

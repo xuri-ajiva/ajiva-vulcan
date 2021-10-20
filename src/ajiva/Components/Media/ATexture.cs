@@ -4,7 +4,7 @@ using SharpVk;
 
 namespace ajiva.Components.Media
 {
-    public partial class ATexture : DisposingLogger , IComponent
+    public partial class ATexture : DisposingLogger
     {
         public ATexture()
         {

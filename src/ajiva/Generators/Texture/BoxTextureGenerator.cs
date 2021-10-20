@@ -32,7 +32,7 @@ namespace ajiva.Generators.Texture
                 MissingTexture = ATexture.FromBitmap(Ecs, bitmap);
                 //MissingTexture.TextureId = 0;
 
-                Ecs.GetComponentSystem<TextureSystem, ATexture>().AddAndMapTextureToDescriptor(MissingTexture);
+                Ecs.GetComponentSystem<TextureSystem, TextureComponent>().AddAndMapTextureToDescriptor(MissingTexture);
 
                 return WorkResult.Succeeded;
             }, ALog.WriteLine, "Missing Texture Generator");

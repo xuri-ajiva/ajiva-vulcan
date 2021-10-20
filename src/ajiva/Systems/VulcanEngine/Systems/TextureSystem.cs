@@ -14,7 +14,7 @@ using SharpVk;
 namespace ajiva.Systems.VulcanEngine.Systems
 {
     [Dependent(typeof(ImageSystem), typeof(AssetManager))]
-    public class TextureSystem : ComponentSystemBase<ATexture>, IInit
+    public class TextureSystem : ComponentSystemBase<TextureComponent>, IInit
     {
         private ShaderConfig config;
         public TextureSystem(IAjivaEcs ecs) : base(ecs)
@@ -43,10 +43,12 @@ namespace ajiva.Systems.VulcanEngine.Systems
         }
 
         /// <inheritdoc />
-        public override ATexture CreateComponent(IEntity entity)
+        public override TextureComponent CreateComponent(IEntity entity)
         {
-            throw new NotImplementedException();
-            return new ATexture();
+            return new TextureComponent
+            {
+                TextureId = 0,
+            };
         }
 
         /// <inheritdoc />

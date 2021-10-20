@@ -37,8 +37,11 @@ namespace ajiva.Systems.VulcanEngine.Layer3d
 
             component.Models = Models;
             transform.ChangingObserver.OnChanged += component.OnTransformChange;
-            //if (entity.TryGetComponent<TextureComponent>(out var texture))
-            //    texture.ChangingObserver.OnChanged += _ => Models.GetForChange((int)component.Id).Value.fragtexSamplerId = texture.TextureId;
+
+            if (entity.TryGetComponent<TextureComponent>(out var texture))
+            {
+                component.TextureComponent = texture;
+            } 
 
             //component.ChangingObserver.OnChanged += _ => Models.GetForChange((int)component.Id).Value.TextureSamplerId = component.Id;
 
@@ -93,7 +96,7 @@ namespace ajiva.Systems.VulcanEngine.Layer3d
             PipelineDescriptorInfos = Layers.PipelineDescriptorInfos.CreateFrom(
                 AjivaLayer.LayerUniform.Uniform.Buffer!, (uint)AjivaLayer.LayerUniform.SizeOfT,
                 Models.Uniform.Buffer!, (uint)Models.SizeOfT,
-                Ecs.GetComponentSystem<TextureSystem, ATexture>().TextureSamplerImageViews
+                Ecs.GetComponentSystem<TextureSystem, TextureComponent>().TextureSamplerImageViews
             );
         }
 

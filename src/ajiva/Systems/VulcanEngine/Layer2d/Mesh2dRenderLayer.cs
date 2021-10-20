@@ -103,7 +103,7 @@ namespace ajiva.Systems.VulcanEngine.Layer2d
             PipelineDescriptorInfos = Layers.PipelineDescriptorInfos.CreateFrom(
                 AjivaLayer.LayerUniform.Uniform.Buffer!, (uint)AjivaLayer.LayerUniform.SizeOfT,
                 Models.Uniform.Buffer!, (uint)Models.SizeOfT,
-                Ecs.GetComponentSystem<TextureSystem, ATexture>().TextureSamplerImageViews
+                Ecs.GetComponentSystem<TextureSystem, TextureComponent>().TextureSamplerImageViews
             );
         }
 

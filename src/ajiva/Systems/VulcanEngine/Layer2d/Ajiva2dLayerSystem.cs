@@ -35,18 +35,7 @@ namespace ajiva.Systems.VulcanEngine.Layer2d
         {
             window = Ecs.GetSystem<WindowSystem>();
 
-            window.OnMouseMove += delegate(object? sender, AjivaMouseMotionCallbackEventArgs args)
-            {
-                if (args.ActiveLayer == AjivaEngineLayer.Layer2d)
-                {
-                    MouseMoved(args.Pos);
-                }
-            };
             var canvas = window.Canvas;
-            window.OnResize += delegate
-            {
-                BuildLayerUniform(window.Canvas);
-            };
 
             var deviceSystem = Ecs.GetSystem<DeviceSystem>();
 
@@ -67,9 +56,22 @@ namespace ajiva.Systems.VulcanEngine.Layer2d
                     Vec2 = new vec2(1337, 421337), MousePos = new vec2(.5f, .5f)
                 };
             BuildLayerUniform(window.Canvas);
+
+            window.OnResize += delegate
+            {
+                BuildLayerUniform(window.Canvas);
+            };
+            window.OnMouseMove += delegate(object? sender, AjivaMouseMotionCallbackEventArgs args)
+            {
+                if (args.ActiveLayer == AjivaEngineLayer.Layer2d)
+                {
+                    MouseMoved(args.Pos);
+                }
+            };
         }
 
         private void BuildLayerUniform(Canvas canvas) => BuildLayerUniform(canvas.WidthF, canvas.HeightF);
+
         private void BuildLayerUniform(float height, float width)
         {
             var byRef = LayerUniform.GetForChange(0);

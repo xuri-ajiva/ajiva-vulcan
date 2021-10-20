@@ -28,6 +28,10 @@ namespace ajiva.Factories
                 debugComponent.Render = true;
                 debugComponent.SetMesh(MeshPrefab.Cube);
             }
+            if (system.TryAttachNewComponentToEntity<TextureComponent>(cube, out var textureComponent))
+            {
+                textureComponent.TextureId = 1;
+            }
 
             //system.AttachComponentToEntity<ATexture>(cube);
             return cube;
