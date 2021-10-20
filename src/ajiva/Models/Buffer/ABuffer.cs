@@ -26,6 +26,7 @@ namespace ajiva.Models.Buffer
 
             Memory = system.Device.AllocateMemory(memRequirements.Size, system.FindMemoryType(memRequirements.MemoryTypeBits, flags));
             Buffer.BindMemory(Memory, 0);
+            system.WatchObject(this);
         }
 
         /// <inheritdoc />

@@ -109,7 +109,7 @@ namespace ajiva.Systems.VulcanEngine.Systems
             DepthFormat = (deviceSystem.PhysicalDevice ?? throw new InvalidOperationException()).FindDepthFormat();
         }
 
-        private const int DISPOSE_DALEY = 1000;
+        private const int DISPOSE_DALEY = 3000;
 
         protected void ReCreateRenderUnion()
         {

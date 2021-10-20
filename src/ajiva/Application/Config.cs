@@ -13,6 +13,8 @@ namespace ajiva.Application
         }
 
         public WindowConfig Window { get; set; } = new WindowConfig();
+        public ShaderConfig ShaderConfig { get; set; } = new ShaderConfig();
+        
         public string AssetPath { get; set; }
 
         private static Config? _default;
@@ -34,7 +36,6 @@ namespace ajiva.Application
                 return _default;
             }
         }
-        public ShaderConfig ShaderConfig { get; set; }
     }
     public class WindowConfig
     {

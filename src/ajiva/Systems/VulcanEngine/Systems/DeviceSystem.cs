@@ -6,6 +6,7 @@ using ajiva.Ecs;
 using ajiva.Ecs.System;
 using ajiva.Ecs.Utils;
 using ajiva.Models;
+using ajiva.Models.Buffer;
 using Ajiva.Wrapper.Logger;
 using SharpVk;
 using SharpVk.Khronos;
@@ -220,6 +221,17 @@ namespace ajiva.Systems.VulcanEngine.Systems
         /// <inheritdoc />
         protected override void ReleaseUnmanagedResources(bool disposing)
         {
+            foreach (var buffer in Disposables)
+            {
+                buffer.Dispose();
+            }
+            Disposables.Clear();
+            Disposables = null!;
+
+            TransferQueueFence.Dispose();
+            PresentQueueFence.Dispose();
+            GraphicsQueueFence.Dispose();
+
             TransientCommandPool?.Dispose();
             CommandPool?.FreeCommandBuffers(SingleCommandBuffer);
             CommandPool?.Dispose();
@@ -242,6 +254,13 @@ namespace ajiva.Systems.VulcanEngine.Systems
         /// <inheritdoc />
         public DeviceSystem(IAjivaEcs ecs) : base(ecs)
         {
+        }
+
+        private List<IDisposable> Disposables { get; set; } = new List<IDisposable>();
+
+        public void WatchObject(IDisposable disposable)
+        {
+            Disposables.Add(disposable);
         }
     }
 

@@ -39,6 +39,7 @@ namespace ajiva.Systems.VulcanEngine.Systems
             });
 
             aImage.CreateView(device, format, aspectFlags);
+            deviceSystem.WatchObject(aImage);
 
             return aImage;
         }

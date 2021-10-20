@@ -26,7 +26,7 @@ namespace ajiva.Systems.VulcanEngine.Layers
             RenderFinished = renderFinished;
         }
 
-        public Dictionary<IAjivaLayer, AjivaLayerData> LayerMaps { get; } = new();
+        public Dictionary<IAjivaLayer, AjivaLayerData> LayerMaps { get; set; } = new();
         public class AjivaLayerData
         {
             public RenderPassLayer RenderPass;
@@ -104,33 +104,36 @@ namespace ajiva.Systems.VulcanEngine.Layers
 
         public void FillBuffers()
         {
-            RenderLayerGuard guard = new();
-            foreach (var (ajivaLayer, data) in LayerMaps)
+            lock (bufferLock)
             {
-                for (var i = 0; i < data.RenderPass.FrameBuffers.Length; i++)
+                RenderLayerGuard guard = new();
+                foreach (var (ajivaLayer, data) in LayerMaps)
                 {
-                    var framebuffer = data.RenderPass.FrameBuffers[i];
-                    var commandBuffer = data.RenderPass.RenderBuffers[i];
-                    commandBuffer.Reset();
-
-                    commandBuffer.Begin(CommandBufferUsageFlags.SimultaneousUse);
-
-                    commandBuffer.BeginRenderPass(data.RenderPass.RenderPass,
-                        framebuffer,
-                        SwapChainLayer.Canvas.Rect,
-                        ajivaLayer.ClearValues,
-                        SubpassContents.Inline);
-
-                    foreach (var (ajivaLayerRenderSystem, ajivaLayerRenderSystemData) in data.LayerMaps)
+                    for (var i = 0; i < data.RenderPass.FrameBuffers.Length; i++)
                     {
-                        commandBuffer.BindPipeline(PipelineBindPoint.Graphics, ajivaLayerRenderSystemData.GraphicsPipeline.Pipeline);
-                        guard.Pipeline = ajivaLayerRenderSystemData.GraphicsPipeline;
-                        guard.Buffer = commandBuffer;
-                        ajivaLayerRenderSystem.DrawComponents(guard);
-                    }
+                        var framebuffer = data.RenderPass.FrameBuffers[i];
+                        var commandBuffer = data.RenderPass.RenderBuffers[i];
+                        commandBuffer.Reset();
 
-                    commandBuffer.EndRenderPass();
-                    commandBuffer.End();
+                        commandBuffer.Begin(CommandBufferUsageFlags.SimultaneousUse);
+
+                        commandBuffer.BeginRenderPass(data.RenderPass.RenderPass,
+                            framebuffer,
+                            SwapChainLayer.Canvas.Rect,
+                            ajivaLayer.ClearValues,
+                            SubpassContents.Inline);
+
+                        foreach (var (ajivaLayerRenderSystem, ajivaLayerRenderSystemData) in data.LayerMaps)
+                        {
+                            commandBuffer.BindPipeline(PipelineBindPoint.Graphics, ajivaLayerRenderSystemData.GraphicsPipeline.Pipeline);
+                            guard.Pipeline = ajivaLayerRenderSystemData.GraphicsPipeline;
+                            guard.Buffer = commandBuffer;
+                            ajivaLayerRenderSystem.DrawComponents(guard);
+                        }
+
+                        commandBuffer.EndRenderPass();
+                        commandBuffer.End();
+                    }
                 }
             }
         }
@@ -156,6 +159,19 @@ namespace ajiva.Systems.VulcanEngine.Layers
 
         public Result[] ResultsCache { get; private set; }
         public SubmitInfo[] SubmitInfoCache { get; private set; }
+
+        /// <inheritdoc />
+        protected override void ReleaseUnmanagedResources(bool disposing)
+        {
+            base.ReleaseUnmanagedResources(disposing);
+            SwapChainLayer?.Dispose();
+            ImageAvailable.Dispose();
+            RenderFinished.Dispose();
+            LayerMaps.Clear();
+            LayerMaps = null!;
+            SubmitInfoCache = null!;
+            ResultsCache = null!;
+        }
     }
     public class RenderLayerGuard
     {

@@ -221,6 +221,8 @@ namespace ajiva.Application
         /// <inheritdoc />
         protected override void ReleaseUnmanagedResources(bool disposing)
         {
+            entityComponentSystem.GetSystem<DeviceSystem>().WaitIdle();
+            
             entityComponentSystem.Dispose();
 
             debugReportCallback.Dispose();

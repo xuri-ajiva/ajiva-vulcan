@@ -17,7 +17,7 @@ using SharpVk.Shanq.GlmSharp;
 
 namespace ajiva.Components
 {
-    public class Shader : ThreadSaveCreatable, IComponent
+    public class Shader : ThreadSaveCreatable
     {
         private readonly DeviceSystem system;
         public ShaderModule? FragShader { get; private set; }
@@ -45,7 +45,9 @@ namespace ajiva.Components
         {
             var shaderData = LoadShaderData(assetManager, assetName, out var codeSize);
 
-            return system.Device!.CreateShaderModule(codeSize, shaderData);
+            var shader = system.Device!.CreateShaderModule(codeSize, shaderData);
+            system.WatchObject(shader);
+            return shader;
         }
 
         [MethodImpl(MethodImplOptions.Synchronized)]
