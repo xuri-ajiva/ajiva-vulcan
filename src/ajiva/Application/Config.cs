@@ -20,21 +20,21 @@ namespace ajiva.Application
         {
             get
             {
-                if (_default is null)
-                {
-                    if (File.Exists(Const.Default.Config))
-                    {
-                        _default = JsonSerializer.Deserialize<Config>(File.ReadAllText(Const.Default.Config))!;
-                    }
-                    else
-                    {
-                        _default = new Config();
-                    }
-                    File.WriteAllText(Const.Default.Config, JsonSerializer.Serialize(_default, new JsonSerializerOptions() { WriteIndented = true }));
-                }
+                if (_default is not null) return _default;
+
+                _default = File.Exists(Const.Default.Config)
+                    ? JsonSerializer.Deserialize<Config>(File.ReadAllText(Const.Default.Config))!
+                    : new Config();
+                File.WriteAllText(Const.Default.Config,
+                    JsonSerializer.Serialize(_default,
+                        new JsonSerializerOptions()
+                            { WriteIndented = true }
+                    )
+                );
                 return _default;
             }
         }
+        public ShaderConfig ShaderConfig { get; set; }
     }
     public class WindowConfig
     {
@@ -51,5 +51,18 @@ namespace ajiva.Application
         
         public int PosX { get; set; }
         public int PosY { get; set; }
+    }
+
+    public class ShaderConfig
+    {
+        // ReSharper disable InconsistentNaming
+        public int TEXTURE_SAMPLER_COUNT { set; get; } = 128;
+
+        // ReSharper restore InconsistentNaming
+
+        public (string name, object value)[] GetAll()
+        {
+            return new (string name, object value)[] { (nameof(TEXTURE_SAMPLER_COUNT), TEXTURE_SAMPLER_COUNT) };
+        }
     }
 }

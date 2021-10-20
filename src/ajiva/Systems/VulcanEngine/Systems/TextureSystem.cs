@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Runtime.InteropServices.ComTypes;
+using ajiva.Application;
 using ajiva.Components.Media;
 using ajiva.Ecs;
 using ajiva.Ecs.ComponentSytem;
@@ -15,13 +16,12 @@ namespace ajiva.Systems.VulcanEngine.Systems
     [Dependent(typeof(ImageSystem), typeof(AssetManager))]
     public class TextureSystem : ComponentSystemBase<ATexture>, IInit
     {
-        // ReSharper disable once InconsistentNaming
-        public const int MAX_TEXTURE_SAMPLERS_IN_SHADER = 128;
-
+        private ShaderConfig config;
         public TextureSystem(IAjivaEcs ecs) : base(ecs)
         {
-            INextId<ATexture>.MaxId = MAX_TEXTURE_SAMPLERS_IN_SHADER;
-            TextureSamplerImageViews = new DescriptorImageInfo[MAX_TEXTURE_SAMPLERS_IN_SHADER];
+            this.config = ecs.TryGetPara<Config>(Const.Default.Config, out var _config) ? _config.ShaderConfig : Config.Default.ShaderConfig;
+            INextId<ATexture>.MaxId = (uint)config.TEXTURE_SAMPLER_COUNT;
+            TextureSamplerImageViews = new DescriptorImageInfo[config.TEXTURE_SAMPLER_COUNT];
             Textures = new();
         }
 
@@ -37,7 +37,7 @@ namespace ajiva.Systems.VulcanEngine.Systems
 
         public void MapTextureToDescriptor(ATexture texture)
         {
-            if (MAX_TEXTURE_SAMPLERS_IN_SHADER <= texture.TextureId) throw new ArgumentException($"{nameof(texture.TextureId)} is more then {nameof(MAX_TEXTURE_SAMPLERS_IN_SHADER)}", nameof(IBindCtx));
+            if (config.TEXTURE_SAMPLER_COUNT <= texture.TextureId) throw new ArgumentException($"{nameof(texture.TextureId)} is more then {nameof(config.TEXTURE_SAMPLER_COUNT)}", nameof(IBindCtx));
 
             TextureSamplerImageViews[texture.TextureId] = texture.DescriptorImageInfo;
         }
@@ -48,11 +48,11 @@ namespace ajiva.Systems.VulcanEngine.Systems
             throw new NotImplementedException();
             return new ATexture();
         }
-        
+
         /// <inheritdoc />
         protected override void ReleaseUnmanagedResources(bool disposing)
         {
-            for (var i = 0; i < MAX_TEXTURE_SAMPLERS_IN_SHADER; i++)
+            for (var i = 0; i < config.TEXTURE_SAMPLER_COUNT; i++)
             {
                 TextureSamplerImageViews[i] = default;
             }
@@ -69,7 +69,7 @@ namespace ajiva.Systems.VulcanEngine.Systems
             Default = ATexture.FromFile(ecs, "Logos:logo.png");
             Textures.Add(Default);
 
-            for (var i = 0; i < MAX_TEXTURE_SAMPLERS_IN_SHADER; i++)
+            for (var i = 0; i < config.TEXTURE_SAMPLER_COUNT; i++)
             {
                 TextureSamplerImageViews[i] = Default.DescriptorImageInfo;
             }

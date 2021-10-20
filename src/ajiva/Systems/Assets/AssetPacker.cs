@@ -1,17 +1,13 @@
 ﻿using System;
 using System.Diagnostics;
-using System.Drawing;
 using System.IO;
 using System.Linq;
-using System.Runtime.Intrinsics.Arm;
 using System.Security.Cryptography;
 using System.Threading.Tasks;
-using System.Windows.Markup;
+using ajiva.Application;
 using ajiva.Systems.Assets.Contracts;
-using ajiva.Systems.VulcanEngine;
 using Ajiva.Wrapper.Logger;
 using ProtoBuf;
-using ProtoBuf.Meta;
 
 namespace ajiva.Systems.Assets
 {
@@ -63,7 +59,7 @@ namespace ajiva.Systems.Assets
                         throw new Exception("File Already Exists");
                     }
                 }
-                File.WriteAllBytes(assetOutput,serializedAsset);
+                File.WriteAllBytes(assetOutput, serializedAsset);
 
                 File.WriteAllBytes(hashFilePath, assetHash);
             }
@@ -109,7 +105,7 @@ namespace ajiva.Systems.Assets
 
             var compiler = new Process
             {
-                StartInfo = new ProcessStartInfo(ShaderCompiler, $"{frag.Name} {vert.Name} -V")
+                StartInfo = new ProcessStartInfo(ShaderCompiler, $"{frag.Name} {vert.Name} -V " + Macros)
                 {
                     RedirectStandardError = true,
                     RedirectStandardOutput = true,
@@ -147,6 +143,19 @@ namespace ajiva.Systems.Assets
             assetPack.Add(AssetType.Shader, relPathName, files.First(x => x.Name == Const.Default.FragmentShaderName));
         }
 
+        public static string Macros
+        {
+            get
+            {
+                if (macros != null) return macros;
+
+                const string macroPrefix = " -D";
+                macros = Config.Default.ShaderConfig.GetAll().Select((name, value) => macroPrefix + name + "=" + value).Aggregate((x, y) => x + y);
+                return macros;
+            }
+        }
+
         private static readonly string ShaderCompiler = Path.GetFullPath("./tools/spirv/glslangValidator.exe");
+        private static string? macros;
     }
 }
