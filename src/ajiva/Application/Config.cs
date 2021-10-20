@@ -38,19 +38,11 @@ namespace ajiva.Application
     }
     public class WindowConfig
     {
-        public WindowConfig()
-        {
-            Height = Const.Default.SurfaceHeight;
-            Width = Const.Default.SurfaceWidth;
-            PosX = Const.Default.PosX;
-            PosY = Const.Default.PosY;
-        }
+        public uint Width { set; get; } = 800;
+        public uint Height { set; get; } = 600;
 
-        public uint Width { get; set; }
-        public uint Height { get; set; }
-        
-        public int PosX { get; set; }
-        public int PosY { get; set; }
+        public int PosX { set; get; } = 200;
+        public int PosY { set; get; } = 300;
     }
 
     public class ShaderConfig
