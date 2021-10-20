@@ -28,7 +28,7 @@ namespace ajiva.Models
             }
             catch (Exception e)
             {
-                LogHelper.WriteLine(e);
+                ALog.Error(e);
             }
         }
 

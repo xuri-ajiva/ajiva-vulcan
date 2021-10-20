@@ -28,7 +28,7 @@ namespace ajiva.Systems.Assets.Contracts
             var assetName = AssetHelper.AsName(name);
             if (Assets.ContainsKey(assetName))
             {
-                LogHelper.Log($"Duplicate AssetName {AssetType}:{assetName}");
+                ALog.Warn($"Duplicate AssetName {AssetType}:{assetName}");
             }
             Assets.Add(assetName, data);
         }
@@ -40,7 +40,7 @@ namespace ajiva.Systems.Assets.Contracts
                 return data;
             }
 
-            LogHelper.Log($"Error: Asset Not Found, {AssetType}:{name}");
+            ALog.Error($"Asset Not Found, {AssetType}:{name}");
             return Array.Empty<byte>();
         }
     }

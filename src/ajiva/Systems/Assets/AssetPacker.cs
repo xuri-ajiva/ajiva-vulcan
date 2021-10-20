@@ -49,7 +49,7 @@ namespace ajiva.Systems.Assets
                             var diskHash = File.ReadAllBytes(hashFilePath);
                             if (assetHash.SequenceEqual(diskHash))
                             {
-                                LogHelper.Log($"Asset Already Build, Content Identical: {assetHash.Select(x => x.ToString("X")).Aggregate((x, y) => x + y)}");
+                                ALog.Warn($"Asset Already Build, Content Identical: {assetHash.Select(x => x.ToString("X")).Aggregate((x, y) => x + y)}");
                                 return;
                             }
                         }
@@ -94,12 +94,12 @@ namespace ajiva.Systems.Assets
                 return;
             if (vert is null)
             {
-                LogHelper.WriteLine($"[PACK/ERROR] Vertex Shader is Null! for: {shaderDirectory.Name}");
+                ALog.Error($"[PACK/ERROR] Vertex Shader is Null! for: {shaderDirectory.Name}");
                 return;
             }
             if (frag is null)
             {
-                LogHelper.WriteLine($"[PACK/ERROR] Fragment Shader is Null! for: {shaderDirectory.Name}");
+                ALog.Error($"[PACK/ERROR] Fragment Shader is Null! for: {shaderDirectory.Name}");
                 return;
             }
 
@@ -117,19 +117,23 @@ namespace ajiva.Systems.Assets
             compiler.PriorityClass = ProcessPriorityClass.High;
             compiler.EnableRaisingEvents = true;
             compiler.PriorityBoostEnabled = true;
-            while (!compiler.HasExited)
+
+            const int maxWait = 10000;
+            const int waitInterval = 100;
+            for (var i = 0; !compiler.HasExited && i < maxWait / waitInterval; i += waitInterval)
             {
                 compiler.Refresh();
-                await Task.Delay(100);
+                await Task.Delay(waitInterval);
             }
+
             var errors = await compiler.StandardError.ReadToEndAsync();
             var output = await compiler.StandardOutput.ReadToEndAsync();
-            LogHelper.WriteLine($"[COMPILE/INFO]: Shaders for: {shaderDirectory.Name}");
+            ALog.Info($"[COMPILE/INFO]: Shaders for: {shaderDirectory.Name}");
             if (!string.IsNullOrEmpty(output))
-                LogHelper.WriteLine($"[COMPILE/RESULT/INFO] {output}");
+                ALog.Info($"[COMPILE/RESULT/INFO]\n{output.TrimEnd('\n')}");
             if (!string.IsNullOrEmpty(errors))
-                LogHelper.WriteLine($"[COMPILE/RESULT/ERROR] {errors}");
-            LogHelper.WriteLine($"[COMPILE/RESULT/EXIT] Compiler Process has exited with code {compiler.ExitCode}");
+                ALog.Error($"[COMPILE/RESULT/ERROR]\n{errors.TrimEnd('\n')}");
+            ALog.Info($"[COMPILE/RESULT/EXIT] Compiler Process has exited with code {compiler.ExitCode}");
             if (compiler.ExitCode != 0)
             {
                 Environment.Exit((int)(compiler.ExitCode + Const.ExitCode.ShaderCompile));
@@ -147,10 +151,10 @@ namespace ajiva.Systems.Assets
         {
             get
             {
-                if (macros != null) return macros;
+                if (macros is not null) return macros;
 
                 const string macroPrefix = " -D";
-                macros = Config.Default.ShaderConfig.GetAll().Select((name, value) => macroPrefix + name + "=" + value).Aggregate((x, y) => x + y);
+                macros = Config.Default.ShaderConfig.GetAll().Select(x => macroPrefix + x.name + "=" + x.value).Aggregate((x, y) => x + y);
                 return macros;
             }
         }

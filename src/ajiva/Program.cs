@@ -26,12 +26,11 @@ namespace ajiva
             //CompileShaders();
             PackAssets();
 
-            LogHelper.UseConsoleCursorPos = false;
-            Console.WriteLine($"ProcessId: {Environment.ProcessId}");
-            Console.WriteLine($"Version: {Environment.Version}");
-            Console.WriteLine($"Is64BitProcess: {Environment.Is64BitProcess}");
-            Console.WriteLine($"Is64BitOperatingSystem: {Environment.Is64BitOperatingSystem}");
-            Console.WriteLine($"OSVersion: {Environment.OSVersion}");
+            ALog.Log(ALogLevel.Info, $"ProcessId: {Environment.ProcessId}");
+            ALog.Log(ALogLevel.Info, $"Version: {Environment.Version}");
+            ALog.Log(ALogLevel.Info, $"Is64BitProcess: {Environment.Is64BitProcess}");
+            ALog.Log(ALogLevel.Info, $"Is64BitOperatingSystem: {Environment.Is64BitOperatingSystem}");
+            ALog.Log(ALogLevel.Info, $"OSVersion: {Environment.OSVersion}");
 
             Glfw3.Init();
 
@@ -49,7 +48,7 @@ namespace ajiva
             GC.Collect();
             HeapUtil.FreeHGlobal();
             Glfw3.Terminate();
-            Console.WriteLine("Finished, press any Key to continue.");
+            ALog.Info("Finished, press any Key to continue.");
             Console.ReadKey();
             Environment.Exit(0);
         }
@@ -93,12 +92,12 @@ namespace ajiva
                 return;
             if (vert is null)
             {
-                Console.WriteLine($"[COMPILE/ERROR] Vertex Shader is Null! for: {shaderDirectory.Name}");
+                ALog.Info($"[COMPILE/ERROR] Vertex Shader is Null! for: {shaderDirectory.Name}");
                 return;
             }
             if (frag is null)
             {
-                Console.WriteLine($"[COMPILE/ERROR] Fragment Shader is Null! for: {shaderDirectory.Name}");
+                ALog.Info($"[COMPILE/ERROR] Fragment Shader is Null! for: {shaderDirectory.Name}");
                 return;
             }
 
@@ -126,12 +125,12 @@ namespace ajiva
 
             lock (ConsoleLock)
             {
-                Console.WriteLine($"[COMPILE/INFO]: Shaders for: {shaderDirectory.Name}");
+                ALog.Info($"[COMPILE/INFO]: Shaders for: {shaderDirectory.Name}");
                 if (!string.IsNullOrEmpty(output))
-                    Console.WriteLine($"[COMPILE/RESULT/INFO] {output}");
+                    ALog.Info($"[COMPILE/RESULT/INFO] {output}");
                 if (!string.IsNullOrEmpty(errors))
-                    Console.WriteLine($"[COMPILE/RESULT/ERROR] {errors}");
-                Console.WriteLine($"[COMPILE/RESULT/EXIT] Compiler Process has exited with code {compiler.ExitCode}");
+                    ALog.Info($"[COMPILE/RESULT/ERROR] {errors}");
+                ALog.Info($"[COMPILE/RESULT/EXIT] Compiler Process has exited with code {compiler.ExitCode}");
                 if (compiler.ExitCode != 0)
                 {
                     Environment.Exit((int)(compiler.ExitCode + Const.ExitCode.ShaderCompile));
@@ -149,7 +148,7 @@ namespace ajiva
 
         // private void LoadTexture()
         // {
-        //     Console.WriteLine("Path:");
+        //     ALog.Info("Path:");
         //     var path = Console.ReadLine()!;
         //     engine.TextureComponent.AddAndMapTextureToDescriptor(Texture.FromFile(engine, path));
         //     Menu();

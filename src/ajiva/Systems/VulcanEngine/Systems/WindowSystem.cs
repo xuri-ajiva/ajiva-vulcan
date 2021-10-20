@@ -80,7 +80,7 @@ namespace ajiva.Systems.VulcanEngine.Systems
                     }
                     catch (Exception e)
                     {
-                        LogHelper.WriteLine(e);
+                        ALog.Error(e);
                     }
                 }
                 Glfw3.PollEvents();

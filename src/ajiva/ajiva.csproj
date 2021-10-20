@@ -35,5 +35,8 @@
       <ProjectReference Include="..\..\libs\SharpVk\src\SharpVk\SharpVk.csproj" />
       <ProjectReference Include="..\ajiva.Ecs\ajiva.Ecs.csproj" />
     </ItemGroup>
-    
+
+    <PropertyGroup>
+        <PathMap>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)'))=./</PathMap>
+    </PropertyGroup>
 </Project>

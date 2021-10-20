@@ -90,7 +90,7 @@ namespace ajiva.Systems.VulcanEngine.Layer3d
             }
             else
             {
-                LogHelper.Log("Error: cam not created");
+                ALog.Error("cam not created");
             }
             MainCamara.UpdatePerspective(90, window.Canvas.Width, window.Canvas.Height);
             MainCamara.MovementSpeed = .01f;

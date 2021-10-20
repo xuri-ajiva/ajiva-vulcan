@@ -35,7 +35,7 @@ namespace ajiva.Ecs.ComponentSytem
             {
                 if (entity != entity1)
                 {
-                    LogHelper.Log("Error: Removing component not assigned to entity");
+                    ALog.Error("Removing component not assigned to entity");
                 }
             }
             return component;

@@ -208,7 +208,7 @@ namespace ajiva.Ecs
                 {
                     return CreateSystemOrComponentSystemIfNotExitsRecursive(missing);
                 }
-                LogHelper.Log($"Error Cannot instantiate {missing}!");
+                ALog.Error($"Error Cannot instantiate {missing}!");
                 return null;
             });
 
@@ -217,7 +217,7 @@ namespace ajiva.Ecs
                 case IComponentSystem componentSystem:
                     if (ComponentSystems.ContainsKey(componentSystem.ComponentType))
                     {
-                        LogHelper.Log($"Dup Component System Creation: {componentSystem.GetHashCode()}");
+                        ALog.Warn($"Dup Component System Creation: {componentSystem.GetHashCode()}");
                         componentSystem.Dispose();
                         return ComponentSystems[componentSystem.ComponentType];
                     }

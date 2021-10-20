@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using ajiva.Components.Media;
 using ajiva.Models;
@@ -56,15 +57,32 @@ namespace ajiva.Systems.VulcanEngine
             throw new ArgumentOutOfRangeException(nameof(candidates), candidates, "failed to find supported format!");
         }
 
-        private static readonly ConsoleRolBlock DebugReportBlock = new(5, nameof(DebugReportBlock));
+        private static readonly ConsoleRolBlock DebugReportBlock = new(10, nameof(DebugReportBlock));
 
         private static readonly DebugReportCallbackDelegate DebugReportDelegate = (flags, objectType, o, location, messageCode, layerPrefix, message, userData) =>
         {
             DebugReportBlock.WriteNext($"[{flags}] ({objectType}) {layerPrefix}");
             DebugReportBlock.WriteNext(message);
 
+            var stackframe = new StackFrame(2, true);
+            var stackframe2 = new StackFrame(3, true);
+            var stackframe3 = new StackFrame(4, true);
+            DebugReportBlock.WriteNext($"File: {stackframe.GetFileName()}:{stackframe.GetFileLineNumber()} from {stackframe2.GetFileName()}:{stackframe2.GetFileLineNumber()} from {stackframe3.GetFileName()}:{stackframe3.GetFileLineNumber()}");
+
             return false;
         };
+
+        public static void LogStackTrace()
+        {
+            var stackFrame = new StackTrace(true);
+            foreach (var frame in stackFrame.GetFrames())
+            {
+                Console.WriteLine($"{frame.GetFileName()}:{frame.GetFileLineNumber()}");
+            }
+        }
+
+        /*private static DataTarget dataTarget = DataTarget.AttachToProcess(Environment.ProcessId, false);
+        private static ClrRuntime runtime = dataTarget.ClrVersions.First().CreateRuntime();*/
 
         public static (Instance instance, DebugReportCallback debugReportCallback) CreateInstance(IEnumerable<string> enabledExtensionNames)
         {

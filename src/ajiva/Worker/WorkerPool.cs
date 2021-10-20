@@ -27,7 +27,7 @@ namespace ajiva.Worker
             for (var i = 0; i < workerCount; i++)
                 workers[i] = new(this, i);
 
-            StartMonitoring(CancellationTokenSource.Token);
+            //StartMonitoring(CancellationTokenSource.Token);
 
             for (var i = 0; i < workerCount; i++)
                 workers[i].Start();

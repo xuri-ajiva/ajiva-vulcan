@@ -36,7 +36,7 @@ namespace ajiva.Ecs.Entity
         {
             if (entity.HasComponent<T>())
             {
-                LogHelper.WriteLine($"{entity.Id} already Contains {component}");
+                ALog.Warn($"{entity.Id} already Contains {component}");
                 return component;
             }
             entity.Components.Add(UsVc<T>.Key, component);

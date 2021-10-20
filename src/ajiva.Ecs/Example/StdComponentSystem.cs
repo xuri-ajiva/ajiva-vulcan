@@ -1,4 +1,5 @@
-﻿using ajiva.Ecs.ComponentSytem;
+﻿using System;
+using ajiva.Ecs.ComponentSytem;
 using ajiva.Ecs.Entity;
 using ajiva.Ecs.Utils;
 using ajiva.Utils;
@@ -13,7 +14,7 @@ namespace ajiva.Ecs.Example
         {
             foreach (var (key, value) in ComponentEntityMap)
             {
-                LogHelper.WriteLine($"[{value}]: " + key);
+                Console.WriteLine($"[{value}]: " + key);
             }
         }
 

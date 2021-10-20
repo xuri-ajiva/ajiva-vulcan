@@ -155,7 +155,7 @@ namespace ajiva.Systems.VulcanEngine.Systems
                     {
                         if (fence.GetStatus() == Result.Success)
                         {
-                            LogHelper.Log("Fence Error");
+                            ALog.Error("Fence Error");
                         }
 
                         var action = queueQueue.Dequeue();

@@ -35,7 +35,7 @@ namespace ajiva.Generators.Texture
                 Ecs.GetComponentSystem<TextureSystem, ATexture>().AddAndMapTextureToDescriptor(MissingTexture);
 
                 return WorkResult.Succeeded;
-            }, LogHelper.WriteLine, "Missing Texture Generator");
+            }, ALog.WriteLine, "Missing Texture Generator");
 
             //Ecs.GetSystem<WorkerPool>().;
         }

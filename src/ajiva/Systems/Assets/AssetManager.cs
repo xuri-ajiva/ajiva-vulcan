@@ -37,7 +37,7 @@ namespace ajiva.Systems.Assets
                 return assets.GetAsset(name);
             }
 
-            LogHelper.Log($"Error: Asset Not Found, {assetType}:{name}");
+            ALog.Error($"Asset Not Found, {assetType}:{name}");
             return Array.Empty<byte>();
         }
 
