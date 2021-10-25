@@ -21,13 +21,6 @@ namespace ajiva.Factories
                 renderMesh.Render = true;
                 renderMesh.SetMesh(MeshPrefab.Cube);
             }
-            if (system.TryAttachNewComponentToEntity<DebugComponent>(cube, out var debugComponent))
-            {
-                debugComponent.DrawTransform = true;
-                debugComponent.DrawWireframe = true;
-                debugComponent.Render = true;
-                debugComponent.SetMesh(MeshPrefab.Cube);
-            }
             if (system.TryAttachNewComponentToEntity<TextureComponent>(cube, out var textureComponent))
             {
                 textureComponent.TextureId = 1;

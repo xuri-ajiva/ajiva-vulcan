@@ -86,18 +86,19 @@ namespace ajiva.Application
             entityComponentSystem.AddEntityFactory(new CubeFactory());
             entityComponentSystem.AddEntityFactory(new RectFactory());
             entityComponentSystem.AddEntityFactory(new Cameras.FpsCamaraFactory());
+            entityComponentSystem.AddEntityFactory(new DebugBoxFactory());
 
             window.OnKeyEvent += WindowOnOnKeyEvent;
             var ajiva3dLayerSystem = entityComponentSystem.CreateSystemOrComponentSystem<Ajiva3dLayerSystem>();
             var ajiva2dLayerSystem = entityComponentSystem.CreateSystemOrComponentSystem<Ajiva2dLayerSystem>();
-            //var solidMeshRenderLayer = entityComponentSystem.CreateSystemOrComponentSystem<SolidMeshRenderLayer>();
+            var solidMeshRenderLayer = entityComponentSystem.CreateSystemOrComponentSystem<SolidMeshRenderLayer>();
             var debugLayer = entityComponentSystem.CreateSystemOrComponentSystem<DebugLayer>();
             var rectRender = entityComponentSystem.CreateSystemOrComponentSystem<Mesh2dRenderLayer>();
 
             graphicsSystem.AddUpdateLayer(ajiva3dLayerSystem);
             graphicsSystem.AddUpdateLayer(ajiva2dLayerSystem);
 
-            //ajiva3dLayerSystem.AddLayer(solidMeshRenderLayer);
+            ajiva3dLayerSystem.AddLayer(solidMeshRenderLayer);
             ajiva3dLayerSystem.AddLayer(debugLayer);
             ajiva2dLayerSystem.AddLayer(rectRender);
 
