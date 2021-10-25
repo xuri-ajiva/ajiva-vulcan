@@ -16,9 +16,9 @@ namespace ajiva.Components.RenderAble
 
         public Mesh(T[] verticesData, ushort[] indicesData)
         {
-            this.VerticesData = verticesData;
-            this.IndicesData = indicesData;
-            
+            VerticesData = verticesData;
+            IndicesData = indicesData;
+
             MeshId = INextId<IMesh>.Next();
         }
 
@@ -29,7 +29,7 @@ namespace ajiva.Components.RenderAble
         public void Create(DeviceSystem system)
         {
             if (deviceComponent != null) return; // if we have an deviceComponent we are created!
-            this.deviceComponent = system;
+            deviceComponent = system;
             Vertices = CreateShaderBuffer(VerticesData, BufferUsageFlags.VertexBuffer);
             Indeces = CreateShaderBuffer(IndicesData, BufferUsageFlags.IndexBuffer);
         }

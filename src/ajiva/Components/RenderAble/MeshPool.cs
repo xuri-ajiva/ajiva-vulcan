@@ -31,6 +31,11 @@ namespace ajiva.Components.RenderAble
             mesh.DrawIndexed(buffer);
         }
 
+        public IMesh GetMesh(uint meshId)
+        {
+            return Meshes[meshId];
+        }
+
         /// <inheritdoc />
         public void Reset()
         {
