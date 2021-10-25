@@ -127,8 +127,9 @@ namespace ajiva.Systems.VulcanEngine.Systems
 
         private void UpdateGraphicsData()
         {
+            deviceSystem.WaitIdle();
             //LogHelper.Log("Updating BufferData");
-                ChangingObserver.Updated();
+            ChangingObserver.Updated();
             ajivaLayerRenderer.FillBuffers();
             /*foreach (var (_, layer) in layerSystem.Layers)
             {
