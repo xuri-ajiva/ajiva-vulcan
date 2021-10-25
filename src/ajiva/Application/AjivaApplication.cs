@@ -12,6 +12,7 @@ using ajiva.Factories;
 using ajiva.Generators.Texture;
 using ajiva.Systems;
 using ajiva.Systems.Assets;
+using ajiva.Systems.Physics;
 using ajiva.Systems.VulcanEngine;
 using ajiva.Systems.VulcanEngine.Debug;
 using ajiva.Systems.VulcanEngine.Layer;
@@ -83,7 +84,7 @@ namespace ajiva.Application
             var graphicsSystem = entityComponentSystem.CreateSystemOrComponentSystem<GraphicsSystem>();
             entityComponentSystem.AddEntityFactory(new SomeEntityFactory());
 
-            entityComponentSystem.AddEntityFactory(new CubeFactory());
+            entityComponentSystem.AddEntityFactory(new CubeFactory(meshPool));
             entityComponentSystem.AddEntityFactory(new RectFactory());
             entityComponentSystem.AddEntityFactory(new Cameras.FpsCamaraFactory());
             entityComponentSystem.AddEntityFactory(new DebugBoxFactory());
@@ -94,6 +95,9 @@ namespace ajiva.Application
             var solidMeshRenderLayer = entityComponentSystem.CreateSystemOrComponentSystem<SolidMeshRenderLayer>();
             var debugLayer = entityComponentSystem.CreateSystemOrComponentSystem<DebugLayer>();
             var rectRender = entityComponentSystem.CreateSystemOrComponentSystem<Mesh2dRenderLayer>();
+            
+            var collisionsComponentSystem = entityComponentSystem.CreateSystemOrComponentSystem<CollisionsComponentSystem>();
+            var boundingBoxComponentsSystem = entityComponentSystem.CreateSystemOrComponentSystem<BoundingBoxComponentsSystem>();
 
             graphicsSystem.AddUpdateLayer(ajiva3dLayerSystem);
             graphicsSystem.AddUpdateLayer(ajiva2dLayerSystem);
