@@ -9,6 +9,8 @@ using ajiva.Entities;
 using ajiva.Models;
 using ajiva.Utils;
 using ajiva.Utils.Changing;
+using ajiva.Worker;
+using Ajiva.Wrapper.Logger;
 using GlmSharp;
 
 namespace ajiva.Components.Physics
@@ -53,18 +55,29 @@ namespace ajiva.Components.Physics
 
         private void TransformChanged(ITransform<vec3, mat4> sender, mat4 after)
         {
-            ComputeBox();
+            ComputeBoxBg();
+        }
+
+        private void ComputeBoxBg()
+        {
+            var vp = Ecs.GetSystem<WorkerPool>();
+            lock (this)
+            {
+                var vCpy = ++version;
+                vp.EnqueueWork((info, _) => vCpy < version ? WorkResult.Failed : ComputeBox(), ALog.Error, nameof(ComputeBox));
+            }
         }
 
         private OnChangedDelegate ColliderChangedDelegate;
 
         private void ColliderChanged(IChangingObserver changingObserver)
         {
-            ComputeBox();
+            ComputeBoxBg();
         }
 
         private DebugBox? visual;
         private Transform3d? transform;
+        private uint version = 0;
 
         public BoundingBox()
         {
@@ -72,15 +85,16 @@ namespace ajiva.Components.Physics
             TransformChangedDelegate = TransformChanged;
         }
 
-        private void ComputeBox()
+        private WorkResult ComputeBox()
         {
             var mesh = collider!.Pool.GetMesh(collider.MeshId);
-            if (mesh is not Mesh<Vertex3D> vMesh) return;
+            if (mesh is not Mesh<Vertex3D> vMesh) return WorkResult.Failed;
 
-            float x1 = 0, x2 = 0, y1 = 0, y2 = 0, z1 = 0, z2 = 0; // 1 = min, 2 = max
+            float x1 = float.PositiveInfinity, x2 = float.NegativeInfinity, y1 = float.PositiveInfinity, y2 = float.NegativeInfinity, z1 = float.PositiveInfinity, z2 = float.NegativeInfinity; // 1 = min, 2 = max
+            var mm = Transform.ModelMat;
             for (var i = 0; i < vMesh.Vertices.Length; i++)
             {
-                var v = vMesh.Vertices[i].Position;
+                var v = mm * vMesh.Vertices[i].Position;
                 if (x1 > v.x)
                     x1 = v.x;
                 if (x2 < v.x)
@@ -97,18 +111,23 @@ namespace ajiva.Components.Physics
                     z2 = v.z;
             }
 
-            MinPos = new vec3(Transform.ModelMat * new vec4(x1, y1, z1, 1));
-            MaxPos = new vec3(Transform.ModelMat * new vec4(x2, y2, z2, 1));
+            lock (this)
+            {
+                MinPos = new vec3(x1, y1, z1);
+                MaxPos = new vec3(x2, y2, z2);
 
-            if (visual is null)
-            {
-                Debug.Assert(Ecs.TryCreateEntity<DebugBox>(out visual), "Ecs.TryCreateEntity<BoxRenderer>(out visual)");
-            }
-            if (visual.TryGetComponent<Transform3d>(out var trans))
-            {
-                trans.Position = MinPos + ((MaxPos - MinPos) / 2);
-                trans.Scale = Transform.Scale * 1.1f;
-                trans.Rotation = Transform.Rotation;
+                if (visual is null)
+                {
+                    Debug.Assert(Ecs.TryCreateEntity<DebugBox>(out visual), "Ecs.TryCreateEntity<BoxRenderer>(out visual)");
+                }
+
+                if (visual.TryGetComponent<Transform3d>(out var trans))
+                {
+                    var size = (MaxPos - MinPos) / 2;
+                    trans.Position = MinPos + size;
+                    trans.Scale = size * 1.01f;
+                }
+                return WorkResult.Succeeded;
             }
         }
     }
