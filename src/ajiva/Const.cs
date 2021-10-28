@@ -16,6 +16,7 @@
 
             public const string VertexShaderName = "vert.spv";
             public const string FragmentShaderName = "frag.spv";
+            public const int ModelBufferSize = 1_000_000;
         }
     }
 }

@@ -90,7 +90,7 @@ namespace ajiva.Systems.VulcanEngine.Layer3d
             var deviceSystem = Ecs.GetSystem<DeviceSystem>();
 
             MainShader = Shader.CreateShaderFrom(Ecs.GetSystem<AssetManager>(), "3d/Solid", deviceSystem, "main");
-            Models = new AChangeAwareBackupBufferOfT<SolidUniformModel>(1000000, deviceSystem);
+            Models = new AChangeAwareBackupBufferOfT<SolidUniformModel>(Const.Default.ModelBufferSize, deviceSystem);
             meshPool = Ecs.GetInstance<MeshPool>();
 
             PipelineDescriptorInfos = Layers.PipelineDescriptorInfos.CreateFrom(

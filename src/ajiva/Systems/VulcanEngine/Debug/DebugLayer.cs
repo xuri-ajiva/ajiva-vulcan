@@ -75,7 +75,7 @@ namespace ajiva.Systems.VulcanEngine.Debug
             var deviceSystem = Ecs.GetSystem<DeviceSystem>();
 
             MainShader = Shader.CreateShaderFrom(Ecs.GetSystem<AssetManager>(), "3d/debug", deviceSystem, "main");
-            Models = new AChangeAwareBackupBufferOfT<DebugUniformModel>(1000000, deviceSystem);
+            Models = new AChangeAwareBackupBufferOfT<DebugUniformModel>(Const.Default.ModelBufferSize, deviceSystem);
             meshPool = Ecs.GetInstance<MeshPool>();
 
             PipelineDescriptorInfos = Layers.PipelineDescriptorInfos.CreateFrom(
