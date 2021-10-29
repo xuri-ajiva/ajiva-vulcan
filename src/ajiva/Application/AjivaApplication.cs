@@ -231,6 +231,15 @@ namespace ajiva.Application
                     }
                     break;
 
+                case Key.P: 
+                    var bbs = entityComponentSystem.GetComponentSystem<BoundingBoxComponentsSystem, BoundingBox>();
+                    wp.EnqueueWork((info, param) =>
+                    {
+                        bbs.DoPhysicFrame();
+                        return WorkResult.Succeeded;
+                    }, exception => ALog.Error(exception), "DoPhysicFrame");
+
+                    break;
                 case Key.T:
                     /*foreach (var keyValuePair in entityComponentSystem.Entities)
                     {keyValuePair.Value
