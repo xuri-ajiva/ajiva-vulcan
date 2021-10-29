@@ -120,7 +120,7 @@ namespace ajiva.Systems.VulcanEngine.Systems
             SingleCommandBuffer ??= Device!.AllocateCommandBuffers(CommandPool, CommandBufferLevel.Primary, 1).Single();
         }
 
-        public void ExecuteSingleTimeCommand(QueueType queueType, Action<CommandBuffer> action)
+        public void ExecuteSingleTimeCommand(QueueType queueType, Action<CommandBuffer>? action)
         {
             EnsureCommandPoolsExists();
 
@@ -167,8 +167,13 @@ namespace ajiva.Systems.VulcanEngine.Systems
             }
         }
 
-        private void ExecuteOnQueueWithFence(Action<CommandBuffer> action, Queue queue, Fence fence)
+        private void ExecuteOnQueueWithFence(Action<CommandBuffer>? action, Queue queue, Fence fence)
         {
+            if (action is null)
+            {
+                ALog.Error("Action is Null");
+                return;
+            }
             System.Diagnostics.Debug.Assert(SingleCommandBuffer != null, nameof(SingleCommandBuffer) + " != null");
             SingleCommandBuffer.Begin(CommandBufferUsageFlags.OneTimeSubmit);
 
