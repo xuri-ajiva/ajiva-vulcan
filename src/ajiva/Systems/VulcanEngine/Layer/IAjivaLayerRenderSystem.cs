@@ -9,6 +9,8 @@ namespace ajiva.Systems.VulcanEngine.Layer
         void DrawComponents(RenderLayerGuard renderGuard);
 
         GraphicsPipelineLayer CreateGraphicsPipelineLayer(RenderPassLayer renderPassLayer);
+
+        public bool Render { get; }
     }
     public interface IAjivaLayerRenderSystem<TParent> : IAjivaLayerRenderSystem, IDisposable where TParent : unmanaged
     {

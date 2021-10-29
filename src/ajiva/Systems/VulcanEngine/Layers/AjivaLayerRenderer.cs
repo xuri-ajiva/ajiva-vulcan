@@ -125,6 +125,7 @@ namespace ajiva.Systems.VulcanEngine.Layers
 
                         foreach (var (ajivaLayerRenderSystem, ajivaLayerRenderSystemData) in data.LayerMaps)
                         {
+                            if (!ajivaLayerRenderSystem.Render) continue;
                             commandBuffer.BindPipeline(PipelineBindPoint.Graphics, ajivaLayerRenderSystemData.GraphicsPipeline.Pipeline);
                             guard.Pipeline = ajivaLayerRenderSystemData.GraphicsPipeline;
                             guard.Buffer = commandBuffer;

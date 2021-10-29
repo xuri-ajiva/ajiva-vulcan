@@ -85,6 +85,9 @@ namespace ajiva.Systems.VulcanEngine.Layer3d
         }
 
         /// <inheritdoc />
+        public bool Render { get; set; } = true;
+
+        /// <inheritdoc />
         public void Init()
         {
             var deviceSystem = Ecs.GetSystem<DeviceSystem>();
