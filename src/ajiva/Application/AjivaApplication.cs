@@ -188,6 +188,15 @@ namespace ajiva.Application
 
             switch (key)
             {
+                case Key.F1:
+                    var s1 = entityComponentSystem.GetComponentSystem<DebugLayer, DebugComponent>();
+                    s1.Render = !s1.Render;
+                    break;
+                case Key.F2:
+                    SolidMeshRenderLayer s2 = entityComponentSystem.GetComponentSystemUnSave<SolidMeshRenderLayer>();
+                    s2.Render = !s2.Render;
+                    break;
+
                 case Key.B:
                     {
                         using var change = entityComponentSystem.GetSystem<GraphicsSystem>().ChangingObserver.BeginBigChange();
