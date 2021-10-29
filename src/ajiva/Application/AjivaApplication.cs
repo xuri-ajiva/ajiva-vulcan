@@ -236,6 +236,23 @@ namespace ajiva.Application
                     {keyValuePair.Value
                     }*/
                     break;
+                case Key.F:
+                    var sys = entityComponentSystem.GetSystem<Ajiva3dLayerSystem>();
+                    if (entityComponentSystem.TryCreateEntity<Cube>(out var cn))
+                    {
+                        if (cn.TryGetComponent<RenderMesh3D>(out var render))
+                        {
+                            render.SetMesh(meshPref);
+                            render.Render = true;
+                        }
+
+                        if (cn.TryGetComponent<Transform3d>(out var trans))
+                        {
+                            trans.Position = sys.MainCamara.Transform.Position + sys.MainCamara.FrontNormalized * 25;
+                            trans.Rotation = sys.MainCamara.Transform.Rotation;
+                        }
+                    }
+                    break;
             }
         }
 
