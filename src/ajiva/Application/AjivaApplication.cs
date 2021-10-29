@@ -2,6 +2,7 @@
 using System.Threading;
 using System.Threading.Tasks;
 using ajiva.Components.Media;
+using ajiva.Components.Physics;
 using ajiva.Components.RenderAble;
 using ajiva.Components.Transform;
 using ajiva.Ecs;
@@ -151,32 +152,38 @@ namespace ajiva.Application
             if (inputaction != InputAction.Press) return;
             // ReSharper disable once SwitchStatementMissingSomeEnumCasesNoDefault
             var meshPref = MeshPrefab.Cube;
+            var wp = entityComponentSystem.GetSystem<WorkerPool>();
 
             if (key is > Key.Num0 and <= Key.Num9)
             {
-                Task.Run(() =>
+                var index = key - Key.Num0 + 1;
+                var rep = 1 << index;
+                const float sz = .5f;
+                wp.EnqueueWork((info, param) =>
                 {
                     using var change = entityComponentSystem.GetSystem<GraphicsSystem>().ChangingObserver.BeginBigChange();
 
-                    var index = key - Key.Num0 + 1;
-                    var rep = 1 << index;
-                    const float sz = .5f;
-                    for (var i = 0; i < rep; i++)
+                    var res = Parallel.For(0, rep, new ParallelOptions() { MaxDegreeOfParallelism = Environment.ProcessorCount / 2 }, i =>
                     {
-                        for (int j = 0; j < rep; j++)
+                        for (var j = 0; j < rep; j++)
                         {
                             if (!entityComponentSystem.TryCreateEntity<Cube>(out var cube)) continue;
 
-                            if (cube.TryGetComponent<Transform3d>(out var trans))
-                            {
-                                trans.Position = new(i * sz, -index * 2, j * sz);
-                                trans.Rotation = new(i * 90, j * 90, 0);
-                                trans.Scale = new(sz / 2);
-                            }
+                            if (!cube.TryGetComponent<Transform3d>(out var trans)) continue;
+
+                            trans.Position = new(i * sz, -index * 2, j * sz);
+                            trans.Rotation = new(i * 90, j * 90, 0);
+                            trans.Scale = new(sz / 2);
                         }
+                    });
+                    while (!res.IsCompleted)
+                    {
+                        Task.Delay(10);
                     }
+
                     change.Dispose();
-                });
+                    return WorkResult.Succeeded;
+                }, exception => ALog.Error(exception), $"Creation of {rep * rep} Cubes");
             }
 
             switch (key)
