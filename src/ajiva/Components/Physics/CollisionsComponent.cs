@@ -25,5 +25,8 @@ namespace ajiva.Components.Physics
 
         /// <inheritdoc />
         public MeshPool Pool { get; set; }
+
+        /// <inheritdoc />
+        public bool IsStatic { get; set; }
     }
 }

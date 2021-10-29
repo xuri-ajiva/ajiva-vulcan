@@ -11,5 +11,6 @@ namespace ajiva.Components.Physics
         uint MeshId { get; set; }
 
         MeshPool Pool { get; set; }
+        bool IsStatic { get; set; }
     }
 }
