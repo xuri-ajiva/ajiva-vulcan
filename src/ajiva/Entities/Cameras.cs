@@ -61,6 +61,7 @@ namespace ajiva.Entities
                 View += mat4.Translate(v * -1.0F);
             }
 
+            public abstract vec3 FrontNormalized { get; }
             public mat4 Projection { get; protected set; }
             public mat4 View { get; private protected set; }
             public mat4 ProjView => Projection * View;
@@ -100,6 +101,9 @@ namespace ajiva.Entities
                 lockAt = CamFront;
                 UpdateMatrices();
             }
+
+            /// <inheritdoc />
+            public override vec3 FrontNormalized => CamFront;
 
             public override void UpdateMatrices()
             {
