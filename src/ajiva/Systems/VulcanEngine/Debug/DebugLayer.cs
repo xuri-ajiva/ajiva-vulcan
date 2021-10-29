@@ -111,6 +111,9 @@ namespace ajiva.Systems.VulcanEngine.Debug
         }
 
         /// <inheritdoc />
+        public bool Render { get; set; } = true;
+
+        /// <inheritdoc />
         public IAjivaLayer<UniformViewProj3d> AjivaLayer { get; set; }
     }
     public struct DebugUniformModel : IComp<DebugUniformModel>
