@@ -17,8 +17,32 @@ namespace ajiva.Components.Physics
 {
     public class BoundingBox : DisposingLogger, IComponent
     {
-        public vec3 MinPos { get; private set; }
-        public vec3 MaxPos { get; private set; }
+        private void CalculateDynamics()
+        {
+            SizeHalf = (MaxPos - MinPos) / 2;
+            Center = MinPos + SizeHalf;
+        }
+
+        public vec3 MinPos
+        {
+            get => minPos;
+            private set
+            {
+                minPos = value;
+                CalculateDynamics();
+            }
+        }
+        public vec3 MaxPos
+        {
+            get => maxPos;
+            private set
+            {
+                maxPos = value;
+                CalculateDynamics();
+            }
+        }
+        public vec3 SizeHalf { get; private set; }
+        public vec3 Center { get; private set; }
 
         public IAjivaEcs Ecs { private get; set; }
 
@@ -78,6 +102,8 @@ namespace ajiva.Components.Physics
         private DebugBox? visual;
         private Transform3d? transform;
         private uint version = 0;
+        private vec3 maxPos;
+        private vec3 minPos;
 
         public BoundingBox()
         {
@@ -89,6 +115,7 @@ namespace ajiva.Components.Physics
         {
             var mesh = collider!.Pool.GetMesh(collider.MeshId);
             if (mesh is not Mesh<Vertex3D> vMesh) return WorkResult.Failed;
+            if (vMesh.Vertices is null) return WorkResult.Failed;
 
             float x1 = float.PositiveInfinity, x2 = float.NegativeInfinity, y1 = float.PositiveInfinity, y2 = float.NegativeInfinity, z1 = float.PositiveInfinity, z2 = float.NegativeInfinity; // 1 = min, 2 = max
             var mm = Transform.ModelMat;
@@ -113,22 +140,32 @@ namespace ajiva.Components.Physics
 
             lock (this)
             {
-                MinPos = new vec3(x1, y1, z1);
-                MaxPos = new vec3(x2, y2, z2);
+                minPos = new vec3(x1, y1, z1); //no update
+                MaxPos = new vec3(x2, y2, z2); //update dynamics
 
-                if (visual is null)
-                {
-                    Debug.Assert(Ecs.TryCreateEntity<DebugBox>(out visual), "Ecs.TryCreateEntity<BoxRenderer>(out visual)");
-                }
+                UpdateVisual();
 
-                if (visual.TryGetComponent<Transform3d>(out var trans))
-                {
-                    var size = (MaxPos - MinPos) / 2;
-                    trans.Position = MinPos + size;
-                    trans.Scale = size * 1.01f;
-                }
                 return WorkResult.Succeeded;
             }
+        }
+
+        private void UpdateVisual()
+        {
+            if (visual is null)
+            {
+                var res = Ecs.TryCreateEntity<DebugBox>(out visual);
+                Debug.Assert(res, "Ecs.TryCreateEntity<BoxRenderer>(out visual)");
+            }
+            if (!visual.TryGetComponent<Transform3d>(out var trans)) return;
+            trans.Position = Center;
+            trans.Scale = SizeHalf * 1.01f;
+        }
+
+        public void ModifyPositionRelative(vec3 vec3)
+        {
+            minPos += vec3;
+            MaxPos += vec3;
+            UpdateVisual();
         }
     }
     internal class BoxRenderer : DefaultEntity
