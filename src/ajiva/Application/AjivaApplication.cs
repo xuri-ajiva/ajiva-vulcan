@@ -96,7 +96,7 @@ namespace ajiva.Application
             var solidMeshRenderLayer = entityComponentSystem.CreateSystemOrComponentSystem<SolidMeshRenderLayer>();
             var debugLayer = entityComponentSystem.CreateSystemOrComponentSystem<DebugLayer>();
             var rectRender = entityComponentSystem.CreateSystemOrComponentSystem<Mesh2dRenderLayer>();
-            
+
             var collisionsComponentSystem = entityComponentSystem.CreateSystemOrComponentSystem<CollisionsComponentSystem>();
             var boundingBoxComponentsSystem = entityComponentSystem.CreateSystemOrComponentSystem<BoundingBoxComponentsSystem>();
 
@@ -193,11 +193,11 @@ namespace ajiva.Application
                     break;
                 case Key.F1:
                     var s1 = entityComponentSystem.GetComponentSystem<DebugLayer, DebugComponent>();
-                    s1.Render = !s1.Render;
+                    s1.Render.Value = !s1.Render;
                     break;
                 case Key.F2:
                     SolidMeshRenderLayer s2 = entityComponentSystem.GetComponentSystemUnSave<SolidMeshRenderLayer>();
-                    s2.Render = !s2.Render;
+                    s2.Render.Value = !s2.Render;
                     break;
 
                 case Key.B:
@@ -234,7 +234,7 @@ namespace ajiva.Application
                     }
                     break;
 
-                case Key.P: 
+                case Key.P:
                     var bbs = entityComponentSystem.GetComponentSystem<BoundingBoxComponentsSystem, BoundingBox>();
                     wp.EnqueueWork((info, param) =>
                     {
@@ -272,7 +272,7 @@ namespace ajiva.Application
         protected override void ReleaseUnmanagedResources(bool disposing)
         {
             entityComponentSystem.GetSystem<DeviceSystem>().WaitIdle();
-            
+
             entityComponentSystem.Dispose();
 
             debugReportCallback.Dispose();

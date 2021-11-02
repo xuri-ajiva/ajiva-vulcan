@@ -21,10 +21,16 @@ namespace ajiva
 {
     public static class Program
     {
-        private static void Main()
+        private static void Main(string[] args)
         {
-            //CompileShaders();
-            PackAssets();
+            if (args.Length > 0)
+            {
+            }
+            else
+            {
+                PackAssets();
+            }
+                //CompileShaders();
 
             ALog.Log(ALogLevel.Info, $"ProcessId: {Environment.ProcessId}");
             ALog.Log(ALogLevel.Info, $"Version: {Environment.Version}");
