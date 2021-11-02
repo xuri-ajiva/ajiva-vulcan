@@ -7,7 +7,7 @@ namespace ajiva.Systems.VulcanEngine.Layers.Models
 {
     public class RenderPassLayer : DisposingLogger
     {
-        private AImage? DepthImage { get; }
+        public ClearValue[] ClearValues { get; }
         public RenderPass RenderPass { get; }
         public CommandPool CommandPool { get; }
         public Framebuffer[] FrameBuffers { get; }
@@ -16,12 +16,12 @@ namespace ajiva.Systems.VulcanEngine.Layers.Models
         public SwapChainLayer Parent { get; }
 
         /// <inheritdoc />
-        public RenderPassLayer(SwapChainLayer parent, RenderPass renderPass, AImage? depthImage, CommandPool commandPool, Framebuffer[] frameBuffers)
+        public RenderPassLayer(SwapChainLayer parent, RenderPass renderPass, CommandPool commandPool, Framebuffer[] frameBuffers, ClearValue[] clearValues)
         {
-            DepthImage = depthImage;
             RenderPass = renderPass;
             CommandPool = commandPool;
             FrameBuffers = frameBuffers;
+            ClearValues = clearValues;
             Parent = parent;
         }
 
@@ -32,7 +32,6 @@ namespace ajiva.Systems.VulcanEngine.Layers.Models
             {
                 child.Dispose();
             }
-            DepthImage?.Dispose();
             RenderPass.Dispose();
             foreach (var frameBuffer in FrameBuffers)
             {
