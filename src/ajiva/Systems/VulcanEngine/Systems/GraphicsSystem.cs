@@ -88,7 +88,7 @@ namespace ajiva.Systems.VulcanEngine.Systems
             var presentation = deviceSystem.PresentQueue!;
 
             deviceSystem.ExecuteSingleTimeCommands(QueueType.GraphicsQueue);
-            
+
             lock (presentation)
             {
                 lock (render)
@@ -125,12 +125,11 @@ namespace ajiva.Systems.VulcanEngine.Systems
             UpdateGraphicsData();
         }
 
-        private void UpdateGraphicsData()
+        public void UpdateGraphicsData()
         {
-            deviceSystem.WaitIdle();
             //LogHelper.Log("Updating BufferData");
             ChangingObserver.Updated();
-            ajivaLayerRenderer.FillBuffers();
+            ajivaLayerRenderer.FillBuffers(deviceSystem);
             /*foreach (var (_, layer) in layerSystem.Layers)
             {
                 renderUnion.FillFrameBuffer(layer.PipelineLayer, layer.GetRenders(), meshPool);

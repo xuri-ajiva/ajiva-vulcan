@@ -39,11 +39,25 @@ namespace ajiva.Systems.VulcanEngine.Layers
             public Dictionary<IAjivaLayerRenderSystem, AjivaLayerRenderSystemData> LayerMaps { get; } = new();
             public class AjivaLayerRenderSystemData
             {
+                private readonly AjivaLayerRenderer renderer;
+                private readonly IAjivaLayer layerRenderSystem;
+                private readonly IAjivaLayerRenderSystem ajivaLayerRenderSystem;
                 public GraphicsPipelineLayer GraphicsPipeline;
+                private readonly Reactive<bool>.OnChangeDelegate onChangeDelegate;
 
-                public AjivaLayerRenderSystemData(GraphicsPipelineLayer graphicsPipeline)
+                public AjivaLayerRenderSystemData(AjivaLayerRenderer renderer, IAjivaLayer layerRenderSystem, IAjivaLayerRenderSystem ajivaLayerRenderSystem, GraphicsPipelineLayer graphicsPipeline)
                 {
+                    onChangeDelegate = RenderOnOnChange;
+                    ajivaLayerRenderSystem.Render.OnChange += onChangeDelegate;
+                    this.renderer = renderer;
+                    this.layerRenderSystem = layerRenderSystem;
+                    this.ajivaLayerRenderSystem = ajivaLayerRenderSystem;
                     GraphicsPipeline = graphicsPipeline;
+                }
+
+                private void RenderOnOnChange(ref bool oldState, ref bool newState)
+                {
+                    renderer.RebuildLayer(layerRenderSystem);
                 }
             }
         }
@@ -71,11 +85,12 @@ namespace ajiva.Systems.VulcanEngine.Layers
                 foreach (var layer in ajivaLayer.LayerRenderComponentSystems)
                 {
                     var graphicsPipelineLayer = layer.CreateGraphicsPipelineLayer(data.RenderPass);
-                    data.LayerMaps.Add(layer, new AjivaLayerData.AjivaLayerRenderSystemData(graphicsPipelineLayer));
+                    data.LayerMaps.Add(layer, new AjivaLayerData.AjivaLayerRenderSystemData(this, ajivaLayer, layer, graphicsPipelineLayer));
                 }
                 mostPasses = Math.Max((byte)data.RenderPass.FrameBuffers.Length, mostPasses);
                 LayerMaps.Add(ajivaLayer, data);
             }
+
             SubmitInfo[] submitInfos = new SubmitInfo[mostPasses];
             for (var i = 0; i < mostPasses; i++)
             {
@@ -96,46 +111,57 @@ namespace ajiva.Systems.VulcanEngine.Layers
                     }
                 };
             }
+            SubmitInfoCache = submitInfos;
 
             ResultsCache = new Result[1];
-
-            SubmitInfoCache = submitInfos;
         }
 
-        public void FillBuffers()
+        public void FillBuffers(DeviceSystem deviceSystem)
         {
             lock (bufferLock)
             {
+                deviceSystem.WaitIdle();
                 RenderLayerGuard guard = new();
                 foreach (var (ajivaLayer, data) in LayerMaps)
                 {
-                    for (var i = 0; i < data.RenderPass.FrameBuffers.Length; i++)
-                    {
-                        var framebuffer = data.RenderPass.FrameBuffers[i];
-                        var commandBuffer = data.RenderPass.RenderBuffers[i];
-                        commandBuffer.Reset();
-
-                        commandBuffer.Begin(CommandBufferUsageFlags.SimultaneousUse);
-
-                        commandBuffer.BeginRenderPass(data.RenderPass.RenderPass,
-                            framebuffer,
-                            SwapChainLayer.Canvas.Rect,
-                            ajivaLayer.ClearValues,
-                            SubpassContents.Inline);
-
-                        foreach (var (ajivaLayerRenderSystem, ajivaLayerRenderSystemData) in data.LayerMaps)
-                        {
-                            if (!ajivaLayerRenderSystem.Render) continue;
-                            commandBuffer.BindPipeline(PipelineBindPoint.Graphics, ajivaLayerRenderSystemData.GraphicsPipeline.Pipeline);
-                            guard.Pipeline = ajivaLayerRenderSystemData.GraphicsPipeline;
-                            guard.Buffer = commandBuffer;
-                            ajivaLayerRenderSystem.DrawComponents(guard);
-                        }
-
-                        commandBuffer.EndRenderPass();
-                        commandBuffer.End();
-                    }
+                    FillBufferForLayer(data, ajivaLayer, guard);
                 }
+            }
+        }
+
+        public void RebuildLayer(IAjivaLayer ajivaLayer)
+        {
+            lock (bufferLock)
+                FillBufferForLayer(LayerMaps[ajivaLayer], ajivaLayer, new RenderLayerGuard());
+        }
+
+        private void FillBufferForLayer(AjivaLayerData data, IAjivaLayer ajivaLayer, RenderLayerGuard guard)
+        {
+            for (var i = 0; i < data.RenderPass.FrameBuffers.Length; i++)
+            {
+                var framebuffer = data.RenderPass.FrameBuffers[i];
+                var commandBuffer = data.RenderPass.RenderBuffers[i];
+                commandBuffer.Reset();
+
+                commandBuffer.Begin(CommandBufferUsageFlags.SimultaneousUse);
+
+                commandBuffer.BeginRenderPass(data.RenderPass.RenderPass,
+                    framebuffer,
+                    SwapChainLayer.Canvas.Rect,
+                    ajivaLayer.ClearValues,
+                    SubpassContents.Inline);
+
+                foreach (var (ajivaLayerRenderSystem, ajivaLayerRenderSystemData) in data.LayerMaps)
+                {
+                    if (!ajivaLayerRenderSystem.Render) continue;
+                    commandBuffer.BindPipeline(PipelineBindPoint.Graphics, ajivaLayerRenderSystemData.GraphicsPipeline.Pipeline);
+                    guard.Pipeline = ajivaLayerRenderSystemData.GraphicsPipeline;
+                    guard.Buffer = commandBuffer;
+                    ajivaLayerRenderSystem.DrawComponents(guard);
+                }
+
+                commandBuffer.EndRenderPass();
+                commandBuffer.End();
             }
         }
 
