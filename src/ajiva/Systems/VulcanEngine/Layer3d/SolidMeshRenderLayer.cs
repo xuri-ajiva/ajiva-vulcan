@@ -51,6 +51,18 @@ namespace ajiva.Systems.VulcanEngine.Layer3d
         }
 
         /// <inheritdoc />
+        public override RenderMesh3D UnRegisterComponent(IEntity entity, RenderMesh3D component)
+        {
+            if (!entity.TryGetComponent<Transform3d>(out var transform))
+                throw new ArgumentException("Entity needs and transform in order to be rendered as debug");
+
+            transform.ChangingObserver.OnChanged -= component.OnTransformChange;
+
+            GraphicsDataChanged.Changed();
+            return base.UnRegisterComponent(entity, component);
+        }
+
+        /// <inheritdoc />
         public SolidMeshRenderLayer(IAjivaEcs ecs) : base(ecs)
         {
             GraphicsDataChanged = new ChangingObserver<IAjivaLayerRenderSystem>(this);
