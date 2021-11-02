@@ -15,34 +15,33 @@ namespace ajiva.Systems.VulcanEngine.Layers
 {
     public class DynamicLayerAjivaLayerRenderSystemData
     {
-        public DynamicLayerAjivaLayerRenderSystemData(RenderPassLayer renderPass, GraphicsPipelineLayer graphicsPipeline, IAjivaLayer ajivaLayer)
+        public DynamicLayerAjivaLayerRenderSystemData(RenderPassLayer renderPass, GraphicsPipelineLayer graphicsPipeline, IAjivaLayer ajivaLayer, IAjivaLayerRenderSystem ajivaLayerRenderSystem)
         {
             RenderPass = renderPass;
             GraphicsPipeline = graphicsPipeline;
             AjivaLayer = ajivaLayer;
-            RenderBuffers = new CommandBuffer[]?[]?[Const.Default.BackupBuffers];
+            AjivaLayerRenderSystem = ajivaLayerRenderSystem;
+            RenderBuffers = new CommandBuffer[]?[Const.Default.BackupBuffers];
         }
 
-        public CommandBuffer[]?[]?[] RenderBuffers { get; }
+        public CommandBuffer[]?[] RenderBuffers { get; }
 
         public RenderPassLayer RenderPass { get; init; }
         public GraphicsPipelineLayer GraphicsPipeline { get; init; }
+        public IAjivaLayerRenderSystem AjivaLayerRenderSystem { get; init; }
         public IAjivaLayer AjivaLayer { get; init; }
 
         public int CurrentBufferIndex { get; private set; }
 
         private int AcquireNextBufferIndex()
         {
-            if (++CurrentBufferIndex > RenderBuffers.Length)
+            CurrentBufferIndex++;
+            if (CurrentBufferIndex >= RenderBuffers.Length)
                 CurrentBufferIndex = 0;
             return CurrentBufferIndex;
         }
 
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <returns>The id of the buffers should be equal to CurrentBufferIndex</returns>
-        public int FillUnusedBuffers(DeviceSystem deviceSystem, Canvas canvas)
+        public void FillNextBuffer(DeviceSystem deviceSystem, Canvas canvas)
         {
             /*
              * backgroundBuffer[j]          backup.count                        // 2 or more
@@ -60,45 +59,36 @@ namespace ajiva.Systems.VulcanEngine.Layers
                     }
                 }
             }*/
-            FillBuffer(deviceSystem, RenderBuffers[nextBufferIndex] ??= new CommandBuffer[]?[RenderPass.FrameBuffers.Length],
+            FillBuffer(deviceSystem,
+                RenderBuffers[nextBufferIndex] ??= new CommandBuffer[RenderPass.FrameBuffers.Length],
                 canvas, new RenderLayerGuard());
-            return nextBufferIndex;
         }
 
-        private void FillBuffer(DeviceSystem deviceSystem, IList<CommandBuffer[]?> swapBuffer, Canvas canvas, RenderLayerGuard guard)
+        private void FillBuffer(DeviceSystem deviceSystem, IList<CommandBuffer?> swapBuffer, Canvas canvas, RenderLayerGuard guard)
         {
             System.Diagnostics.Debug.Assert(swapBuffer.Count == RenderPass.FrameBuffers.Length, "swapBuffer.Length == RenderPass.FrameBuffers.Length");
             for (var i = 0; i < RenderPass.FrameBuffers.Length; i++)
             {
                 var framebuffer = RenderPass.FrameBuffers[i];
-                FillBuffer(swapBuffer[i] ??= deviceSystem.AllocateCommandBuffers(CommandBufferLevel.Primary, AjivaLayer.LayerRenderComponentSystems.Count),
+
+                FillBuffer(swapBuffer[i] ??= deviceSystem.AllocateCommandBuffer(CommandBufferLevel.Primary),
                     framebuffer, canvas, guard);
             }
         }
 
-        private void FillBuffer(IReadOnlyList<CommandBuffer> layerBuffer, Framebuffer framebuffer, Canvas canvas, RenderLayerGuard guard)
-        {
-            System.Diagnostics.Debug.Assert(layerBuffer.Count == AjivaLayer.LayerRenderComponentSystems.Count, "layerBuffer.Length == AjivaLayer.LayerRenderComponentSystems.Count");
-            for (var i = 0; i < layerBuffer.Count; i++)
-            {
-                var layer = AjivaLayer.LayerRenderComponentSystems[i];
-                FillBuffer(canvas, layerBuffer[i], layer, framebuffer, guard);
-            }
-        }
-
-        private void FillBuffer(Canvas canvas, CommandBuffer commandBuffer, IAjivaLayerRenderSystem layer, Framebuffer framebuffer, RenderLayerGuard guard)
+        private void FillBuffer(CommandBuffer commandBuffer, Framebuffer framebuffer, Canvas canvas, RenderLayerGuard guard)
         {
             commandBuffer.Reset();
             commandBuffer.Begin(CommandBufferUsageFlags.SimultaneousUse);
             commandBuffer.BeginRenderPass(RenderPass.RenderPass,
                 framebuffer,
                 canvas.Rect,
-                AjivaLayer.ClearValues,
+                RenderPass.ClearValues,
                 SubpassContents.Inline);
             commandBuffer.BindPipeline(PipelineBindPoint.Graphics, GraphicsPipeline.Pipeline);
             guard.Pipeline = GraphicsPipeline;
             guard.Buffer = commandBuffer;
-            layer.DrawComponents(guard);
+            AjivaLayerRenderSystem.DrawComponents(guard);
             commandBuffer.EndRenderPass();
             commandBuffer.End();
         }
