@@ -125,6 +125,10 @@ namespace ajiva.Systems.VulcanEngine.Layers
         {
             ReCreateSwapchainLayer();
             BuildDynamicLayerSystemData(layers);
+            foreach (var dynamicLayerAjivaLayerRenderSystemData in DynamicLayerSystemData)
+            {
+                dynamicLayerAjivaLayerRenderSystemData.FillNextBuffer(deviceSystem, canvas);
+            }
             CreateSubmitInfo();
             FillBuffers();
         }
@@ -133,9 +137,9 @@ namespace ajiva.Systems.VulcanEngine.Layers
         {
             for (var systemIndex = 0; systemIndex < DynamicLayerSystemData.Count; systemIndex++)
             {
-                var nextBackUpBuffer = DynamicLayerSystemData[systemIndex].FillUnusedBuffers(deviceSystem, canvas);
-                UpdateSubmitInfo(systemIndex, nextBackUpBuffer);
+                DynamicLayerSystemData[systemIndex].FillNextBuffer(deviceSystem, canvas);
             }
+            UpdateSubmitInfo();
         }
 
         public void ReCreateSwapchainLayer()
@@ -162,14 +166,23 @@ namespace ajiva.Systems.VulcanEngine.Layers
             }
         }
 
-        public void UpdateSubmitInfo(int systemIndex, int backupBufferIndex)
+        public void UpdateSubmitInfo()
         {
             //SubmitInfoCache.Length should be 2
             for (var nextImage = 0; nextImage < SubmitInfoCache.Length; nextImage++)
             {
-                SubmitInfoCache[nextImage][systemIndex] = new SubmitInfo
+                SubmitInfoCache[nextImage].CommandBuffers = DynamicLayerSystemData.Select(x => x.RenderBuffers[x.CurrentBufferIndex][nextImage]).ToArray();
+            }
+        }
+
+        public void CreateSubmitInfo()
+        {
+            SubmitInfo[] submitInfos = new SubmitInfo[SwapChainLayer.SwapChainImages.Length];
+            for (var nextImage = 0; nextImage < submitInfos.Length; nextImage++)
+            {
+                submitInfos[nextImage] = new SubmitInfo
                 {
-                    CommandBuffers = DynamicLayerSystemData[systemIndex].RenderBuffers[backupBufferIndex][nextImage],
+                    CommandBuffers = DynamicLayerSystemData.Select(x => x.RenderBuffers[x.CurrentBufferIndex][nextImage]).ToArray(), //todo multiple buffers per layer to add stuff easy
                     SignalSemaphores = new[]
                     {
                         RenderFinished
@@ -183,37 +196,6 @@ namespace ajiva.Systems.VulcanEngine.Layers
                         ImageAvailable
                     }
                 };
-            }
-        }
-
-        public void CreateSubmitInfo()
-        {
-            SubmitInfo[][] submitInfos = new SubmitInfo[SwapChainLayer.SwapChainImages.Length][];
-            for (var nextImage = 0; nextImage < submitInfos.Length; nextImage++)
-            {
-                SubmitInfo[] infos = new SubmitInfo[DynamicLayerSystemData.Count];
-
-                for (var j = 0; j < DynamicLayerSystemData.Count; j++)
-                {
-                    infos[j] = new SubmitInfo
-                    {
-                        CommandBuffers = DynamicLayerSystemData[j].RenderBuffers[DynamicLayerSystemData[j].CurrentBufferIndex][nextImage],
-                        SignalSemaphores = new[]
-                        {
-                            RenderFinished
-                        },
-                        WaitDestinationStageMask = new[]
-                        {
-                            PipelineStageFlags.ColorAttachmentOutput
-                        },
-                        WaitSemaphores = new[]
-                        {
-                            ImageAvailable
-                        }
-                    };
-                }
-
-                submitInfos[nextImage] = infos;
             }
             SubmitInfoCache = submitInfos;
 
@@ -240,7 +222,7 @@ namespace ajiva.Systems.VulcanEngine.Layers
         }
 
         public Result[] ResultsCache { get; private set; }
-        public SubmitInfo[][] SubmitInfoCache { get; private set; }
+        public SubmitInfo[] SubmitInfoCache { get; private set; }
 
         /// <inheritdoc />
         protected override void ReleaseUnmanagedResources(bool disposing)
@@ -252,7 +234,6 @@ namespace ajiva.Systems.VulcanEngine.Layers
             SubmitInfoCache = null!;
             ResultsCache = null!;
         }
-        
     }
     public class RenderLayerGuard
     {
