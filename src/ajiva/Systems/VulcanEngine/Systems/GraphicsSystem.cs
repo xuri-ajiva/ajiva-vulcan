@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using ajiva.Components.Media;
 using ajiva.Components.RenderAble;
 using ajiva.Ecs;
@@ -65,6 +66,14 @@ namespace ajiva.Systems.VulcanEngine.Systems
                 RecreateCurrentGraphicsLayout();
                 recreateCurrentGraphicsLayoutNeeded = false;
             }
+            if (ToUpdate.Any())
+            {
+                foreach (var renderSystem in ToUpdate)
+                {
+                    ajivaLayerRenderer.Update(renderSystem);
+                }
+                ToUpdate.Clear();
+            }
             if (ChangingObserver.UpdateCycle(delta.Iteration))
                 UpdateGraphicsData();
             lock (CurrentGraphicsLayoutSwapLock)
@@ -118,9 +127,10 @@ namespace ajiva.Systems.VulcanEngine.Systems
             var imageAvailable = deviceSystem.Device!.CreateSemaphore()!;
             var renderFinished = deviceSystem.Device!.CreateSemaphore()!;
 
-            ajivaLayerRenderer = new AjivaLayerRenderer(imageAvailable, renderFinished);
+            ajivaLayerRenderer = new AjivaLayerRenderer(imageAvailable, renderFinished, deviceSystem, windowSystem.Canvas);
 
-            ajivaLayerRenderer.PrepareRenderSubmitInfo(deviceSystem, windowSystem.Canvas, Layers);
+            ajivaLayerRenderer.Init(Layers.Values.ToList());
+            //ajivaLayerRenderer.PrepareRenderSubmitInfo(deviceSystem, windowSystem.Canvas, Layers);
 
             UpdateGraphicsData();
         }
@@ -129,7 +139,7 @@ namespace ajiva.Systems.VulcanEngine.Systems
         {
             //LogHelper.Log("Updating BufferData");
             ChangingObserver.Updated();
-            ajivaLayerRenderer.FillBuffers(deviceSystem);
+            ajivaLayerRenderer.FillBuffers();
             /*foreach (var (_, layer) in layerSystem.Layers)
             {
                 renderUnion.FillFrameBuffer(layer.PipelineLayer, layer.GetRenders(), meshPool);
@@ -140,7 +150,24 @@ namespace ajiva.Systems.VulcanEngine.Systems
 
         public void AddUpdateLayer(IAjivaLayer layer)
         {
+            layer.LayerChanged.OnChanged += LayerChangedOnOnChanged;
             Layers.Add(layer.PipelineLayer, layer);
+        }
+
+        private void LayerChangedOnOnChanged(IAjivaLayer sender)
+        {
+            foreach (var layerLayerRenderComponentSystem in sender.LayerRenderComponentSystems)
+            {
+                layerLayerRenderComponentSystem.GraphicsDataChanged.OnChanged -= GraphicsDataChangedOnOnChanged;
+                layerLayerRenderComponentSystem.GraphicsDataChanged.OnChanged += GraphicsDataChangedOnOnChanged;
+            }
+        }
+
+        private ISet<IAjivaLayerRenderSystem> ToUpdate { get; } = new HashSet<IAjivaLayerRenderSystem>();
+
+        private void GraphicsDataChangedOnOnChanged(IAjivaLayerRenderSystem ajivaLayerRenderSystem)
+        {
+            ToUpdate.Add(ajivaLayerRenderSystem);
         }
     }
 }
