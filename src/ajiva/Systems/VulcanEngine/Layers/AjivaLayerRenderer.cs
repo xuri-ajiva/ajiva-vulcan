@@ -113,15 +113,19 @@ namespace ajiva.Systems.VulcanEngine.Layers
 
         public List<DynamicLayerAjivaLayerRenderSystemData> DynamicLayerSystemData { get; } = new();
 
-        /*public void Update(IAjivaLayer layer,IAjivaLayerRenderSystem ajivaLayerRenderSystem)
+        public void Update(IAjivaLayerRenderSystem ajivaLayerRenderSystem)
         {
-            var dyData = DynamicLayerSystemData.Single(x => x.AjivaLayer == layer);
-            dyData.Update(ajivaLayerRenderSystem)
-           
+            for (var systemIndex = 0; systemIndex < DynamicLayerSystemData.Count; systemIndex++)
+            {
+                if (DynamicLayerSystemData[systemIndex].AjivaLayerRenderSystem == ajivaLayerRenderSystem)
+                {
+                    DynamicLayerSystemData[systemIndex].FillNextBuffer(deviceSystem, canvas);
+                }
+            }
             UpdateSubmitInfo();
-        }*/
-        
-        public void Init(IEnumerable<IAjivaLayer> layers)
+        }
+
+        public void Init(IList<IAjivaLayer> layers)
         {
             ReCreateSwapchainLayer();
             BuildDynamicLayerSystemData(layers);
