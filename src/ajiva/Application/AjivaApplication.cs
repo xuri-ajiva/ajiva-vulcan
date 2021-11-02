@@ -188,6 +188,9 @@ namespace ajiva.Application
 
             switch (key)
             {
+                case Key.Q:
+                    Task.Run(() => entityComponentSystem.GetSystem<GraphicsSystem>().UpdateGraphicsData());
+                    break;
                 case Key.F1:
                     var s1 = entityComponentSystem.GetComponentSystem<DebugLayer, DebugComponent>();
                     s1.Render = !s1.Render;
