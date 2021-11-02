@@ -267,6 +267,23 @@ namespace ajiva.Systems.VulcanEngine.Systems
         {
             Disposables.Add(disposable);
         }
+
+        public CommandBuffer[] AllocateCommandBuffers(CommandBufferLevel bufferLevel, int count)
+        {
+            lock (commandPoolLock)
+            {
+                System.Diagnostics.Debug.Assert(Device != null, nameof(Device) + " != null");
+                return Device.AllocateCommandBuffers(CommandPool, bufferLevel, (uint)count);
+            }
+        }      
+        public CommandBuffer AllocateCommandBuffer(CommandBufferLevel bufferLevel)
+        {
+            lock (commandPoolLock)
+            {
+                System.Diagnostics.Debug.Assert(Device != null, nameof(Device) + " != null");
+                return Device.AllocateCommandBuffers(CommandPool, bufferLevel, 1)[0];
+            }
+        }
     }
 
     public enum QueueType
