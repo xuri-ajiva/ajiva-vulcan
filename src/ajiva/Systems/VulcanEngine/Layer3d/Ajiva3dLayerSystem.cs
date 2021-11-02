@@ -69,10 +69,98 @@ namespace ajiva.Systems.VulcanEngine.Layer3d
         /// <inheritdoc />
         public List<IAjivaLayerRenderSystem<UniformViewProj3d>> LayerRenderComponentSystems { get; } = new List<IAjivaLayerRenderSystem<UniformViewProj3d>>();
 
+        private AImage? depthImage;
+        private Format depthFormat;
+
         /// <inheritdoc />
-        public RenderPassLayer CreateRenderPassLayer(SwapChainLayer swapChainLayer)
+        public RenderPassLayer CreateRenderPassLayer(SwapChainLayer swapChainLayer, PositionAndMax layerIndex, PositionAndMax layerRenderComponentSystemsIndex)
         {
-            return RenderPassLayerCreator.Default(swapChainLayer, Ecs.GetSystem<DeviceSystem>(), Ecs.GetComponentSystem<ImageSystem, AImage>());
+            DeviceSystem deviceSystem = Ecs.GetSystem<DeviceSystem>();
+
+            if (depthImage is null)
+            {
+                ImageSystem imageSystem = Ecs.GetComponentSystem<ImageSystem, AImage>();
+                depthFormat = deviceSystem.PhysicalDevice!.FindDepthFormat();
+                depthImage = imageSystem.CreateManagedImage(depthFormat, ImageAspectFlags.Depth, swapChainLayer.Canvas);
+            }
+
+            var firstPass = layerIndex.First && layerRenderComponentSystemsIndex.First;
+            var lastPass = layerIndex.Last && layerRenderComponentSystemsIndex.Last;
+
+            RenderPass renderPass = deviceSystem.Device!.CreateRenderPass(new[]
+                {
+                    new AttachmentDescription(AttachmentDescriptionFlags.None,
+                        swapChainLayer.SwapChainFormat,
+                        SampleCountFlags.SampleCount1,
+                        firstPass ? AttachmentLoadOp.Clear : AttachmentLoadOp.Load,
+                        AttachmentStoreOp.Store,
+                        AttachmentLoadOp.DontCare,
+                        AttachmentStoreOp.DontCare,
+                        firstPass ? ImageLayout.Undefined : ImageLayout.General,
+                        lastPass ? ImageLayout.PresentSource : ImageLayout.General),
+                    new AttachmentDescription(AttachmentDescriptionFlags.None,
+                        depthFormat,
+                        SampleCountFlags.SampleCount1,
+                        layerRenderComponentSystemsIndex.First ? AttachmentLoadOp.Clear : AttachmentLoadOp.Load,
+                        layerRenderComponentSystemsIndex.Last ? AttachmentStoreOp.DontCare : AttachmentStoreOp.Store,
+                        AttachmentLoadOp.DontCare,
+                        AttachmentStoreOp.DontCare,
+                        layerRenderComponentSystemsIndex.First ? ImageLayout.Undefined : ImageLayout.DepthStencilAttachmentOptimal,
+                        ImageLayout.DepthStencilAttachmentOptimal)
+                },
+                new SubpassDescription
+                {
+                    DepthStencilAttachment = new AttachmentReference(1, ImageLayout.DepthStencilAttachmentOptimal),
+                    PipelineBindPoint = PipelineBindPoint.Graphics,
+                    ColorAttachments = new[]
+                    {
+                        new AttachmentReference(0, ImageLayout.ColorAttachmentOptimal)
+                    }
+                },
+                new[]
+                {
+                    new SubpassDependency
+                    {
+                        SourceSubpass = Constants.SubpassExternal,
+                        DestinationSubpass = 0,
+                        SourceStageMask = PipelineStageFlags.BottomOfPipe,
+                        SourceAccessMask = AccessFlags.MemoryRead,
+                        DestinationStageMask = PipelineStageFlags.ColorAttachmentOutput | PipelineStageFlags.EarlyFragmentTests,
+                        DestinationAccessMask = AccessFlags.ColorAttachmentRead | AccessFlags.ColorAttachmentWrite | AccessFlags.DepthStencilAttachmentRead
+                    },
+                    new SubpassDependency
+                    {
+                        SourceSubpass = 0,
+                        DestinationSubpass = Constants.SubpassExternal,
+                        SourceStageMask = PipelineStageFlags.ColorAttachmentOutput | PipelineStageFlags.EarlyFragmentTests,
+                        SourceAccessMask = AccessFlags.ColorAttachmentRead | AccessFlags.ColorAttachmentWrite | AccessFlags.DepthStencilAttachmentRead,
+                        DestinationStageMask = PipelineStageFlags.BottomOfPipe,
+                        DestinationAccessMask = AccessFlags.MemoryRead
+                    },
+                });
+
+            Framebuffer MakeFrameBuffer(ImageView imageView)
+            {
+                return deviceSystem.Device.CreateFramebuffer(renderPass,
+                    new[] { imageView, depthImage.View },
+                    swapChainLayer.Canvas.Width,
+                    swapChainLayer.Canvas.Height,
+                    1);
+            }
+
+            Framebuffer[] frameBuffers = swapChainLayer.SwapChainImages.Select(x => MakeFrameBuffer(x.View!)).ToArray();
+
+            //commandPool.Reset(CommandPoolResetFlags.ReleaseResources); // not needed!, releases currently used Resources  //todo check if first and release thean
+
+            CommandPool commandPool = default!;
+            deviceSystem.UseCommandPool(x =>
+            {
+                commandPool = x;
+            });
+
+            var renderPassLayer = new RenderPassLayer(swapChainLayer, renderPass, commandPool, frameBuffers, layerRenderComponentSystemsIndex.First ? ClearValues : Array.Empty<ClearValue>());
+            swapChainLayer.AddChild(renderPassLayer);
+            return renderPassLayer;
         }
 
         /// <inheritdoc />
@@ -176,6 +264,7 @@ namespace ajiva.Systems.VulcanEngine.Layer3d
         /// <inheritdoc />
         protected override void ReleaseUnmanagedResources(bool disposing)
         {
+            depthImage?.Dispose();
             lock (MainLock)
             {
                 foreach (var renderSystem in LayerRenderComponentSystems) renderSystem.Dispose();

@@ -154,17 +154,20 @@ namespace ajiva.Systems.VulcanEngine.Layers
             SwapChainLayer = SwapChainLayerCreator.Default(deviceSystem, canvas);
         }
 
-        public void BuildDynamicLayerSystemData(IEnumerable<IAjivaLayer> layers)
+        public void BuildDynamicLayerSystemData(IList<IAjivaLayer> layers)
         {
             DynamicLayerSystemData.Clear();
-            foreach (var ajivaLayer in layers)
+            for (var layerIndex = 0; layerIndex < layers.Count; layerIndex++)
             {
-                var renderPassLayer = ajivaLayer.CreateRenderPassLayer(SwapChainLayer);
-
-                foreach (var layer in ajivaLayer.LayerRenderComponentSystems)
+                var ajivaLayer = layers[layerIndex];
+                for (var layerRenderComponentSystemsIndex = 0; layerRenderComponentSystemsIndex < ajivaLayer.LayerRenderComponentSystems.Count; layerRenderComponentSystemsIndex++)
                 {
+                    var layer = ajivaLayer.LayerRenderComponentSystems[layerRenderComponentSystemsIndex];
+                    var renderPassLayer = ajivaLayer.CreateRenderPassLayer(SwapChainLayer,
+                        new PositionAndMax(layerIndex, 0, layers.Count - 1),
+                        new PositionAndMax(layerRenderComponentSystemsIndex, 0, ajivaLayer.LayerRenderComponentSystems.Count - 1));
                     var graphicsPipelineLayer = layer.CreateGraphicsPipelineLayer(renderPassLayer);
-                    DynamicLayerSystemData.Add(new DynamicLayerAjivaLayerRenderSystemData(renderPassLayer, graphicsPipelineLayer, ajivaLayer));
+                    DynamicLayerSystemData.Add(new DynamicLayerAjivaLayerRenderSystemData(renderPassLayer, graphicsPipelineLayer, ajivaLayer, layer));
                 }
             }
         }

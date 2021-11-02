@@ -118,12 +118,80 @@ namespace ajiva.Systems.VulcanEngine.Layer2d
         public AjivaVulkanPipeline PipelineLayer { get; } = AjivaVulkanPipeline.Pipeline2d;
 
         /// <inheritdoc />
-        public ClearValue[] ClearValues { get; } = Array.Empty<ClearValue>();
-
-        /// <inheritdoc />
-        public RenderPassLayer CreateRenderPassLayer(SwapChainLayer swapChainLayer)
+        public RenderPassLayer CreateRenderPassLayer(SwapChainLayer swapChainLayer, PositionAndMax layerIndex, PositionAndMax layerRenderComponentSystemsIndex)
         {
-            return RenderPassLayerCreator.NoDepth(swapChainLayer, Ecs.GetSystem<DeviceSystem>(), Ecs.GetComponentSystem<ImageSystem, AImage>());
+            var firstPass = layerIndex.First && layerRenderComponentSystemsIndex.First;
+            var lastPass = layerIndex.Last && layerRenderComponentSystemsIndex.Last;
+
+            DeviceSystem deviceSystem = Ecs.GetSystem<DeviceSystem>();
+            RenderPass renderPass = deviceSystem.Device!.CreateRenderPass(new[]
+                {
+                    new AttachmentDescription(AttachmentDescriptionFlags.None,
+                        swapChainLayer.SwapChainFormat,
+                        SampleCountFlags.SampleCount1,
+                        firstPass ? AttachmentLoadOp.Clear : AttachmentLoadOp.Load,
+                        AttachmentStoreOp.Store,
+                        AttachmentLoadOp.DontCare,
+                        AttachmentStoreOp.DontCare,
+                        firstPass ? ImageLayout.Undefined : ImageLayout.General,
+                        lastPass ? ImageLayout.PresentSource : ImageLayout.General),
+                },
+                new SubpassDescription
+                {
+                    PipelineBindPoint = PipelineBindPoint.Graphics,
+                    ColorAttachments = new[]
+                    {
+                        new AttachmentReference(0, ImageLayout.ColorAttachmentOptimal)
+                    }
+                },
+                new[]
+                {
+                    new SubpassDependency
+                    {
+                        SourceSubpass = Constants.SubpassExternal,
+                        DestinationSubpass = 0,
+                        SourceStageMask = PipelineStageFlags.BottomOfPipe,
+                        SourceAccessMask = AccessFlags.MemoryRead,
+                        DestinationStageMask = PipelineStageFlags.ColorAttachmentOutput | PipelineStageFlags.EarlyFragmentTests,
+                        DestinationAccessMask = AccessFlags.ColorAttachmentRead | AccessFlags.ColorAttachmentWrite | AccessFlags.DepthStencilAttachmentRead
+                    },
+                    new SubpassDependency
+                    {
+                        SourceSubpass = 0,
+                        DestinationSubpass = Constants.SubpassExternal,
+                        SourceStageMask = PipelineStageFlags.ColorAttachmentOutput | PipelineStageFlags.EarlyFragmentTests,
+                        SourceAccessMask = AccessFlags.ColorAttachmentRead | AccessFlags.ColorAttachmentWrite | AccessFlags.DepthStencilAttachmentRead,
+                        DestinationStageMask = PipelineStageFlags.BottomOfPipe,
+                        DestinationAccessMask = AccessFlags.MemoryRead
+                    },
+                });
+
+            Framebuffer MakeFrameBuffer(ImageView imageView)
+            {
+                return deviceSystem.Device.CreateFramebuffer(renderPass,
+                    new[]
+                    {
+                        imageView
+                    },
+                    swapChainLayer.Canvas.Width,
+                    swapChainLayer.Canvas.Height,
+                    1);
+            }
+
+            Framebuffer[] frameBuffers = swapChainLayer.SwapChainImages.Select(x => MakeFrameBuffer(x.View!)).ToArray();
+
+            //commandPool.Reset(CommandPoolResetFlags.ReleaseResources); // not needed!, releases currently used Resources
+
+            CommandPool commandPool = default!;
+            deviceSystem.UseCommandPool(x =>
+            {
+                commandPool = x;
+            });
+
+            //CommandBuffer[] renderBuffers = deviceSystem.Device.AllocateCommandBuffers(commandPool, CommandBufferLevel.Primary, (uint)frameBuffers!.Length);
+            var renderPassLayer = new RenderPassLayer(swapChainLayer, renderPass, commandPool, frameBuffers, firstPass ? new ClearValue[] { new ClearColorValue(.1f, .1f, .1f, .1f) } : Array.Empty<ClearValue>());
+            swapChainLayer.AddChild(renderPassLayer);
+            return renderPassLayer;
         }
     }
 }
