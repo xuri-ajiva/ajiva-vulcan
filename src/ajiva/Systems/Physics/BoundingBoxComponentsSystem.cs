@@ -21,31 +21,39 @@ namespace ajiva.Systems.Physics
         /// <inheritdoc />
         public void Update(UpdateInfo delta)
         {
+            //DoPhysicFrame();
         }
 
         public void DoPhysicFrame()
         {
-            foreach (var (box1, _) in ComponentEntityMap.Where(x => !x.Key.Collider.IsStatic))
+            foreach (var (box1, e1) in ComponentEntityMap.Where(x => !x.Key.Collider.IsStatic))
             {
-                foreach (var (box2, _) in ComponentEntityMap.Where(other => box1 != other.Key))
+                foreach (var (box2, e2) in ComponentEntityMap.Where(other => box1 != other.Key))
                 {
-                    DoCollision(box1, box2);
+                    DoCollision(box1, box2, e1, e2);
                 }
             }
         }
 
-        public void DoCollision(BoundingBox b1, BoundingBox b2)
+        public void DoCollision(BoundingBox b1, BoundingBox b2, IEntity e1, IEntity e2)
         {
             if (!Intersect(b1, b2)) return;
 
             var resolved = ResolveColision(b1, b2);
             if (b2.Collider.IsStatic)
             {
+                if (e1.TryGetComponent<Transform3d>(out var t)) 
+                    t.Position += resolved;
                 b1.ModifyPositionRelative(resolved);
             }
             else
             {
+                if (e1.TryGetComponent<Transform3d>(out var t1)) 
+                    t1.Position += resolved / 2;
                 b1.ModifyPositionRelative(resolved / 2);
+                
+                if (e2.TryGetComponent<Transform3d>(out var t2)) 
+                    t2.Position -= resolved / 2;
                 b2.ModifyPositionRelative(-resolved / 2);
             }
         }
