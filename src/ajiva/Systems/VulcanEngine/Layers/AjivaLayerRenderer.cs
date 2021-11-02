@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 using ajiva.Models;
 using ajiva.Systems.VulcanEngine.Layer;
 using ajiva.Systems.VulcanEngine.Layers.Creation;
@@ -12,91 +13,170 @@ using SharpVk.Khronos;
 
 namespace ajiva.Systems.VulcanEngine.Layers
 {
+    public class DynamicLayerAjivaLayerRenderSystemData
+    {
+        public DynamicLayerAjivaLayerRenderSystemData(RenderPassLayer renderPass, GraphicsPipelineLayer graphicsPipeline, IAjivaLayer ajivaLayer)
+        {
+            RenderPass = renderPass;
+            GraphicsPipeline = graphicsPipeline;
+            AjivaLayer = ajivaLayer;
+            RenderBuffers = new CommandBuffer[]?[]?[Const.Default.BackupBuffers];
+        }
+
+        public CommandBuffer[]?[]?[] RenderBuffers { get; }
+
+        public RenderPassLayer RenderPass { get; init; }
+        public GraphicsPipelineLayer GraphicsPipeline { get; init; }
+        public IAjivaLayer AjivaLayer { get; init; }
+
+        public int CurrentBufferIndex { get; private set; }
+
+        private int AcquireNextBufferIndex()
+        {
+            if (++CurrentBufferIndex > RenderBuffers.Length)
+                CurrentBufferIndex = 0;
+            return CurrentBufferIndex;
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <returns>The id of the buffers should be equal to CurrentBufferIndex</returns>
+        public int FillUnusedBuffers(DeviceSystem deviceSystem, Canvas canvas)
+        {
+            /*
+             * backgroundBuffer[j]          backup.count                        // 2 or more
+             * swapBuffer[k]     RenderPass.FrameBuffers.Length                 // should be 2
+             * layerBuffer[i]    AjivaLayer.LayerRenderComponentSystems.Count   // any length > 1
+             */
+
+            var nextBufferIndex = AcquireNextBufferIndex();
+            /*foreach (var backgroundBuffer in RenderBuffers)
+            {
+                foreach (var swapBuffer in backgroundBuffer)
+                {
+                    foreach (var layerBuffer in swapBuffer)
+                    {
+                    }
+                }
+            }*/
+            FillBuffer(deviceSystem, RenderBuffers[nextBufferIndex] ??= new CommandBuffer[]?[RenderPass.FrameBuffers.Length],
+                canvas, new RenderLayerGuard());
+            return nextBufferIndex;
+        }
+
+        private void FillBuffer(DeviceSystem deviceSystem, IList<CommandBuffer[]?> swapBuffer, Canvas canvas, RenderLayerGuard guard)
+        {
+            System.Diagnostics.Debug.Assert(swapBuffer.Count == RenderPass.FrameBuffers.Length, "swapBuffer.Length == RenderPass.FrameBuffers.Length");
+            for (var i = 0; i < RenderPass.FrameBuffers.Length; i++)
+            {
+                var framebuffer = RenderPass.FrameBuffers[i];
+                FillBuffer(swapBuffer[i] ??= deviceSystem.AllocateCommandBuffers(CommandBufferLevel.Primary, AjivaLayer.LayerRenderComponentSystems.Count),
+                    framebuffer, canvas, guard);
+            }
+        }
+
+        private void FillBuffer(IReadOnlyList<CommandBuffer> layerBuffer, Framebuffer framebuffer, Canvas canvas, RenderLayerGuard guard)
+        {
+            System.Diagnostics.Debug.Assert(layerBuffer.Count == AjivaLayer.LayerRenderComponentSystems.Count, "layerBuffer.Length == AjivaLayer.LayerRenderComponentSystems.Count");
+            for (var i = 0; i < layerBuffer.Count; i++)
+            {
+                var layer = AjivaLayer.LayerRenderComponentSystems[i];
+                FillBuffer(canvas, layerBuffer[i], layer, framebuffer, guard);
+            }
+        }
+
+        private void FillBuffer(Canvas canvas, CommandBuffer commandBuffer, IAjivaLayerRenderSystem layer, Framebuffer framebuffer, RenderLayerGuard guard)
+        {
+            commandBuffer.Reset();
+            commandBuffer.Begin(CommandBufferUsageFlags.SimultaneousUse);
+            commandBuffer.BeginRenderPass(RenderPass.RenderPass,
+                framebuffer,
+                canvas.Rect,
+                AjivaLayer.ClearValues,
+                SubpassContents.Inline);
+            commandBuffer.BindPipeline(PipelineBindPoint.Graphics, GraphicsPipeline.Pipeline);
+            guard.Pipeline = GraphicsPipeline;
+            guard.Buffer = commandBuffer;
+            layer.DrawComponents(guard);
+            commandBuffer.EndRenderPass();
+            commandBuffer.End();
+        }
+    }
+
     public class AjivaLayerRenderer : DisposingLogger
     {
+        private readonly DeviceSystem deviceSystem;
+        private readonly Canvas canvas;
         public SwapChainLayer SwapChainLayer { get; set; }
         public Semaphore ImageAvailable { get; }
         public Semaphore RenderFinished { get; }
         private object bufferLock = new object();
 
-        /// <inheritdoc />
-        public AjivaLayerRenderer(Semaphore imageAvailable, Semaphore renderFinished)
+        public AjivaLayerRenderer(Semaphore imageAvailable, Semaphore renderFinished, DeviceSystem deviceSystem, Canvas canvas)
         {
+            this.deviceSystem = deviceSystem;
+            this.canvas = canvas;
             ImageAvailable = imageAvailable;
             RenderFinished = renderFinished;
         }
 
-        public Dictionary<IAjivaLayer, AjivaLayerData> LayerMaps { get; set; } = new();
-        public class AjivaLayerData
+        public List<DynamicLayerAjivaLayerRenderSystemData> DynamicLayerSystemData { get; } = new();
+
+        /*public void Update(IAjivaLayer layer,IAjivaLayerRenderSystem ajivaLayerRenderSystem)
         {
-            public RenderPassLayer RenderPass;
+            var dyData = DynamicLayerSystemData.Single(x => x.AjivaLayer == layer);
+            dyData.Update(ajivaLayerRenderSystem)
+           
+            UpdateSubmitInfo();
+        }*/
+        
+        public void Init(IEnumerable<IAjivaLayer> layers)
+        {
+            ReCreateSwapchainLayer();
+            BuildDynamicLayerSystemData(layers);
+            CreateSubmitInfo();
+            FillBuffers();
+        }
 
-            public AjivaLayerData(RenderPassLayer renderPass)
+        public void FillBuffers()
+        {
+            for (var systemIndex = 0; systemIndex < DynamicLayerSystemData.Count; systemIndex++)
             {
-                RenderPass = renderPass;
-            }
-
-            public Dictionary<IAjivaLayerRenderSystem, AjivaLayerRenderSystemData> LayerMaps { get; } = new();
-            public class AjivaLayerRenderSystemData
-            {
-                private readonly AjivaLayerRenderer renderer;
-                private readonly IAjivaLayer layerRenderSystem;
-                private readonly IAjivaLayerRenderSystem ajivaLayerRenderSystem;
-                public GraphicsPipelineLayer GraphicsPipeline;
-                private readonly Reactive<bool>.OnChangeDelegate onChangeDelegate;
-
-                public AjivaLayerRenderSystemData(AjivaLayerRenderer renderer, IAjivaLayer layerRenderSystem, IAjivaLayerRenderSystem ajivaLayerRenderSystem, GraphicsPipelineLayer graphicsPipeline)
-                {
-                    onChangeDelegate = RenderOnOnChange;
-                    ajivaLayerRenderSystem.Render.OnChange += onChangeDelegate;
-                    this.renderer = renderer;
-                    this.layerRenderSystem = layerRenderSystem;
-                    this.ajivaLayerRenderSystem = ajivaLayerRenderSystem;
-                    GraphicsPipeline = graphicsPipeline;
-                }
-
-                private void RenderOnOnChange(ref bool oldState, ref bool newState)
-                {
-                    renderer.RebuildLayer(layerRenderSystem);
-                }
+                var nextBackUpBuffer = DynamicLayerSystemData[systemIndex].FillUnusedBuffers(deviceSystem, canvas);
+                UpdateSubmitInfo(systemIndex, nextBackUpBuffer);
             }
         }
 
-        public void PrepareRenderSubmitInfo(DeviceSystem deviceSystem, Canvas canvas, Dictionary<AjivaVulkanPipeline, IAjivaLayer> layers)
-        {
-            lock (bufferLock)
-            {
-                PrepareRenderSubmitInfoLocked(deviceSystem, canvas, layers);
-            }
-        }
-
-        private void PrepareRenderSubmitInfoLocked(DeviceSystem deviceSystem, Canvas canvas, Dictionary<AjivaVulkanPipeline, IAjivaLayer> layers)
+        public void ReCreateSwapchainLayer()
         {
             SwapChainLayer?.Dispose();
-            LayerMaps.Clear();
             SwapChainLayer = SwapChainLayerCreator.Default(deviceSystem, canvas);
+        }
 
-            byte mostPasses = 0;
-            foreach (var ajivaLayer in layers.Values)
+        public void BuildDynamicLayerSystemData(IEnumerable<IAjivaLayer> layers)
+        {
+            DynamicLayerSystemData.Clear();
+            foreach (var ajivaLayer in layers)
             {
                 var renderPassLayer = ajivaLayer.CreateRenderPassLayer(SwapChainLayer);
-                var data = new AjivaLayerData(renderPassLayer);
 
                 foreach (var layer in ajivaLayer.LayerRenderComponentSystems)
                 {
-                    var graphicsPipelineLayer = layer.CreateGraphicsPipelineLayer(data.RenderPass);
-                    data.LayerMaps.Add(layer, new AjivaLayerData.AjivaLayerRenderSystemData(this, ajivaLayer, layer, graphicsPipelineLayer));
+                    var graphicsPipelineLayer = layer.CreateGraphicsPipelineLayer(renderPassLayer);
+                    DynamicLayerSystemData.Add(new DynamicLayerAjivaLayerRenderSystemData(renderPassLayer, graphicsPipelineLayer, ajivaLayer));
                 }
-                mostPasses = Math.Max((byte)data.RenderPass.FrameBuffers.Length, mostPasses);
-                LayerMaps.Add(ajivaLayer, data);
             }
+        }
 
-            SubmitInfo[] submitInfos = new SubmitInfo[mostPasses];
-            for (var i = 0; i < mostPasses; i++)
+        public void UpdateSubmitInfo(int systemIndex, int backupBufferIndex)
+        {
+            //SubmitInfoCache.Length should be 2
+            for (var nextImage = 0; nextImage < SubmitInfoCache.Length; nextImage++)
             {
-                submitInfos[i] = new SubmitInfo
+                SubmitInfoCache[nextImage][systemIndex] = new SubmitInfo
                 {
-                    CommandBuffers = LayerMaps.Values.Select(data => data.RenderPass.RenderBuffers[i]).ToArray(),
+                    CommandBuffers = DynamicLayerSystemData[systemIndex].RenderBuffers[backupBufferIndex][nextImage],
                     SignalSemaphores = new[]
                     {
                         RenderFinished
@@ -111,58 +191,40 @@ namespace ajiva.Systems.VulcanEngine.Layers
                     }
                 };
             }
+        }
+
+        public void CreateSubmitInfo()
+        {
+            SubmitInfo[][] submitInfos = new SubmitInfo[SwapChainLayer.SwapChainImages.Length][];
+            for (var nextImage = 0; nextImage < submitInfos.Length; nextImage++)
+            {
+                SubmitInfo[] infos = new SubmitInfo[DynamicLayerSystemData.Count];
+
+                for (var j = 0; j < DynamicLayerSystemData.Count; j++)
+                {
+                    infos[j] = new SubmitInfo
+                    {
+                        CommandBuffers = DynamicLayerSystemData[j].RenderBuffers[DynamicLayerSystemData[j].CurrentBufferIndex][nextImage],
+                        SignalSemaphores = new[]
+                        {
+                            RenderFinished
+                        },
+                        WaitDestinationStageMask = new[]
+                        {
+                            PipelineStageFlags.ColorAttachmentOutput
+                        },
+                        WaitSemaphores = new[]
+                        {
+                            ImageAvailable
+                        }
+                    };
+                }
+
+                submitInfos[nextImage] = infos;
+            }
             SubmitInfoCache = submitInfos;
 
             ResultsCache = new Result[1];
-        }
-
-        public void FillBuffers(DeviceSystem deviceSystem)
-        {
-            lock (bufferLock)
-            {
-                deviceSystem.WaitIdle();
-                RenderLayerGuard guard = new();
-                foreach (var (ajivaLayer, data) in LayerMaps)
-                {
-                    FillBufferForLayer(data, ajivaLayer, guard);
-                }
-            }
-        }
-
-        public void RebuildLayer(IAjivaLayer ajivaLayer)
-        {
-            lock (bufferLock)
-                FillBufferForLayer(LayerMaps[ajivaLayer], ajivaLayer, new RenderLayerGuard());
-        }
-
-        private void FillBufferForLayer(AjivaLayerData data, IAjivaLayer ajivaLayer, RenderLayerGuard guard)
-        {
-            for (var i = 0; i < data.RenderPass.FrameBuffers.Length; i++)
-            {
-                var framebuffer = data.RenderPass.FrameBuffers[i];
-                var commandBuffer = data.RenderPass.RenderBuffers[i];
-                commandBuffer.Reset();
-
-                commandBuffer.Begin(CommandBufferUsageFlags.SimultaneousUse);
-
-                commandBuffer.BeginRenderPass(data.RenderPass.RenderPass,
-                    framebuffer,
-                    SwapChainLayer.Canvas.Rect,
-                    ajivaLayer.ClearValues,
-                    SubpassContents.Inline);
-
-                foreach (var (ajivaLayerRenderSystem, ajivaLayerRenderSystemData) in data.LayerMaps)
-                {
-                    if (!ajivaLayerRenderSystem.Render) continue;
-                    commandBuffer.BindPipeline(PipelineBindPoint.Graphics, ajivaLayerRenderSystemData.GraphicsPipeline.Pipeline);
-                    guard.Pipeline = ajivaLayerRenderSystemData.GraphicsPipeline;
-                    guard.Buffer = commandBuffer;
-                    ajivaLayerRenderSystem.DrawComponents(guard);
-                }
-
-                commandBuffer.EndRenderPass();
-                commandBuffer.End();
-            }
         }
 
         public void DrawFrame(Queue graphicsQueue, Queue presentQueue)
@@ -179,13 +241,13 @@ namespace ajiva.Systems.VulcanEngine.Layers
 
             var nextImage = SwapChainLayer.SwapChain.AcquireNextImage(uint.MaxValue, ImageAvailable, null);
 
-            graphicsQueue!.Submit(SubmitInfoCache[nextImage], null);
+            graphicsQueue.Submit(SubmitInfoCache[nextImage], null);
 
             presentQueue.Present(RenderFinished, SwapChainLayer.SwapChain, nextImage, ResultsCache);
         }
 
         public Result[] ResultsCache { get; private set; }
-        public SubmitInfo[] SubmitInfoCache { get; private set; }
+        public SubmitInfo[][] SubmitInfoCache { get; private set; }
 
         /// <inheritdoc />
         protected override void ReleaseUnmanagedResources(bool disposing)
@@ -194,11 +256,10 @@ namespace ajiva.Systems.VulcanEngine.Layers
             SwapChainLayer?.Dispose();
             ImageAvailable.Dispose();
             RenderFinished.Dispose();
-            LayerMaps.Clear();
-            LayerMaps = null!;
             SubmitInfoCache = null!;
             ResultsCache = null!;
         }
+        
     }
     public class RenderLayerGuard
     {

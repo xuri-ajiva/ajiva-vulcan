@@ -92,8 +92,8 @@ namespace ajiva.Systems.VulcanEngine.Layers.Creation
                 commandPool = x;
             });
 
-            CommandBuffer[] renderBuffers = deviceSystem.Device.AllocateCommandBuffers(commandPool, CommandBufferLevel.Primary, (uint)frameBuffers!.Length);
-            var renderPassLayer = new RenderPassLayer(swapChainLayer, renderPass, depthImage, commandPool, frameBuffers, renderBuffers);
+            //CommandBuffer[] renderBuffers = deviceSystem.Device.AllocateCommandBuffers(commandPool, CommandBufferLevel.Primary, (uint)frameBuffers!.Length);
+            var renderPassLayer = new RenderPassLayer(swapChainLayer, renderPass, depthImage, commandPool, frameBuffers);
             swapChainLayer.AddChild(renderPassLayer);
             return renderPassLayer;
         }
@@ -161,8 +161,8 @@ namespace ajiva.Systems.VulcanEngine.Layers.Creation
                 commandPool = x;
             });
 
-            CommandBuffer[] renderBuffers = deviceSystem.Device.AllocateCommandBuffers(commandPool, CommandBufferLevel.Primary, (uint)frameBuffers!.Length);
-            var renderPassLayer = new RenderPassLayer(swapChainLayer, renderPass, null, commandPool, frameBuffers, renderBuffers);
+            //CommandBuffer[] renderBuffers = deviceSystem.Device.AllocateCommandBuffers(commandPool, CommandBufferLevel.Primary, (uint)frameBuffers!.Length);
+            var renderPassLayer = new RenderPassLayer(swapChainLayer, renderPass, null, commandPool, frameBuffers);
             swapChainLayer.AddChild(renderPassLayer);
             return renderPassLayer;
         }

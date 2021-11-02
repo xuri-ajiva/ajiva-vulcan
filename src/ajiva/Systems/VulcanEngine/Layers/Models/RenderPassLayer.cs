@@ -11,19 +11,17 @@ namespace ajiva.Systems.VulcanEngine.Layers.Models
         public RenderPass RenderPass { get; }
         public CommandPool CommandPool { get; }
         public Framebuffer[] FrameBuffers { get; }
-        public CommandBuffer[] RenderBuffers { get; }
 
         public List<GraphicsPipelineLayer> Children { get; } = new();
         public SwapChainLayer Parent { get; }
 
         /// <inheritdoc />
-        public RenderPassLayer(SwapChainLayer parent, RenderPass renderPass, AImage? depthImage, CommandPool commandPool, Framebuffer[] frameBuffers, CommandBuffer[] renderBuffers)
+        public RenderPassLayer(SwapChainLayer parent, RenderPass renderPass, AImage? depthImage, CommandPool commandPool, Framebuffer[] frameBuffers)
         {
             DepthImage = depthImage;
             RenderPass = renderPass;
             CommandPool = commandPool;
             FrameBuffers = frameBuffers;
-            RenderBuffers = renderBuffers;
             Parent = parent;
         }
 
@@ -36,7 +34,6 @@ namespace ajiva.Systems.VulcanEngine.Layers.Models
             }
             DepthImage?.Dispose();
             RenderPass.Dispose();
-            CommandPool.FreeCommandBuffers(RenderBuffers);
             foreach (var frameBuffer in FrameBuffers)
             {
                 frameBuffer.Dispose();
