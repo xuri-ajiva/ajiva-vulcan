@@ -41,7 +41,7 @@ namespace ajiva.Systems.VulcanEngine.Layer3d
             if (entity.TryGetComponent<TextureComponent>(out var texture))
             {
                 component.TextureComponent = texture;
-            } 
+            }
 
             //component.ChangingObserver.OnChanged += _ => Models.GetForChange((int)component.Id).Value.TextureSamplerId = component.Id;
 
@@ -85,7 +85,7 @@ namespace ajiva.Systems.VulcanEngine.Layer3d
         }
 
         /// <inheritdoc />
-        public bool Render { get; set; } = true;
+        public Reactive<bool> Render { get; } = new Reactive<bool>(true);
 
         /// <inheritdoc />
         public void Init()

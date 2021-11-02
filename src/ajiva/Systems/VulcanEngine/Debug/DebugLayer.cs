@@ -111,7 +111,7 @@ namespace ajiva.Systems.VulcanEngine.Debug
         }
 
         /// <inheritdoc />
-        public bool Render { get; set; } = true;
+        public Reactive<bool> Render { get; } = new Reactive<bool>(true);
 
         /// <inheritdoc />
         public IAjivaLayer<UniformViewProj3d> AjivaLayer { get; set; }

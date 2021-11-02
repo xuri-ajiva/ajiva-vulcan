@@ -92,7 +92,7 @@ namespace ajiva.Systems.VulcanEngine.Layer2d
         }
 
         /// <inheritdoc />
-        public bool Render { get; set; } = false;
+        public Reactive<bool> Render { get; } = new Reactive<bool>(false);
 
         /// <inheritdoc />
         public void Init()

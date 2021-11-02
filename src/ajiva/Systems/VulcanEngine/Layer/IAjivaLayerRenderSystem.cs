@@ -10,7 +10,7 @@ namespace ajiva.Systems.VulcanEngine.Layer
 
         GraphicsPipelineLayer CreateGraphicsPipelineLayer(RenderPassLayer renderPassLayer);
 
-        public bool Render { get; }
+        public Reactive<bool> Render { get; }
     }
     public interface IAjivaLayerRenderSystem<TParent> : IAjivaLayerRenderSystem, IDisposable where TParent : unmanaged
     {
