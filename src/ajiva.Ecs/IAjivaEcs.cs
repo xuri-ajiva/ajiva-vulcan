@@ -35,6 +35,7 @@ namespace ajiva.Ecs
 
         IComponentSystem<T> GetComponentSystemByComponent<T>() where T : class, IComponent;
         TS GetComponentSystem<TS, TC>() where TS : IComponentSystem<TC> where TC : class, IComponent;
+        TS GetComponentSystemUnSave<TS>() where TS : IComponentSystem;
 
 #endregion
 
@@ -49,7 +50,7 @@ namespace ajiva.Ecs
 
         bool TryCreateComponent<T>(IEntity entity, [MaybeNullWhen(false)] out T component) where T : class, IComponent;
         T RegisterComponent<T>(IEntity entity, T component) where T : class, IComponent;
-        bool TryAttachNewComponentToEntity<T>(IEntity entity,[MaybeNullWhen(false)]  out T component) where T : class, IComponent;
+        bool TryAttachNewComponentToEntity<T>(IEntity entity, [MaybeNullWhen(false)] out T component) where T : class, IComponent;
         bool TryAttachComponentToEntity<T>(IEntity entity, T component) where T : class, IComponent;
         bool TryDetachComponentFromEntityAndDelete<T>(IEntity entity) where T : class, IComponent;
         bool TryDetachComponentFromEntity<T>(IEntity entity, [MaybeNullWhen(false)] out T component) where T : class, IComponent;

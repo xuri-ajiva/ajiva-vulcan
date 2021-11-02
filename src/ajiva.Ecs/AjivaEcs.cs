@@ -150,6 +150,14 @@ namespace ajiva.Ecs
         }
 
         /// <inheritdoc />
+        public TS GetComponentSystemUnSave<TS>() where TS : IComponentSystem
+        {
+            if (typeof(TS).BaseType is {} baseType and not null)
+                return (TS)ComponentSystems[baseType.GenericTypeArguments.First()];
+            throw new ArgumentException("BaseType Is Null");
+        }
+
+        /// <inheritdoc />
         public T GetSystem<T>() where T : class, ISystem
         {
             return (T)Systems[typeof(T)];
