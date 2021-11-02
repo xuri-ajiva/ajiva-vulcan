@@ -42,6 +42,7 @@ namespace ajiva.Systems.VulcanEngine.Debug
         /// <inheritdoc />
         public DebugLayer(IAjivaEcs ecs) : base(ecs)
         {
+            GraphicsDataChanged = new ChangingObserver<IAjivaLayerRenderSystem>(this);
         }
 
         /// <inheritdoc />
@@ -53,7 +54,7 @@ namespace ajiva.Systems.VulcanEngine.Debug
             component.Models = Models;
             transform.ChangingObserver.OnChanged += component.OnTransformChange;
 
-            Ecs.GetSystem<GraphicsSystem>().ChangingObserver.Changed();
+            GraphicsDataChanged.Changed();
             return base.RegisterComponent(entity, component);
         }
 
@@ -65,7 +66,7 @@ namespace ajiva.Systems.VulcanEngine.Debug
 
             transform.ChangingObserver.OnChanged -= component.OnTransformChange;
 
-            Ecs.GetSystem<GraphicsSystem>().ChangingObserver.Changed();
+            GraphicsDataChanged.Changed();
             return base.UnRegisterComponent(entity, component);
         }
 
@@ -91,6 +92,9 @@ namespace ajiva.Systems.VulcanEngine.Debug
             lock (mainLock)
                 Models.CommitChanges();
         }
+
+        /// <inheritdoc />
+        public IChangingObserver<IAjivaLayerRenderSystem> GraphicsDataChanged { get;  }
 
         /// <inheritdoc />
         public void DrawComponents(RenderLayerGuard renderGuard)

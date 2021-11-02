@@ -34,14 +34,13 @@ namespace ajiva.Systems.VulcanEngine.Layer2d
         /// <inheritdoc />
         public override RenderMesh2D RegisterComponent(IEntity entity, RenderMesh2D component)
         {
-
             if (!entity.TryGetComponent<Transform2d>(out var transform))
                 throw new ArgumentException("Entity needs and transform in order to be rendered as debug");
 
             component.Models = Models;
             transform.ChangingObserver.OnChanged += component.OnTransformChange;
 
-            Ecs.GetSystem<GraphicsSystem>().ChangingObserver.Changed(); //todo some changes on a single layer
+            GraphicsDataChanged.Changed();
             return base.RegisterComponent(entity, component);
         }
 
@@ -52,19 +51,23 @@ namespace ajiva.Systems.VulcanEngine.Layer2d
                 throw new ArgumentException("Entity needs and transform in order to be rendered as debug");
 
             transform.ChangingObserver.OnChanged -= component.OnTransformChange;
-            
+
             return base.UnRegisterComponent(entity, component);
         }
 
         /// <inheritdoc />
         public Mesh2dRenderLayer(IAjivaEcs ecs) : base(ecs)
         {
+            GraphicsDataChanged = new ChangingObserver<IAjivaLayerRenderSystem>(this);
         }
 
         public PipelineDescriptorInfos[] PipelineDescriptorInfos { get; set; }
 
         public Shader MainShader { get; set; }
         public IAjivaLayer<UniformLayer2d> AjivaLayer { get; set; }
+
+        /// <inheritdoc />
+        public IChangingObserver<IAjivaLayerRenderSystem> GraphicsDataChanged { get; }
 
         /// <inheritdoc />
         public void DrawComponents(RenderLayerGuard renderGuard)

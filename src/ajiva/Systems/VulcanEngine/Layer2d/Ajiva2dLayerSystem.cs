@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using ajiva.Components;
 using ajiva.Components.Media;
 using ajiva.Ecs;
@@ -13,12 +14,13 @@ using ajiva.Systems.VulcanEngine.Layers.Creation;
 using ajiva.Systems.VulcanEngine.Layers.Models;
 using ajiva.Systems.VulcanEngine.Systems;
 using ajiva.Utils;
+using ajiva.Utils.Changing;
 using GlmSharp;
 using SharpVk;
 
 namespace ajiva.Systems.VulcanEngine.Layer2d
 {
-    [Dependent(typeof(WindowSystem))]
+    [Dependent(typeof(WindowSystem), typeof(GraphicsSystem))]
     public class Ajiva2dLayerSystem : SystemBase, IInit, IUpdate, IAjivaLayer<UniformLayer2d>
     {
         private WindowSystem window;
@@ -28,6 +30,7 @@ namespace ajiva.Systems.VulcanEngine.Layer2d
         /// <inheritdoc />
         public Ajiva2dLayerSystem(IAjivaEcs ecs) : base(ecs)
         {
+            LayerChanged = new ChangingObserver<IAjivaLayer>(this);
         }
 
         /// <inheritdoc />
@@ -100,17 +103,13 @@ namespace ajiva.Systems.VulcanEngine.Layer2d
         }
 
         /// <inheritdoc />
+        public IChangingObserver<IAjivaLayer> LayerChanged { get; }
+
+        /// <inheritdoc />
         List<IAjivaLayerRenderSystem> IAjivaLayer.LayerRenderComponentSystems => new List<IAjivaLayerRenderSystem>(LayerRenderComponentSystems);
 
         /// <inheritdoc />
         public IAChangeAwareBackupBufferOfT<UniformLayer2d> LayerUniform { get; private set; }
-
-        /// <inheritdoc />
-        public void AddLayer(IAjivaLayerRenderSystem<UniformLayer2d> layer)
-        {
-            layer.AjivaLayer = this;
-            LayerRenderComponentSystems.Add(layer);
-        }
 
         /// <inheritdoc />
         public List<IAjivaLayerRenderSystem<UniformLayer2d>> LayerRenderComponentSystems { get; } = new List<IAjivaLayerRenderSystem<UniformLayer2d>>();

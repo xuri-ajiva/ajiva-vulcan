@@ -1,6 +1,8 @@
 ﻿#region
 
+using System;
 using System.Collections.Generic;
+using System.Linq;
 using ajiva.Components.Media;
 using ajiva.Ecs;
 using ajiva.Ecs.System;
@@ -14,6 +16,7 @@ using ajiva.Systems.VulcanEngine.Layers.Creation;
 using ajiva.Systems.VulcanEngine.Layers.Models;
 using ajiva.Systems.VulcanEngine.Systems;
 using ajiva.Utils;
+using ajiva.Utils.Changing;
 using Ajiva.Wrapper.Logger;
 using SharpVk;
 using SharpVk.Glfw;
@@ -22,7 +25,7 @@ using SharpVk.Glfw;
 
 namespace ajiva.Systems.VulcanEngine.Layer3d
 {
-    [Dependent(typeof(WindowSystem))]
+    [Dependent(typeof(WindowSystem), typeof(GraphicsSystem))]
     public class Ajiva3dLayerSystem : SystemBase, IInit, IUpdate, IAjivaLayer<UniformViewProj3d>
     {
         private Cameras.Camera? mainCamara;
@@ -31,6 +34,7 @@ namespace ajiva.Systems.VulcanEngine.Layer3d
         /// <inheritdoc />
         public Ajiva3dLayerSystem(IAjivaEcs ecs) : base(ecs)
         {
+            LayerChanged = new ChangingObserver<IAjivaLayer>(this);
         }
 
         public Cameras.Camera MainCamara
@@ -48,12 +52,14 @@ namespace ajiva.Systems.VulcanEngine.Layer3d
         public IAChangeAwareBackupBufferOfT<UniformViewProj3d> LayerUniform { get; set; }
 
         /// <inheritdoc />
+        public IChangingObserver<IAjivaLayer> LayerChanged { get; }
+
+        /// <inheritdoc />
         List<IAjivaLayerRenderSystem> IAjivaLayer.LayerRenderComponentSystems => new List<IAjivaLayerRenderSystem>(LayerRenderComponentSystems);
 
         /// <inheritdoc />
         public AjivaVulkanPipeline PipelineLayer { get; } = AjivaVulkanPipeline.Pipeline3d;
 
-        /// <inheritdoc />
         public ClearValue[] ClearValues { get; } =
         {
             new ClearColorValue(.1f, .1f, .1f, .1f),
@@ -179,38 +185,5 @@ namespace ajiva.Systems.VulcanEngine.Layer3d
             }
             base.ReleaseUnmanagedResources(disposing);
         }
-
-        public void AddLayer(IAjivaLayerRenderSystem<UniformViewProj3d> layer)
-        {
-            layer.AjivaLayer = this;
-            LayerRenderComponentSystems.Add(layer);
-        }
     }
-
-    /*public static class RenderSystem3DCreateHelper
-    {
-        public static T Create3DRenderedObject<T>(this T entity, AjivaEcs ecs) where T : class, IEntity
-        {
-            var ajiva3dSystem = ecs.GetComponentSystem<SolidMeshRenderLayer, RenderMesh3D>();
-            ecs.AttachComponentToEntity<RenderMesh3D>(entity);
-            ecs.AttachComponentToEntity<Transform3d>(entity);
-            if (entity.TryGetComponent(out RenderMesh3D? renderAble) && renderAble is not null)
-                if (entity.TryGetComponent(out Transform3d? transform3d) && transform3d is not null)
-                {
-                    void Update(IChangingObserver sender)
-                    {
-                        var change = ajiva3dSystem.Models.GetForChange((int)renderAble.Id);
-                        change.Value.Model = transform3d.ModelMat;
-                        change.Value.TextureSamplerId = renderAble.Id;
-                    }
-
-                    OnChangedDelegate delegates = Update;
-
-                    transform3d.ChangingObserver.OnChanged += delegates;
-                    renderAble.ChangingObserver.OnChanged += delegates;
-                }
-
-            return entity;
-        }
-    }*/
 }

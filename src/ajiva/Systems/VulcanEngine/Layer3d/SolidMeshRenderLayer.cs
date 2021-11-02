@@ -18,6 +18,7 @@ using ajiva.Systems.VulcanEngine.Layers.Creation;
 using ajiva.Systems.VulcanEngine.Layers.Models;
 using ajiva.Systems.VulcanEngine.Systems;
 using ajiva.Utils;
+using ajiva.Utils.Changing;
 
 namespace ajiva.Systems.VulcanEngine.Layer3d
 {
@@ -45,19 +46,23 @@ namespace ajiva.Systems.VulcanEngine.Layer3d
 
             //component.ChangingObserver.OnChanged += _ => Models.GetForChange((int)component.Id).Value.TextureSamplerId = component.Id;
 
-            Ecs.GetSystem<GraphicsSystem>().ChangingObserver.Changed();
+            GraphicsDataChanged.Changed();
             return base.RegisterComponent(entity, component);
         }
 
         /// <inheritdoc />
         public SolidMeshRenderLayer(IAjivaEcs ecs) : base(ecs)
         {
+            GraphicsDataChanged = new ChangingObserver<IAjivaLayerRenderSystem>(this);
         }
 
         public PipelineDescriptorInfos[] PipelineDescriptorInfos { get; set; }
 
         public Shader MainShader { get; set; }
         public IAjivaLayer<UniformViewProj3d> AjivaLayer { get; set; }
+
+        /// <inheritdoc />
+        public IChangingObserver<IAjivaLayerRenderSystem> GraphicsDataChanged { get; }
 
         /// <inheritdoc />
         public void DrawComponents(RenderLayerGuard renderGuard)
