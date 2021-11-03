@@ -15,19 +15,22 @@ namespace ajiva.Systems.VulcanEngine.Layers
 {
     public class AjivaLayerRenderer : DisposingLogger
     {
-        private readonly DeviceSystem deviceSystem;
-        private readonly Canvas canvas;
+        internal readonly DeviceSystem deviceSystem;
+        internal readonly Canvas canvas;
         public SwapChainLayer SwapChainLayer { get; set; }
         public Semaphore ImageAvailable { get; }
         public Semaphore RenderFinished { get; }
         private object bufferLock = new object();
+        public readonly object SubmitInfoLock = new();
+        private readonly Fence fence;
 
-        public AjivaLayerRenderer(Semaphore imageAvailable, Semaphore renderFinished, DeviceSystem deviceSystem, Canvas canvas)
+        public AjivaLayerRenderer(DeviceSystem deviceSystem, Canvas canvas)
         {
             this.deviceSystem = deviceSystem;
             this.canvas = canvas;
-            ImageAvailable = imageAvailable;
-            RenderFinished = renderFinished;
+            ImageAvailable = deviceSystem.Device!.CreateSemaphore()!;
+            RenderFinished = deviceSystem.Device!.CreateSemaphore()!;
+            fence = deviceSystem.Device.CreateFence();
         }
 
         public List<DynamicLayerAjivaLayerRenderSystemData> DynamicLayerSystemData { get; } = new();

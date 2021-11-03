@@ -125,11 +125,8 @@ namespace ajiva.Systems.VulcanEngine.Systems
         protected void ReCreateRenderUnion()
         {
             ajivaLayerRenderer?.DisposeIn(DISPOSE_DALEY);
-
-            var imageAvailable = deviceSystem.Device!.CreateSemaphore()!;
-            var renderFinished = deviceSystem.Device!.CreateSemaphore()!;
-
-            ajivaLayerRenderer = new AjivaLayerRenderer(imageAvailable, renderFinished, deviceSystem, windowSystem.Canvas);
+            
+            ajivaLayerRenderer = new AjivaLayerRenderer(deviceSystem, windowSystem.Canvas);
 
             ajivaLayerRenderer.Init(Layers.Values.ToList());
             //ajivaLayerRenderer.PrepareRenderSubmitInfo(deviceSystem, windowSystem.Canvas, Layers);
