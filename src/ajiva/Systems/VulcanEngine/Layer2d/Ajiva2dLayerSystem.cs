@@ -180,16 +180,7 @@ namespace ajiva.Systems.VulcanEngine.Layer2d
 
             Framebuffer[] frameBuffers = swapChainLayer.SwapChainImages.Select(x => MakeFrameBuffer(x.View!)).ToArray();
 
-            //commandPool.Reset(CommandPoolResetFlags.ReleaseResources); // not needed!, releases currently used Resources
-
-            CommandPool commandPool = default!;
-            deviceSystem.UseCommandPool(x =>
-            {
-                commandPool = x;
-            });
-
-            //CommandBuffer[] renderBuffers = deviceSystem.Device.AllocateCommandBuffers(commandPool, CommandBufferLevel.Primary, (uint)frameBuffers!.Length);
-            var renderPassLayer = new RenderPassLayer(swapChainLayer, renderPass, commandPool, frameBuffers, firstPass ? new ClearValue[] { new ClearColorValue(.1f, .1f, .1f, .1f) } : Array.Empty<ClearValue>());
+            var renderPassLayer = new RenderPassLayer(swapChainLayer, renderPass, frameBuffers, firstPass ? new ClearValue[] { new ClearColorValue(.1f, .1f, .1f, .1f) } : Array.Empty<ClearValue>());
             swapChainLayer.AddChild(renderPassLayer);
             return renderPassLayer;
         }

@@ -83,16 +83,7 @@ namespace ajiva.Systems.VulcanEngine.Layers.Creation
 
             Framebuffer[] frameBuffers = swapChainLayer.SwapChainImages.Select(x => MakeFrameBuffer(x.View!)).ToArray();
 
-            //commandPool.Reset(CommandPoolResetFlags.ReleaseResources); // not needed!, releases currently used Resources
-
-            CommandPool commandPool = default!;
-            deviceSystem.UseCommandPool(x =>
-            {
-                commandPool = x;
-            });
-
-            //CommandBuffer[] renderBuffers = deviceSystem.Device.AllocateCommandBuffers(commandPool, CommandBufferLevel.Primary, (uint)frameBuffers!.Length);
-            var renderPassLayer = new RenderPassLayer(swapChainLayer, renderPass, commandPool, frameBuffers, clearValues);
+            var renderPassLayer = new RenderPassLayer(swapChainLayer, renderPass, frameBuffers, clearValues);
             swapChainLayer.AddChild(renderPassLayer);
             return renderPassLayer;
         }
@@ -152,16 +143,7 @@ namespace ajiva.Systems.VulcanEngine.Layers.Creation
 
             Framebuffer[] frameBuffers = swapChainLayer.SwapChainImages.Select(x => MakeFrameBuffer(x.View!)).ToArray();
 
-            //commandPool.Reset(CommandPoolResetFlags.ReleaseResources); // not needed!, releases currently used Resources
-
-            CommandPool commandPool = default!;
-            deviceSystem.UseCommandPool(x =>
-            {
-                commandPool = x;
-            });
-
-            //CommandBuffer[] renderBuffers = deviceSystem.Device.AllocateCommandBuffers(commandPool, CommandBufferLevel.Primary, (uint)frameBuffers!.Length);
-            var renderPassLayer = new RenderPassLayer(swapChainLayer, renderPass, commandPool, frameBuffers, clearValues);
+            var renderPassLayer = new RenderPassLayer(swapChainLayer, renderPass, frameBuffers, clearValues);
             swapChainLayer.AddChild(renderPassLayer);
             return renderPassLayer;
         }

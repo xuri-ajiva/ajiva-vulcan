@@ -9,17 +9,15 @@ namespace ajiva.Systems.VulcanEngine.Layers.Models
     {
         public ClearValue[] ClearValues { get; }
         public RenderPass RenderPass { get; }
-        public CommandPool CommandPool { get; }
         public Framebuffer[] FrameBuffers { get; }
 
         public List<GraphicsPipelineLayer> Children { get; } = new();
         public SwapChainLayer Parent { get; }
 
         /// <inheritdoc />
-        public RenderPassLayer(SwapChainLayer parent, RenderPass renderPass, CommandPool commandPool, Framebuffer[] frameBuffers, ClearValue[] clearValues)
+        public RenderPassLayer(SwapChainLayer parent, RenderPass renderPass, Framebuffer[] frameBuffers, ClearValue[] clearValues)
         {
             RenderPass = renderPass;
-            CommandPool = commandPool;
             FrameBuffers = frameBuffers;
             ClearValues = clearValues;
             Parent = parent;
