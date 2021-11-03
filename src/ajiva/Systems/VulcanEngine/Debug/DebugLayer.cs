@@ -94,17 +94,22 @@ namespace ajiva.Systems.VulcanEngine.Debug
         }
 
         /// <inheritdoc />
-        public IChangingObserver<IAjivaLayerRenderSystem> GraphicsDataChanged { get;  }
+        public IChangingObserver<IAjivaLayerRenderSystem> GraphicsDataChanged { get; }
 
         /// <inheritdoc />
         public void DrawComponents(RenderLayerGuard renderGuard)
         {
-            meshPool.Reset();
-            foreach (var (render, entity) in ComponentEntityMap)
+            var readyMeshPool = meshPool.Use();
+
+            List<DebugComponent> res;
+            lock (ComponentEntityMap)
+                res = ComponentEntityMap.Keys.Where(x => x.Render).ToList();
+
+            foreach (var render in res)
             {
                 if (!render.Render) continue;
                 renderGuard.BindDescriptor(render.Id * (uint)Unsafe.SizeOf<DebugUniformModel>());
-                meshPool.DrawMesh(renderGuard.Buffer, render.MeshId);
+                readyMeshPool.DrawMesh(renderGuard.Buffer, render.MeshId);
             }
         }
 

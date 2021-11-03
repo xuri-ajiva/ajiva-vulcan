@@ -79,12 +79,14 @@ namespace ajiva.Systems.VulcanEngine.Layer3d
         /// <inheritdoc />
         public void DrawComponents(RenderLayerGuard renderGuard)
         {
-            meshPool.Reset();
-            foreach (var (render, entity) in ComponentEntityMap)
+            var readyMeshPool = meshPool.Use();
+
+            List<RenderMesh3D> res;
+            lock (ComponentEntityMap)
             {
                 if (!render.Render) continue;
                 renderGuard.BindDescriptor(render.Id * (uint)Unsafe.SizeOf<SolidUniformModel>());
-                meshPool.DrawMesh(renderGuard.Buffer, render.MeshId);
+                readyMeshPool.DrawMesh(renderGuard.Buffer, render.MeshId);
             }
         }
 
