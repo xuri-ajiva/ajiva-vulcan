@@ -96,7 +96,9 @@ namespace ajiva.Systems.VulcanEngine.Systems
             var render = deviceSystem.GraphicsQueue!;
             var presentation = deviceSystem.PresentQueue!;
 
-            deviceSystem.ExecuteSingleTimeCommands(QueueType.GraphicsQueue);
+            deviceSystem.ExecuteSingleTimeCommands(QueueType.GraphicsQueue, CommandPoolSelector.Foreground);
+            deviceSystem.ExecuteSingleTimeCommands(QueueType.GraphicsQueue, CommandPoolSelector.Background);
+            deviceSystem.ExecuteSingleTimeCommands(QueueType.TransferQueue, CommandPoolSelector.Transit);
 
             lock (presentation)
             {
