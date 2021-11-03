@@ -101,18 +101,32 @@ namespace ajiva.Systems.VulcanEngine.Debug
         public void DrawComponents(RenderLayerGuard renderGuard, CancellationToken cancellationToken)
         {
             var readyMeshPool = meshPool.Use();
-
-            List<DebugComponent> res;
-            lock (ComponentEntityMap)
-                res = ComponentEntityMap.Keys.Where(x => x.Render).ToList();
-
-            foreach (var render in res)
+            
+            foreach (var render in SnapShot)
             {
                 if (cancellationToken.IsCancellationRequested) return;
                 if (!render.Render) continue;
                 renderGuard.BindDescriptor(render.Id * (uint)Unsafe.SizeOf<DebugUniformModel>());
                 readyMeshPool.DrawMesh(renderGuard.Buffer, render.MeshId);
             }
+        }
+
+        public List<DebugComponent> SnapShot { get; set; }
+
+        /// <inheritdoc />
+        public object SnapShotLock { get; } = new();
+
+        /// <inheritdoc />
+        public void CreateSnapShot()
+        {
+            lock (ComponentEntityMap)
+                SnapShot = ComponentEntityMap.Keys.Where(x => x.Render).ToList();
+        }
+
+        /// <inheritdoc />
+        public void ClearSnapShot()
+        {
+            SnapShot = null!;
         }
 
         /// <inheritdoc />

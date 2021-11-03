@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using ajiva.Components;
@@ -74,13 +76,31 @@ namespace ajiva.Systems.VulcanEngine.Layer2d
         public void DrawComponents(RenderLayerGuard renderGuard, CancellationToken cancellationToken)
         {
             var readyMeshPool = meshPool.Use();
-            foreach (var (render, entity) in ComponentEntityMap)
+            foreach (var render in SnapShot)
             {
                 if (cancellationToken.IsCancellationRequested) return;
                 if (!render.Render) continue;
                 renderGuard.BindDescriptor(render.Id * (uint)Unsafe.SizeOf<SolidUniformModel2d>());
                 readyMeshPool.DrawMesh(renderGuard.Buffer, render.MeshId);
             }
+        }
+
+        public List<RenderMesh2D> SnapShot { get; set; }
+
+        /// <inheritdoc />
+        public object SnapShotLock { get; } = new();
+
+        /// <inheritdoc />
+        public void CreateSnapShot()
+        {
+            lock (ComponentEntityMap)
+                SnapShot = ComponentEntityMap.Keys.Where(x => x.Render).ToList();
+        }
+
+        /// <inheritdoc />
+        public void ClearSnapShot()
+        {
+            SnapShot = null!;
         }
 
         /// <inheritdoc />

@@ -3,9 +3,11 @@ using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using ajiva.Components.Transform;
 using ajiva.Systems.VulcanEngine.Layer;
 using ajiva.Systems.VulcanEngine.Layers.Models;
 using ajiva.Systems.VulcanEngine.Systems;
+using Ajiva.Wrapper.Logger;
 using SharpVk;
 
 namespace ajiva.Systems.VulcanEngine.Layers
@@ -116,13 +118,19 @@ namespace ajiva.Systems.VulcanEngine.Layers
                 if (renderBuffer.Version == vTmp)
                     return;
                 System.Diagnostics.Debug.Assert(renderBuffer.CommandBuffers.Length == RenderPass.FrameBuffers.Length, "swapBuffer.Length == RenderPass.FrameBuffers.Length");
-                for (var i = 0; i < RenderPass.FrameBuffers.Length; i++)
+                lock (AjivaLayerRenderSystem.SnapShotLock)
                 {
-                    var framebuffer = RenderPass.FrameBuffers[i];
+                    AjivaLayerRenderSystem.CreateSnapShot();
+                    for (var i = 0; i < RenderPass.FrameBuffers.Length; i++)
+                    {
+                        var framebuffer = RenderPass.FrameBuffers[i];
 
-                    FillBuffer(renderBuffer.CommandBuffers[i], framebuffer, guard, cancellationToken);
-                    if (cancellationToken.IsCancellationRequested) return;
+                        FillBuffer(renderBuffer.CommandBuffers[i], framebuffer, guard, cancellationToken);
+                        if (cancellationToken.IsCancellationRequested) return;
+                    }
+                    AjivaLayerRenderSystem.ClearSnapShot();
                 }
+
                 PushRenderBuffer(vTmp, renderBuffer);
             }
         }
@@ -150,6 +158,7 @@ namespace ajiva.Systems.VulcanEngine.Layers
         public RenderBuffer? UpToDateBuffer { get; set; }
 
         private readonly object upToDateLock = new();
+
         public bool TryGetUpdatedBuffers([MaybeNullWhen(false)] out RenderBuffer renderBuffer)
         {
             lock (upToDateLock)

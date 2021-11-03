@@ -84,18 +84,31 @@ namespace ajiva.Systems.VulcanEngine.Layer3d
         {
             var readyMeshPool = meshPool.Use();
 
-            List<RenderMesh3D> res;
-            lock (ComponentEntityMap)
-            {
-                res = ComponentEntityMap.Keys.Where(x => x.Render).ToList();
-            }
-            foreach (var render in res)
+            foreach (var render in SnapShot)
             {
                 if (cancellationToken.IsCancellationRequested) return;
-                if(!render.Render) continue;
+                if (!render.Render) continue;
                 renderGuard.BindDescriptor(render.Id * (uint)Unsafe.SizeOf<SolidUniformModel>());
                 readyMeshPool.DrawMesh(renderGuard.Buffer, render.MeshId);
             }
+        }
+
+        public List<RenderMesh3D> SnapShot { get; set; }
+
+        /// <inheritdoc />
+        public object SnapShotLock { get; } = new();
+
+        /// <inheritdoc />
+        public void CreateSnapShot()
+        {
+            lock (ComponentEntityMap)
+                SnapShot = ComponentEntityMap.Keys.Where(x => x.Render).ToList();
+        }
+
+        /// <inheritdoc />
+        public void ClearSnapShot()
+        {
+            SnapShot = null!;
         }
 
         /// <inheritdoc />
