@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading.Tasks;
+using System.Threading;
 using ajiva.Models;
 using ajiva.Systems.VulcanEngine.Layer;
 using ajiva.Systems.VulcanEngine.Layers.Creation;
@@ -10,6 +10,7 @@ using ajiva.Systems.VulcanEngine.Systems;
 using ajiva.Utils;
 using SharpVk;
 using SharpVk.Khronos;
+using Semaphore = SharpVk.Semaphore;
 
 namespace ajiva.Systems.VulcanEngine.Layers
 {
@@ -37,35 +38,29 @@ namespace ajiva.Systems.VulcanEngine.Layers
 
         public void Update(IAjivaLayerRenderSystem ajivaLayerRenderSystem)
         {
-            for (var systemIndex = 0; systemIndex < DynamicLayerSystemData.Count; systemIndex++)
+            foreach (var systemData in DynamicLayerSystemData)
             {
-                if (DynamicLayerSystemData[systemIndex].AjivaLayerRenderSystem == ajivaLayerRenderSystem)
+                if (systemData.AjivaLayerRenderSystem == ajivaLayerRenderSystem)
                 {
-                    DynamicLayerSystemData[systemIndex].FillNextBuffer(deviceSystem, canvas);
+                    systemData.FillNextBufferAsync();
                 }
             }
-            UpdateSubmitInfo();
         }
 
         public void Init(IList<IAjivaLayer> layers)
         {
             ReCreateSwapchainLayer();
             BuildDynamicLayerSystemData(layers);
-            foreach (var dynamicLayerAjivaLayerRenderSystemData in DynamicLayerSystemData)
-            {
-                dynamicLayerAjivaLayerRenderSystemData.FillNextBuffer(deviceSystem, canvas);
-            }
             CreateSubmitInfo();
-            FillBuffers();
+            ForceFillBuffers();
         }
 
-        public void FillBuffers()
+        public void ForceFillBuffers()
         {
-            for (var systemIndex = 0; systemIndex < DynamicLayerSystemData.Count; systemIndex++)
+            foreach (var systemData in DynamicLayerSystemData)
             {
-                DynamicLayerSystemData[systemIndex].FillNextBuffer(deviceSystem, canvas);
+                systemData.FillNextBufferBlocking(CancellationToken.None);
             }
-            UpdateSubmitInfo();
         }
 
         public void ReCreateSwapchainLayer()
@@ -77,6 +72,7 @@ namespace ajiva.Systems.VulcanEngine.Layers
         public void BuildDynamicLayerSystemData(IList<IAjivaLayer> layers)
         {
             DynamicLayerSystemData.Clear();
+            var systemIndex = 0;
             for (var layerIndex = 0; layerIndex < layers.Count; layerIndex++)
             {
                 var ajivaLayer = layers[layerIndex];
@@ -87,17 +83,37 @@ namespace ajiva.Systems.VulcanEngine.Layers
                         new PositionAndMax(layerIndex, 0, layers.Count - 1),
                         new PositionAndMax(layerRenderComponentSystemsIndex, 0, ajivaLayer.LayerRenderComponentSystems.Count - 1));
                     var graphicsPipelineLayer = layer.CreateGraphicsPipelineLayer(renderPassLayer);
-                    DynamicLayerSystemData.Add(new DynamicLayerAjivaLayerRenderSystemData(renderPassLayer, graphicsPipelineLayer, ajivaLayer, layer));
+                    DynamicLayerSystemData.Add(new DynamicLayerAjivaLayerRenderSystemData(systemIndex++, this, renderPassLayer, graphicsPipelineLayer, ajivaLayer, layer, OnBufferReady));
                 }
             }
         }
 
-        public void UpdateSubmitInfo()
+        private Queue<(CommandBuffer[], int)> ToReturn = new();
+
+        private IEnumerable<CommandBuffer> SwapBuffers(RenderBuffer renderBuffer, int systemIndex)
         {
-            //SubmitInfoCache.Length should be 2
-            for (var nextImage = 0; nextImage < SubmitInfoCache.Length; nextImage++)
+            lock (SubmitInfoLock) //BUG locks main thread?
             {
-                SubmitInfoCache[nextImage].CommandBuffers = DynamicLayerSystemData.Select(x => x.RenderBuffers[x.CurrentBufferIndex][nextImage]).ToArray();
+                //todo multiple buffers per layer to add stuff easy
+                for (var i = 0; i < renderBuffer.CommandBuffers.Length; i++)
+                {
+                    yield return SubmitInfoCache[i].CommandBuffers[systemIndex];
+                    SubmitInfoCache[i].CommandBuffers[systemIndex] = renderBuffer.CommandBuffers[i];
+                }
+            }
+        }
+
+        private void OnBufferReady(RenderBuffer renderBuffer, int systemIndex)
+        {
+            var res = SwapBuffers(renderBuffer, systemIndex).ToArray();
+            ToReturn.Enqueue((res, systemIndex));
+        }
+
+        public void UpdateSubmitInfoChecked()
+        {
+            foreach (var systemData in DynamicLayerSystemData.Where(x => !x.IsVersionUpToDate && !x.IsBackgroundTaskRunning))
+            {
+                systemData.FillNextBufferAsync();
             }
         }
 
@@ -108,7 +124,7 @@ namespace ajiva.Systems.VulcanEngine.Layers
             {
                 submitInfos[nextImage] = new SubmitInfo
                 {
-                    CommandBuffers = DynamicLayerSystemData.Select(x => x.RenderBuffers[x.CurrentBufferIndex][nextImage]).ToArray(), //todo multiple buffers per layer to add stuff easy
+                    CommandBuffers = new CommandBuffer[DynamicLayerSystemData.Count],
                     SignalSemaphores = new[]
                     {
                         RenderFinished
@@ -123,7 +139,8 @@ namespace ajiva.Systems.VulcanEngine.Layers
                     }
                 };
             }
-            SubmitInfoCache = submitInfos;
+            lock (SubmitInfoLock)
+                SubmitInfoCache = submitInfos;
 
             ResultsCache = new Result[1];
         }
@@ -139,12 +156,22 @@ namespace ajiva.Systems.VulcanEngine.Layers
         private void DrawFrameNoLock(Queue graphicsQueue, Queue presentQueue)
         {
             if (Disposed) return;
+            lock (SubmitInfoLock)
+            {
+                var nextImage = SwapChainLayer.SwapChain.AcquireNextImage(uint.MaxValue, ImageAvailable, null);
 
-            var nextImage = SwapChainLayer.SwapChain.AcquireNextImage(uint.MaxValue, ImageAvailable, null);
+                graphicsQueue.Submit(SubmitInfoCache[nextImage], fence);
 
-            graphicsQueue.Submit(SubmitInfoCache[nextImage], null);
+                presentQueue.Present(RenderFinished, SwapChainLayer.SwapChain, nextImage, ResultsCache);
 
-            presentQueue.Present(RenderFinished, SwapChainLayer.SwapChain, nextImage, ResultsCache);
+                //graphicsQueue.WaitIdle();
+                fence.Wait(20_000_000UL); // 20 ms in ns
+                fence.Reset();
+            }
+            while (ToReturn.TryDequeue(out var result))
+            {
+                DynamicLayerSystemData[result.Item2].ReturnBuffer(result.Item1);
+            }
         }
 
         public Result[] ResultsCache { get; private set; }

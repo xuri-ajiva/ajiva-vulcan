@@ -66,6 +66,7 @@ namespace ajiva.Systems.VulcanEngine.Systems
                 RecreateCurrentGraphicsLayout();
                 recreateCurrentGraphicsLayoutNeeded = false;
             }
+            ajivaLayerRenderer.UpdateSubmitInfoChecked();
             if (ToUpdate.Any())
             {
                 foreach (var renderSystem in ToUpdate)
@@ -138,7 +139,7 @@ namespace ajiva.Systems.VulcanEngine.Systems
         {
             //LogHelper.Log("Updating BufferData");
             ChangingObserver.Updated();
-            ajivaLayerRenderer.FillBuffers();
+            ajivaLayerRenderer.ForceFillBuffers();
             /*foreach (var (_, layer) in layerSystem.Layers)
             {
                 renderUnion.FillFrameBuffer(layer.PipelineLayer, layer.GetRenders(), meshPool);
