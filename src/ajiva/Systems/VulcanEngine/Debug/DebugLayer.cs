@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
+using System.Threading;
 using ajiva.Components;
 using ajiva.Components.Media;
 using ajiva.Components.RenderAble;
@@ -97,7 +98,7 @@ namespace ajiva.Systems.VulcanEngine.Debug
         public IChangingObserver<IAjivaLayerRenderSystem> GraphicsDataChanged { get; }
 
         /// <inheritdoc />
-        public void DrawComponents(RenderLayerGuard renderGuard)
+        public void DrawComponents(RenderLayerGuard renderGuard, CancellationToken cancellationToken)
         {
             var readyMeshPool = meshPool.Use();
 
@@ -107,6 +108,7 @@ namespace ajiva.Systems.VulcanEngine.Debug
 
             foreach (var render in res)
             {
+                if (cancellationToken.IsCancellationRequested) return;
                 if (!render.Render) continue;
                 renderGuard.BindDescriptor(render.Id * (uint)Unsafe.SizeOf<DebugUniformModel>());
                 readyMeshPool.DrawMesh(renderGuard.Buffer, render.MeshId);

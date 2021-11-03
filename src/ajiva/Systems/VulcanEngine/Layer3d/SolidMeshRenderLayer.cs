@@ -1,5 +1,8 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Runtime.CompilerServices;
+using System.Threading;
 using ajiva.Components;
 using ajiva.Components.Media;
 using ajiva.Components.RenderAble;
@@ -77,14 +80,19 @@ namespace ajiva.Systems.VulcanEngine.Layer3d
         public IChangingObserver<IAjivaLayerRenderSystem> GraphicsDataChanged { get; }
 
         /// <inheritdoc />
-        public void DrawComponents(RenderLayerGuard renderGuard)
+        public void DrawComponents(RenderLayerGuard renderGuard, CancellationToken cancellationToken)
         {
             var readyMeshPool = meshPool.Use();
 
             List<RenderMesh3D> res;
             lock (ComponentEntityMap)
             {
-                if (!render.Render) continue;
+                res = ComponentEntityMap.Keys.Where(x => x.Render).ToList();
+            }
+            foreach (var render in res)
+            {
+                if (cancellationToken.IsCancellationRequested) return;
+                if(!render.Render) continue;
                 renderGuard.BindDescriptor(render.Id * (uint)Unsafe.SizeOf<SolidUniformModel>());
                 readyMeshPool.DrawMesh(renderGuard.Buffer, render.MeshId);
             }
