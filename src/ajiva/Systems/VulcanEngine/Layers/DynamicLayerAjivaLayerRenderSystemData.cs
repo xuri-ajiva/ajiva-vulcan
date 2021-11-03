@@ -1,5 +1,7 @@
 ﻿using System.Collections.Generic;
-using ajiva.Models;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 using ajiva.Systems.VulcanEngine.Layer;
 using ajiva.Systems.VulcanEngine.Layers.Models;
 using ajiva.Systems.VulcanEngine.Systems;
@@ -7,6 +9,24 @@ using SharpVk;
 
 namespace ajiva.Systems.VulcanEngine.Layers
 {
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <returns>The Old CommandBuffers</returns>
+    public delegate void OnBufferReadyDelegate(RenderBuffer renderBuffer, int systemIndex);
+
+    public class RenderBuffer
+    {
+        public RenderBuffer(CommandBuffer[] commandBuffers, long version)
+        {
+            this.CommandBuffers = commandBuffers;
+            this.Version = version;
+        }
+
+        public CommandBuffer[] CommandBuffers { get; set; }
+        public long Version { get; set; }
+    }
+
     public class DynamicLayerAjivaLayerRenderSystemData
     {
         public DynamicLayerAjivaLayerRenderSystemData(RenderPassLayer renderPass, GraphicsPipelineLayer graphicsPipeline, IAjivaLayer ajivaLayer, IAjivaLayerRenderSystem ajivaLayerRenderSystem)
