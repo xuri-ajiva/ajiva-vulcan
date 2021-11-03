@@ -50,7 +50,10 @@ namespace ajiva.Systems.VulcanEngine.Layers
             GraphicsPipeline = graphicsPipeline;
             AjivaLayer = ajivaLayer;
             AjivaLayerRenderSystem = ajivaLayerRenderSystem;
-            RenderBuffers = new CommandBuffer[]?[Const.Default.BackupBuffers];
+            for (var i = 0; i < Const.Default.BackupBuffers; i++)
+            {
+                AllocateNewBuffers();
+            }
         }
         private List<RenderBuffer> AllocatedBuffers { get; } = new();
         public Queue<RenderBuffer> RenderBuffers { get; } = new();
@@ -66,64 +69,120 @@ namespace ajiva.Systems.VulcanEngine.Layers
         public bool IsBackgroundTaskRunning => UpdateTask is not null;
         public bool IsVersionUpToDate => AjivaLayerRenderSystem.GraphicsDataChanged.Version == CurrentActiveVersion;
 
-        private int AcquireNextBufferIndex()
+        public void FillNextBufferBlocking(CancellationToken cancellationToken)
         {
-            CurrentBufferIndex++;
-            if (CurrentBufferIndex >= RenderBuffers.Length)
-                CurrentBufferIndex = 0;
-            return CurrentBufferIndex;
+            FillBuffer(GetNextBuffer(), new RenderLayerGuard(), cancellationToken);
         }
-
-        public void FillNextBuffer(DeviceSystem deviceSystem, Canvas canvas)
+        private void AllocateNewBuffers()
         {
-            /*
-             * backgroundBuffer[j]          backup.count                        // 2 or more
-             * swapBuffer[k]     RenderPass.FrameBuffers.Length                 // should be 2
-             * layerBuffer[i]    AjivaLayer.LayerRenderComponentSystems.Count   // any length > 1
-             */
-
-            var nextBufferIndex = AcquireNextBufferIndex();
-            /*foreach (var backgroundBuffer in RenderBuffers)
+            var buffers = new RenderBuffer(renderer.deviceSystem.AllocateCommandBuffers(CommandBufferLevel.Primary, RenderPass.FrameBuffers.Length, CommandPoolSelector.Background), 0);
+            AllocatedBuffers.Add(buffers);
+            RenderBuffers.Enqueue(buffers);
+        }
+        
+        private RenderBuffer GetNextBuffer()
+        {
+            lock (Lock)
             {
-                foreach (var swapBuffer in backgroundBuffer)
+                if (!RenderBuffers.Any())
                 {
-                    foreach (var layerBuffer in swapBuffer)
-                    {
-                    }
+                    AllocateNewBuffers();
                 }
-            }*/
-            FillBuffer(deviceSystem,
-                RenderBuffers[nextBufferIndex] ??= new CommandBuffer[RenderPass.FrameBuffers.Length],
-                canvas, new RenderLayerGuard());
-        }
-
-        private void FillBuffer(DeviceSystem deviceSystem, IList<CommandBuffer?> swapBuffer, Canvas canvas, RenderLayerGuard guard)
-        {
-            System.Diagnostics.Debug.Assert(swapBuffer.Count == RenderPass.FrameBuffers.Length, "swapBuffer.Length == RenderPass.FrameBuffers.Length");
-            for (var i = 0; i < RenderPass.FrameBuffers.Length; i++)
-            {
-                var framebuffer = RenderPass.FrameBuffers[i];
-
-                FillBuffer(swapBuffer[i] ??= deviceSystem.AllocateCommandBuffer(CommandBufferLevel.Primary),
-                    framebuffer, canvas, guard);
+                RenderBuffers.TryDequeue(out var result);
+                System.Diagnostics.Debug.Assert(result is not null, nameof(result) + " != null");
+                return result;
             }
         }
 
-        private void FillBuffer(CommandBuffer commandBuffer, Framebuffer framebuffer, Canvas canvas, RenderLayerGuard guard)
+        public readonly object Lock = new();
+        public void FillNextBufferAsync()
         {
-            commandBuffer.Reset();
-            commandBuffer.Begin(CommandBufferUsageFlags.SimultaneousUse);
-            commandBuffer.BeginRenderPass(RenderPass.RenderPass,
-                framebuffer,
-                canvas.Rect,
-                RenderPass.ClearValues,
-                SubpassContents.Inline);
-            commandBuffer.BindPipeline(PipelineBindPoint.Graphics, GraphicsPipeline.Pipeline);
-            guard.Pipeline = GraphicsPipeline;
-            guard.Buffer = commandBuffer;
-            AjivaLayerRenderSystem.DrawComponents(guard);
-            commandBuffer.EndRenderPass();
-            commandBuffer.End();
+            lock (this)
+            {
+                if (UpdateTask is not null)
+                {
+                    TokenSource.Cancel(true);
+                    TokenSource = new CancellationTokenSource();
+                }
+
+                UpdateTask = Task.Run(() =>
+                {
+                    FillNextBufferBlocking(TokenSource.Token);
+                    UpdateTask = null;
+                }, TokenSource.Token);
+            }
+        }
+
+        private void FillBuffer(RenderBuffer renderBuffer, RenderLayerGuard guard, CancellationToken cancellationToken)
+        {
+            lock (renderBuffer)
+            {
+                var vTmp = AjivaLayerRenderSystem.GraphicsDataChanged.Version;
+                if (renderBuffer.Version == vTmp)
+                    return;
+                System.Diagnostics.Debug.Assert(renderBuffer.CommandBuffers.Length == RenderPass.FrameBuffers.Length, "swapBuffer.Length == RenderPass.FrameBuffers.Length");
+                for (var i = 0; i < RenderPass.FrameBuffers.Length; i++)
+                {
+                    var framebuffer = RenderPass.FrameBuffers[i];
+
+                    FillBuffer(renderBuffer.CommandBuffers[i], framebuffer, guard, cancellationToken);
+                    if (cancellationToken.IsCancellationRequested) return;
+                }
+                PushRenderBuffer(vTmp, renderBuffer);
+            }
+        }
+
+        public long CurrentActiveVersion { get; set; }
+
+        private void PushRenderBuffer(long version, RenderBuffer renderBuffer)
+        {
+            lock (Lock)
+            {
+                renderBuffer.Version = version;
+                onBufferReady.Invoke(renderBuffer, id);
+                CurrentActiveVersion = version;
+            }
+        }
+
+        public void ReturnBuffer(CommandBuffer?[] commandBuffers)
+        {
+            if (commandBuffers.Any(x => x is null))
+            {
+                FreeBuffers(commandBuffers);
+            }
+            else
+            {
+                RenderBuffers.Enqueue(new RenderBuffer(commandBuffers, CurrentActiveVersion));
+            }
+        }
+
+        private void FreeBuffers(CommandBuffer?[] commandBuffers)
+        {
+            renderer.deviceSystem.UseCommandPool(x =>
+            {
+                x.FreeCommandBuffers(commandBuffers.Where(y => y is not null).ToArray());
+            }, CommandPoolSelector.Background);
+        }
+
+        private void FillBuffer(CommandBuffer commandBuffer, Framebuffer framebuffer, RenderLayerGuard guard, CancellationToken cancellationToken)
+        {
+            lock (renderer.deviceSystem.GetCommandPoolLock(CommandPoolSelector.Background))
+            {
+                commandBuffer.Reset();
+                commandBuffer.Begin(CommandBufferUsageFlags.SimultaneousUse);
+                commandBuffer.BeginRenderPass(RenderPass.RenderPass,
+                    framebuffer,
+                    renderer.canvas.Rect,
+                    RenderPass.ClearValues,
+                    SubpassContents.Inline);
+                commandBuffer.BindPipeline(PipelineBindPoint.Graphics, GraphicsPipeline.Pipeline);
+                guard.Pipeline = GraphicsPipeline;
+                guard.Buffer = commandBuffer;
+                AjivaLayerRenderSystem.DrawComponents(guard, cancellationToken);
+                if (cancellationToken.IsCancellationRequested) return;
+                commandBuffer.EndRenderPass();
+                commandBuffer.End();
+            }
         }
     }
 }
