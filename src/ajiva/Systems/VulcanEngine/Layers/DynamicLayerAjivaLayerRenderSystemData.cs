@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -9,12 +10,6 @@ using SharpVk;
 
 namespace ajiva.Systems.VulcanEngine.Layers
 {
-    /// <summary>
-    /// 
-    /// </summary>
-    /// <returns>The Old CommandBuffers</returns>
-    public delegate void OnBufferReadyDelegate(RenderBuffer renderBuffer, int systemIndex);
-
     public class RenderBuffer
     {
         public RenderBuffer(CommandBuffer[] commandBuffers, long version)
@@ -31,7 +26,6 @@ namespace ajiva.Systems.VulcanEngine.Layers
     {
         private readonly int id;
         private readonly AjivaLayerRenderer renderer;
-        private readonly OnBufferReadyDelegate onBufferReady;
 
         public DynamicLayerAjivaLayerRenderSystemData(
             int id,
@@ -39,13 +33,11 @@ namespace ajiva.Systems.VulcanEngine.Layers
             RenderPassLayer renderPass,
             GraphicsPipelineLayer graphicsPipeline,
             IAjivaLayer ajivaLayer,
-            IAjivaLayerRenderSystem ajivaLayerRenderSystem,
-            OnBufferReadyDelegate onBufferReady
+            IAjivaLayerRenderSystem ajivaLayerRenderSystem
         )
         {
             this.id = id;
             this.renderer = renderer;
-            this.onBufferReady = onBufferReady;
             RenderPass = renderPass;
             GraphicsPipeline = graphicsPipeline;
             AjivaLayer = ajivaLayer;
@@ -55,6 +47,7 @@ namespace ajiva.Systems.VulcanEngine.Layers
                 AllocateNewBuffers();
             }
         }
+
         private List<RenderBuffer> AllocatedBuffers { get; } = new();
         public Queue<RenderBuffer> RenderBuffers { get; } = new();
 
@@ -73,13 +66,14 @@ namespace ajiva.Systems.VulcanEngine.Layers
         {
             FillBuffer(GetNextBuffer(), new RenderLayerGuard(), cancellationToken);
         }
+
         private void AllocateNewBuffers()
         {
             var buffers = new RenderBuffer(renderer.deviceSystem.AllocateCommandBuffers(CommandBufferLevel.Primary, RenderPass.FrameBuffers.Length, CommandPoolSelector.Background), 0);
             AllocatedBuffers.Add(buffers);
             RenderBuffers.Enqueue(buffers);
         }
-        
+
         private RenderBuffer GetNextBuffer()
         {
             lock (Lock)
@@ -95,6 +89,7 @@ namespace ajiva.Systems.VulcanEngine.Layers
         }
 
         public readonly object Lock = new();
+
         public void FillNextBufferAsync()
         {
             lock (this)
@@ -139,8 +134,30 @@ namespace ajiva.Systems.VulcanEngine.Layers
             lock (Lock)
             {
                 renderBuffer.Version = version;
-                onBufferReady.Invoke(renderBuffer, id);
+                lock (upToDateLock)
+                {
+                    //todo reuse if not null
+                    if (UpToDateBuffer is not null)
+                    {
+                        RenderBuffers.Enqueue(UpToDateBuffer);
+                    }
+                    UpToDateBuffer = renderBuffer;
+                }
                 CurrentActiveVersion = version;
+            }
+        }
+
+        public RenderBuffer? UpToDateBuffer { get; set; }
+
+        private readonly object upToDateLock = new();
+        public bool TryGetUpdatedBuffers([MaybeNullWhen(false)] out RenderBuffer renderBuffer)
+        {
+            lock (upToDateLock)
+            {
+                renderBuffer = UpToDateBuffer;
+                if (renderBuffer is null) return false;
+                UpToDateBuffer = null;
+                return true;
             }
         }
 
@@ -152,7 +169,7 @@ namespace ajiva.Systems.VulcanEngine.Layers
             }
             else
             {
-                RenderBuffers.Enqueue(new RenderBuffer(commandBuffers, CurrentActiveVersion));
+                RenderBuffers.Enqueue(new RenderBuffer(commandBuffers, 0));
             }
         }
 

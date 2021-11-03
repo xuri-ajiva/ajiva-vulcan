@@ -83,16 +83,14 @@ namespace ajiva.Systems.VulcanEngine.Layers
                         new PositionAndMax(layerIndex, 0, layers.Count - 1),
                         new PositionAndMax(layerRenderComponentSystemsIndex, 0, ajivaLayer.LayerRenderComponentSystems.Count - 1));
                     var graphicsPipelineLayer = layer.CreateGraphicsPipelineLayer(renderPassLayer);
-                    DynamicLayerSystemData.Add(new DynamicLayerAjivaLayerRenderSystemData(systemIndex++, this, renderPassLayer, graphicsPipelineLayer, ajivaLayer, layer, OnBufferReady));
+                    DynamicLayerSystemData.Add(new DynamicLayerAjivaLayerRenderSystemData(systemIndex++, this, renderPassLayer, graphicsPipelineLayer, ajivaLayer, layer));
                 }
             }
         }
 
-        private Queue<(CommandBuffer[], int)> ToReturn = new();
-
         private IEnumerable<CommandBuffer> SwapBuffers(RenderBuffer renderBuffer, int systemIndex)
         {
-            lock (SubmitInfoLock) //BUG locks main thread?
+            lock (SubmitInfoLock) 
             {
                 //todo multiple buffers per layer to add stuff easy
                 for (var i = 0; i < renderBuffer.CommandBuffers.Length; i++)
@@ -102,19 +100,29 @@ namespace ajiva.Systems.VulcanEngine.Layers
                 }
             }
         }
-
-        private void OnBufferReady(RenderBuffer renderBuffer, int systemIndex)
-        {
-            var res = SwapBuffers(renderBuffer, systemIndex).ToArray();
-            ToReturn.Enqueue((res, systemIndex));
-        }
-
-        public void UpdateSubmitInfoChecked()
+        
+        public void CheckBuffersUpToDate()
         {
             foreach (var systemData in DynamicLayerSystemData.Where(x => !x.IsVersionUpToDate && !x.IsBackgroundTaskRunning))
             {
                 systemData.FillNextBufferAsync();
             }
+        }
+
+        public void UpdateSubmitInfoChecked()
+        {
+            for (var systemIndex = 0; systemIndex < DynamicLayerSystemData.Count; systemIndex++)
+            {
+                if (! DynamicLayerSystemData[systemIndex].TryGetUpdatedBuffers(out var update)) continue;
+                
+                var oldBuffers = PerformUpdate(update, systemIndex);
+                DynamicLayerSystemData[systemIndex].ReturnBuffer(oldBuffers);
+            }
+        }
+
+        private CommandBuffer[] PerformUpdate(RenderBuffer renderBuffer, int systemIndex)
+        {
+            return SwapBuffers(renderBuffer, systemIndex).ToArray();
         }
 
         public void CreateSubmitInfo()
@@ -167,10 +175,6 @@ namespace ajiva.Systems.VulcanEngine.Layers
                 //graphicsQueue.WaitIdle();
                 fence.Wait(20_000_000UL); // 20 ms in ns
                 fence.Reset();
-            }
-            while (ToReturn.TryDequeue(out var result))
-            {
-                DynamicLayerSystemData[result.Item2].ReturnBuffer(result.Item1);
             }
         }
 

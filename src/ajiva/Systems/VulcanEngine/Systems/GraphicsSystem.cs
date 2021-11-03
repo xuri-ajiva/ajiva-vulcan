@@ -66,7 +66,8 @@ namespace ajiva.Systems.VulcanEngine.Systems
                 RecreateCurrentGraphicsLayout();
                 recreateCurrentGraphicsLayoutNeeded = false;
             }
-            ajivaLayerRenderer.UpdateSubmitInfoChecked();
+            //ajivaLayerRenderer.CheckBuffersUpToDate();
+            
             if (ToUpdate.Any())
             {
                 foreach (var renderSystem in ToUpdate)
@@ -75,6 +76,8 @@ namespace ajiva.Systems.VulcanEngine.Systems
                 }
                 ToUpdate.Clear();
             }
+            ajivaLayerRenderer.UpdateSubmitInfoChecked();
+
             if (ChangingObserver.UpdateCycle(delta.Iteration))
                 UpdateGraphicsData();
             lock (CurrentGraphicsLayoutSwapLock)
