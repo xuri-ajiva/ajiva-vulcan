@@ -29,23 +29,42 @@ namespace ajiva.Systems.VulcanEngine.Layers
 
     public class DynamicLayerAjivaLayerRenderSystemData
     {
-        public DynamicLayerAjivaLayerRenderSystemData(RenderPassLayer renderPass, GraphicsPipelineLayer graphicsPipeline, IAjivaLayer ajivaLayer, IAjivaLayerRenderSystem ajivaLayerRenderSystem)
+        private readonly int id;
+        private readonly AjivaLayerRenderer renderer;
+        private readonly OnBufferReadyDelegate onBufferReady;
+
+        public DynamicLayerAjivaLayerRenderSystemData(
+            int id,
+            AjivaLayerRenderer renderer,
+            RenderPassLayer renderPass,
+            GraphicsPipelineLayer graphicsPipeline,
+            IAjivaLayer ajivaLayer,
+            IAjivaLayerRenderSystem ajivaLayerRenderSystem,
+            OnBufferReadyDelegate onBufferReady
+        )
         {
+            this.id = id;
+            this.renderer = renderer;
+            this.onBufferReady = onBufferReady;
             RenderPass = renderPass;
             GraphicsPipeline = graphicsPipeline;
             AjivaLayer = ajivaLayer;
             AjivaLayerRenderSystem = ajivaLayerRenderSystem;
             RenderBuffers = new CommandBuffer[]?[Const.Default.BackupBuffers];
         }
-
-        public CommandBuffer[]?[] RenderBuffers { get; }
+        private List<RenderBuffer> AllocatedBuffers { get; } = new();
+        public Queue<RenderBuffer> RenderBuffers { get; } = new();
 
         public RenderPassLayer RenderPass { get; init; }
         public GraphicsPipelineLayer GraphicsPipeline { get; init; }
         public IAjivaLayerRenderSystem AjivaLayerRenderSystem { get; init; }
         public IAjivaLayer AjivaLayer { get; init; }
 
-        public int CurrentBufferIndex { get; private set; }
+        public Task? UpdateTask { get; private set; }
+        public CancellationTokenSource TokenSource { get; set; } = new();
+
+        public bool IsBackgroundTaskRunning => UpdateTask is not null;
+        public bool IsVersionUpToDate => AjivaLayerRenderSystem.GraphicsDataChanged.Version == CurrentActiveVersion;
 
         private int AcquireNextBufferIndex()
         {
