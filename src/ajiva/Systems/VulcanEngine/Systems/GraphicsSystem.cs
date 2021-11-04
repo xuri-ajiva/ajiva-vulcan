@@ -35,8 +35,6 @@ namespace ajiva.Systems.VulcanEngine.Systems
 
         private Format DepthFormat { get; set; }
 
-        private ISet<IAjivaLayerRenderSystem> ToUpdate { get; } = new HashSet<IAjivaLayerRenderSystem>();
-
         /// <inheritdoc />
         public void Init()
         {
@@ -52,13 +50,7 @@ namespace ajiva.Systems.VulcanEngine.Systems
                 RecreateCurrentGraphicsLayout();
                 reInitAjivaLayerRendererNeeded = false;
             }
-
-            if (!ChangingObserver.Locked && ToUpdate.Any())
-            {
-                foreach (var renderSystem in ToUpdate) ajivaLayerRenderer!.Update(renderSystem);
-                ToUpdate.Clear();
-            }
-
+            
             ajivaLayerRenderer!.UpdateSubmitInfoChecked();
 
             if (ChangingObserver.UpdateCycle(delta.Iteration)) UpdateGraphicsData();
@@ -137,17 +129,8 @@ namespace ajiva.Systems.VulcanEngine.Systems
 
         private void LayerChangedOnOnChanged(IAjivaLayer sender)
         {
-            if (!reInitAjivaLayerRendererNeeded) reInitAjivaLayerRendererNeeded = true;
-            foreach (var layerLayerRenderComponentSystem in sender.LayerRenderComponentSystems)
-            {
-                layerLayerRenderComponentSystem.GraphicsDataChanged.OnChanged -= GraphicsDataChangedOnOnChanged;
-                layerLayerRenderComponentSystem.GraphicsDataChanged.OnChanged += GraphicsDataChangedOnOnChanged;
-            }
-        }
-
-        private void GraphicsDataChangedOnOnChanged(IAjivaLayerRenderSystem ajivaLayerRenderSystem)
-        {
-            ToUpdate.Add(ajivaLayerRenderSystem);
+            if (!reInitAjivaLayerRendererNeeded) 
+                reInitAjivaLayerRendererNeeded = true;
         }
     }
 }

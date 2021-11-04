@@ -48,6 +48,13 @@ namespace ajiva.Systems.VulcanEngine.Layers
             AjivaLayer = ajivaLayer;
             AjivaLayerRenderSystem = ajivaLayerRenderSystem;
             for (var i = 0; i < Const.Default.BackupBuffers; i++) AllocateNewBuffers();
+            
+            ajivaLayerRenderSystem.GraphicsDataChanged.OnChanged += GraphicsDataChangedOnOnChanged;
+        }
+
+        private void GraphicsDataChangedOnOnChanged(IAjivaLayerRenderSystem sender)
+        {
+             FillNextBufferAsync();
         }
 
         private List<CommandBuffer[]> AllocatedBuffers { get; } = new List<CommandBuffer[]>();
@@ -201,7 +208,9 @@ namespace ajiva.Systems.VulcanEngine.Layers
         protected override void ReleaseUnmanagedResources(bool disposing)
         {
             base.ReleaseUnmanagedResources(disposing);
-
+            
+            AjivaLayerRenderSystem.GraphicsDataChanged.OnChanged -= GraphicsDataChangedOnOnChanged;
+            
             RenderBuffers.Clear();
 
             TokenSource?.Cancel();

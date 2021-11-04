@@ -35,18 +35,7 @@ namespace ajiva.Systems.VulcanEngine.Layers
         }
 
         public List<DynamicLayerAjivaLayerRenderSystemData> DynamicLayerSystemData { get; } = new();
-
-        public void Update(IAjivaLayerRenderSystem ajivaLayerRenderSystem)
-        {
-            foreach (var systemData in DynamicLayerSystemData)
-            {
-                if (systemData.AjivaLayerRenderSystem == ajivaLayerRenderSystem)
-                {
-                    systemData.FillNextBufferAsync();
-                }
-            }
-        }
-
+        
         public void Init(IList<IAjivaLayer> layers)
         {
             ReCreateSwapchainLayer();
