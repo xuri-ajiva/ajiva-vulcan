@@ -75,7 +75,7 @@ namespace ajiva.Systems.VulcanEngine.Layers
 
         private void AllocateNewBuffers()
         {
-            var buffers = new RenderBuffer(renderer.deviceSystem.AllocateCommandBuffers(CommandBufferLevel.Primary, RenderPass.FrameBuffers.Length, CommandPoolSelector.Background), 0);
+            var buffers = new RenderBuffer(renderer.DeviceSystem.AllocateCommandBuffers(CommandBufferLevel.Primary, RenderPass.FrameBuffers.Length, CommandPoolSelector.Background), 0);
             AllocatedBuffers.Add(buffers.CommandBuffers);
             RenderBuffers.Enqueue(buffers);
         }
@@ -170,7 +170,7 @@ namespace ajiva.Systems.VulcanEngine.Layers
 
         private void FreeBuffers(CommandBuffer?[] commandBuffers)
         {
-            renderer.deviceSystem.UseCommandPool(x =>
+            renderer.DeviceSystem.UseCommandPool(x =>
             {
                 x.FreeCommandBuffers(commandBuffers.Where(y => y is not null).ToArray());
             }, CommandPoolSelector.Background);
@@ -178,13 +178,13 @@ namespace ajiva.Systems.VulcanEngine.Layers
 
         private void FillBuffer(CommandBuffer commandBuffer, Framebuffer framebuffer, RenderLayerGuard guard, CancellationToken cancellationToken)
         {
-            lock (renderer.deviceSystem.GetCommandPoolLock(CommandPoolSelector.Background))
+            lock (renderer.DeviceSystem.GetCommandPoolLock(CommandPoolSelector.Background))
             {
                 commandBuffer.Reset();
                 commandBuffer.Begin(CommandBufferUsageFlags.SimultaneousUse);
                 commandBuffer.BeginRenderPass(RenderPass.RenderPass,
                     framebuffer,
-                    renderer.canvas.Rect,
+                    renderer.Canvas.Rect,
                     RenderPass.ClearValues,
                     SubpassContents.Inline);
                 commandBuffer.BindPipeline(PipelineBindPoint.Graphics, GraphicsPipeline.Pipeline);
@@ -207,7 +207,7 @@ namespace ajiva.Systems.VulcanEngine.Layers
             TokenSource?.Cancel();
             UpdateTask?.Dispose();
 
-            renderer.deviceSystem.UseCommandPool(x =>
+            renderer.DeviceSystem.UseCommandPool(x =>
             {
                 foreach (var allocatedBuffer in AllocatedBuffers) x.FreeCommandBuffers(allocatedBuffer);
             }, CommandPoolSelector.Background);

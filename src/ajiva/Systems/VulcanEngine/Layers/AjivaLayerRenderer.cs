@@ -16,21 +16,21 @@ namespace ajiva.Systems.VulcanEngine.Layers
 {
     public class AjivaLayerRenderer : DisposingLogger
     {
-        internal readonly DeviceSystem deviceSystem;
-        internal readonly Canvas canvas;
-        public SwapChainLayer SwapChainLayer { get; set; }
-        public Semaphore ImageAvailable { get; }
-        public Semaphore RenderFinished { get; }
-        private object bufferLock = new object();
-        public readonly object SubmitInfoLock = new();
+        internal readonly DeviceSystem DeviceSystem;
+        internal readonly Canvas Canvas;
+        private SwapChainLayer swapChainLayer;
+        private readonly Semaphore imageAvailable;
+        private readonly Semaphore renderFinished;
+        private readonly object bufferLock = new object();
+        private readonly object submitInfoLock = new object();
         private readonly Fence fence;
 
         public AjivaLayerRenderer(DeviceSystem deviceSystem, Canvas canvas)
         {
-            this.deviceSystem = deviceSystem;
-            this.canvas = canvas;
-            ImageAvailable = deviceSystem.Device!.CreateSemaphore()!;
-            RenderFinished = deviceSystem.Device!.CreateSemaphore()!;
+            this.DeviceSystem = deviceSystem;
+            this.Canvas = canvas;
+            imageAvailable = deviceSystem.Device!.CreateSemaphore()!;
+            renderFinished = deviceSystem.Device!.CreateSemaphore()!;
             fence = deviceSystem.Device.CreateFence();
         }
 
@@ -50,7 +50,8 @@ namespace ajiva.Systems.VulcanEngine.Layers
         public void Init(IList<IAjivaLayer> layers)
         {
             ReCreateSwapchainLayer();
-            ReBuildDynamicLayerSystemData(layers);
+            DeleteDynamicLayerData();
+            BuildDynamicLayerSystemData(layers);
             CreateSubmitInfo();
             ForceFillBuffers();
         }
@@ -65,21 +66,12 @@ namespace ajiva.Systems.VulcanEngine.Layers
 
         public void ReCreateSwapchainLayer()
         {
-            SwapChainLayer?.Dispose();
-            SwapChainLayer = SwapChainLayerCreator.Default(deviceSystem, canvas);
+            swapChainLayer?.Dispose();
+            swapChainLayer = SwapChainLayerCreator.Default(DeviceSystem, Canvas);
         }
 
-        public void ReBuildDynamicLayerSystemData(IList<IAjivaLayer> layers)
+        public void BuildDynamicLayerSystemData(IList<IAjivaLayer> layers)
         {
-            if (DynamicLayerSystemData.Any())
-            {
-                foreach (var data in DynamicLayerSystemData)
-                {
-                    data.Dispose();
-                }
-                DynamicLayerSystemData.Clear();
-            }
-            
             var systemIndex = 0;
             for (var layerIndex = 0; layerIndex < layers.Count; layerIndex++)
             {
@@ -87,7 +79,7 @@ namespace ajiva.Systems.VulcanEngine.Layers
                 for (var layerRenderComponentSystemsIndex = 0; layerRenderComponentSystemsIndex < ajivaLayer.LayerRenderComponentSystems.Count; layerRenderComponentSystemsIndex++)
                 {
                     var layer = ajivaLayer.LayerRenderComponentSystems[layerRenderComponentSystemsIndex];
-                    var renderPassLayer = ajivaLayer.CreateRenderPassLayer(SwapChainLayer,
+                    var renderPassLayer = ajivaLayer.CreateRenderPassLayer(swapChainLayer,
                         new PositionAndMax(layerIndex, 0, layers.Count - 1),
                         new PositionAndMax(layerRenderComponentSystemsIndex, 0, ajivaLayer.LayerRenderComponentSystems.Count - 1));
                     var graphicsPipelineLayer = layer.CreateGraphicsPipelineLayer(renderPassLayer);
@@ -96,9 +88,18 @@ namespace ajiva.Systems.VulcanEngine.Layers
             }
         }
 
+        private void DeleteDynamicLayerData()
+        {
+            foreach (var data in DynamicLayerSystemData)
+            {
+                data.Dispose();
+            }
+            DynamicLayerSystemData.Clear();
+        }
+
         private IEnumerable<CommandBuffer> SwapBuffers(RenderBuffer renderBuffer, int systemIndex)
         {
-            lock (SubmitInfoLock)
+            lock (submitInfoLock)
             {
                 //todo multiple buffers per layer to add stuff easy
                 for (var i = 0; i < renderBuffer.CommandBuffers.Length; i++)
@@ -135,7 +136,7 @@ namespace ajiva.Systems.VulcanEngine.Layers
 
         public void CreateSubmitInfo()
         {
-            SubmitInfo[] submitInfos = new SubmitInfo[SwapChainLayer.SwapChainImages.Length];
+            SubmitInfo[] submitInfos = new SubmitInfo[swapChainLayer.SwapChainImages.Length];
             for (var nextImage = 0; nextImage < submitInfos.Length; nextImage++)
             {
                 submitInfos[nextImage] = new SubmitInfo
@@ -143,7 +144,7 @@ namespace ajiva.Systems.VulcanEngine.Layers
                     CommandBuffers = new CommandBuffer[DynamicLayerSystemData.Count],
                     SignalSemaphores = new[]
                     {
-                        RenderFinished
+                        renderFinished
                     },
                     WaitDestinationStageMask = new[]
                     {
@@ -151,11 +152,11 @@ namespace ajiva.Systems.VulcanEngine.Layers
                     },
                     WaitSemaphores = new[]
                     {
-                        ImageAvailable
+                        imageAvailable
                     }
                 };
             }
-            lock (SubmitInfoLock)
+            lock (submitInfoLock)
                 SubmitInfoCache = submitInfos;
 
             ResultsCache = new Result[1];
@@ -172,13 +173,13 @@ namespace ajiva.Systems.VulcanEngine.Layers
         private void DrawFrameNoLock(Queue graphicsQueue, Queue presentQueue)
         {
             if (Disposed) return;
-            lock (SubmitInfoLock)
+            lock (submitInfoLock)
             {
-                var nextImage = SwapChainLayer.SwapChain.AcquireNextImage(uint.MaxValue, ImageAvailable, null);
+                var nextImage = swapChainLayer.SwapChain.AcquireNextImage(uint.MaxValue, imageAvailable, null);
 
                 graphicsQueue.Submit(SubmitInfoCache[nextImage], fence);
 
-                presentQueue.Present(RenderFinished, SwapChainLayer.SwapChain, nextImage, ResultsCache);
+                presentQueue.Present(renderFinished, swapChainLayer.SwapChain, nextImage, ResultsCache);
 
                 //graphicsQueue.WaitIdle();
                 fence.Wait(20_000_000UL); // 20 ms in ns
@@ -193,11 +194,19 @@ namespace ajiva.Systems.VulcanEngine.Layers
         protected override void ReleaseUnmanagedResources(bool disposing)
         {
             base.ReleaseUnmanagedResources(disposing);
-            SwapChainLayer?.Dispose();
-            ImageAvailable.Dispose();
-            RenderFinished.Dispose();
-            SubmitInfoCache = null!;
-            ResultsCache = null!;
+
+            lock (bufferLock)
+            lock (submitInfoLock)
+            {
+                DeleteDynamicLayerData();
+
+                fence?.Dispose();
+                swapChainLayer?.Dispose();
+                imageAvailable.Dispose();
+                renderFinished.Dispose();
+                SubmitInfoCache = null!;
+                ResultsCache = null!;
+            }
         }
     }
     public class RenderLayerGuard
