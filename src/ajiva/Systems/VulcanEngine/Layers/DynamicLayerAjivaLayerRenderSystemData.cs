@@ -1,13 +1,12 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using ajiva.Components.Transform;
 using ajiva.Systems.VulcanEngine.Layer;
 using ajiva.Systems.VulcanEngine.Layers.Models;
 using ajiva.Systems.VulcanEngine.Systems;
-using Ajiva.Wrapper.Logger;
+using ajiva.Utils;
 using SharpVk;
 
 namespace ajiva.Systems.VulcanEngine.Layers
@@ -16,18 +15,22 @@ namespace ajiva.Systems.VulcanEngine.Layers
     {
         public RenderBuffer(CommandBuffer[] commandBuffers, long version)
         {
-            this.CommandBuffers = commandBuffers;
-            this.Version = version;
+            CommandBuffers = commandBuffers;
+            Version = version;
         }
 
         public CommandBuffer[] CommandBuffers { get; set; }
         public long Version { get; set; }
     }
 
-    public class DynamicLayerAjivaLayerRenderSystemData
+    public class DynamicLayerAjivaLayerRenderSystemData : DisposingLogger
     {
         private readonly int id;
+
+        public readonly object Lock = new object();
         private readonly AjivaLayerRenderer renderer;
+
+        private readonly object upToDateLock = new object();
 
         public DynamicLayerAjivaLayerRenderSystemData(
             int id,
@@ -44,14 +47,11 @@ namespace ajiva.Systems.VulcanEngine.Layers
             GraphicsPipeline = graphicsPipeline;
             AjivaLayer = ajivaLayer;
             AjivaLayerRenderSystem = ajivaLayerRenderSystem;
-            for (var i = 0; i < Const.Default.BackupBuffers; i++)
-            {
-                AllocateNewBuffers();
-            }
+            for (var i = 0; i < Const.Default.BackupBuffers; i++) AllocateNewBuffers();
         }
 
-        private List<RenderBuffer> AllocatedBuffers { get; } = new();
-        public Queue<RenderBuffer> RenderBuffers { get; } = new();
+        private List<CommandBuffer[]> AllocatedBuffers { get; } = new List<CommandBuffer[]>();
+        public Queue<RenderBuffer> RenderBuffers { get; } = new Queue<RenderBuffer>();
 
         public RenderPassLayer RenderPass { get; init; }
         public GraphicsPipelineLayer GraphicsPipeline { get; init; }
@@ -59,10 +59,14 @@ namespace ajiva.Systems.VulcanEngine.Layers
         public IAjivaLayer AjivaLayer { get; init; }
 
         public Task? UpdateTask { get; private set; }
-        public CancellationTokenSource TokenSource { get; set; } = new();
+        public CancellationTokenSource TokenSource { get; set; } = new CancellationTokenSource();
 
         public bool IsBackgroundTaskRunning => UpdateTask is not null;
         public bool IsVersionUpToDate => AjivaLayerRenderSystem.GraphicsDataChanged.Version == CurrentActiveVersion;
+
+        public long CurrentActiveVersion { get; set; }
+
+        public RenderBuffer? UpToDateBuffer { get; set; }
 
         public void FillNextBufferBlocking(CancellationToken cancellationToken)
         {
@@ -72,7 +76,7 @@ namespace ajiva.Systems.VulcanEngine.Layers
         private void AllocateNewBuffers()
         {
             var buffers = new RenderBuffer(renderer.deviceSystem.AllocateCommandBuffers(CommandBufferLevel.Primary, RenderPass.FrameBuffers.Length, CommandPoolSelector.Background), 0);
-            AllocatedBuffers.Add(buffers);
+            AllocatedBuffers.Add(buffers.CommandBuffers);
             RenderBuffers.Enqueue(buffers);
         }
 
@@ -80,17 +84,12 @@ namespace ajiva.Systems.VulcanEngine.Layers
         {
             lock (Lock)
             {
-                if (!RenderBuffers.Any())
-                {
-                    AllocateNewBuffers();
-                }
+                if (!RenderBuffers.Any()) AllocateNewBuffers();
                 RenderBuffers.TryDequeue(out var result);
                 System.Diagnostics.Debug.Assert(result is not null, nameof(result) + " != null");
                 return result;
             }
         }
-
-        public readonly object Lock = new();
 
         public void FillNextBufferAsync()
         {
@@ -135,8 +134,6 @@ namespace ajiva.Systems.VulcanEngine.Layers
             }
         }
 
-        public long CurrentActiveVersion { get; set; }
-
         private void PushRenderBuffer(long version, RenderBuffer renderBuffer)
         {
             lock (Lock)
@@ -145,19 +142,12 @@ namespace ajiva.Systems.VulcanEngine.Layers
                 lock (upToDateLock)
                 {
                     //todo reuse if not null
-                    if (UpToDateBuffer is not null)
-                    {
-                        RenderBuffers.Enqueue(UpToDateBuffer);
-                    }
+                    if (UpToDateBuffer is not null) RenderBuffers.Enqueue(UpToDateBuffer);
                     UpToDateBuffer = renderBuffer;
                 }
                 CurrentActiveVersion = version;
             }
         }
-
-        public RenderBuffer? UpToDateBuffer { get; set; }
-
-        private readonly object upToDateLock = new();
 
         public bool TryGetUpdatedBuffers([MaybeNullWhen(false)] out RenderBuffer renderBuffer)
         {
@@ -173,13 +163,9 @@ namespace ajiva.Systems.VulcanEngine.Layers
         public void ReturnBuffer(CommandBuffer?[] commandBuffers)
         {
             if (commandBuffers.Any(x => x is null))
-            {
                 FreeBuffers(commandBuffers);
-            }
             else
-            {
                 RenderBuffers.Enqueue(new RenderBuffer(commandBuffers, 0));
-            }
         }
 
         private void FreeBuffers(CommandBuffer?[] commandBuffers)
@@ -209,6 +195,26 @@ namespace ajiva.Systems.VulcanEngine.Layers
                 commandBuffer.EndRenderPass();
                 commandBuffer.End();
             }
+        }
+
+        /// <inheritdoc />
+        protected override void ReleaseUnmanagedResources(bool disposing)
+        {
+            base.ReleaseUnmanagedResources(disposing);
+
+            RenderBuffers.Clear();
+
+            TokenSource?.Cancel();
+            UpdateTask?.Dispose();
+
+            renderer.deviceSystem.UseCommandPool(x =>
+            {
+                foreach (var allocatedBuffer in AllocatedBuffers) x.FreeCommandBuffers(allocatedBuffer);
+            }, CommandPoolSelector.Background);
+            AllocatedBuffers.Clear();
+
+            GraphicsPipeline?.Dispose();
+            RenderPass.Dispose();
         }
     }
 }

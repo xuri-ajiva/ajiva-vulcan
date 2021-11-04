@@ -50,7 +50,7 @@ namespace ajiva.Systems.VulcanEngine.Layers
         public void Init(IList<IAjivaLayer> layers)
         {
             ReCreateSwapchainLayer();
-            BuildDynamicLayerSystemData(layers);
+            ReBuildDynamicLayerSystemData(layers);
             CreateSubmitInfo();
             ForceFillBuffers();
         }
@@ -69,9 +69,17 @@ namespace ajiva.Systems.VulcanEngine.Layers
             SwapChainLayer = SwapChainLayerCreator.Default(deviceSystem, canvas);
         }
 
-        public void BuildDynamicLayerSystemData(IList<IAjivaLayer> layers)
+        public void ReBuildDynamicLayerSystemData(IList<IAjivaLayer> layers)
         {
-            DynamicLayerSystemData.Clear();
+            if (DynamicLayerSystemData.Any())
+            {
+                foreach (var data in DynamicLayerSystemData)
+                {
+                    data.Dispose();
+                }
+                DynamicLayerSystemData.Clear();
+            }
+            
             var systemIndex = 0;
             for (var layerIndex = 0; layerIndex < layers.Count; layerIndex++)
             {
@@ -90,7 +98,7 @@ namespace ajiva.Systems.VulcanEngine.Layers
 
         private IEnumerable<CommandBuffer> SwapBuffers(RenderBuffer renderBuffer, int systemIndex)
         {
-            lock (SubmitInfoLock) 
+            lock (SubmitInfoLock)
             {
                 //todo multiple buffers per layer to add stuff easy
                 for (var i = 0; i < renderBuffer.CommandBuffers.Length; i++)
@@ -100,7 +108,7 @@ namespace ajiva.Systems.VulcanEngine.Layers
                 }
             }
         }
-        
+
         public void CheckBuffersUpToDate()
         {
             foreach (var systemData in DynamicLayerSystemData.Where(x => !x.IsVersionUpToDate && !x.IsBackgroundTaskRunning))
@@ -113,8 +121,8 @@ namespace ajiva.Systems.VulcanEngine.Layers
         {
             for (var systemIndex = 0; systemIndex < DynamicLayerSystemData.Count; systemIndex++)
             {
-                if (! DynamicLayerSystemData[systemIndex].TryGetUpdatedBuffers(out var update)) continue;
-                
+                if (!DynamicLayerSystemData[systemIndex].TryGetUpdatedBuffers(out var update)) continue;
+
                 var oldBuffers = PerformUpdate(update, systemIndex);
                 DynamicLayerSystemData[systemIndex].ReturnBuffer(oldBuffers);
             }
