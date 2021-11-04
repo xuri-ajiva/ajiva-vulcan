@@ -43,8 +43,9 @@ namespace ajiva.Systems.VulcanEngine.Layer2d
             component.Models = Models;
             transform.ChangingObserver.OnChanged += component.OnTransformChange;
 
+            var res = base.RegisterComponent(entity, component);
             GraphicsDataChanged.Changed();
-            return base.RegisterComponent(entity, component);
+            return res;
         }
 
         /// <inheritdoc />

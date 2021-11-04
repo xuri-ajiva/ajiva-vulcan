@@ -55,8 +55,9 @@ namespace ajiva.Systems.VulcanEngine.Debug
             component.Models = Models;
             transform.ChangingObserver.OnChanged += component.OnTransformChange;
 
+            var res = base.RegisterComponent(entity, component);
             GraphicsDataChanged.Changed();
-            return base.RegisterComponent(entity, component);
+            return res;
         }
 
         /// <inheritdoc />
@@ -67,8 +68,9 @@ namespace ajiva.Systems.VulcanEngine.Debug
 
             transform.ChangingObserver.OnChanged -= component.OnTransformChange;
 
+            var res = base.UnRegisterComponent(entity, component);
             GraphicsDataChanged.Changed();
-            return base.UnRegisterComponent(entity, component);
+            return res;
         }
 
         /// <inheritdoc />

@@ -49,8 +49,9 @@ namespace ajiva.Systems.VulcanEngine.Layer3d
 
             //component.ChangingObserver.OnChanged += _ => Models.GetForChange((int)component.Id).Value.TextureSamplerId = component.Id;
 
+            var res = base.RegisterComponent(entity, component);
             GraphicsDataChanged.Changed();
-            return base.RegisterComponent(entity, component);
+            return res;
         }
 
         /// <inheritdoc />
@@ -61,8 +62,9 @@ namespace ajiva.Systems.VulcanEngine.Layer3d
 
             transform.ChangingObserver.OnChanged -= component.OnTransformChange;
 
+            var res = base.UnRegisterComponent(entity, component);
             GraphicsDataChanged.Changed();
-            return base.UnRegisterComponent(entity, component);
+            return res;
         }
 
         /// <inheritdoc />
