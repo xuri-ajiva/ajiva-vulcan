@@ -57,17 +57,14 @@ namespace ajiva.Systems.VulcanEngine
             throw new ArgumentOutOfRangeException(nameof(candidates), candidates, "failed to find supported format!");
         }
 
-        private static readonly ConsoleRolBlock DebugReportBlock = new(10, nameof(DebugReportBlock));
-
         private static readonly DebugReportCallbackDelegate DebugReportDelegate = (flags, objectType, o, location, messageCode, layerPrefix, message, userData) =>
         {
-            DebugReportBlock.WriteNext($"[{flags}] ({objectType}) {layerPrefix}");
-            DebugReportBlock.WriteNext(message);
-
             var stackframe = new StackFrame(2, true);
             var stackframe2 = new StackFrame(3, true);
             var stackframe3 = new StackFrame(4, true);
-            DebugReportBlock.WriteNext($"File: {stackframe.GetFileName()}:{stackframe.GetFileLineNumber()} from {stackframe2.GetFileName()}:{stackframe2.GetFileLineNumber()} from {stackframe3.GetFileName()}:{stackframe3.GetFileLineNumber()}");
+            ALog.Error($"[{flags}] ({objectType}) {layerPrefix}");
+            ALog.Error(message);
+            ALog.Error($"File: {stackframe.GetFileName()}:{stackframe.GetFileLineNumber()} from {stackframe2.GetFileName()}:{stackframe2.GetFileLineNumber()} from {stackframe3.GetFileName()}:{stackframe3.GetFileLineNumber()}");
 
             return false;
         };
