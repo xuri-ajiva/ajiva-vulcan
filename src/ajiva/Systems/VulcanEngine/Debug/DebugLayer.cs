@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
+using System.Threading;
 using ajiva.Components;
 using ajiva.Components.Media;
 using ajiva.Components.RenderAble;
@@ -42,6 +43,7 @@ namespace ajiva.Systems.VulcanEngine.Debug
         /// <inheritdoc />
         public DebugLayer(IAjivaEcs ecs) : base(ecs)
         {
+            GraphicsDataChanged = new ChangingObserver<IAjivaLayerRenderSystem>(this);
         }
 
         /// <inheritdoc />
@@ -53,8 +55,9 @@ namespace ajiva.Systems.VulcanEngine.Debug
             component.Models = Models;
             transform.ChangingObserver.OnChanged += component.OnTransformChange;
 
-            Ecs.GetSystem<GraphicsSystem>().ChangingObserver.Changed();
-            return base.RegisterComponent(entity, component);
+            var res = base.RegisterComponent(entity, component);
+            GraphicsDataChanged.Changed();
+            return res;
         }
 
         /// <inheritdoc />
@@ -65,8 +68,9 @@ namespace ajiva.Systems.VulcanEngine.Debug
 
             transform.ChangingObserver.OnChanged -= component.OnTransformChange;
 
-            Ecs.GetSystem<GraphicsSystem>().ChangingObserver.Changed();
-            return base.UnRegisterComponent(entity, component);
+            var res = base.UnRegisterComponent(entity, component);
+            GraphicsDataChanged.Changed();
+            return res;
         }
 
         /// <inheritdoc />
@@ -93,15 +97,38 @@ namespace ajiva.Systems.VulcanEngine.Debug
         }
 
         /// <inheritdoc />
-        public void DrawComponents(RenderLayerGuard renderGuard)
+        public IChangingObserver<IAjivaLayerRenderSystem> GraphicsDataChanged { get; }
+
+        /// <inheritdoc />
+        public void DrawComponents(RenderLayerGuard renderGuard, CancellationToken cancellationToken)
         {
-            meshPool.Reset();
-            foreach (var (render, entity) in ComponentEntityMap)
+            var readyMeshPool = meshPool.Use();
+            
+            foreach (var render in SnapShot)
             {
+                if (cancellationToken.IsCancellationRequested) return;
                 if (!render.Render) continue;
                 renderGuard.BindDescriptor(render.Id * (uint)Unsafe.SizeOf<DebugUniformModel>());
-                meshPool.DrawMesh(renderGuard.Buffer, render.MeshId);
+                readyMeshPool.DrawMesh(renderGuard.Buffer, render.MeshId);
             }
+        }
+
+        public List<DebugComponent> SnapShot { get; set; }
+
+        /// <inheritdoc />
+        public object SnapShotLock { get; } = new();
+
+        /// <inheritdoc />
+        public void CreateSnapShot()
+        {
+            lock (ComponentEntityMap)
+                SnapShot = ComponentEntityMap.Keys.Where(x => x.Render).ToList();
+        }
+
+        /// <inheritdoc />
+        public void ClearSnapShot()
+        {
+            SnapShot = null!;
         }
 
         /// <inheritdoc />

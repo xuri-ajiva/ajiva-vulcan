@@ -1,6 +1,8 @@
 ﻿#region
 
+using System;
 using System.Collections.Generic;
+using System.Linq;
 using ajiva.Components.Media;
 using ajiva.Ecs;
 using ajiva.Ecs.System;
@@ -14,6 +16,7 @@ using ajiva.Systems.VulcanEngine.Layers.Creation;
 using ajiva.Systems.VulcanEngine.Layers.Models;
 using ajiva.Systems.VulcanEngine.Systems;
 using ajiva.Utils;
+using ajiva.Utils.Changing;
 using Ajiva.Wrapper.Logger;
 using SharpVk;
 using SharpVk.Glfw;
@@ -22,7 +25,7 @@ using SharpVk.Glfw;
 
 namespace ajiva.Systems.VulcanEngine.Layer3d
 {
-    [Dependent(typeof(WindowSystem))]
+    [Dependent(typeof(WindowSystem), typeof(GraphicsSystem))]
     public class Ajiva3dLayerSystem : SystemBase, IInit, IUpdate, IAjivaLayer<UniformViewProj3d>
     {
         private Cameras.Camera? mainCamara;
@@ -31,6 +34,7 @@ namespace ajiva.Systems.VulcanEngine.Layer3d
         /// <inheritdoc />
         public Ajiva3dLayerSystem(IAjivaEcs ecs) : base(ecs)
         {
+            LayerChanged = new ChangingObserver<IAjivaLayer>(this);
         }
 
         public Cameras.Camera MainCamara
@@ -48,12 +52,14 @@ namespace ajiva.Systems.VulcanEngine.Layer3d
         public IAChangeAwareBackupBufferOfT<UniformViewProj3d> LayerUniform { get; set; }
 
         /// <inheritdoc />
+        public IChangingObserver<IAjivaLayer> LayerChanged { get; }
+
+        /// <inheritdoc />
         List<IAjivaLayerRenderSystem> IAjivaLayer.LayerRenderComponentSystems => new List<IAjivaLayerRenderSystem>(LayerRenderComponentSystems);
 
         /// <inheritdoc />
         public AjivaVulkanPipeline PipelineLayer { get; } = AjivaVulkanPipeline.Pipeline3d;
 
-        /// <inheritdoc />
         public ClearValue[] ClearValues { get; } =
         {
             new ClearColorValue(.1f, .1f, .1f, .1f),
@@ -63,10 +69,90 @@ namespace ajiva.Systems.VulcanEngine.Layer3d
         /// <inheritdoc />
         public List<IAjivaLayerRenderSystem<UniformViewProj3d>> LayerRenderComponentSystems { get; } = new List<IAjivaLayerRenderSystem<UniformViewProj3d>>();
 
+        private AImage? depthImage;
+        private Format depthFormat;
+
         /// <inheritdoc />
-        public RenderPassLayer CreateRenderPassLayer(SwapChainLayer swapChainLayer)
+        public RenderPassLayer CreateRenderPassLayer(SwapChainLayer swapChainLayer, PositionAndMax layerIndex, PositionAndMax layerRenderComponentSystemsIndex)
         {
-            return RenderPassLayerCreator.Default(swapChainLayer, Ecs.GetSystem<DeviceSystem>(), Ecs.GetComponentSystem<ImageSystem, AImage>());
+            DeviceSystem deviceSystem = Ecs.GetSystem<DeviceSystem>();
+
+            if (depthImage is null)
+            {
+                ImageSystem imageSystem = Ecs.GetComponentSystem<ImageSystem, AImage>();
+                depthFormat = deviceSystem.PhysicalDevice!.FindDepthFormat();
+                depthImage = imageSystem.CreateManagedImage(depthFormat, ImageAspectFlags.Depth, swapChainLayer.Canvas);
+            }
+
+            var firstPass = layerIndex.First && layerRenderComponentSystemsIndex.First;
+            var lastPass = layerIndex.Last && layerRenderComponentSystemsIndex.Last;
+
+            RenderPass renderPass = deviceSystem.Device!.CreateRenderPass(new[]
+                {
+                    new AttachmentDescription(AttachmentDescriptionFlags.None,
+                        swapChainLayer.SwapChainFormat,
+                        SampleCountFlags.SampleCount1,
+                        firstPass ? AttachmentLoadOp.Clear : AttachmentLoadOp.Load,
+                        AttachmentStoreOp.Store,
+                        AttachmentLoadOp.DontCare,
+                        AttachmentStoreOp.DontCare,
+                        firstPass ? ImageLayout.Undefined : ImageLayout.General,
+                        lastPass ? ImageLayout.PresentSource : ImageLayout.General),
+                    new AttachmentDescription(AttachmentDescriptionFlags.None,
+                        depthFormat,
+                        SampleCountFlags.SampleCount1,
+                        layerRenderComponentSystemsIndex.First ? AttachmentLoadOp.Clear : AttachmentLoadOp.Load,
+                        layerRenderComponentSystemsIndex.Last ? AttachmentStoreOp.DontCare : AttachmentStoreOp.Store,
+                        AttachmentLoadOp.DontCare,
+                        AttachmentStoreOp.DontCare,
+                        layerRenderComponentSystemsIndex.First ? ImageLayout.Undefined : ImageLayout.DepthStencilAttachmentOptimal,
+                        ImageLayout.DepthStencilAttachmentOptimal)
+                },
+                new SubpassDescription
+                {
+                    DepthStencilAttachment = new AttachmentReference(1, ImageLayout.DepthStencilAttachmentOptimal),
+                    PipelineBindPoint = PipelineBindPoint.Graphics,
+                    ColorAttachments = new[]
+                    {
+                        new AttachmentReference(0, ImageLayout.ColorAttachmentOptimal)
+                    }
+                },
+                new[]
+                {
+                    new SubpassDependency
+                    {
+                        SourceSubpass = Constants.SubpassExternal,
+                        DestinationSubpass = 0,
+                        SourceStageMask = PipelineStageFlags.BottomOfPipe,
+                        SourceAccessMask = AccessFlags.MemoryRead,
+                        DestinationStageMask = PipelineStageFlags.ColorAttachmentOutput | PipelineStageFlags.EarlyFragmentTests,
+                        DestinationAccessMask = AccessFlags.ColorAttachmentRead | AccessFlags.ColorAttachmentWrite | AccessFlags.DepthStencilAttachmentRead
+                    },
+                    new SubpassDependency
+                    {
+                        SourceSubpass = 0,
+                        DestinationSubpass = Constants.SubpassExternal,
+                        SourceStageMask = PipelineStageFlags.ColorAttachmentOutput | PipelineStageFlags.EarlyFragmentTests,
+                        SourceAccessMask = AccessFlags.ColorAttachmentRead | AccessFlags.ColorAttachmentWrite | AccessFlags.DepthStencilAttachmentRead,
+                        DestinationStageMask = PipelineStageFlags.BottomOfPipe,
+                        DestinationAccessMask = AccessFlags.MemoryRead
+                    },
+                });
+
+            Framebuffer MakeFrameBuffer(ImageView imageView)
+            {
+                return deviceSystem.Device.CreateFramebuffer(renderPass,
+                    new[] { imageView, depthImage.View },
+                    swapChainLayer.Canvas.Width,
+                    swapChainLayer.Canvas.Height,
+                    1);
+            }
+
+            Framebuffer[] frameBuffers = swapChainLayer.SwapChainImages.Select(x => MakeFrameBuffer(x.View!)).ToArray();
+
+            var renderPassLayer = new RenderPassLayer(swapChainLayer, renderPass, frameBuffers, layerRenderComponentSystemsIndex.First ? ClearValues : Array.Empty<ClearValue>());
+            swapChainLayer.AddChild(renderPassLayer);
+            return renderPassLayer;
         }
 
         /// <inheritdoc />
@@ -170,6 +256,7 @@ namespace ajiva.Systems.VulcanEngine.Layer3d
         /// <inheritdoc />
         protected override void ReleaseUnmanagedResources(bool disposing)
         {
+            depthImage?.Dispose();
             lock (MainLock)
             {
                 foreach (var renderSystem in LayerRenderComponentSystems) renderSystem.Dispose();
@@ -179,38 +266,5 @@ namespace ajiva.Systems.VulcanEngine.Layer3d
             }
             base.ReleaseUnmanagedResources(disposing);
         }
-
-        public void AddLayer(IAjivaLayerRenderSystem<UniformViewProj3d> layer)
-        {
-            layer.AjivaLayer = this;
-            LayerRenderComponentSystems.Add(layer);
-        }
     }
-
-    /*public static class RenderSystem3DCreateHelper
-    {
-        public static T Create3DRenderedObject<T>(this T entity, AjivaEcs ecs) where T : class, IEntity
-        {
-            var ajiva3dSystem = ecs.GetComponentSystem<SolidMeshRenderLayer, RenderMesh3D>();
-            ecs.AttachComponentToEntity<RenderMesh3D>(entity);
-            ecs.AttachComponentToEntity<Transform3d>(entity);
-            if (entity.TryGetComponent(out RenderMesh3D? renderAble) && renderAble is not null)
-                if (entity.TryGetComponent(out Transform3d? transform3d) && transform3d is not null)
-                {
-                    void Update(IChangingObserver sender)
-                    {
-                        var change = ajiva3dSystem.Models.GetForChange((int)renderAble.Id);
-                        change.Value.Model = transform3d.ModelMat;
-                        change.Value.TextureSamplerId = renderAble.Id;
-                    }
-
-                    OnChangedDelegate delegates = Update;
-
-                    transform3d.ChangingObserver.OnChanged += delegates;
-                    renderAble.ChangingObserver.OnChanged += delegates;
-                }
-
-            return entity;
-        }
-    }*/
 }

@@ -1,5 +1,8 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Runtime.CompilerServices;
+using System.Threading;
 using ajiva.Components;
 using ajiva.Components.Media;
 using ajiva.Components.RenderAble;
@@ -18,6 +21,7 @@ using ajiva.Systems.VulcanEngine.Layers.Creation;
 using ajiva.Systems.VulcanEngine.Layers.Models;
 using ajiva.Systems.VulcanEngine.Systems;
 using ajiva.Utils;
+using ajiva.Utils.Changing;
 
 namespace ajiva.Systems.VulcanEngine.Layer3d
 {
@@ -45,13 +49,28 @@ namespace ajiva.Systems.VulcanEngine.Layer3d
 
             //component.ChangingObserver.OnChanged += _ => Models.GetForChange((int)component.Id).Value.TextureSamplerId = component.Id;
 
-            Ecs.GetSystem<GraphicsSystem>().ChangingObserver.Changed();
-            return base.RegisterComponent(entity, component);
+            var res = base.RegisterComponent(entity, component);
+            GraphicsDataChanged.Changed();
+            return res;
+        }
+
+        /// <inheritdoc />
+        public override RenderMesh3D UnRegisterComponent(IEntity entity, RenderMesh3D component)
+        {
+            if (!entity.TryGetComponent<Transform3d>(out var transform))
+                throw new ArgumentException("Entity needs and transform in order to be rendered as debug");
+
+            transform.ChangingObserver.OnChanged -= component.OnTransformChange;
+
+            var res = base.UnRegisterComponent(entity, component);
+            GraphicsDataChanged.Changed();
+            return res;
         }
 
         /// <inheritdoc />
         public SolidMeshRenderLayer(IAjivaEcs ecs) : base(ecs)
         {
+            GraphicsDataChanged = new ChangingObserver<IAjivaLayerRenderSystem>(this);
         }
 
         public PipelineDescriptorInfos[] PipelineDescriptorInfos { get; set; }
@@ -60,15 +79,38 @@ namespace ajiva.Systems.VulcanEngine.Layer3d
         public IAjivaLayer<UniformViewProj3d> AjivaLayer { get; set; }
 
         /// <inheritdoc />
-        public void DrawComponents(RenderLayerGuard renderGuard)
+        public IChangingObserver<IAjivaLayerRenderSystem> GraphicsDataChanged { get; }
+
+        /// <inheritdoc />
+        public void DrawComponents(RenderLayerGuard renderGuard, CancellationToken cancellationToken)
         {
-            meshPool.Reset();
-            foreach (var (render, entity) in ComponentEntityMap)
+            var readyMeshPool = meshPool.Use();
+
+            foreach (var render in SnapShot)
             {
+                if (cancellationToken.IsCancellationRequested) return;
                 if (!render.Render) continue;
                 renderGuard.BindDescriptor(render.Id * (uint)Unsafe.SizeOf<SolidUniformModel>());
-                meshPool.DrawMesh(renderGuard.Buffer, render.MeshId);
+                readyMeshPool.DrawMesh(renderGuard.Buffer, render.MeshId);
             }
+        }
+
+        public List<RenderMesh3D> SnapShot { get; set; }
+
+        /// <inheritdoc />
+        public object SnapShotLock { get; } = new();
+
+        /// <inheritdoc />
+        public void CreateSnapShot()
+        {
+            lock (ComponentEntityMap)
+                SnapShot = ComponentEntityMap.Keys.Where(x => x.Render).ToList();
+        }
+
+        /// <inheritdoc />
+        public void ClearSnapShot()
+        {
+            SnapShot = null!;
         }
 
         /// <inheritdoc />

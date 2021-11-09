@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using ajiva.Components;
 using ajiva.Components.Media;
 using ajiva.Ecs;
@@ -13,12 +14,13 @@ using ajiva.Systems.VulcanEngine.Layers.Creation;
 using ajiva.Systems.VulcanEngine.Layers.Models;
 using ajiva.Systems.VulcanEngine.Systems;
 using ajiva.Utils;
+using ajiva.Utils.Changing;
 using GlmSharp;
 using SharpVk;
 
 namespace ajiva.Systems.VulcanEngine.Layer2d
 {
-    [Dependent(typeof(WindowSystem))]
+    [Dependent(typeof(WindowSystem), typeof(GraphicsSystem))]
     public class Ajiva2dLayerSystem : SystemBase, IInit, IUpdate, IAjivaLayer<UniformLayer2d>
     {
         private WindowSystem window;
@@ -28,6 +30,7 @@ namespace ajiva.Systems.VulcanEngine.Layer2d
         /// <inheritdoc />
         public Ajiva2dLayerSystem(IAjivaEcs ecs) : base(ecs)
         {
+            LayerChanged = new ChangingObserver<IAjivaLayer>(this);
         }
 
         /// <inheritdoc />
@@ -100,17 +103,13 @@ namespace ajiva.Systems.VulcanEngine.Layer2d
         }
 
         /// <inheritdoc />
+        public IChangingObserver<IAjivaLayer> LayerChanged { get; }
+
+        /// <inheritdoc />
         List<IAjivaLayerRenderSystem> IAjivaLayer.LayerRenderComponentSystems => new List<IAjivaLayerRenderSystem>(LayerRenderComponentSystems);
 
         /// <inheritdoc />
         public IAChangeAwareBackupBufferOfT<UniformLayer2d> LayerUniform { get; private set; }
-
-        /// <inheritdoc />
-        public void AddLayer(IAjivaLayerRenderSystem<UniformLayer2d> layer)
-        {
-            layer.AjivaLayer = this;
-            LayerRenderComponentSystems.Add(layer);
-        }
 
         /// <inheritdoc />
         public List<IAjivaLayerRenderSystem<UniformLayer2d>> LayerRenderComponentSystems { get; } = new List<IAjivaLayerRenderSystem<UniformLayer2d>>();
@@ -119,12 +118,71 @@ namespace ajiva.Systems.VulcanEngine.Layer2d
         public AjivaVulkanPipeline PipelineLayer { get; } = AjivaVulkanPipeline.Pipeline2d;
 
         /// <inheritdoc />
-        public ClearValue[] ClearValues { get; } = Array.Empty<ClearValue>();
-
-        /// <inheritdoc />
-        public RenderPassLayer CreateRenderPassLayer(SwapChainLayer swapChainLayer)
+        public RenderPassLayer CreateRenderPassLayer(SwapChainLayer swapChainLayer, PositionAndMax layerIndex, PositionAndMax layerRenderComponentSystemsIndex)
         {
-            return RenderPassLayerCreator.NoDepth(swapChainLayer, Ecs.GetSystem<DeviceSystem>(), Ecs.GetComponentSystem<ImageSystem, AImage>());
+            var firstPass = layerIndex.First && layerRenderComponentSystemsIndex.First;
+            var lastPass = layerIndex.Last && layerRenderComponentSystemsIndex.Last;
+
+            DeviceSystem deviceSystem = Ecs.GetSystem<DeviceSystem>();
+            RenderPass renderPass = deviceSystem.Device!.CreateRenderPass(new[]
+                {
+                    new AttachmentDescription(AttachmentDescriptionFlags.None,
+                        swapChainLayer.SwapChainFormat,
+                        SampleCountFlags.SampleCount1,
+                        firstPass ? AttachmentLoadOp.Clear : AttachmentLoadOp.Load,
+                        AttachmentStoreOp.Store,
+                        AttachmentLoadOp.DontCare,
+                        AttachmentStoreOp.DontCare,
+                        firstPass ? ImageLayout.Undefined : ImageLayout.General,
+                        lastPass ? ImageLayout.PresentSource : ImageLayout.General),
+                },
+                new SubpassDescription
+                {
+                    PipelineBindPoint = PipelineBindPoint.Graphics,
+                    ColorAttachments = new[]
+                    {
+                        new AttachmentReference(0, ImageLayout.ColorAttachmentOptimal)
+                    }
+                },
+                new[]
+                {
+                    new SubpassDependency
+                    {
+                        SourceSubpass = Constants.SubpassExternal,
+                        DestinationSubpass = 0,
+                        SourceStageMask = PipelineStageFlags.BottomOfPipe,
+                        SourceAccessMask = AccessFlags.MemoryRead,
+                        DestinationStageMask = PipelineStageFlags.ColorAttachmentOutput | PipelineStageFlags.EarlyFragmentTests,
+                        DestinationAccessMask = AccessFlags.ColorAttachmentRead | AccessFlags.ColorAttachmentWrite | AccessFlags.DepthStencilAttachmentRead
+                    },
+                    new SubpassDependency
+                    {
+                        SourceSubpass = 0,
+                        DestinationSubpass = Constants.SubpassExternal,
+                        SourceStageMask = PipelineStageFlags.ColorAttachmentOutput | PipelineStageFlags.EarlyFragmentTests,
+                        SourceAccessMask = AccessFlags.ColorAttachmentRead | AccessFlags.ColorAttachmentWrite | AccessFlags.DepthStencilAttachmentRead,
+                        DestinationStageMask = PipelineStageFlags.BottomOfPipe,
+                        DestinationAccessMask = AccessFlags.MemoryRead
+                    },
+                });
+
+            Framebuffer MakeFrameBuffer(ImageView imageView)
+            {
+                return deviceSystem.Device.CreateFramebuffer(renderPass,
+                    new[]
+                    {
+                        imageView
+                    },
+                    swapChainLayer.Canvas.Width,
+                    swapChainLayer.Canvas.Height,
+                    1);
+            }
+
+            Framebuffer[] frameBuffers = swapChainLayer.SwapChainImages.Select(x => MakeFrameBuffer(x.View!)).ToArray();
+
+            var renderPassLayer = new RenderPassLayer(swapChainLayer, renderPass, frameBuffers, firstPass ? new ClearValue[] { new ClearColorValue(.1f, .1f, .1f, .1f) } : Array.Empty<ClearValue>());
+            swapChainLayer.AddChild(renderPassLayer);
+            return renderPassLayer;
         }
     }
 }

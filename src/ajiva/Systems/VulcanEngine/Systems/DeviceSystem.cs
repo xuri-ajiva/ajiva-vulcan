@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using ajiva.Components.Transform;
 using ajiva.Ecs;
 using ajiva.Ecs.System;
@@ -18,6 +19,7 @@ namespace ajiva.Systems.VulcanEngine.Systems
     {
         internal PhysicalDevice? PhysicalDevice { get; private set; }
         internal Device? Device { get; private set; }
+        private QueueFamilyIndices queueFamilies;
 
         internal Queue? GraphicsQueue { get; private set; }
         internal Queue? PresentQueue { get; private set; }
@@ -31,12 +33,17 @@ namespace ajiva.Systems.VulcanEngine.Systems
         public Fence PresentQueueFence { get; private set; }
         public Fence GraphicsQueueFence { get; private set; }
 
-        public CommandBuffer? SingleCommandBuffer { get; private set; }
         public CommandPool? TransientCommandPool { get; private set; }
-        private CommandPool? CommandPool { get; set; }
+        private CommandPool? BackgroundCommandPool { get; set; }
+        private CommandPool? ForegroundCommandPool { get; set; }
 
-        private QueueFamilyIndices queueFamilies;
-        private readonly object commandPoolLock = new();
+        private object TransientCommandPoolLock { get; } = new();
+        private object BackgroundCommandPoolLock { get; } = new();
+        private object ForegroundCommandPoolLock { get; } = new();
+
+        public CommandBuffer? TransientSingleCommandBuffer { get; private set; }
+        public CommandBuffer? BackgroundSingleCommandBuffer { get; private set; }
+        public CommandBuffer? ForegroundSingleCommandBuffer { get; private set; }
 
         private void PickPhysicalDevice(Instance instance)
         {
@@ -101,51 +108,87 @@ namespace ajiva.Systems.VulcanEngine.Systems
 
 #region CommandPool
 
-        public void UseCommandPool(Action<CommandPool> action)
+        public void UseCommandPool(Action<CommandPool> action, CommandPoolSelector selector)
         {
             EnsureCommandPoolsExists();
-            System.Diagnostics.Debug.Assert(CommandPool != null, nameof(CommandPool) + " != null");
-            lock (commandPoolLock)
+
+            lock (GetCommandPoolLock(selector))
             {
-                action?.Invoke(CommandPool);
+                action?.Invoke(GetCommandPool(selector));
             }
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveOptimization | MethodImplOptions.AggressiveInlining)]
+        private CommandPool GetCommandPool(CommandPoolSelector selector)
+        {
+            return selector switch
+            {
+                CommandPoolSelector.Foreground => ForegroundCommandPool!,
+                CommandPoolSelector.Background => BackgroundCommandPool!,
+                CommandPoolSelector.Transit => TransientCommandPool!,
+                _ => throw new ArgumentOutOfRangeException(nameof(selector), selector, null)
+            };
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveOptimization | MethodImplOptions.AggressiveInlining)]
+        private CommandBuffer GetSingleCommandBuffer(CommandPoolSelector selector)
+        {
+            return selector switch
+            {
+                CommandPoolSelector.Foreground => ForegroundSingleCommandBuffer!,
+                CommandPoolSelector.Background => BackgroundSingleCommandBuffer!,
+                CommandPoolSelector.Transit => TransientSingleCommandBuffer!,
+                _ => throw new ArgumentOutOfRangeException(nameof(selector), selector, null)
+            };
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveOptimization | MethodImplOptions.AggressiveInlining)]
+        public object GetCommandPoolLock(CommandPoolSelector selector)
+        {
+            return selector switch
+            {
+                CommandPoolSelector.Foreground => ForegroundCommandPoolLock,
+                CommandPoolSelector.Background => BackgroundCommandPoolLock,
+                CommandPoolSelector.Transit => TransientCommandPoolLock,
+                _ => throw new ArgumentOutOfRangeException(nameof(selector), selector, null)
+            };
         }
 
         private void EnsureCommandPoolsExists()
         {
-            TransientCommandPool ??= Device!.CreateCommandPool(queueFamilies.TransferFamily!.Value, CommandPoolCreateFlags.Transient);
+            TransientCommandPool ??= Device!.CreateCommandPool(queueFamilies.TransferFamily!.Value, CommandPoolCreateFlags.Transient | CommandPoolCreateFlags.ResetCommandBuffer);
 
-            CommandPool ??= Device!.CreateCommandPool(queueFamilies.GraphicsFamily!.Value, CommandPoolCreateFlags.ResetCommandBuffer);
+            BackgroundCommandPool ??= Device!.CreateCommandPool(queueFamilies.GraphicsFamily!.Value, CommandPoolCreateFlags.ResetCommandBuffer);
+            ForegroundCommandPool ??= Device!.CreateCommandPool(queueFamilies.GraphicsFamily!.Value, CommandPoolCreateFlags.ResetCommandBuffer);
 
-            SingleCommandBuffer ??= Device!.AllocateCommandBuffers(CommandPool, CommandBufferLevel.Primary, 1).Single();
+            TransientSingleCommandBuffer ??= Device!.AllocateCommandBuffers(TransientCommandPool, CommandBufferLevel.Primary, 1).Single();
+            BackgroundSingleCommandBuffer ??= Device!.AllocateCommandBuffers(BackgroundCommandPool, CommandBufferLevel.Primary, 1).Single();
+            ForegroundSingleCommandBuffer ??= Device!.AllocateCommandBuffers(ForegroundCommandPool, CommandBufferLevel.Primary, 1).Single();
         }
 
-        public void ExecuteSingleTimeCommand(QueueType queueType, Action<CommandBuffer>? action)
+        public void ExecuteSingleTimeCommand(QueueType queueType, CommandPoolSelector poolSelector, Action<CommandBuffer>? action)
         {
             EnsureCommandPoolsExists();
 
-            System.Diagnostics.Debug.Assert(SingleCommandBuffer != null, nameof(SingleCommandBuffer) + " != null");
-
-            GetQueusByType(queueType, out var queue, out Fence fence, out Queue<Action<CommandBuffer>> queueQueue);
-            lock (SingleCommandBuffer)
+            GetQueueByType(queueType, poolSelector, out var queue, out Fence fence, out Queue<Action<CommandBuffer>> queueQueue, out var commandBuffer, out var poolLock);
+            lock (poolLock)
             lock (queue)
-                ExecuteOnQueueWithFence(action, queue, fence);
+                ExecuteOnQueueWithFence(action, queue, fence, poolLock, commandBuffer, queueType);
         }
 
-        public void QueueSingleTimeCommand(QueueType queueType, Action<CommandBuffer> action)
+        public void QueueSingleTimeCommand(QueueType queueType, CommandPoolSelector poolSelector, Action<CommandBuffer> action)
         {
-            GetQueusByType(queueType, out _, out _, out Queue<Action<CommandBuffer>> queueQueue);
+            GetQueueByType(queueType, poolSelector, out var queue, out Fence fence, out Queue<Action<CommandBuffer>> queueQueue, out var commandBuffer, out var poolLock);
             queueQueue.Enqueue(action);
         }
 
-        public void ExecuteSingleTimeCommands(QueueType queueType)
+        public void ExecuteSingleTimeCommands(QueueType queueType, CommandPoolSelector poolSelector)
         {
             EnsureCommandPoolsExists();
-            System.Diagnostics.Debug.Assert(SingleCommandBuffer != null, nameof(SingleCommandBuffer) + " != null");
 
-            GetQueusByType(queueType, out var queue, out Fence fence, out Queue<Action<CommandBuffer>> queueQueue);
+            GetQueueByType(queueType, poolSelector, out var queue, out Fence fence, out Queue<Action<CommandBuffer>> queueQueue, out var commandBuffer, out var poolLock);
 
-            lock (SingleCommandBuffer)
+            lock (commandBuffer)
             {
                 if (queue is null)
                     throw new("Init not done!");
@@ -160,43 +203,51 @@ namespace ajiva.Systems.VulcanEngine.Systems
                         }
 
                         var action = queueQueue.Dequeue();
-
-                        ExecuteOnQueueWithFence(action, queue, fence);
+                        ExecuteOnQueueWithFence(action, queue, fence, poolLock, commandBuffer, queueType);
                     }
                 }
             }
         }
 
-        private void ExecuteOnQueueWithFence(Action<CommandBuffer>? action, Queue queue, Fence fence)
+        private void ExecuteOnQueueWithFence(Action<CommandBuffer>? action, Queue queue, Fence fence, object commandPoolLock, CommandBuffer singleCommandBuffer, QueueType type)
         {
             if (action is null)
             {
                 ALog.Error("Action is Null");
                 return;
             }
-            System.Diagnostics.Debug.Assert(SingleCommandBuffer != null, nameof(SingleCommandBuffer) + " != null");
-            SingleCommandBuffer.Begin(CommandBufferUsageFlags.OneTimeSubmit);
 
-            action.Invoke(SingleCommandBuffer);
+            lock (commandPoolLock)
+            {
+                singleCommandBuffer.Begin(CommandBufferUsageFlags.OneTimeSubmit);
 
-            SingleCommandBuffer.End();
+                action.Invoke(singleCommandBuffer);
+
+                singleCommandBuffer.End();
+            }
 
             queue.Submit(new SubmitInfo
             {
                 CommandBuffers = new[]
                 {
-                    SingleCommandBuffer
+                    singleCommandBuffer
                 },
             }, fence);
 
             queue.WaitIdle();
             fence.Wait(DEFAULT_TIMEOUT);
             fence.Reset();
-            SingleCommandBuffer.Reset(CommandBufferResetFlags.ReleaseResources);
+
+            if (type != QueueType.GraphicsQueue) return;
+            
+            lock (commandPoolLock)
+                singleCommandBuffer.Reset(CommandBufferResetFlags.ReleaseResources);
         }
 
-        private void GetQueusByType(QueueType queueType, out Queue queue, out Fence fence, out Queue<Action<CommandBuffer>> queueQueue)
+        private void GetQueueByType(QueueType queueType, CommandPoolSelector commandPoolSelector, out Queue queue, out Fence fence, out Queue<Action<CommandBuffer>> queueQueue, out CommandBuffer commandBuffer, out object poolLock)
         {
+            commandBuffer = GetSingleCommandBuffer(commandPoolSelector);
+            poolLock = GetCommandPoolLock(commandPoolSelector);
             switch (queueType)
             {
                 case QueueType.GraphicsQueue:
@@ -237,13 +288,19 @@ namespace ajiva.Systems.VulcanEngine.Systems
             PresentQueueFence.Dispose();
             GraphicsQueueFence.Dispose();
 
+            TransientCommandPool?.FreeCommandBuffers(TransientSingleCommandBuffer);
             TransientCommandPool?.Dispose();
-            CommandPool?.FreeCommandBuffers(SingleCommandBuffer);
-            CommandPool?.Dispose();
+            ForegroundCommandPool?.FreeCommandBuffers(ForegroundSingleCommandBuffer);
+            ForegroundCommandPool?.Dispose();
+            BackgroundCommandPool?.FreeCommandBuffers(BackgroundSingleCommandBuffer);
+            BackgroundCommandPool?.Dispose();
             Device?.Dispose();
 
-            SingleCommandBuffer = null;
-            CommandPool = null;
+            TransientSingleCommandBuffer = null;
+            ForegroundSingleCommandBuffer = null;
+            BackgroundSingleCommandBuffer = null;
+            ForegroundCommandPool = null;
+            BackgroundCommandPool = null;
             TransientCommandPool = null;
             Device = null;
             PhysicalDevice = null;
@@ -267,8 +324,32 @@ namespace ajiva.Systems.VulcanEngine.Systems
         {
             Disposables.Add(disposable);
         }
+
+        public CommandBuffer[] AllocateCommandBuffers(CommandBufferLevel bufferLevel, int count, CommandPoolSelector selector)
+        {
+            lock (GetCommandPoolLock(selector))
+            {
+                System.Diagnostics.Debug.Assert(Device != null, nameof(Device) + " != null");
+                return Device.AllocateCommandBuffers(GetCommandPool(selector), bufferLevel, (uint)count);
+            }
+        }
+
+        public CommandBuffer AllocateCommandBuffer(CommandBufferLevel bufferLevel, CommandPoolSelector selector)
+        {
+            lock (GetCommandPoolLock(selector))
+            {
+                System.Diagnostics.Debug.Assert(Device != null, nameof(Device) + " != null");
+                return Device.AllocateCommandBuffers(GetCommandPool(selector), bufferLevel, 1)[0];
+            }
+        }
     }
 
+    public enum CommandPoolSelector
+    {
+        Foreground,
+        Background,
+        Transit
+    }
     public enum QueueType
     {
         GraphicsQueue,

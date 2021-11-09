@@ -1,4 +1,5 @@
 ﻿using System.Linq;
+using ajiva.Components.Media;
 using ajiva.Systems.VulcanEngine.Layers.Models;
 using ajiva.Systems.VulcanEngine.Systems;
 using ajiva.Utils;
@@ -8,19 +9,17 @@ namespace ajiva.Systems.VulcanEngine.Layers.Creation
 {
     public static class RenderPassLayerCreator
     {
-        public static RenderPassLayer DefaultChecked(SwapChainLayer swapChainLayer, DeviceSystem deviceSystem, ImageSystem imageSystem)
+        public static RenderPassLayer DefaultChecked(SwapChainLayer swapChainLayer, DeviceSystem deviceSystem, AImage depthImage, Format depthFormat, ClearValue[] clearValues)
         {
             if (deviceSystem.Device is null || deviceSystem.PhysicalDevice is null)
             {
                 throw new NotInitializedException(nameof(deviceSystem), deviceSystem);
             }
-            return Default(swapChainLayer, deviceSystem, imageSystem);
+            return Default(swapChainLayer, deviceSystem, depthImage, depthFormat, clearValues);
         }
 
-        public static RenderPassLayer Default(SwapChainLayer swapChainLayer, DeviceSystem deviceSystem, ImageSystem imageSystem)
+        public static RenderPassLayer Default(SwapChainLayer swapChainLayer, DeviceSystem deviceSystem, AImage depthImage, Format depthFormat, ClearValue[] clearValues)
         {
-            var depthFormat = deviceSystem.PhysicalDevice!.FindDepthFormat();
-            var depthImage = imageSystem.CreateManagedImage(depthFormat, ImageAspectFlags.Depth, swapChainLayer.Canvas);
             RenderPass renderPass = deviceSystem.Device!.CreateRenderPass(new[]
                 {
                     new AttachmentDescription(AttachmentDescriptionFlags.None,
@@ -84,21 +83,12 @@ namespace ajiva.Systems.VulcanEngine.Layers.Creation
 
             Framebuffer[] frameBuffers = swapChainLayer.SwapChainImages.Select(x => MakeFrameBuffer(x.View!)).ToArray();
 
-            //commandPool.Reset(CommandPoolResetFlags.ReleaseResources); // not needed!, releases currently used Resources
-
-            CommandPool commandPool = default!;
-            deviceSystem.UseCommandPool(x =>
-            {
-                commandPool = x;
-            });
-
-            CommandBuffer[] renderBuffers = deviceSystem.Device.AllocateCommandBuffers(commandPool, CommandBufferLevel.Primary, (uint)frameBuffers!.Length);
-            var renderPassLayer = new RenderPassLayer(swapChainLayer, renderPass, depthImage, commandPool, frameBuffers, renderBuffers);
+            var renderPassLayer = new RenderPassLayer(swapChainLayer, renderPass, frameBuffers, clearValues);
             swapChainLayer.AddChild(renderPassLayer);
             return renderPassLayer;
         }
 
-        public static RenderPassLayer NoDepth(SwapChainLayer swapChainLayer, DeviceSystem deviceSystem, ImageSystem imageSystem)
+        public static RenderPassLayer NoDepth(SwapChainLayer swapChainLayer, DeviceSystem deviceSystem, ClearValue[] clearValues)
         {
             RenderPass renderPass = deviceSystem.Device!.CreateRenderPass(new[]
                 {
@@ -129,14 +119,14 @@ namespace ajiva.Systems.VulcanEngine.Layers.Creation
                         SourceStageMask = PipelineStageFlags.BottomOfPipe,
                         SourceAccessMask = AccessFlags.MemoryRead,
                         DestinationStageMask = PipelineStageFlags.ColorAttachmentOutput | PipelineStageFlags.EarlyFragmentTests,
-                        DestinationAccessMask = AccessFlags.ColorAttachmentRead | AccessFlags.ColorAttachmentWrite 
+                        DestinationAccessMask = AccessFlags.ColorAttachmentRead | AccessFlags.ColorAttachmentWrite
                     },
                     new SubpassDependency
                     {
                         SourceSubpass = 0,
                         DestinationSubpass = Constants.SubpassExternal,
                         SourceStageMask = PipelineStageFlags.ColorAttachmentOutput | PipelineStageFlags.EarlyFragmentTests,
-                        SourceAccessMask = AccessFlags.ColorAttachmentRead | AccessFlags.ColorAttachmentWrite ,
+                        SourceAccessMask = AccessFlags.ColorAttachmentRead | AccessFlags.ColorAttachmentWrite,
                         DestinationStageMask = PipelineStageFlags.BottomOfPipe,
                         DestinationAccessMask = AccessFlags.MemoryRead
                     },
@@ -153,16 +143,7 @@ namespace ajiva.Systems.VulcanEngine.Layers.Creation
 
             Framebuffer[] frameBuffers = swapChainLayer.SwapChainImages.Select(x => MakeFrameBuffer(x.View!)).ToArray();
 
-            //commandPool.Reset(CommandPoolResetFlags.ReleaseResources); // not needed!, releases currently used Resources
-
-            CommandPool commandPool = default!;
-            deviceSystem.UseCommandPool(x =>
-            {
-                commandPool = x;
-            });
-
-            CommandBuffer[] renderBuffers = deviceSystem.Device.AllocateCommandBuffers(commandPool, CommandBufferLevel.Primary, (uint)frameBuffers!.Length);
-            var renderPassLayer = new RenderPassLayer(swapChainLayer, renderPass, null, commandPool, frameBuffers, renderBuffers);
+            var renderPassLayer = new RenderPassLayer(swapChainLayer, renderPass, frameBuffers, clearValues);
             swapChainLayer.AddChild(renderPassLayer);
             return renderPassLayer;
         }
