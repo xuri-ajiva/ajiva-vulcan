@@ -18,26 +18,28 @@ namespace ajiva.Ecs.ComponentSytem
         /// <inheritdoc />
         public virtual T CreateComponent(IEntity entity)
         {
-            return RegisterComponent(entity, new T()); 
+            return RegisterComponent(entity, new T());
         }
 
         /// <inheritdoc />
         public virtual T RegisterComponent(IEntity entity, T component)
         {
-            ComponentEntityMap.Add(component, entity);
+            lock (ComponentEntityMap)
+                ComponentEntityMap.Add(component, entity);
             return component;
         }
 
         /// <inheritdoc />
         public virtual T UnRegisterComponent(IEntity entity, T component)
         {
-            if (ComponentEntityMap.Remove(component, out var entity1))
-            {
-                if (entity != entity1)
+            lock (ComponentEntityMap)
+                if (ComponentEntityMap.Remove(component, out var entity1))
                 {
-                    ALog.Error("Removing component not assigned to entity");
+                    if (entity != entity1)
+                    {
+                        ALog.Error("Removing component not assigned to entity");
+                    }
                 }
-            }
             return component;
         }
 
