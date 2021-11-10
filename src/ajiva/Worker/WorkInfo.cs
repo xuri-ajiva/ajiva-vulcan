@@ -1,41 +1,38 @@
-﻿using System;
+﻿namespace ajiva.Worker;
 
-namespace ajiva.Worker
+public delegate WorkResult Work(WorkInfo info, object? userParam);
+
+public delegate void ErrorNotify(Exception exception);
+
+public class WorkInfo
 {
-    public delegate WorkResult Work(WorkInfo info, object? userParam);
-
-    public delegate void ErrorNotify(Exception exception);
-
-    public class WorkInfo
+    internal WorkInfo(Work work, string name, ErrorNotify errorNotify, object? userParam = default)
     {
-        internal WorkInfo(Work work, string name, ErrorNotify errorNotify, object? userParam = default)
+        Work = work;
+        Name = name;
+        ErrorNotify = errorNotify;
+        UserParam = userParam;
+    }
+
+    public Worker? ActiveWorker { get; internal set; }
+    public Work Work { get; }
+
+    public ErrorNotify? ErrorNotify { get; }
+
+    public string Name { get; }
+    internal object? UserParam { get; }
+
+    public WorkResult Invoke()
+    {
+        try
         {
-            Work = work;
-            Name = name;
-            ErrorNotify = errorNotify;
-            UserParam = userParam;
+
+            return Work.Invoke(this, UserParam);
         }
-
-        public Worker? ActiveWorker { get; internal set; }
-        public Work Work { get; }
-
-        public ErrorNotify? ErrorNotify { get; }
-
-        public string Name { get; }
-        internal object? UserParam { get; }
-
-        public WorkResult Invoke()
+        catch (Exception e)
         {
-            try
-            {
-
-                return Work.Invoke(this, UserParam);
-            }
-            catch (Exception e)
-            {
-                ErrorNotify?.Invoke(e);
-                return WorkResult.Failed;
-            }
+            ErrorNotify?.Invoke(e);
+            return WorkResult.Failed;
         }
     }
 }

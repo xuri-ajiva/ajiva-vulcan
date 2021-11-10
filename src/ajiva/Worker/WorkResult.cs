@@ -1,13 +1,12 @@
-﻿namespace ajiva.Worker
+﻿namespace ajiva.Worker;
+
+public enum WorkResult
 {
-    public enum WorkResult
-    {
-        Working,
-        Waiting,
-        Idelle,
-        Failed,
-        Succeeded,
-        Locking,
-        Disabled
-    }
+    Working,
+    Waiting,
+    Idelle,
+    Failed,
+    Succeeded,
+    Locking,
+    Disabled
 }

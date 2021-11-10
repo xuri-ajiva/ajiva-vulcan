@@ -1,10 +1,6 @@
-﻿using ajiva.Ecs.Component;
-using ajiva.Utils;
+﻿namespace ajiva.Components.Media;
 
-namespace ajiva.Components.Media
+public class TextureComponent : DisposingLogger, IComponent
 {
-    public class TextureComponent : DisposingLogger, IComponent
-    {
-        public uint TextureId { get; set; }
-    }
+    public uint TextureId { get; set; }
 }

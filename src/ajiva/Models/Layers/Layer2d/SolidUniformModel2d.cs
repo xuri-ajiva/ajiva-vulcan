@@ -1,16 +1,14 @@
-﻿using ajiva.Utils;
-using GlmSharp;
+﻿using GlmSharp;
 
-namespace ajiva.Models.Layers.Layer2d
+namespace ajiva.Models.Layers.Layer2d;
+
+public struct SolidUniformModel2d : IComp<SolidUniformModel2d>
 {
-    public struct SolidUniformModel2d : IComp<SolidUniformModel2d>
-    {
-        public mat4 Model;
+    public mat4 Model;
 
-        /// <inheritdoc />
-        public bool CompareTo(SolidUniformModel2d other)
-        {
-            return Model == other.Model;
-        }
+    /// <inheritdoc />
+    public bool CompareTo(SolidUniformModel2d other)
+    {
+        return Model == other.Model;
     }
 }

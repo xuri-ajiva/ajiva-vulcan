@@ -1,9 +1,6 @@
-﻿using ajiva.Utils;
+﻿namespace ajiva.Ecs.Utils;
 
-namespace ajiva.Ecs.Utils
+public interface IUpdate
 {
-    public interface IUpdate
-    {
-        public void Update(UpdateInfo delta);
-    }
+    public void Update(UpdateInfo delta);
 }

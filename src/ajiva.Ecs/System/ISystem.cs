@@ -1,8 +1,5 @@
-﻿using ajiva.Utils;
+﻿namespace ajiva.Ecs.System;
 
-namespace ajiva.Ecs.System
+public interface ISystem : IDisposingLogger
 {
-    public interface ISystem : IDisposingLogger
-    {
-    }
 }

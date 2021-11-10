@@ -1,15 +1,14 @@
 ﻿using System;
 
-namespace ajiva.Ecs.Utils
-{
-    [AttributeUsage(AttributeTargets.Class)]
-    public class DependentAttribute : Attribute
-    {
-        public readonly Type[] Dependent;
+namespace ajiva.Ecs.Utils;
 
-        public DependentAttribute(params Type[] type)
-        {
-            Dependent = type;
-        }
+[AttributeUsage(AttributeTargets.Class)]
+public class DependentAttribute : Attribute
+{
+    public readonly Type[] Dependent;
+
+    public DependentAttribute(params Type[] type)
+    {
+        Dependent = type;
     }
 }

@@ -1,18 +1,11 @@
 ﻿#nullable enable
 using System;
 using System.Diagnostics.CodeAnalysis;
-using ajiva.Ecs.Component;
-using ajiva.Ecs.ComponentSytem;
-using ajiva.Ecs.Entity;
-using ajiva.Ecs.Factory;
-using ajiva.Ecs.System;
-using ajiva.Ecs.Utils;
-using ajiva.Utils;
 
-namespace ajiva.Ecs
+namespace ajiva.Ecs;
+
+public interface IAjivaEcs : IDisposingLogger
 {
-    public interface IAjivaEcs : IDisposingLogger
-    {
 #region Add
 
         void AddEntityFactory<T>(IEntityFactory<T> entityFactory) where T : class, IEntity;
@@ -91,5 +84,4 @@ namespace ajiva.Ecs
         void RegisterInit(IInit init);
 
 #endregion
-    }
 }

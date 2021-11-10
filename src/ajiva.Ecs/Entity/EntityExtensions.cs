@@ -1,56 +1,52 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
-using ajiva.Ecs.Component;
-using ajiva.Utils;
 using Ajiva.Wrapper.Logger;
-using Microsoft.VisualBasic;
 
-namespace ajiva.Ecs.Entity
+namespace ajiva.Ecs.Entity;
+
+public static class EntityExtensions
 {
-    public static class EntityExtensions
+    public static bool TryGetComponent<T>(this IEntity entity, [MaybeNullWhen(false)] out T value) where T : class, IComponent
     {
-        public static bool TryGetComponent<T>(this IEntity entity, [MaybeNullWhen(false)] out T value) where T : class, IComponent
+        if (entity.Components.TryGetValue(UsVc<T>.Key, out var tmp))
         {
-            if (entity.Components.TryGetValue(UsVc<T>.Key, out var tmp))
-            {
-                value = (T)tmp;
-                return true;
-            }
-            value = default;
-            return false;
+            value = (T)tmp;
+            return true;
         }
+        value = default;
+        return false;
+    }
 
-        [Obsolete("UnSave use TryGetComponent", true)]
-        public static T GetComponent<T>(this IEntity entity) where T : class, IComponent
-        {
-            return (T)entity.Components[UsVc<T>.Key];
-        }
+    [Obsolete("UnSave use TryGetComponent", true)]
+    public static T GetComponent<T>(this IEntity entity) where T : class, IComponent
+    {
+        return (T)entity.Components[UsVc<T>.Key];
+    }
 
-        public static bool HasComponent<T>(this IEntity entity) where T : class, IComponent
-        {
-            return entity.Components.ContainsKey(UsVc<T>.Key);
-        }
+    public static bool HasComponent<T>(this IEntity entity) where T : class, IComponent
+    {
+        return entity.Components.ContainsKey(UsVc<T>.Key);
+    }
 
-        public static T AddComponent<T>(this IEntity entity, T component) where T : class, IComponent
+    public static T AddComponent<T>(this IEntity entity, T component) where T : class, IComponent
+    {
+        if (entity.HasComponent<T>())
         {
-            if (entity.HasComponent<T>())
-            {
-                ALog.Warn($"{entity.Id} already Contains {component}");
-                return component;
-            }
-            entity.Components.Add(UsVc<T>.Key, component);
+            ALog.Warn($"{entity.Id} already Contains {component}");
             return component;
         }
+        entity.Components.Add(UsVc<T>.Key, component);
+        return component;
+    }
 
-        public static T? RemoveComponent<T>(this IEntity entity) where T : class, IComponent
-        {
-            return entity.Components.Remove(UsVc<T>.Key, out var component) ? (T)component : default;
-        }
+    public static T? RemoveComponent<T>(this IEntity entity) where T : class, IComponent
+    {
+        return entity.Components.Remove(UsVc<T>.Key, out var component) ? (T)component : default;
+    }
 
-        public static bool TryRemoveComponent<T>(this IEntity entity, [MaybeNullWhen(false)] out IComponent component) where T : class, IComponent
-        {
-            return entity.Components.Remove(UsVc<T>.Key, out component);
-        }
+    public static bool TryRemoveComponent<T>(this IEntity entity, [MaybeNullWhen(false)] out IComponent component) where T : class, IComponent
+    {
+        return entity.Components.Remove(UsVc<T>.Key, out component);
     }
 }

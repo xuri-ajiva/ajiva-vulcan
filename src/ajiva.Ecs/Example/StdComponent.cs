@@ -1,22 +1,20 @@
 ﻿using System;
-using ajiva.Ecs.Component;
 
-namespace ajiva.Ecs.Example
+namespace ajiva.Ecs.Example;
+
+public class StdComponent : IComponent
 {
-    public class StdComponent : IComponent
+    public int Health { get; set; }
+
+    /// <inheritdoc />
+    public override string ToString()
     {
-        public int Health { get; set; }
-
-        /// <inheritdoc />
-        public override string ToString()
-        {
-            return $"{nameof(Health)}: {Health}";
-        }
+        return $"{nameof(Health)}: {Health}";
+    }
 
 
-        void IDisposable.Dispose()
-        {
-            GC.SuppressFinalize(this);
-        }
+    void IDisposable.Dispose()
+    {
+        GC.SuppressFinalize(this);
     }
 }

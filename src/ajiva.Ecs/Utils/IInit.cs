@@ -1,7 +1,6 @@
-﻿namespace ajiva.Ecs.Utils
+﻿namespace ajiva.Ecs.Utils;
+
+public interface IInit
 {
-    public interface IInit
-    {
-        public void Init();
-    }
+    public void Init();
 }

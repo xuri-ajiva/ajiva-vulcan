@@ -1,6 +1,5 @@
-﻿namespace ajiva.Entities
+﻿namespace ajiva.Entities;
+
+public class DebugBox : DefaultEntity
 {
-    public class DebugBox : DefaultEntity
-    {
-    }
 }
