@@ -6,11 +6,15 @@ namespace ajiva.Ecs.ComponentSytem;
 
 public abstract class ComponentSystemBase<T> : DisposingLogger, IComponentSystem<T> where T : class, IComponent, new()
 {
+    public ComponentSystemBase(IAjivaEcs ecs)
+    {
+        Ecs = ecs;
+    }
+
+    protected IAjivaEcs Ecs { get; }
     public Type ComponentType { get; } = typeof(T);
 
     public Dictionary<T, IEntity> ComponentEntityMap { get; private set; } = new();
-
-    protected IAjivaEcs Ecs { get; }
 
     /// <inheritdoc />
     public virtual T CreateComponent(IEntity entity)
@@ -57,10 +61,5 @@ public abstract class ComponentSystemBase<T> : DisposingLogger, IComponentSystem
         }
         ComponentEntityMap.Clear();
         ComponentEntityMap = null!;
-    }
-
-    public ComponentSystemBase(IAjivaEcs ecs)
-    {
-        Ecs = ecs;
     }
 }

@@ -19,6 +19,9 @@ namespace ajiva.Systems.VulcanEngine.Layer3d;
 [Dependent(typeof(WindowSystem), typeof(GraphicsSystem))]
 public class Ajiva3dLayerSystem : SystemBase, IInit, IUpdate, IAjivaLayer<UniformViewProj3d>
 {
+    private Format depthFormat;
+
+    private AImage? depthImage;
     private Cameras.Camera? mainCamara;
     private WindowSystem window;
 
@@ -40,6 +43,12 @@ public class Ajiva3dLayerSystem : SystemBase, IInit, IUpdate, IAjivaLayer<Unifor
 
     private object MainLock { get; } = new object();
 
+    public ClearValue[] ClearValues { get; } =
+    {
+        new ClearColorValue(.1f, .1f, .1f, .1f),
+        new ClearDepthStencilValue(1.0f, 0)
+    };
+
     public IAChangeAwareBackupBufferOfT<UniformViewProj3d> LayerUniform { get; set; }
 
     /// <inheritdoc />
@@ -51,26 +60,17 @@ public class Ajiva3dLayerSystem : SystemBase, IInit, IUpdate, IAjivaLayer<Unifor
     /// <inheritdoc />
     public AjivaVulkanPipeline PipelineLayer { get; } = AjivaVulkanPipeline.Pipeline3d;
 
-    public ClearValue[] ClearValues { get; } =
-    {
-        new ClearColorValue(.1f, .1f, .1f, .1f),
-        new ClearDepthStencilValue(1.0f, 0),
-    };
-
     /// <inheritdoc />
     public List<IAjivaLayerRenderSystem<UniformViewProj3d>> LayerRenderComponentSystems { get; } = new List<IAjivaLayerRenderSystem<UniformViewProj3d>>();
-
-    private AImage? depthImage;
-    private Format depthFormat;
 
     /// <inheritdoc />
     public RenderPassLayer CreateRenderPassLayer(SwapChainLayer swapChainLayer, PositionAndMax layerIndex, PositionAndMax layerRenderComponentSystemsIndex)
     {
-        DeviceSystem deviceSystem = Ecs.GetSystem<DeviceSystem>();
+        var deviceSystem = Ecs.GetSystem<DeviceSystem>();
 
         if (depthImage is null)
         {
-            ImageSystem imageSystem = Ecs.GetComponentSystem<ImageSystem, AImage>();
+            var imageSystem = Ecs.GetComponentSystem<ImageSystem, AImage>();
             depthFormat = deviceSystem.PhysicalDevice!.FindDepthFormat();
             depthImage = imageSystem.CreateManagedImage(depthFormat, ImageAspectFlags.Depth, swapChainLayer.Canvas);
         }
@@ -78,7 +78,7 @@ public class Ajiva3dLayerSystem : SystemBase, IInit, IUpdate, IAjivaLayer<Unifor
         var firstPass = layerIndex.First && layerRenderComponentSystemsIndex.First;
         var lastPass = layerIndex.Last && layerRenderComponentSystemsIndex.Last;
 
-        RenderPass renderPass = deviceSystem.Device!.CreateRenderPass(new[]
+        var renderPass = deviceSystem.Device!.CreateRenderPass(new[]
             {
                 new AttachmentDescription(AttachmentDescriptionFlags.None,
                     swapChainLayer.SwapChainFormat,
@@ -127,7 +127,7 @@ public class Ajiva3dLayerSystem : SystemBase, IInit, IUpdate, IAjivaLayer<Unifor
                     SourceAccessMask = AccessFlags.ColorAttachmentRead | AccessFlags.ColorAttachmentWrite | AccessFlags.DepthStencilAttachmentRead,
                     DestinationStageMask = PipelineStageFlags.BottomOfPipe,
                     DestinationAccessMask = AccessFlags.MemoryRead
-                },
+                }
             });
 
         Framebuffer MakeFrameBuffer(ImageView imageView)
@@ -139,7 +139,7 @@ public class Ajiva3dLayerSystem : SystemBase, IInit, IUpdate, IAjivaLayer<Unifor
                 1);
         }
 
-        Framebuffer[] frameBuffers = swapChainLayer.SwapChainImages.Select(x => MakeFrameBuffer(x.View!)).ToArray();
+        var frameBuffers = swapChainLayer.SwapChainImages.Select(x => MakeFrameBuffer(x.View!)).ToArray();
 
         var renderPassLayer = new RenderPassLayer(swapChainLayer, renderPass, frameBuffers, layerRenderComponentSystemsIndex.First ? ClearValues : Array.Empty<ClearValue>());
         swapChainLayer.AddChild(renderPassLayer);
@@ -162,13 +162,9 @@ public class Ajiva3dLayerSystem : SystemBase, IInit, IUpdate, IAjivaLayer<Unifor
         LayerUniform = new AChangeAwareBackupBufferOfT<UniformViewProj3d>(1, deviceSystem);
 
         if (Ecs.TryCreateEntity<Cameras.FpsCamera>(out var mCamTmp))
-        {
             MainCamara = mCamTmp;
-        }
         else
-        {
             ALog.Error("cam not created");
-        }
         MainCamara.UpdatePerspective(90, window.Canvas.Width, window.Canvas.Height);
         MainCamara.MovementSpeed = .01f;
     }

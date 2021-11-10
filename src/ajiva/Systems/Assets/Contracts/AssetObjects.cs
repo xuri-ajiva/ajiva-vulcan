@@ -18,24 +18,18 @@ public class AssetObjects
     public AssetType AssetType { get; }
 
     [ProtoMember(2)]
-    public Dictionary<string, byte[]> Assets { get; set; } = new();
+    public Dictionary<string, byte[]> Assets { get; set; } = new Dictionary<string, byte[]>();
 
     public void Add(string name, byte[] data)
     {
         var assetName = AssetHelper.AsName(name);
-        if (Assets.ContainsKey(assetName))
-        {
-            ALog.Warn($"Duplicate AssetName {AssetType}:{assetName}");
-        }
+        if (Assets.ContainsKey(assetName)) ALog.Warn($"Duplicate AssetName {AssetType}:{assetName}");
         Assets.Add(assetName, data);
     }
 
     public byte[] GetAsset(string name)
     {
-        if (Assets.TryGetValue(AssetHelper.AsName(name), out var data))
-        {
-            return data;
-        }
+        if (Assets.TryGetValue(AssetHelper.AsName(name), out var data)) return data;
 
         ALog.Error($"Asset Not Found, {AssetType}:{name}");
         return Array.Empty<byte>();

@@ -17,7 +17,6 @@ public class RenderBuffer
     public CommandBuffer[] CommandBuffers { get; set; }
     public long Version { get; set; }
 }
-
 public class DynamicLayerAjivaLayerRenderSystemData : DisposingLogger
 {
     private readonly int id;
@@ -43,13 +42,8 @@ public class DynamicLayerAjivaLayerRenderSystemData : DisposingLogger
         AjivaLayer = ajivaLayer;
         AjivaLayerRenderSystem = ajivaLayerRenderSystem;
         for (var i = 0; i < Const.Default.BackupBuffers; i++) AllocateNewBuffers();
-            
-        ajivaLayerRenderSystem.GraphicsDataChanged.OnChanged += GraphicsDataChangedOnOnChanged;
-    }
 
-    private void GraphicsDataChangedOnOnChanged(IAjivaLayerRenderSystem sender)
-    {
-        FillNextBufferAsync();
+        ajivaLayerRenderSystem.GraphicsDataChanged.OnChanged += GraphicsDataChangedOnOnChanged;
     }
 
     private List<CommandBuffer[]> AllocatedBuffers { get; } = new List<CommandBuffer[]>();
@@ -69,6 +63,11 @@ public class DynamicLayerAjivaLayerRenderSystemData : DisposingLogger
     public long CurrentActiveVersion { get; set; }
 
     public RenderBuffer? UpToDateBuffer { get; set; }
+
+    private void GraphicsDataChangedOnOnChanged(IAjivaLayerRenderSystem sender)
+    {
+        FillNextBufferAsync();
+    }
 
     public void FillNextBufferBlocking(CancellationToken cancellationToken)
     {
@@ -203,9 +202,9 @@ public class DynamicLayerAjivaLayerRenderSystemData : DisposingLogger
     protected override void ReleaseUnmanagedResources(bool disposing)
     {
         base.ReleaseUnmanagedResources(disposing);
-            
+
         AjivaLayerRenderSystem.GraphicsDataChanged.OnChanged -= GraphicsDataChangedOnOnChanged;
-            
+
         RenderBuffers.Clear();
 
         TokenSource?.Cancel();

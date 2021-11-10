@@ -8,9 +8,24 @@ namespace ajiva.Systems.Assets;
 
 internal class AssetPacker
 {
+    private static readonly string ShaderCompiler = Path.GetFullPath("./tools/spirv/glslangValidator.exe");
+    private static string? macros;
+
+    public static string Macros
+    {
+        get
+        {
+            if (macros is not null) return macros;
+
+            const string macroPrefix = " -D";
+            macros = Config.Default.ShaderConfig.GetAll().Select(x => macroPrefix + x.name + "=" + x.value).Aggregate((x, y) => x + y);
+            return macros;
+        }
+    }
+
     public static async Task Pack(string assetOutput, AssetSpecification assetSpecification, bool overide = false)
     {
-        AssetPack assetPack = new AssetPack();
+        var assetPack = new AssetPack();
 
         var shaderRoot = assetSpecification.Get(AssetType.Shader);
 
@@ -68,12 +83,8 @@ internal class AssetPacker
     {
         var relPathName = textureDirectory == root ? "" : textureDirectory.FullName[(root.FullName.Length + 1)..];
         foreach (var fileInfo in textureDirectory.EnumerateFiles())
-        {
             if (fileInfo.Extension is ".png" or ".jpg" or ".bmp" or ".texture")
-            {
                 assetPack.Add(AssetType.Texture, relPathName, fileInfo);
-            }
-        }
         return Task.CompletedTask;
     }
 
@@ -106,7 +117,7 @@ internal class AssetPacker
                 RedirectStandardOutput = true,
                 WorkingDirectory = shaderDirectory.FullName,
                 CreateNoWindow = true
-            },
+            }
         };
         compiler.Start();
         compiler.PriorityClass = ProcessPriorityClass.High;
@@ -129,10 +140,7 @@ internal class AssetPacker
         if (!string.IsNullOrEmpty(errors))
             ALog.Error($"[COMPILE/RESULT/ERROR]\n{errors.TrimEnd('\n')}");
         ALog.Info($"[COMPILE/RESULT/EXIT] Compiler Process has exited with code {compiler.ExitCode}");
-        if (compiler.ExitCode != 0)
-        {
-            Environment.Exit((int)(compiler.ExitCode + Const.ExitCode.ShaderCompile));
-        }
+        if (compiler.ExitCode != 0) Environment.Exit((int)(compiler.ExitCode + Const.ExitCode.ShaderCompile));
 
         //region pack
         files = shaderDirectory.GetFiles(); //refresh files
@@ -141,19 +149,4 @@ internal class AssetPacker
         assetPack.Add(AssetType.Shader, relPathName, files.First(x => x.Name == Const.Default.VertexShaderName));
         assetPack.Add(AssetType.Shader, relPathName, files.First(x => x.Name == Const.Default.FragmentShaderName));
     }
-
-    public static string Macros
-    {
-        get
-        {
-            if (macros is not null) return macros;
-
-            const string macroPrefix = " -D";
-            macros = Config.Default.ShaderConfig.GetAll().Select(x => macroPrefix + x.name + "=" + x.value).Aggregate((x, y) => x + y);
-            return macros;
-        }
-    }
-
-    private static readonly string ShaderCompiler = Path.GetFullPath("./tools/spirv/glslangValidator.exe");
-    private static string? macros;
 }

@@ -17,10 +17,7 @@ public class CopyBuffer<T> : BufferOfT<T> where T : struct
         ATrace.Assert(Memory != null, nameof(Memory) + " != null");
         var memPtr = Memory.Map(0, Size, MemoryMapFlags.None);
 
-        for (var index = 0; index < Value.Length; index++)
-        {
-            Marshal.StructureToPtr(Value[index], memPtr + Unsafe.SizeOf<T>() * index, true);
-        }
+        for (var index = 0; index < Value.Length; index++) Marshal.StructureToPtr(Value[index], memPtr + Unsafe.SizeOf<T>() * index, true);
 
         Memory.Unmap();
     }
@@ -40,10 +37,7 @@ public class CopyBuffer<T> : BufferOfT<T> where T : struct
         ATrace.Assert(Memory != null, nameof(Memory) + " != null");
         var memPtr = Memory.Map(0, Size, MemoryMapFlags.None);
 
-        foreach (var u in ids)
-        {
-            Marshal.StructureToPtr(Value[u], memPtr + (Unsafe.SizeOf<T>() * (int)u), true);
-        }
+        foreach (var u in ids) Marshal.StructureToPtr(Value[u], memPtr + Unsafe.SizeOf<T>() * (int)u, true);
 
         Memory.Unmap();
     }

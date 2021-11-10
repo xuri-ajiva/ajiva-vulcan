@@ -4,14 +4,14 @@ namespace ajiva.Systems.Assets;
 
 public class AssetSpecification
 {
-    public DirectoryInfo Root { get; }
-    public Dictionary<AssetType, string> PathMap { get; }
-
     public AssetSpecification(string root, Dictionary<AssetType, string> pathMap)
     {
         Root = new DirectoryInfo(root);
         PathMap = pathMap;
     }
+
+    public DirectoryInfo Root { get; }
+    public Dictionary<AssetType, string> PathMap { get; }
 
     public DirectoryInfo Get(AssetType type)
     {

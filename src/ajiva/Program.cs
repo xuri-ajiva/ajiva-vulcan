@@ -10,6 +10,10 @@ namespace ajiva;
 
 public static class Program
 {
+    private static readonly string ShaderCompiler = Path.GetFullPath("./tools/spirv/glslangValidator.exe");
+
+    private static readonly object ConsoleLock = new object();
+
     private static void Main(string[] args)
     {
         if (args.Length > 0)
@@ -50,12 +54,12 @@ public static class Program
 
     private static async void PackAssets()
     {
-        await AssetPacker.Pack(Const.Default.AssetsFile, new AssetSpecification(Const.Default.AssetsPath, new Dictionary<AssetType, string>()
+        await AssetPacker.Pack(Const.Default.AssetsFile, new AssetSpecification(Const.Default.AssetsPath, new Dictionary<AssetType, string>
         {
             [AssetType.Shader] = "Shaders",
             [AssetType.Texture] = "Textures",
-            [AssetType.Model] = "Models",
-        }), overide: true);
+            [AssetType.Model] = "Models"
+        }), true);
     }
 
     private static void CompileShaders()
@@ -74,8 +78,6 @@ public static class Program
                 ).ToArray()
         );
     }
-
-    static string ShaderCompiler = Path.GetFullPath("./tools/spirv/glslangValidator.exe");
 
     private static async Task CheckAndCompilerShadersInDir(DirectoryInfo shaderDirectory)
     {
@@ -104,7 +106,7 @@ public static class Program
                 RedirectStandardOutput = true,
                 WorkingDirectory = shaderDirectory.FullName,
                 CreateNoWindow = true
-            },
+            }
         };
         compiler.Start();
         compiler.PriorityClass = ProcessPriorityClass.High;
@@ -126,14 +128,9 @@ public static class Program
             if (!string.IsNullOrEmpty(errors))
                 ALog.Info($"[COMPILE/RESULT/ERROR] {errors}");
             ALog.Info($"[COMPILE/RESULT/EXIT] Compiler Process has exited with code {compiler.ExitCode}");
-            if (compiler.ExitCode != 0)
-            {
-                Environment.Exit((int)(compiler.ExitCode + Const.ExitCode.ShaderCompile));
-            }
+            if (compiler.ExitCode != 0) Environment.Exit((int)(compiler.ExitCode + Const.ExitCode.ShaderCompile));
         }
     }
-
-    private static object ConsoleLock = new();
 
     // private void Menu()
     // {

@@ -12,23 +12,17 @@ public class AssetManager : SystemBase, IInit
     {
     }
 
+    public AssetPack AssetPack { get; set; }
+
     /// <inheritdoc />
     public void Init()
     {
-        if (Ecs.TryGetPara<Config>(Const.Default.Config, out var config))
-        {
-            AssetPack = Serializer.Deserialize<AssetPack>(new ReadOnlyMemory<byte>(File.ReadAllBytes(config.AssetPath)));
-        }
+        if (Ecs.TryGetPara<Config>(Const.Default.Config, out var config)) AssetPack = Serializer.Deserialize<AssetPack>(new ReadOnlyMemory<byte>(File.ReadAllBytes(config.AssetPath)));
     }
-
-    public AssetPack AssetPack { get; set; }
 
     public byte[] GetAsset(AssetType assetType, string name)
     {
-        if (AssetPack.Assets.TryGetValue(assetType, out var assets))
-        {
-            return assets.GetAsset(name);
-        }
+        if (AssetPack.Assets.TryGetValue(assetType, out var assets)) return assets.GetAsset(name);
 
         ALog.Error($"Asset Not Found, {assetType}:{name}");
         return Array.Empty<byte>();

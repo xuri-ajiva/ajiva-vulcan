@@ -10,8 +10,8 @@ namespace ajiva.Factories;
 
 public class CubeFactory : EntityFactoryBase<Cube>
 {
-    private readonly MeshPool meshPool;
     private readonly Mesh<Vertex3D> mesh;
+    private readonly MeshPool meshPool;
 
     public CubeFactory(MeshPool meshPool)
     {
@@ -30,10 +30,7 @@ public class CubeFactory : EntityFactoryBase<Cube>
             renderMesh.Render = true;
             renderMesh.SetMesh(mesh);
         }
-        if (system.TryAttachNewComponentToEntity<TextureComponent>(cube, out var textureComponent))
-        {
-            textureComponent.TextureId = 1;
-        }
+        if (system.TryAttachNewComponentToEntity<TextureComponent>(cube, out var textureComponent)) textureComponent.TextureId = 1;
         if (system.TryAttachNewComponentToEntity<CollisionsComponent>(cube, out var colider))
         {
             if (system.TryAttachNewComponentToEntity<BoundingBox>(cube, out var boundingBox))

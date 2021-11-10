@@ -5,16 +5,11 @@ namespace ajiva.Worker;
 
 public class WorkerPool : SystemBase
 {
+    internal readonly object AvailableLock = new object();
+
+    private readonly ConcurrentQueue<WorkInfo> concurrentQueue = new ConcurrentQueue<WorkInfo>();
 
     private readonly Worker[] workers;
-
-    public Semaphore SyncSemaphore { get; } = new(0, int.MaxValue);
-    internal readonly object AvailableLock = new();
-    public string Name { get; set; }
-
-    private readonly ConcurrentQueue<WorkInfo> concurrentQueue = new();
-
-    public CancellationTokenSource CancellationTokenSource { get; }= new();
 
     public WorkerPool(int workerCount, string name, IAjivaEcs ecs) : base(ecs)
     {
@@ -22,13 +17,20 @@ public class WorkerPool : SystemBase
         workers = new Worker[workerCount];
 
         for (var i = 0; i < workerCount; i++)
-            workers[i] = new(this, i);
+            workers[i] = new Worker(this, i);
 
         //StartMonitoring(CancellationTokenSource.Token);
 
         for (var i = 0; i < workerCount; i++)
             workers[i].Start();
     }
+
+    public Semaphore SyncSemaphore { get; } = new Semaphore(0, int.MaxValue);
+    public string Name { get; set; }
+
+    public CancellationTokenSource CancellationTokenSource { get; } = new CancellationTokenSource();
+
+    public bool Enabled { get; set; }
 
     public void EnqueueWork(Work work, ErrorNotify errorNotify, string name, object? userParam = default)
     {
@@ -37,8 +39,6 @@ public class WorkerPool : SystemBase
 
         SyncSemaphore.Release(1);
     }
-
-    public bool Enabled { get; set; }
 
     public bool TryGetWork(out WorkInfo? workInfo)
     {

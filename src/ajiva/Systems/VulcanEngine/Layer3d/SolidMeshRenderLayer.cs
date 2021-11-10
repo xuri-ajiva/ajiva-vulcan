@@ -20,44 +20,8 @@ namespace ajiva.Systems.VulcanEngine.Layer3d;
 [Dependent(typeof(Ajiva3dLayerSystem))]
 public class SolidMeshRenderLayer : ComponentSystemBase<RenderMesh3D>, IInit, IUpdate, IAjivaLayerRenderSystem<UniformViewProj3d>
 {
+    private readonly object mainLock = new object();
     private MeshPool meshPool;
-    private readonly object mainLock = new();
-
-    public IAChangeAwareBackupBufferOfT<SolidUniformModel> Models { get; set; }
-
-    /// <inheritdoc />
-    public override RenderMesh3D RegisterComponent(IEntity entity, RenderMesh3D component)
-    {
-        if (!entity.TryGetComponent<Transform3d>(out var transform))
-            throw new ArgumentException("Entity needs and transform in order to be rendered as debug");
-
-        component.Models = Models;
-        transform.ChangingObserver.OnChanged += component.OnTransformChange;
-
-        if (entity.TryGetComponent<TextureComponent>(out var texture))
-        {
-            component.TextureComponent = texture;
-        }
-
-        //component.ChangingObserver.OnChanged += _ => Models.GetForChange((int)component.Id).Value.TextureSamplerId = component.Id;
-
-        var res = base.RegisterComponent(entity, component);
-        GraphicsDataChanged.Changed();
-        return res;
-    }
-
-    /// <inheritdoc />
-    public override RenderMesh3D UnRegisterComponent(IEntity entity, RenderMesh3D component)
-    {
-        if (!entity.TryGetComponent<Transform3d>(out var transform))
-            throw new ArgumentException("Entity needs and transform in order to be rendered as debug");
-
-        transform.ChangingObserver.OnChanged -= component.OnTransformChange;
-
-        var res = base.UnRegisterComponent(entity, component);
-        GraphicsDataChanged.Changed();
-        return res;
-    }
 
     /// <inheritdoc />
     public SolidMeshRenderLayer(IAjivaEcs ecs) : base(ecs)
@@ -65,9 +29,13 @@ public class SolidMeshRenderLayer : ComponentSystemBase<RenderMesh3D>, IInit, IU
         GraphicsDataChanged = new ChangingObserver<IAjivaLayerRenderSystem>(this);
     }
 
+    public IAChangeAwareBackupBufferOfT<SolidUniformModel> Models { get; set; }
+
     public PipelineDescriptorInfos[] PipelineDescriptorInfos { get; set; }
 
     public Shader MainShader { get; set; }
+
+    public List<RenderMesh3D> SnapShot { get; set; }
     public IAjivaLayer<UniformViewProj3d> AjivaLayer { get; set; }
 
     /// <inheritdoc />
@@ -87,16 +55,16 @@ public class SolidMeshRenderLayer : ComponentSystemBase<RenderMesh3D>, IInit, IU
         }
     }
 
-    public List<RenderMesh3D> SnapShot { get; set; }
-
     /// <inheritdoc />
-    public object SnapShotLock { get; } = new();
+    public object SnapShotLock { get; } = new object();
 
     /// <inheritdoc />
     public void CreateSnapShot()
     {
         lock (ComponentEntityMap)
+        {
             SnapShot = ComponentEntityMap.Keys.Where(x => x.Render).ToList();
+        }
     }
 
     /// <inheritdoc />
@@ -110,10 +78,7 @@ public class SolidMeshRenderLayer : ComponentSystemBase<RenderMesh3D>, IInit, IU
     {
         var res = GraphicsPipelineLayerCreator.Default(renderPassLayer.Parent, renderPassLayer, Ecs.GetSystem<DeviceSystem>(), true, Vertex3D.GetBindingDescription(), Vertex3D.GetAttributeDescriptions(), MainShader, PipelineDescriptorInfos);
 
-        foreach (var entity in ComponentEntityMap)
-        {
-            entity.Key.ChangingObserver.Changed();
-        }
+        foreach (var entity in ComponentEntityMap) entity.Key.ChangingObserver.Changed();
 
         return res;
     }
@@ -141,6 +106,39 @@ public class SolidMeshRenderLayer : ComponentSystemBase<RenderMesh3D>, IInit, IU
     public void Update(UpdateInfo delta)
     {
         lock (mainLock)
+        {
             Models.CommitChanges();
+        }
+    }
+
+    /// <inheritdoc />
+    public override RenderMesh3D RegisterComponent(IEntity entity, RenderMesh3D component)
+    {
+        if (!entity.TryGetComponent<Transform3d>(out var transform))
+            throw new ArgumentException("Entity needs and transform in order to be rendered as debug");
+
+        component.Models = Models;
+        transform.ChangingObserver.OnChanged += component.OnTransformChange;
+
+        if (entity.TryGetComponent<TextureComponent>(out var texture)) component.TextureComponent = texture;
+
+        //component.ChangingObserver.OnChanged += _ => Models.GetForChange((int)component.Id).Value.TextureSamplerId = component.Id;
+
+        var res = base.RegisterComponent(entity, component);
+        GraphicsDataChanged.Changed();
+        return res;
+    }
+
+    /// <inheritdoc />
+    public override RenderMesh3D UnRegisterComponent(IEntity entity, RenderMesh3D component)
+    {
+        if (!entity.TryGetComponent<Transform3d>(out var transform))
+            throw new ArgumentException("Entity needs and transform in order to be rendered as debug");
+
+        transform.ChangingObserver.OnChanged -= component.OnTransformChange;
+
+        var res = base.UnRegisterComponent(entity, component);
+        GraphicsDataChanged.Changed();
+        return res;
     }
 }

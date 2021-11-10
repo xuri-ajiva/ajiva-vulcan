@@ -9,16 +9,13 @@ public static class RenderPassLayerCreator
 {
     public static RenderPassLayer DefaultChecked(SwapChainLayer swapChainLayer, DeviceSystem deviceSystem, AImage depthImage, Format depthFormat, ClearValue[] clearValues)
     {
-        if (deviceSystem.Device is null || deviceSystem.PhysicalDevice is null)
-        {
-            throw new NotInitializedException(nameof(deviceSystem), deviceSystem);
-        }
+        if (deviceSystem.Device is null || deviceSystem.PhysicalDevice is null) throw new NotInitializedException(nameof(deviceSystem), deviceSystem);
         return Default(swapChainLayer, deviceSystem, depthImage, depthFormat, clearValues);
     }
 
     public static RenderPassLayer Default(SwapChainLayer swapChainLayer, DeviceSystem deviceSystem, AImage depthImage, Format depthFormat, ClearValue[] clearValues)
     {
-        RenderPass renderPass = deviceSystem.Device!.CreateRenderPass(new[]
+        var renderPass = deviceSystem.Device!.CreateRenderPass(new[]
             {
                 new AttachmentDescription(AttachmentDescriptionFlags.None,
                     swapChainLayer.SwapChainFormat,
@@ -67,7 +64,7 @@ public static class RenderPassLayerCreator
                     SourceAccessMask = AccessFlags.ColorAttachmentRead | AccessFlags.ColorAttachmentWrite | AccessFlags.DepthStencilAttachmentRead,
                     DestinationStageMask = PipelineStageFlags.BottomOfPipe,
                     DestinationAccessMask = AccessFlags.MemoryRead
-                },
+                }
             });
 
         Framebuffer MakeFrameBuffer(ImageView imageView)
@@ -79,7 +76,7 @@ public static class RenderPassLayerCreator
                 1);
         }
 
-        Framebuffer[] frameBuffers = swapChainLayer.SwapChainImages.Select(x => MakeFrameBuffer(x.View!)).ToArray();
+        var frameBuffers = swapChainLayer.SwapChainImages.Select(x => MakeFrameBuffer(x.View!)).ToArray();
 
         var renderPassLayer = new RenderPassLayer(swapChainLayer, renderPass, frameBuffers, clearValues);
         swapChainLayer.AddChild(renderPassLayer);
@@ -88,7 +85,7 @@ public static class RenderPassLayerCreator
 
     public static RenderPassLayer NoDepth(SwapChainLayer swapChainLayer, DeviceSystem deviceSystem, ClearValue[] clearValues)
     {
-        RenderPass renderPass = deviceSystem.Device!.CreateRenderPass(new[]
+        var renderPass = deviceSystem.Device!.CreateRenderPass(new[]
             {
                 new AttachmentDescription(AttachmentDescriptionFlags.None,
                     swapChainLayer.SwapChainFormat,
@@ -98,7 +95,7 @@ public static class RenderPassLayerCreator
                     AttachmentLoadOp.DontCare,
                     AttachmentStoreOp.DontCare,
                     ImageLayout.General,
-                    ImageLayout.PresentSource),
+                    ImageLayout.PresentSource)
             },
             new SubpassDescription
             {
@@ -127,7 +124,7 @@ public static class RenderPassLayerCreator
                     SourceAccessMask = AccessFlags.ColorAttachmentRead | AccessFlags.ColorAttachmentWrite,
                     DestinationStageMask = PipelineStageFlags.BottomOfPipe,
                     DestinationAccessMask = AccessFlags.MemoryRead
-                },
+                }
             });
 
         Framebuffer MakeFrameBuffer(ImageView imageView)
@@ -139,7 +136,7 @@ public static class RenderPassLayerCreator
                 1);
         }
 
-        Framebuffer[] frameBuffers = swapChainLayer.SwapChainImages.Select(x => MakeFrameBuffer(x.View!)).ToArray();
+        var frameBuffers = swapChainLayer.SwapChainImages.Select(x => MakeFrameBuffer(x.View!)).ToArray();
 
         var renderPassLayer = new RenderPassLayer(swapChainLayer, renderPass, frameBuffers, clearValues);
         swapChainLayer.AddChild(renderPassLayer);

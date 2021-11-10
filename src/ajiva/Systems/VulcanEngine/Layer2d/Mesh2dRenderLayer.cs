@@ -21,35 +21,8 @@ namespace ajiva.Systems.VulcanEngine.Layer2d;
 [Dependent(typeof(Ajiva3dLayerSystem))]
 public class Mesh2dRenderLayer : ComponentSystemBase<RenderMesh2D>, IInit, IUpdate, IAjivaLayerRenderSystem<UniformLayer2d>
 {
+    private readonly object mainLock = new object();
     private MeshPool meshPool;
-    private readonly object mainLock = new();
-
-    public IAChangeAwareBackupBufferOfT<SolidUniformModel2d> Models { get; set; }
-
-    /// <inheritdoc />
-    public override RenderMesh2D RegisterComponent(IEntity entity, RenderMesh2D component)
-    {
-        if (!entity.TryGetComponent<Transform2d>(out var transform))
-            throw new ArgumentException("Entity needs and transform in order to be rendered as debug");
-
-        component.Models = Models;
-        transform.ChangingObserver.OnChanged += component.OnTransformChange;
-
-        var res = base.RegisterComponent(entity, component);
-        GraphicsDataChanged.Changed();
-        return res;
-    }
-
-    /// <inheritdoc />
-    public override RenderMesh2D UnRegisterComponent(IEntity entity, RenderMesh2D component)
-    {
-        if (!entity.TryGetComponent<Transform2d>(out var transform))
-            throw new ArgumentException("Entity needs and transform in order to be rendered as debug");
-
-        transform.ChangingObserver.OnChanged -= component.OnTransformChange;
-
-        return base.UnRegisterComponent(entity, component);
-    }
 
     /// <inheritdoc />
     public Mesh2dRenderLayer(IAjivaEcs ecs) : base(ecs)
@@ -57,9 +30,13 @@ public class Mesh2dRenderLayer : ComponentSystemBase<RenderMesh2D>, IInit, IUpda
         GraphicsDataChanged = new ChangingObserver<IAjivaLayerRenderSystem>(this);
     }
 
+    public IAChangeAwareBackupBufferOfT<SolidUniformModel2d> Models { get; set; }
+
     public PipelineDescriptorInfos[] PipelineDescriptorInfos { get; set; }
 
     public Shader MainShader { get; set; }
+
+    public List<RenderMesh2D> SnapShot { get; set; }
     public IAjivaLayer<UniformLayer2d> AjivaLayer { get; set; }
 
     /// <inheritdoc />
@@ -78,16 +55,16 @@ public class Mesh2dRenderLayer : ComponentSystemBase<RenderMesh2D>, IInit, IUpda
         }
     }
 
-    public List<RenderMesh2D> SnapShot { get; set; }
-
     /// <inheritdoc />
-    public object SnapShotLock { get; } = new();
+    public object SnapShotLock { get; } = new object();
 
     /// <inheritdoc />
     public void CreateSnapShot()
     {
         lock (ComponentEntityMap)
+        {
             SnapShot = ComponentEntityMap.Keys.Where(x => x.Render).ToList();
+        }
     }
 
     /// <inheritdoc />
@@ -101,10 +78,7 @@ public class Mesh2dRenderLayer : ComponentSystemBase<RenderMesh2D>, IInit, IUpda
     {
         var res = GraphicsPipelineLayerCreator.Default(renderPassLayer.Parent, renderPassLayer, Ecs.GetSystem<DeviceSystem>(), true, Vertex2D.GetBindingDescription(), Vertex2D.GetAttributeDescriptions(), MainShader, PipelineDescriptorInfos);
 
-        foreach (var entity in ComponentEntityMap)
-        {
-            entity.Key.ChangingObserver.Changed();
-        }
+        foreach (var entity in ComponentEntityMap) entity.Key.ChangingObserver.Changed();
 
         return res;
     }
@@ -132,6 +106,33 @@ public class Mesh2dRenderLayer : ComponentSystemBase<RenderMesh2D>, IInit, IUpda
     public void Update(UpdateInfo delta)
     {
         lock (mainLock)
+        {
             Models.CommitChanges();
+        }
+    }
+
+    /// <inheritdoc />
+    public override RenderMesh2D RegisterComponent(IEntity entity, RenderMesh2D component)
+    {
+        if (!entity.TryGetComponent<Transform2d>(out var transform))
+            throw new ArgumentException("Entity needs and transform in order to be rendered as debug");
+
+        component.Models = Models;
+        transform.ChangingObserver.OnChanged += component.OnTransformChange;
+
+        var res = base.RegisterComponent(entity, component);
+        GraphicsDataChanged.Changed();
+        return res;
+    }
+
+    /// <inheritdoc />
+    public override RenderMesh2D UnRegisterComponent(IEntity entity, RenderMesh2D component)
+    {
+        if (!entity.TryGetComponent<Transform2d>(out var transform))
+            throw new ArgumentException("Entity needs and transform in order to be rendered as debug");
+
+        transform.ChangingObserver.OnChanged -= component.OnTransformChange;
+
+        return base.UnRegisterComponent(entity, component);
     }
 }

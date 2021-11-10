@@ -12,7 +12,7 @@ public class MeshPool
         this.deviceSystem = deviceSystem;
     }
 
-    public Dictionary<uint, IMesh> Meshes { get; } = new();
+    public Dictionary<uint, IMesh> Meshes { get; } = new Dictionary<uint, IMesh>();
 
     public RenderInstanceReadyMeshPool Use()
     {
@@ -32,6 +32,7 @@ public class MeshPool
 }
 public class RenderInstanceReadyMeshPool : IRenderMeshPool
 {
+    private static readonly object Lock = new object();
     private readonly MeshPool meshPool;
 
     public RenderInstanceReadyMeshPool(MeshPool meshPool)
@@ -45,7 +46,7 @@ public class RenderInstanceReadyMeshPool : IRenderMeshPool
     /// <inheritdoc />
     public void DrawMesh(CommandBuffer buffer, uint meshId)
     {
-        IMesh mesh = meshPool.Meshes[meshId]; // todo: check if exists and take error mesh
+        var mesh = meshPool.Meshes[meshId]; // todo: check if exists and take error mesh
 
         if (meshId != LastMeshId)
         {
@@ -57,8 +58,6 @@ public class RenderInstanceReadyMeshPool : IRenderMeshPool
             mesh.DrawIndexed(buffer);
         }
     }
-
-    private static readonly object Lock = new();
 
     /// <inheritdoc />
     public void Reset()

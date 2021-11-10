@@ -11,24 +11,17 @@ namespace ajiva.Ecs;
 
 public class AjivaEcs : DisposingLogger, IAjivaEcs
 {
+    private static readonly Type Me = typeof(AjivaEcs);
+
+    private readonly object @lock = new object();
     private readonly bool multiThreading;
+    private uint currentEntityId;
 
     public AjivaEcs(bool multiThreading)
     {
         this.multiThreading = multiThreading;
     }
 
-    /// <inheritdoc />
-    public long EntitiesCount => Entities.Count;
-
-    /// <inheritdoc />
-    public long ComponentsCount => 0; /* Entities.Sum(x => x.Value.Components.Count);*/ //sequence failed
-
-    /// <inheritdoc />
-    public bool Available { get; private set; }
-
-    private readonly object @lock = new object();
-    private uint currentEntityId;
     public Dictionary<uint, IEntity> Entities { get; } = new Dictionary<uint, IEntity>();
 
     public Dictionary<Type, IEntityFactory> Factories { get; } = new();
@@ -40,7 +33,15 @@ public class AjivaEcs : DisposingLogger, IAjivaEcs
     public Dictionary<Type, object> Instances { get; } = new();
 
     public Dictionary<string, object> Params { get; } = new Dictionary<string, object>();
-    private static readonly Type Me = typeof(AjivaEcs);
+
+    /// <inheritdoc />
+    public long EntitiesCount => Entities.Count;
+
+    /// <inheritdoc />
+    public long ComponentsCount => 0; /* Entities.Sum(x => x.Value.Components.Count);*/ //sequence failed
+
+    /// <inheritdoc />
+    public bool Available { get; private set; }
 
 #region Add
 
@@ -145,7 +146,7 @@ public class AjivaEcs : DisposingLogger, IAjivaEcs
     /// <inheritdoc />
     public TS GetComponentSystemUnSave<TS>() where TS : IComponentSystem
     {
-        if (typeof(TS).BaseType is {} baseType and not null)
+        if (typeof(TS).BaseType is { } baseType and not null)
             return (TS)ComponentSystems[baseType.GenericTypeArguments.First()];
         throw new ArgumentException("BaseType Is Null");
     }

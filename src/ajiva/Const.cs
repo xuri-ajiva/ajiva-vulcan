@@ -4,7 +4,7 @@ internal static class Const
 {
     public enum ExitCode : long
     {
-        ShaderCompile = 10000,
+        ShaderCompile = 10000
     }
     public static class Default
     {
@@ -12,7 +12,6 @@ internal static class Const
 
         public const string AssetsFile = AssetsPath + "/default.asset";
         public const string AssetsPath = "Assets";
-
 
         public const string VertexShaderName = "vert.spv";
         public const string FragmentShaderName = "frag.spv";

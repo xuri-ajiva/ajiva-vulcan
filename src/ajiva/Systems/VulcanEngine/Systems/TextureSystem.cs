@@ -10,18 +10,25 @@ namespace ajiva.Systems.VulcanEngine.Systems;
 [Dependent(typeof(ImageSystem), typeof(AssetManager))]
 public class TextureSystem : ComponentSystemBase<TextureComponent>, IInit
 {
-    private ShaderConfig config;
+    private readonly ShaderConfig config;
+
     public TextureSystem(IAjivaEcs ecs) : base(ecs)
     {
-        this.config = ecs.TryGetPara<Config>(Const.Default.Config, out var _config) ? _config.ShaderConfig : Config.Default.ShaderConfig;
+        config = ecs.TryGetPara<Config>(Const.Default.Config, out var _config) ? _config.ShaderConfig : Config.Default.ShaderConfig;
         INextId<ATexture>.MaxId = (uint)config.TEXTURE_SAMPLER_COUNT;
         TextureSamplerImageViews = new DescriptorImageInfo[config.TEXTURE_SAMPLER_COUNT];
-        Textures = new();
+        Textures = new List<ATexture>();
     }
 
     public ATexture? Default { get; private set; }
     private List<ATexture> Textures { get; }
     public DescriptorImageInfo[] TextureSamplerImageViews { get; }
+
+    /// <inheritdoc />
+    public void Init()
+    {
+        EnsureDefaultImagesExists(Ecs);
+    }
 
     public void AddAndMapTextureToDescriptor(ATexture texture)
     {
@@ -41,21 +48,15 @@ public class TextureSystem : ComponentSystemBase<TextureComponent>, IInit
     {
         return new TextureComponent
         {
-            TextureId = 0,
+            TextureId = 0
         };
     }
 
     /// <inheritdoc />
     protected override void ReleaseUnmanagedResources(bool disposing)
     {
-        for (var i = 0; i < config.TEXTURE_SAMPLER_COUNT; i++)
-        {
-            TextureSamplerImageViews[i] = default;
-        }
-        foreach (var texture in Textures)
-        {
-            texture.Dispose();
-        }
+        for (var i = 0; i < config.TEXTURE_SAMPLER_COUNT; i++) TextureSamplerImageViews[i] = default;
+        foreach (var texture in Textures) texture.Dispose();
     }
 
     public void EnsureDefaultImagesExists(IAjivaEcs ecs)
@@ -65,10 +66,7 @@ public class TextureSystem : ComponentSystemBase<TextureComponent>, IInit
         Default = ATexture.FromFile(ecs, "Logos:logo.png");
         Textures.Add(Default);
 
-        for (var i = 0; i < config.TEXTURE_SAMPLER_COUNT; i++)
-        {
-            TextureSamplerImageViews[i] = Default.DescriptorImageInfo;
-        }
+        for (var i = 0; i < config.TEXTURE_SAMPLER_COUNT; i++) TextureSamplerImageViews[i] = Default.DescriptorImageInfo;
 
         /* todo move int hot load
          AddAndMapTextureToDescriptor(new(1)
@@ -76,11 +74,5 @@ public class TextureSystem : ComponentSystemBase<TextureComponent>, IInit
             Image = CreateTextureImageFromFile("logo2.png"),
             Sampler = CreateTextureSampler()
         });*/
-    }
-
-    /// <inheritdoc />
-    public void Init()
-    {
-        EnsureDefaultImagesExists(Ecs);
     }
 }

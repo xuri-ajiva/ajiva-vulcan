@@ -12,27 +12,17 @@ public struct QueueFamilyIndices
     {
         get
         {
-            if (GraphicsFamily.HasValue)
-            {
-                yield return GraphicsFamily.Value;
-            }
+            if (GraphicsFamily.HasValue) yield return GraphicsFamily.Value;
 
-            if (PresentFamily.HasValue && PresentFamily != GraphicsFamily)
-            {
-                yield return PresentFamily.Value;
-            }
+            if (PresentFamily.HasValue && PresentFamily != GraphicsFamily) yield return PresentFamily.Value;
 
-            if (TransferFamily.HasValue && TransferFamily != PresentFamily && TransferFamily != GraphicsFamily)
-            {
-                yield return TransferFamily.Value;
-            }
+            if (TransferFamily.HasValue && TransferFamily != PresentFamily && TransferFamily != GraphicsFamily) yield return TransferFamily.Value;
         }
     }
 
     public bool IsComplete
     {
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        get =>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)] get =>
             GraphicsFamily.HasValue
             && PresentFamily.HasValue
             && TransferFamily.HasValue;

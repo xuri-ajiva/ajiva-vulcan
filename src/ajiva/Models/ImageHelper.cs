@@ -4,31 +4,6 @@ namespace ajiva.Models;
 
 internal static class ImageHelper
 {
-    [StructLayout(LayoutKind.Sequential)]
-    public struct Rgba32
-    {
-        public byte r;
-        public byte g;
-        public byte b;
-        public byte a;
-    }
-    [StructLayout(LayoutKind.Sequential)]
-    public struct Argb32
-    {
-        public byte b;
-        public byte g;
-        public byte r;
-        public byte a;
-    }
-    [StructLayout(LayoutKind.Sequential)]
-    public readonly struct Argb32R
-    {
-        public readonly byte b;
-        public readonly byte g;
-        public readonly byte r;
-        public readonly byte a;
-    }
-
     public static unsafe void ArgbCopyMap(Argb32R* from, Rgba32* to, uint pixelCount)
     {
         for (var i = 0; i < pixelCount; i++)
@@ -55,5 +30,30 @@ internal static class ImageHelper
             to += sizeof(int);
             from += sizeof(int);
         }
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    public struct Rgba32
+    {
+        public byte r;
+        public byte g;
+        public byte b;
+        public byte a;
+    }
+    [StructLayout(LayoutKind.Sequential)]
+    public struct Argb32
+    {
+        public byte b;
+        public byte g;
+        public byte r;
+        public byte a;
+    }
+    [StructLayout(LayoutKind.Sequential)]
+    public readonly struct Argb32R
+    {
+        public readonly byte b;
+        public readonly byte g;
+        public readonly byte r;
+        public readonly byte a;
     }
 }

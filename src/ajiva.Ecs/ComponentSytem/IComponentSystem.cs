@@ -7,8 +7,6 @@ public interface IComponentSystem : ISystem
 {
     Type ComponentType { get; }
 }
-    
-    
 public interface IComponentSystem<T> : IComponentSystem where T : class, IComponent
 {
     Dictionary<T, IEntity> ComponentEntityMap { get; }

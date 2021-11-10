@@ -7,23 +7,25 @@ namespace ajiva.Systems.VulcanEngine.Layer;
 public interface IAjivaLayerRenderSystem
 {
     public IChangingObserver<IAjivaLayerRenderSystem> GraphicsDataChanged { get; }
+
+    public Reactive<bool> Render { get; }
+
+    /// <summary>
+    ///     to lock for snapshot creation usage / deletion
+    /// </summary>
+    object SnapShotLock { get; }
+
     void DrawComponents(RenderLayerGuard renderGuard, CancellationToken cancellationToken);
 
     GraphicsPipelineLayer CreateGraphicsPipelineLayer(RenderPassLayer renderPassLayer);
 
-    public Reactive<bool> Render { get; }
-        
     /// <summary>
-    /// to lock for snapshot creation usage / deletion
-    /// </summary>
-    object SnapShotLock { get;  }
-        
-    /// <summary>
-    /// Should create an snapshot of all existing objects
+    ///     Should create an snapshot of all existing objects
     /// </summary>
     void CreateSnapShot();
+
     /// <summary>
-    /// Should delete the snapshot of all existing objects
+    ///     Should delete the snapshot of all existing objects
     /// </summary>
     void ClearSnapShot();
 }

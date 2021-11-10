@@ -27,7 +27,7 @@ public struct Vertex3D
 
     public static VertexInputBindingDescription GetBindingDescription()
     {
-        return new()
+        return new VertexInputBindingDescription
         {
             Binding = 0,
             Stride = (uint)Marshal.SizeOf<Vertex3D>(),
@@ -37,16 +37,16 @@ public struct Vertex3D
 
     public static VertexInputAttributeDescription[] GetAttributeDescriptions()
     {
-        return new VertexInputAttributeDescription[]
+        return new[]
         {
-            new()
+            new VertexInputAttributeDescription
             {
                 Binding = 0,
                 Location = 0,
                 Format = Format.R32G32B32SFloat,
                 Offset = (uint)Marshal.OffsetOf<Vertex3D>(nameof(Position))
             },
-            new()
+            new VertexInputAttributeDescription
             {
                 Binding = 0,
                 Location = 1,

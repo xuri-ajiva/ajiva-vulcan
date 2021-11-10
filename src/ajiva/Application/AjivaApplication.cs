@@ -25,9 +25,16 @@ namespace ajiva.Application;
 
 public class AjivaApplication : DisposingLogger
 {
-    private bool Running { get; set; }
+    private const int size = 100;
+    private const int posRange = 10;
+    private const float scale = 0.7f;
 
     private readonly IAjivaEcs entityComponentSystem = new AjivaEcs(false);
+    private DebugReportCallback debugReportCallback;
+    private readonly Random r = new Random();
+
+    private Instance vulcanInstance;
+    private bool Running { get; set; }
 
     private bool FrameLoop(UpdateInfo info)
     {
@@ -46,9 +53,6 @@ public class AjivaApplication : DisposingLogger
         RunHelper.RunDelta(FrameLoop, TimeSpan.MaxValue);
         Running = false;
     }
-
-    private Instance vulcanInstance;
-    private DebugReportCallback debugReportCallback;
 
     public void Init()
     {
@@ -114,13 +118,7 @@ public class AjivaApplication : DisposingLogger
                 rectMesh.SetMesh(MeshPrefab.Rect);
                 rectMesh.Render = true;
             }
-            if (rect.TryGetComponent<Transform2d>(out var rectTrans))
-            {
-                rectTrans.Scale = new vec2(.05f);
-            }
-        }
-        else
-        {
+            if (rect.TryGetComponent<Transform2d>(out var rectTrans)) rectTrans.Scale = new vec2(.05f);
         }
 
         for (var i = 0; i < 10; i++)
@@ -128,16 +126,11 @@ public class AjivaApplication : DisposingLogger
             if (!entityComponentSystem.TryCreateEntity<Cube>(out var cube)) continue;
             if (cube.TryGetComponent<Transform3d>(out var trans))
             {
-                trans.Position = new(r.Next(-posRange, posRange), r.Next(-posRange, posRange), r.Next(-posRange, posRange));
-                trans.Rotation = new(r.Next(0, 100), r.Next(0, 100), r.Next(0, 100));
+                trans.Position = new vec3(r.Next(-posRange, posRange), r.Next(-posRange, posRange), r.Next(-posRange, posRange));
+                trans.Rotation = new vec3(r.Next(0, 100), r.Next(0, 100), r.Next(0, 100));
             }
         }
     }
-
-    const int size = 100;
-    const int posRange = 10;
-    const float scale = 0.7f;
-    Random r = new();
 
     private void WindowOnOnKeyEvent(object? sender, Key key, int scancode, InputAction inputaction, Modifier modifiers)
     {
@@ -155,7 +148,8 @@ public class AjivaApplication : DisposingLogger
             {
                 using var change = entityComponentSystem.GetSystem<GraphicsSystem>().ChangingObserver.BeginBigChange();
 
-                var res = Parallel.For(0, rep, new ParallelOptions() { MaxDegreeOfParallelism = Environment.ProcessorCount / 2 }, i =>
+                var res = Parallel.For(0, rep, new ParallelOptions
+                    { MaxDegreeOfParallelism = Environment.ProcessorCount / 2 }, i =>
                 {
                     for (var j = 0; j < rep; j++)
                     {
@@ -163,15 +157,12 @@ public class AjivaApplication : DisposingLogger
 
                         if (!cube.TryGetComponent<Transform3d>(out var trans)) continue;
 
-                        trans.Position = new(i * sz, -index * 2, j * sz);
-                        trans.Rotation = new(i * 90, j * 90, 0);
-                        trans.Scale = new(sz / 2);
+                        trans.Position = new vec3(i * sz, -index * 2, j * sz);
+                        trans.Rotation = new vec3(i * 90, j * 90, 0);
+                        trans.Scale = new vec3(sz / 2);
                     }
                 });
-                while (!res.IsCompleted)
-                {
-                    Task.Delay(10);
-                }
+                while (!res.IsCompleted) Task.Delay(10);
 
                 change.Dispose();
                 return WorkResult.Succeeded;
@@ -188,7 +179,7 @@ public class AjivaApplication : DisposingLogger
                 s1.Render.Value = !s1.Render;
                 break;
             case Key.F2:
-                SolidMeshRenderLayer s2 = entityComponentSystem.GetComponentSystemUnSave<SolidMeshRenderLayer>();
+                var s2 = entityComponentSystem.GetComponentSystemUnSave<SolidMeshRenderLayer>();
                 s2.Render.Value = !s2.Render;
                 break;
 
@@ -208,8 +199,8 @@ public class AjivaApplication : DisposingLogger
 
                         if (cube.TryGetComponent<Transform3d>(out var trans))
                         {
-                            trans.Position = new(r.Next(-posRange, posRange), r.Next(-posRange, posRange), r.Next(-posRange, posRange));
-                            trans.Rotation = new(r.Next(0, 100), r.Next(0, 100), r.Next(0, 100));
+                            trans.Position = new vec3(r.Next(-posRange, posRange), r.Next(-posRange, posRange), r.Next(-posRange, posRange));
+                            trans.Rotation = new vec3(r.Next(0, 100), r.Next(0, 100), r.Next(0, 100));
                         }
                     }
                     change.Dispose();

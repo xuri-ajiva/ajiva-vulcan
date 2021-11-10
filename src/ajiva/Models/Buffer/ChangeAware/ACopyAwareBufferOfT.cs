@@ -7,27 +7,27 @@ namespace ajiva.Models.Buffer.ChangeAware;
 
 public class AChangeAwareBufferOfT<T> : DisposingLogger, IAChangeAwareBufferOfT<T> where T : struct
 {
+    private int currentMax;
+
     public AChangeAwareBufferOfT(int length, DeviceSystem deviceSystem, BufferUsageFlags usage, MemoryPropertyFlags flags)
     {
         Length = length;
-        Changed = new(length);
+        Changed = new BitArray(length);
         Value = new T[length];
         SizeOfT = UsVc<T>.Size;
-        Buffer = new((uint)(SizeOfT * length));
+        Buffer = new ABuffer((uint)(SizeOfT * length));
         Buffer.Create(deviceSystem, usage, flags);
     }
 
     public AChangeAwareBufferOfT(T[] value, DeviceSystem deviceSystem, BufferUsageFlags usage, MemoryPropertyFlags flags)
     {
         Length = value.Length;
-        Changed = new(value.Length);
+        Changed = new BitArray(value.Length);
         Value = value;
         SizeOfT = UsVc<T>.Size;
-        Buffer = new((uint)(SizeOfT * Length));
+        Buffer = new ABuffer((uint)(SizeOfT * Length));
         Buffer.Create(deviceSystem, usage, flags);
     }
-
-    private int currentMax;
 
     /// <inheritdoc />
     public int Length { get; }
@@ -50,10 +50,8 @@ public class AChangeAwareBufferOfT<T> : DisposingLogger, IAChangeAwareBufferOfT<
         if (index > currentMax)
         {
             if (index > Length)
-            {
                 //todo resize array if to small
                 throw new IndexOutOfRangeException("Currently not resizable!");
-            }
             currentMax = index;
         }
         Value[index] = value;
@@ -65,12 +63,8 @@ public class AChangeAwareBufferOfT<T> : DisposingLogger, IAChangeAwareBufferOfT<
     {
         using var memPtr = Buffer.MapDisposer();
         for (var i = 0; i < currentMax; i++)
-        {
             if (Changed[i])
-            {
                 Marshal.StructureToPtr(Value[i], memPtr.Ptr + SizeOfT * i, true);
-            }
-        }
         memPtr.Dispose();
         Changed.SetAll(false);
     }

@@ -6,11 +6,9 @@ namespace ajiva.Components.RenderAble;
 
 public class Mesh<T> : DisposingLogger, IMesh where T : struct
 {
-    public readonly T[] VerticesData;
     public readonly ushort[] IndicesData;
+    public readonly T[] VerticesData;
     private DeviceSystem? deviceComponent;
-    public BufferOfT<T>? Vertices { get; protected set; }
-    public BufferOfT<ushort>? Indeces { get; protected set; }
 
     public Mesh(T[] verticesData, ushort[] indicesData)
     {
@@ -19,6 +17,9 @@ public class Mesh<T> : DisposingLogger, IMesh where T : struct
 
         MeshId = INextId<IMesh>.Next();
     }
+
+    public BufferOfT<T>? Vertices { get; protected set; }
+    public BufferOfT<ushort>? Indeces { get; protected set; }
 
     /// <inheritdoc />
     public uint MeshId { get; set; }
@@ -30,28 +31,6 @@ public class Mesh<T> : DisposingLogger, IMesh where T : struct
         deviceComponent = system;
         Vertices = CreateShaderBuffer(VerticesData, BufferUsageFlags.VertexBuffer);
         Indeces = CreateShaderBuffer(IndicesData, BufferUsageFlags.IndexBuffer);
-    }
-
-    private BufferOfT<TV> CreateShaderBuffer<TV>(TV[] val, BufferUsageFlags bufferUsage) where TV : struct
-    {
-        ATrace.Assert(deviceComponent != null, nameof(deviceComponent) + " != null");
-
-        BufferOfT<TV> aBuffer = new(val);
-        var copyBuffer = CopyBuffer<TV>.CreateCopyBufferOnDevice(val, deviceComponent);
-
-        aBuffer.Create(deviceComponent, BufferUsageFlags.TransferDestination | bufferUsage, MemoryPropertyFlags.DeviceLocal);
-
-        copyBuffer.CopyTo(aBuffer, deviceComponent);
-        copyBuffer.Dispose();
-        return aBuffer;
-    }
-
-    /// <inheritdoc />
-    protected override void ReleaseUnmanagedResources(bool disposing)
-    {
-        Vertices?.Dispose();
-        Indeces?.Dispose();
-        INextId<IMesh>.Remove(MeshId);
     }
 
     /// <inheritdoc />
@@ -70,8 +49,30 @@ public class Mesh<T> : DisposingLogger, IMesh where T : struct
         commandBuffer.DrawIndexed((uint)Indeces.Length, 1, 0, 0, 0);
     }
 
+    private BufferOfT<TV> CreateShaderBuffer<TV>(TV[] val, BufferUsageFlags bufferUsage) where TV : struct
+    {
+        ATrace.Assert(deviceComponent != null, nameof(deviceComponent) + " != null");
+
+        BufferOfT<TV> aBuffer = new BufferOfT<TV>(val);
+        var copyBuffer = CopyBuffer<TV>.CreateCopyBufferOnDevice(val, deviceComponent);
+
+        aBuffer.Create(deviceComponent, BufferUsageFlags.TransferDestination | bufferUsage, MemoryPropertyFlags.DeviceLocal);
+
+        copyBuffer.CopyTo(aBuffer, deviceComponent);
+        copyBuffer.Dispose();
+        return aBuffer;
+    }
+
+    /// <inheritdoc />
+    protected override void ReleaseUnmanagedResources(bool disposing)
+    {
+        Vertices?.Dispose();
+        Indeces?.Dispose();
+        INextId<IMesh>.Remove(MeshId);
+    }
+
     public Mesh<T> Clone()
     {
-        return new(VerticesData.ToArray(), IndicesData.ToArray());
+        return new Mesh<T>(VerticesData.ToArray(), IndicesData.ToArray());
     }
 }

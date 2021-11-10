@@ -15,13 +15,6 @@ public abstract class RenderMeshIdUnique<T> : ChangingComponentBase, IRenderMesh
     }
 
     /// <inheritdoc />
-    protected override void ReleaseUnmanagedResources(bool disposing)
-    {
-        base.ReleaseUnmanagedResources(disposing);
-        INextId<T>.Remove(Id);
-    }
-
-    /// <inheritdoc />
     public virtual bool Render
     {
         get => render;
@@ -40,5 +33,12 @@ public abstract class RenderMeshIdUnique<T> : ChangingComponentBase, IRenderMesh
     {
         get => id;
         set => ChangingObserver.RaiseAndSetIfChanged(ref id, value);
+    }
+
+    /// <inheritdoc />
+    protected override void ReleaseUnmanagedResources(bool disposing)
+    {
+        base.ReleaseUnmanagedResources(disposing);
+        INextId<T>.Remove(Id);
     }
 }

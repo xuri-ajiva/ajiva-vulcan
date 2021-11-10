@@ -21,6 +21,17 @@ public class Transform2d : DisposingLogger, IComponent, ITransform<vec2, mat4>
     public Transform2d(vec2 position) : this(position, vec2.Zero) { }
     public Transform2d() : this(vec2.Zero) { }
 
+    public mat4 ScaleMat => mat4.Scale(Scale.x, scale.y, 1);
+    public mat4 RotationMat => mat4.RotateX(glm.Radians(Rotation.x)) * mat4.RotateY(glm.Radians(Rotation.y));
+    public mat4 PositionMat => mat4.Translate(Position.x, position.y, 0);
+
+    public mat4 ModelMat => PositionMat * RotationMat * ScaleMat;
+
+    public override string ToString()
+    {
+        return $"{nameof(Position)}: {Position}, {nameof(Rotation)}: {Rotation}, {nameof(Scale)}: {Scale}";
+    }
+
 #region propatys
 
     public vec2 Position
@@ -64,15 +75,4 @@ public class Transform2d : DisposingLogger, IComponent, ITransform<vec2, mat4>
     }
 
 #endregion
-
-    public mat4 ScaleMat => mat4.Scale(Scale.x, scale.y, 1);
-    public mat4 RotationMat => mat4.RotateX(glm.Radians(Rotation.x)) * mat4.RotateY(glm.Radians(Rotation.y));
-    public mat4 PositionMat => mat4.Translate(Position.x, position.y, 0);
-
-    public mat4 ModelMat => PositionMat * RotationMat * ScaleMat;
-
-    public override string ToString()
-    {
-        return $"{nameof(Position)}: {Position}, {nameof(Rotation)}: {Rotation}, {nameof(Scale)}: {Scale}";
-    }
 }

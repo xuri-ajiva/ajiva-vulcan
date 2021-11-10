@@ -9,14 +9,16 @@ namespace ajiva.Components.RenderAble;
 
 public class RenderMesh3D : RenderMeshIdUnique<RenderMesh3D>
 {
-    public IChangingObserverOnlyAfter<ITransform<vec3, mat4>, mat4>.OnChangedDelegate OnTransformChange { get; private set; }
-
     public RenderMesh3D()
     {
         OnTransformChange = TransformChange;
     }
 
+    public IChangingObserverOnlyAfter<ITransform<vec3, mat4>, mat4>.OnChangedDelegate OnTransformChange { get; }
+
     public TextureComponent? TextureComponent { get; set; }
+
+    public IAChangeAwareBackupBufferOfT<SolidUniformModel>? Models { get; set; }
 
     private void TransformChange(ITransform<vec3, mat4> _, mat4 after)
     {
@@ -26,6 +28,4 @@ public class RenderMesh3D : RenderMeshIdUnique<RenderMesh3D>
         data.Value.Model = after;
         data.Value.TextureSamplerId = TextureComponent?.TextureId ?? 0;
     }
-
-    public IAChangeAwareBackupBufferOfT<SolidUniformModel>? Models { get; set; }
 }

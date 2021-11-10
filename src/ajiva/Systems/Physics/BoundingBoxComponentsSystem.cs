@@ -21,12 +21,8 @@ public class BoundingBoxComponentsSystem : ComponentSystemBase<BoundingBox>, IUp
     public void DoPhysicFrame()
     {
         foreach (var (box1, e1) in ComponentEntityMap.Where(x => !x.Key.Collider.IsStatic))
-        {
-            foreach (var (box2, e2) in ComponentEntityMap.Where(other => box1 != other.Key))
-            {
-                DoCollision(box1, box2, e1, e2);
-            }
-        }
+        foreach (var (box2, e2) in ComponentEntityMap.Where(other => box1 != other.Key))
+            DoCollision(box1, box2, e1, e2);
     }
 
     public void DoCollision(BoundingBox b1, BoundingBox b2, IEntity e1, IEntity e2)
@@ -36,17 +32,17 @@ public class BoundingBoxComponentsSystem : ComponentSystemBase<BoundingBox>, IUp
         var resolved = ResolveColision(b1, b2);
         if (b2.Collider.IsStatic)
         {
-            if (e1.TryGetComponent<Transform3d>(out var t)) 
+            if (e1.TryGetComponent<Transform3d>(out var t))
                 t.Position += resolved;
             b1.ModifyPositionRelative(resolved);
         }
         else
         {
-            if (e1.TryGetComponent<Transform3d>(out var t1)) 
+            if (e1.TryGetComponent<Transform3d>(out var t1))
                 t1.Position += resolved / 2;
             b1.ModifyPositionRelative(resolved / 2);
-                
-            if (e2.TryGetComponent<Transform3d>(out var t2)) 
+
+            if (e2.TryGetComponent<Transform3d>(out var t2))
                 t2.Position -= resolved / 2;
             b2.ModifyPositionRelative(-resolved / 2);
         }
@@ -106,38 +102,36 @@ return colDir; // If you need info of the side that collided
         if (o.x >= o.y)
         {
             if (v.y > 0)
-            {
                 ry += o.y;
-            }
             else
-            {
                 ry -= o.y;
-            }
         }
         else if (o.x >= o.z)
         {
             if (v.z > 0)
-            {
                 rz += o.z;
-            }
             else
-            {
                 rz -= o.z;
-            }
         }
         //if (o.y >= o.z)
         else
         {
             if (v.x > 0)
-            {
                 rx += o.x;
-            }
             else
-            {
                 rx -= o.x;
-            }
         }
         return new vec3(rx, ry, rz);
+    }
+
+    /// <inheritdoc />
+    public override BoundingBox RegisterComponent(IEntity entity, BoundingBox component)
+    {
+        component.Ecs = Ecs;
+        if (entity.TryGetComponent<Transform3d>(out var transform)) component.Transform = transform;
+        if (entity.TryGetComponent<CollisionsComponent>(out var collider)) component.Collider = collider;
+
+        return base.RegisterComponent(entity, component);
     }
 
 #region IntersectionTest
@@ -153,43 +147,25 @@ return colDir; // If you need info of the side that collided
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static bool IntersectZ(BoundingBox a, BoundingBox b)
     {
-        return (a.MinPos.z < b.MaxPos.z && a.MaxPos.z > b.MinPos.z);
+        return a.MinPos.z < b.MaxPos.z && a.MaxPos.z > b.MinPos.z;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static bool IntersectY(BoundingBox a, BoundingBox b)
     {
-        return (a.MinPos.y < b.MaxPos.y && a.MaxPos.y > b.MinPos.y);
+        return a.MinPos.y < b.MaxPos.y && a.MaxPos.y > b.MinPos.y;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static bool IntersectX(BoundingBox a, BoundingBox b)
     {
-        return (a.MinPos.x < b.MaxPos.x && a.MaxPos.x > b.MinPos.x);
+        return a.MinPos.x < b.MaxPos.x && a.MaxPos.x > b.MinPos.x;
     }
 
     private static bool IsPointInsideAabb(vec3 point, BoundingBox box)
     {
-        return (point.x > box.MinPos.x && point.x < box.MaxPos.x) &&
-               (point.y > box.MinPos.y && point.y < box.MaxPos.y) &&
-               (point.z > box.MinPos.z && point.z < box.MaxPos.z);
+        return point.x > box.MinPos.x && point.x < box.MaxPos.x && point.y > box.MinPos.y && point.y < box.MaxPos.y && point.z > box.MinPos.z && point.z < box.MaxPos.z;
     }
 
 #endregion
-
-    /// <inheritdoc />
-    public override BoundingBox RegisterComponent(IEntity entity, BoundingBox component)
-    {
-        component.Ecs = Ecs;
-        if (entity.TryGetComponent<Transform3d>(out var transform))
-        {
-            component.Transform = transform;
-        }
-        if (entity.TryGetComponent<CollisionsComponent>(out var collider))
-        {
-            component.Collider = collider;
-        }
-
-        return base.RegisterComponent(entity, component);
-    }
 }

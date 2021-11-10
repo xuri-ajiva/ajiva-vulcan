@@ -9,5 +9,5 @@ public enum WorkPriority
     AboveNormal = 4,
     Highest = 5,
     Critical = 6,
-    Max = 7,
+    Max = 7
 }

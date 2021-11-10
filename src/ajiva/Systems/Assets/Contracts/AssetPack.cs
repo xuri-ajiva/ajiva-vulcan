@@ -5,19 +5,16 @@ namespace ajiva.Systems.Assets.Contracts;
 [ProtoContract]
 public class AssetPack
 {
-    [ProtoMember(1)]
-    public Dictionary<AssetType, AssetObjects> Assets { get; set; } = new();
+    private readonly object @lock = new object();
 
-    private object @lock = new object();
+    [ProtoMember(1)]
+    public Dictionary<AssetType, AssetObjects> Assets { get; set; } = new Dictionary<AssetType, AssetObjects>();
 
     public void Add(AssetType assetType, string name, byte[] data)
     {
         lock (@lock)
         {
-            if (!Assets.ContainsKey(assetType))
-            {
-                Assets.Add(assetType, new AssetObjects(assetType));
-            }
+            if (!Assets.ContainsKey(assetType)) Assets.Add(assetType, new AssetObjects(assetType));
             Assets[assetType].Add(name, data);
         }
     }

@@ -9,7 +9,6 @@ public interface IAjivaLayer<T> : IAjivaLayer, IDisposable where T : unmanaged
     new List<IAjivaLayerRenderSystem<T>> LayerRenderComponentSystems { get; }
     public IAChangeAwareBackupBufferOfT<T> LayerUniform { get; }
 }
-
 public static class AjivaLayerExtensions
 {
     public static void AddLayer<T>(this IAjivaLayer<T> ajivaLayer, IAjivaLayerRenderSystem<T> ajivaLayerRenderSystem) where T : unmanaged
@@ -26,14 +25,13 @@ public interface IAjivaLayer
     AjivaVulkanPipeline PipelineLayer { get; }
     RenderPassLayer CreateRenderPassLayer(SwapChainLayer swapChainLayer, PositionAndMax layerIndex, PositionAndMax layerRenderComponentSystemsIndex);
 }
-
 public struct PositionAndMax
 {
     public PositionAndMax(int index, int start, int end)
     {
-        this.Index = index;
-        this.Start = start;
-        this.End = end;
+        Index = index;
+        Start = start;
+        End = end;
     }
 
     public bool First => Index == Start;
@@ -41,5 +39,4 @@ public struct PositionAndMax
     public int Index { get; init; }
     public int Start { get; init; }
     public int End { get; init; }
-        
 }

@@ -12,7 +12,7 @@ public static class Cameras
         /// <inheritdoc />
         public override FpsCamera Create(IAjivaEcs system, uint id)
         {
-            var cam = new FpsCamera {Id = id};
+            var cam = new FpsCamera { Id = id };
             system.TryAttachComponentToEntity(cam, new Transform3d());
             system.TryAttachNewComponentToEntity<RenderMesh3D>(cam, out _);
             system.RegisterUpdate(cam);
@@ -23,24 +23,21 @@ public static class Cameras
 
     public abstract class Camera : TransformFormEntity<Transform3d, vec3, mat4>
     {
+        public readonly __Keys Keys = new __Keys();
         public float Fov;
-        public float Width;
         public float Height;
+        public float Width;
+
+        public abstract vec3 FrontNormalized { get; }
+        public mat4 Projection { get; protected set; }
+        public mat4 View { get; private protected set; }
+        public mat4 ProjView => Projection * View;
+        public float MovementSpeed { get; set; } = 1;
 
         public bool Moving()
         {
             return Keys.left || Keys.right || Keys.up || Keys.down;
         }
-
-        public class __Keys
-        {
-            public bool up;
-            public bool down;
-            public bool right;
-            public bool left;
-        }
-
-        public readonly __Keys Keys = new();
 
         public abstract void UpdateMatrices();
         public abstract void UpdatePosition(in float delta);
@@ -48,18 +45,9 @@ public static class Cameras
 
         public virtual void Translate(vec3 v)
         {
-            if (this.TryGetComponent<Transform3d>(out var transfrom))
-            {
-                transfrom.Position += v;
-            }
+            if (this.TryGetComponent<Transform3d>(out var transfrom)) transfrom.Position += v;
             View += mat4.Translate(v * -1.0F);
         }
-
-        public abstract vec3 FrontNormalized { get; }
-        public mat4 Projection { get; protected set; }
-        public mat4 View { get; private protected set; }
-        public mat4 ProjView => Projection * View;
-        public float MovementSpeed { get; set; } = 1;
 
         public void UpdatePerspective(float fov, float width, float height)
         {
@@ -69,19 +57,36 @@ public static class Cameras
             Projection = mat4.Perspective(fov / 2.0F, width / height, .1F, 1000.0F);
             View = mat4.Identity;
         }
+
+        public class __Keys
+        {
+            public bool down;
+            public bool left;
+            public bool right;
+            public bool up;
+        }
     }
     public sealed class FpsCamera : Camera, IUpdate
     {
-        public bool FreeCam { get; set; } = true;
-        private vec3 lockAt;
         private const float MouseSensitivity = 0.3F;
+        private vec3 lockAt;
+        public bool FreeCam { get; set; } = true;
 
         private vec3 CamFront =>
             new vec3(
-                x: -glm.Cos(glm.Radians(Transform.Rotation.x)) * glm.Sin(glm.Radians(Transform.Rotation.y)),
-                y: glm.Sin(glm.Radians(Transform.Rotation.x)),
-                z: glm.Cos(glm.Radians(Transform.Rotation.x)) * glm.Cos(glm.Radians(Transform.Rotation.y))
+                -glm.Cos(glm.Radians(Transform.Rotation.x)) * glm.Sin(glm.Radians(Transform.Rotation.y)),
+                glm.Sin(glm.Radians(Transform.Rotation.x)),
+                glm.Cos(glm.Radians(Transform.Rotation.x)) * glm.Cos(glm.Radians(Transform.Rotation.y))
             ).Normalized;
+
+        /// <inheritdoc />
+        public override vec3 FrontNormalized => CamFront;
+
+        /// <inheritdoc />
+        public void Update(UpdateInfo info)
+        {
+            UpdatePosition((float)info.Delta.TotalMilliseconds);
+        }
 
         public override void OnMouseMoved(float xRel, float yRel)
         {
@@ -95,9 +100,6 @@ public static class Cameras
             lockAt = CamFront;
             UpdateMatrices();
         }
-
-        /// <inheritdoc />
-        public override vec3 FrontNormalized => CamFront;
 
         public override void UpdateMatrices()
         {
@@ -142,12 +144,6 @@ public static class Cameras
         {
             Translate(vec3.UnitY * amount);
             UpdateMatrices();
-        }
-
-        /// <inheritdoc />
-        public void Update(UpdateInfo info)
-        {
-            UpdatePosition((float)info.Delta.TotalMilliseconds);
         }
     }
 }

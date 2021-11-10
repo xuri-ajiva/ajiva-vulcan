@@ -6,14 +6,13 @@ using ajiva.Systems.VulcanEngine.Systems;
 using SharpVk;
 using SharpVk.Shanq;
 using SharpVk.Shanq.GlmSharp;
+using Buffer = System.Buffer;
 
 namespace ajiva.Components;
 
 public class Shader : ThreadSaveCreatable
 {
     private readonly DeviceSystem system;
-    public ShaderModule? FragShader { get; private set; }
-    public ShaderModule? VertShader { get; private set; }
 
     public Shader(DeviceSystem system, string name)
     {
@@ -21,12 +20,25 @@ public class Shader : ThreadSaveCreatable
         Name = name;
     }
 
+    public ShaderModule? FragShader { get; private set; }
+    public ShaderModule? VertShader { get; private set; }
+
+    public string Name { get; }
+
+    public PipelineShaderStageCreateInfo VertShaderPipelineStageCreateInfo =>
+        new PipelineShaderStageCreateInfo
+            { Stage = ShaderStageFlags.Vertex, Module = VertShader, Name = Name };
+
+    public PipelineShaderStageCreateInfo FragShaderPipelineStageCreateInfo =>
+        new PipelineShaderStageCreateInfo
+            { Stage = ShaderStageFlags.Fragment, Module = FragShader, Name = Name };
+
     private static uint[] LoadShaderData(AssetManager assetManager, string assetName, out int codeSize)
     {
         var fileBytes = assetManager.GetAsset(AssetType.Shader, assetName);
         var shaderData = new uint[(int)MathF.Ceiling(fileBytes.Length / 4f)];
 
-        System.Buffer.BlockCopy(fileBytes, 0, shaderData, 0, fileBytes.Length);
+        Buffer.BlockCopy(fileBytes, 0, shaderData, 0, fileBytes.Length);
 
         codeSize = fileBytes.Length;
 
@@ -91,10 +103,4 @@ public class Shader : ThreadSaveCreatable
     {
         throw new NotSupportedException("Create with Specific Arguments");
     }
-
-    public string Name { get; }
-
-    public PipelineShaderStageCreateInfo VertShaderPipelineStageCreateInfo => new() { Stage = ShaderStageFlags.Vertex, Module = VertShader, Name = Name, };
-
-    public PipelineShaderStageCreateInfo FragShaderPipelineStageCreateInfo => new() { Stage = ShaderStageFlags.Fragment, Module = FragShader, Name = Name, };
 }

@@ -6,30 +6,30 @@ namespace ajiva.Models.Buffer.ChangeAware;
 
 public class AChangeAwareBackupBufferOfT<T> : DisposingLogger, IAChangeAwareBackupBufferOfT<T> where T : unmanaged
 {
+    private int currentMax;
+
     public AChangeAwareBackupBufferOfT(int length, DeviceSystem deviceSystem)
     {
         Length = length;
-        Changed = new(length);
+        Changed = new BitArray(length);
         Value = new ByRef<T>[length];
 
         for (var i = 0; i < length; i++)
-            Value[i] = new(new());
+            Value[i] = new ByRef<T>(new T());
 
         SizeOfT = UsVc<T>.Size;
 
         this.deviceSystem = deviceSystem;
         currentMax = 0;
 
-        Staging = new((uint)(Length * SizeOfT));
-        Uniform = new((uint)(Length * SizeOfT));
+        Staging = new ABuffer((uint)(Length * SizeOfT));
+        Uniform = new ABuffer((uint)(Length * SizeOfT));
 
         Staging.Create(deviceSystem, BufferUsageFlags.TransferSource, MemoryPropertyFlags.HostVisible | MemoryPropertyFlags.HostCoherent);
         Uniform.Create(deviceSystem, BufferUsageFlags.TransferDestination | BufferUsageFlags.UniformBuffer, MemoryPropertyFlags.DeviceLocal);
     }
 
-    private DeviceSystem deviceSystem { get; set; }
-
-    private int currentMax;
+    private DeviceSystem deviceSystem { get; }
 
     public ByRef<T> this[in int index]
     {
@@ -74,9 +74,9 @@ public class AChangeAwareBackupBufferOfT<T> : DisposingLogger, IAChangeAwareBack
     public void CommitChanges()
     {
         var memPtr = Staging.MapDisposer();
-        List<Regions> simple = new();
+        var simple = new List<Regions>();
 
-        Regions cur = new();
+        var cur = new Regions();
 
         for (var i = 0; i <= currentMax; i++) // go throw all known values
         {
@@ -87,7 +87,7 @@ public class AChangeAwareBackupBufferOfT<T> : DisposingLogger, IAChangeAwareBack
             if (i - cur.End > cur.Length) // check if last region is close enough
             {
                 simple.Add(cur);
-                cur = new(i, i);
+                cur = new Regions(i, i);
             }
             else
             {
@@ -103,7 +103,7 @@ public class AChangeAwareBackupBufferOfT<T> : DisposingLogger, IAChangeAwareBack
             {
                 Size = (ulong)(SizeOfT * x.Length),
                 DestinationOffset = (ulong)(SizeOfT * x.Begin),
-                SourceOffset = (ulong)(SizeOfT * x.Begin),
+                SourceOffset = (ulong)(SizeOfT * x.Begin)
             }).ToArray();
 
         memPtr.Dispose(); // free address space
@@ -111,18 +111,6 @@ public class AChangeAwareBackupBufferOfT<T> : DisposingLogger, IAChangeAwareBack
         Staging.CopyRegions(Uniform, regions, deviceSystem);
 
         Changed.SetAll(false);
-    }
-
-    private void CopyValue(int index, IntPtr ptr)
-    {
-        unsafe
-        {
-            fixed (T* src = &Value[index].Value)
-            {
-                *(T*)(ptr + SizeOfT * index) = *src;
-            }
-        }
-        //Marshal.StructureToPtr(Value[index].Value, ptr + SizeOfT * index, true);
     }
 
     /// <inheritdoc />
@@ -148,13 +136,25 @@ public class AChangeAwareBackupBufferOfT<T> : DisposingLogger, IAChangeAwareBack
         return Value[index];
     }
 
+    private void CopyValue(int index, IntPtr ptr)
+    {
+        unsafe
+        {
+            fixed (T* src = &Value[index].Value)
+            {
+                *(T*)(ptr + SizeOfT * index) = *src;
+            }
+        }
+        //Marshal.StructureToPtr(Value[index].Value, ptr + SizeOfT * index, true);
+    }
+
     private BufferCopy GetRegion(int index)
     {
-        return new()
+        return new BufferCopy
         {
             Size = (ulong)SizeOfT,
             DestinationOffset = (ulong)(SizeOfT * index),
-            SourceOffset = (ulong)(SizeOfT * index),
+            SourceOffset = (ulong)(SizeOfT * index)
         };
     }
 
@@ -170,10 +170,8 @@ public class AChangeAwareBackupBufferOfT<T> : DisposingLogger, IAChangeAwareBack
         if (index > currentMax)
         {
             if (index > Length)
-            {
                 //todo resize array if to small
                 throw new IndexOutOfRangeException("Currently not resizable!");
-            }
             currentMax = index;
         }
     }

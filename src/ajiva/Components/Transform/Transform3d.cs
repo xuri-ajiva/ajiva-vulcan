@@ -22,6 +22,17 @@ public class Transform3d : DisposingLogger, IComponent, ITransform<vec3, mat4>
 
     public Transform3d() : this(vec3.Zero) { }
 
+    public mat4 ScaleMat => mat4.Scale(Scale);
+    public mat4 RotationMat => mat4.RotateX(glm.Radians(Rotation.x)) * mat4.RotateY(glm.Radians(Rotation.y)) * mat4.RotateZ(glm.Radians(Rotation.z));
+    public mat4 PositionMat => mat4.Translate(Position);
+
+    public mat4 ModelMat => PositionMat * RotationMat * ScaleMat;
+
+    public override string ToString()
+    {
+        return $"{nameof(Position)}: {Position}, {nameof(Rotation)}: {Rotation}, {nameof(Scale)}: {Scale}";
+    }
+
 #region propatys
 
     public vec3 Position
@@ -65,15 +76,4 @@ public class Transform3d : DisposingLogger, IComponent, ITransform<vec3, mat4>
     }
 
 #endregion
-
-    public mat4 ScaleMat => mat4.Scale(Scale);
-    public mat4 RotationMat => mat4.RotateX(glm.Radians(Rotation.x)) * mat4.RotateY(glm.Radians(Rotation.y)) * mat4.RotateZ(glm.Radians(Rotation.z));
-    public mat4 PositionMat => mat4.Translate(Position);
-
-    public mat4 ModelMat => PositionMat * RotationMat * ScaleMat;
-
-    public override string ToString()
-    {
-        return $"{nameof(Position)}: {Position}, {nameof(Rotation)}: {Rotation}, {nameof(Scale)}: {Scale}";
-    }
 }

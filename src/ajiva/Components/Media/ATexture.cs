@@ -14,6 +14,10 @@ public partial class ATexture : DisposingLogger
 
     public AImage Image { get; set; } = null!;
 
+    public DescriptorImageInfo DescriptorImageInfo =>
+        new DescriptorImageInfo
+            { Sampler = Sampler, ImageView = Image.View, ImageLayout = ImageLayout.ShaderReadOnlyOptimal };
+
     /// <inheritdoc />
     protected override void ReleaseUnmanagedResources(bool disposing)
     {
@@ -21,6 +25,4 @@ public partial class ATexture : DisposingLogger
         Image.Dispose();
         INextId<ATexture>.Remove(TextureId);
     }
-
-    public DescriptorImageInfo DescriptorImageInfo => new() {Sampler = Sampler, ImageView = Image.View, ImageLayout = ImageLayout.ShaderReadOnlyOptimal};
 }

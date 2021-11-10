@@ -5,24 +5,28 @@ using ajiva.Systems.VulcanEngine.Layer;
 using GlmSharp;
 using SharpVk;
 using SharpVk.Glfw;
-using Glfw3 = SharpVk.Glfw.Glfw3;
-using Key = SharpVk.Glfw.Key;
 
 namespace ajiva.Systems.VulcanEngine.Systems;
 
 public class WindowSystem : SystemBase, IUpdate, IInit
 {
-    public event KeyEventHandler? OnKeyEvent;
-    public event Action? OnResize;
-    public event EventHandler<AjivaMouseMotionCallbackEventArgs>? OnMouseMove;
+    private readonly CursorPosDelegate cursorPosDelegate;
+
+    //force NO gc on these delegates by keeping an reference
+    private readonly KeyDelegate keyDelegate;
+    private readonly WindowSizeDelegate sizeDelegate;
 
     private readonly Thread windowThread;
-    private readonly Queue<Action?> windowThreadQueue = new();
+    private readonly Queue<Action?> windowThreadQueue = new Queue<Action?>();
+    private AjivaEngineLayer activeLayer;
+
+    private DateTime lastResize = DateTime.MinValue;
+    private vec2 previousMousePosition = vec2.Zero;
+    private WindowHandle window;
+
+    private readonly WindowConfig windowConfig;
 
     private bool windowReady;
-    private WindowHandle window;
-    private vec2 previousMousePosition = vec2.Zero;
-    private AjivaEngineLayer activeLayer;
 
     public WindowSystem(IAjivaEcs ecs) : base(ecs)
     {
@@ -31,12 +35,33 @@ public class WindowSystem : SystemBase, IUpdate, IInit
         sizeDelegate = SizeCallback;
 
         activeLayer = AjivaEngineLayer.Layer2d;
-        windowThread = new(WindowStartup);
+        windowThread = new Thread(WindowStartup);
         windowThread.SetApartmentState(ApartmentState.STA);
-        Canvas = new(new());
-            
+        Canvas = new Canvas(new SurfaceHandle());
+
         windowConfig = Ecs.TryGetPara<Config>(Const.Default.Config, out var config) ? config.Window : new WindowConfig();
     }
+
+    public Canvas Canvas { get; }
+
+    /// <inheritdoc />
+    public void Init()
+    {
+        InitWindow();
+        EnsureSurfaceExists();
+    }
+
+    /// <inheritdoc />
+    public void Update(UpdateInfo delta)
+    {
+        PollEvents();
+        if (!windowReady)
+            Ecs.IssueClose();
+    }
+
+    public event KeyEventHandler? OnKeyEvent;
+    public event Action? OnResize;
+    public event EventHandler<AjivaMouseMotionCallbackEventArgs>? OnMouseMove;
 
     private void WindowStartup()
     {
@@ -57,16 +82,13 @@ public class WindowSystem : SystemBase, IUpdate, IInit
             Thread.Sleep(1);
 
             if (lastResize != DateTime.MinValue)
-            {
                 if (lastResize.AddSeconds(5) > DateTime.Now)
                 {
                     OnResize?.Invoke();
                     lastResize = DateTime.MinValue;
                 }
-            }
 
             while (windowThreadQueue.TryDequeue(out var action))
-            {
                 try
                 {
                     action?.Invoke();
@@ -75,7 +97,6 @@ public class WindowSystem : SystemBase, IUpdate, IInit
                 {
                     ALog.Error(e);
                 }
-            }
             Glfw3.PollEvents();
 
             if (windowReady) continue;
@@ -92,21 +113,14 @@ public class WindowSystem : SystemBase, IUpdate, IInit
             Canvas.SurfaceHandle.Surface = Ecs.GetInstance<Instance>().CreateGlfw3Surface(window);
     }
 
-    private WindowConfig windowConfig;
-
     public void InitWindow()
     {
         Canvas.Height = windowConfig.Height;
         Canvas.Width = windowConfig.Width;
         windowThread.Start();
 
-        while (!windowReady)
-        {
-            Thread.Sleep(1);
-        }
+        while (!windowReady) Thread.Sleep(1);
     }
-
-    private DateTime lastResize = DateTime.MinValue;
 
     private void SizeCallback(WindowHandle windowHandle, int width, int height)
     {
@@ -115,13 +129,6 @@ public class WindowSystem : SystemBase, IUpdate, IInit
 
         lastResize = DateTime.Now;
     }
-
-    //force NO gc on these delegates by keeping an reference
-    private readonly KeyDelegate keyDelegate;
-    private readonly CursorPosDelegate cursorPosDelegate;
-    private readonly WindowSizeDelegate sizeDelegate;
-
-    public Canvas Canvas { get; }
 
     private void MouseCallback(WindowHandle windowHandle, double xPosition, double yPosition)
     {
@@ -178,21 +185,6 @@ public class WindowSystem : SystemBase, IUpdate, IInit
     public void PollEvents()
     {
         Glfw3.PollEvents();
-    }
-
-    /// <inheritdoc />
-    public void Update(UpdateInfo delta)
-    {
-        PollEvents();
-        if (!windowReady)
-            Ecs.IssueClose();
-    }
-
-    /// <inheritdoc />
-    public void Init()
-    {
-        InitWindow();
-        EnsureSurfaceExists();
     }
 }
 

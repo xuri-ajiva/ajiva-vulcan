@@ -7,9 +7,19 @@ namespace ajiva.Components.Media;
 public class AImage : ChangingComponentBase
 {
     private readonly bool disposeImage;
-    private ImageView view = null!;
     private Image image = null!;
     private DeviceMemory memory = null!;
+    private ImageView view = null!;
+
+    public AImage(bool disposeImage) : base(20)
+    {
+        this.disposeImage = disposeImage;
+    }
+
+    public AImage() : this(false)
+    {
+    }
+
     public ImageView View
     {
         get => view;
@@ -24,15 +34,6 @@ public class AImage : ChangingComponentBase
     {
         get => memory;
         set => ChangingObserver.RaiseAndSetIfChanged(ref memory, value);
-    }
-
-    public AImage(bool disposeImage) : base(20)
-    {
-        this.disposeImage = disposeImage;
-    }
-
-    public AImage() : this(false)
-    {
     }
 
     /// <inheritdoc />

@@ -9,10 +9,16 @@ namespace ajiva.Models;
 public class SurfaceHandle : ChangingComponentBase
 {
     private Surface? surface;
+
+    /// <inheritdoc />
+    public SurfaceHandle() : base(0)
+    {
+    }
+
     public Surface Surface
     {
         get => surface!;
-        set => ChangingObserver.RaiseAndSetIfChanged(ref surface , value);
+        set => ChangingObserver.RaiseAndSetIfChanged(ref surface, value);
     }
 
     /// <param name="disposing"></param>
@@ -29,19 +35,81 @@ public class SurfaceHandle : ChangingComponentBase
         }
     }
 
-    public static implicit operator Surface(SurfaceHandle handle) => handle.Surface;
-
-    /// <inheritdoc />
-    public SurfaceHandle() : base(0)
+    public static implicit operator Surface(SurfaceHandle handle)
     {
+        return handle.Surface;
     }
 }
 public class Canvas : DisposingLogger
 {
     private Canvas? baseCanvas;
-    private Rect2D BaseRect => baseCanvas?.BaseRect ?? rect;
     private Rect2D rect;
+
+    /// <inheritdoc />
+    public Canvas(Rect2D rect, SurfaceHandle surface)
+    {
+        this.rect = rect;
+        SurfaceHandle = surface;
+    }
+
+    /// <inheritdoc />
+    public Canvas(SurfaceHandle surface) : this(new Rect2D(Offset2D.Zero, Extent2D.Zero), surface)
+    {
+    }
+
+    private Rect2D BaseRect => baseCanvas?.BaseRect ?? rect;
     public SurfaceHandle SurfaceHandle { get; init; }
+
+    // ReSharper disable once ConditionIsAlwaysTrueOrFalse
+    public bool HasSurface => SurfaceHandle.Surface is not null;
+    public Rect2D Rect => rect;
+
+    public Canvas Fork(Offset2D offsetBy, Extent2D shrinkBy)
+    {
+        Canvas n = new Canvas(rect, SurfaceHandle)
+        {
+            Offset = offsetBy,
+            baseCanvas = this
+        };
+        n.rect.Extent.Height -= shrinkBy.Height;
+        n.rect.Extent.Width -= shrinkBy.Width;
+        n.Validate();
+        return n;
+    }
+
+    public Canvas Fork(Rect2D newRect)
+    {
+        ValidateThrow(newRect, rect); //todo user baseRect?, because it is the max valid ??
+        return new Canvas(rect, SurfaceHandle)
+        {
+            rect = newRect,
+            baseCanvas = this
+        };
+    }
+
+    public void Validate()
+    {
+        ValidateThrow(rect, BaseRect);
+    }
+
+    private static void ValidateThrow(Rect2D current, Rect2D max)
+    {
+        if (!Validate(current, max))
+            throw new ValidationException("The rect is Not inside the bounds of the root canvas");
+    }
+
+    private static bool Validate(Rect2D current, Rect2D max)
+    {
+        return !(current.Bottom > max.Bottom) && !(current.Right > max.Right) && !(current.Left < max.Left) && !(current.Top < max.Top);
+    }
+
+    /// <param name="disposing"></param>
+    /// <inheritdoc />
+    protected override void ReleaseUnmanagedResources(bool disposing)
+    {
+        if (disposing)
+            SurfaceHandle.Dispose();
+    }
 
 #region Extent
 
@@ -92,64 +160,4 @@ public class Canvas : DisposingLogger
     public uint Yu => (uint)rect.Offset.Y;
 
 #endregion
-
-    // ReSharper disable once ConditionIsAlwaysTrueOrFalse
-    public bool HasSurface => SurfaceHandle.Surface is not null;
-    public Rect2D Rect => rect;
-
-    public Canvas Fork(Offset2D offsetBy, Extent2D shrinkBy)
-    {
-        Canvas n = new(rect, SurfaceHandle)
-        {
-            Offset = offsetBy,
-            baseCanvas = this,
-        };
-        n.rect.Extent.Height -= shrinkBy.Height;
-        n.rect.Extent.Width -= shrinkBy.Width;
-        n.Validate();
-        return n;
-    }
-
-    public Canvas Fork(Rect2D newRect)
-    {
-        ValidateThrow(newRect, rect); //todo user baseRect?, because it is the max valid ??
-        return new(rect, SurfaceHandle)
-        {
-            rect = newRect,
-            baseCanvas = this,
-        };
-    }
-
-    public void Validate() => ValidateThrow(rect, BaseRect);
-
-    private static void ValidateThrow(Rect2D current, Rect2D max)
-    {
-        if (!Validate(current, max))
-            throw new ValidationException("The rect is Not inside the bounds of the root canvas");
-    }
-
-    private static bool Validate(Rect2D current, Rect2D max)
-    {
-        return !(current.Bottom > max.Bottom) && !(current.Right > max.Right) && !(current.Left < max.Left) && !(current.Top < max.Top);
-    }
-
-    /// <inheritdoc />
-    public Canvas(Rect2D rect, SurfaceHandle surface)
-    {
-        this.rect = rect;
-        SurfaceHandle = surface;
-    }
-
-    /// <inheritdoc />
-    public Canvas(SurfaceHandle surface) : this(new(Offset2D.Zero, Extent2D.Zero), surface)
-    {
-    }
-
-    /// <param name="disposing"></param>
-    /// <inheritdoc />
-    protected override void ReleaseUnmanagedResources(bool disposing)
-    {
-        if(disposing)
-            SurfaceHandle.Dispose();
-    }
 }

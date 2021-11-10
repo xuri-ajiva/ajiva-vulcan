@@ -2,6 +2,7 @@
 using ajiva.Ecs;
 using ajiva.Models;
 using SharpVk;
+using SharpVk.NVidia;
 using Buffer = SharpVk.Buffer;
 
 namespace ajiva.Systems.VulcanEngine.Systems;
@@ -9,29 +10,39 @@ namespace ajiva.Systems.VulcanEngine.Systems;
 [Dependent(typeof(DeviceSystem))]
 public class ImageSystem : ComponentSystemBase<AImage>, IInit
 {
+    /// <inheritdoc />
+    public ImageSystem(IAjivaEcs ecs) : base(ecs)
+    {
+    }
+
+    /// <inheritdoc />
+    public void Init()
+    {
+    }
+
     public AImage CreateImageAndView(uint width, uint height, Format format, ImageTiling tiling, ImageUsageFlags usage, MemoryPropertyFlags properties, ImageAspectFlags aspectFlags)
     {
         var aImage = new AImage(true);
         var deviceSystem = Ecs.GetSystem<DeviceSystem>();
         var device = deviceSystem.Device!;
 
-        aImage.Image = device.CreateImage(ImageType.Image2d, format, new(width, height, 1), 1, 1, SampleCountFlags.SampleCount1, tiling, usage, SharingMode.Exclusive, ArrayProxy<uint>.Null, ImageLayout.Undefined);
+        aImage.Image = device.CreateImage(ImageType.Image2d, format, new Extent3D(width, height, 1), 1, 1, SampleCountFlags.SampleCount1, tiling, usage, SharingMode.Exclusive, ArrayProxy<uint>.Null, ImageLayout.Undefined);
 
-        var memRequirements = device.GetImageMemoryRequirements2(new()
+        var memRequirements = device.GetImageMemoryRequirements2(new ImageMemoryRequirementsInfo2
         {
             Image = aImage.Image
         });
 
-        aImage.Memory = device.AllocateMemory(memRequirements.MemoryRequirements.Size, deviceSystem.FindMemoryType(memRequirements.MemoryRequirements.MemoryTypeBits, properties), new()
+        aImage.Memory = device.AllocateMemory(memRequirements.MemoryRequirements.Size, deviceSystem.FindMemoryType(memRequirements.MemoryRequirements.MemoryTypeBits, properties), new DedicatedAllocationMemoryAllocateInfo
         {
-            Image = aImage.Image,
+            Image = aImage.Image
         });
 
         device.BindImageMemory2(new BindImageMemoryInfo
         {
             Image = aImage.Image,
             Memory = aImage.Memory,
-            MemoryOffset = 0,
+            MemoryOffset = 0
         });
 
         aImage.CreateView(device, format, aspectFlags);
@@ -62,19 +73,19 @@ public class ImageSystem : ComponentSystemBase<AImage>, IInit
     {
         Ecs.GetSystem<DeviceSystem>().ExecuteSingleTimeCommand(QueueType.TransferQueue, CommandPoolSelector.Transit, command =>
         {
-            command.CopyBufferToImage(buffer, image, ImageLayout.TransferDestinationOptimal, new BufferImageCopy()
+            command.CopyBufferToImage(buffer, image, ImageLayout.TransferDestinationOptimal, new BufferImageCopy
             {
                 BufferOffset = 0,
                 BufferRowLength = 0,
                 BufferImageHeight = 0,
-                ImageOffset = new(),
-                ImageExtent = new(width, height, 1),
-                ImageSubresource = new()
+                ImageOffset = new Offset3D(),
+                ImageExtent = new Extent3D(width, height, 1),
+                ImageSubresource = new ImageSubresourceLayers
                 {
                     AspectMask = ImageAspectFlags.Color,
                     MipLevel = 0,
                     BaseArrayLayer = 0,
-                    LayerCount = 1,
+                    LayerCount = 1
                 }
             });
         });
@@ -82,7 +93,7 @@ public class ImageSystem : ComponentSystemBase<AImage>, IInit
 
     public void TransitionImageLayout(Image image, Format format, ImageLayout oldLayout, ImageLayout newLayout)
     {
-        ImageSubresourceRange subresourceRange = new()
+        var subresourceRange = new ImageSubresourceRange
         {
             BaseMipLevel = 0,
             LevelCount = 1,
@@ -106,7 +117,7 @@ public class ImageSystem : ComponentSystemBase<AImage>, IInit
             OldLayout = oldLayout,
             NewLayout = newLayout,
             Image = image,
-            SubresourceRange = subresourceRange,
+            SubresourceRange = subresourceRange
         };
 
         PipelineStageFlags sourceStage;
@@ -149,14 +160,4 @@ public class ImageSystem : ComponentSystemBase<AImage>, IInit
     }
 
 #endregion
-
-    /// <inheritdoc />
-    public void Init()
-    {
-    }
-
-    /// <inheritdoc />
-    public ImageSystem(IAjivaEcs ecs) : base(ecs)
-    {
-    }
 }

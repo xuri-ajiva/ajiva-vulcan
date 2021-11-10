@@ -5,11 +5,11 @@ namespace ajiva.Systems;
 
 public class TransformComponentSystem : ComponentSystemBase<Transform3d>, IUpdate
 {
+    private Random r = new Random();
+
     public TransformComponentSystem(IAjivaEcs ecs) : base(ecs)
     {
     }
-
-    private Random r = new Random();
 
     /// <inheritdoc />
     public void Update(UpdateInfo delta)

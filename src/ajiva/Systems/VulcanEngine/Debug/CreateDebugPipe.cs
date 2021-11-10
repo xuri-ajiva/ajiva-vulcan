@@ -4,15 +4,14 @@ using ajiva.Systems.VulcanEngine.Layers.Models;
 using ajiva.Systems.VulcanEngine.Systems;
 using SharpVk;
 
-
 namespace ajiva.Systems.VulcanEngine.Debug;
 
 public class CreateDebugPipe
 {
     public static GraphicsPipelineLayer Default(SwapChainLayer swapChainLayer, RenderPassLayer renderPassLayer, DeviceSystem deviceSystem, bool useDepthImage, VertexInputBindingDescription bindingDescription, VertexInputAttributeDescription[] attributeDescriptions, Shader mainShader, PipelineDescriptorInfos[] descriptorInfos)
     {
-        DescriptorSetLayout descriptorSetLayout = deviceSystem.Device.CreateDescriptorSetLayout(
-            descriptorInfos.Select(descriptor => new DescriptorSetLayoutBinding()
+        var descriptorSetLayout = deviceSystem.Device.CreateDescriptorSetLayout(
+            descriptorInfos.Select(descriptor => new DescriptorSetLayoutBinding
             {
                 Binding = descriptor.DestinationBinding,
                 DescriptorCount = descriptor.DescriptorCount,
@@ -20,9 +19,9 @@ public class CreateDebugPipe
                 StageFlags = descriptor.StageFlags
             }).ToArray());
 
-        PipelineLayout pipelineLayout = deviceSystem.Device.CreatePipelineLayout(descriptorSetLayout, null);
+        var pipelineLayout = deviceSystem.Device.CreatePipelineLayout(descriptorSetLayout, null);
 
-        Pipeline pipeline = deviceSystem.Device.CreateGraphicsPipelines(null, new[]
+        var pipeline = deviceSystem.Device.CreateGraphicsPipelines(null, new[]
         {
             new GraphicsPipelineCreateInfo
             {
@@ -53,7 +52,7 @@ public class CreateDebugPipe
                             Width = swapChainLayer.Canvas.WidthF,
                             Height = swapChainLayer.Canvas.HeightF,
                             MaxDepth = 1,
-                            MinDepth = 0,
+                            MinDepth = 0
                         }
                     },
                     Scissors = new[]
@@ -107,7 +106,7 @@ public class CreateDebugPipe
                 Stages = new[]
                 {
                     mainShader.VertShaderPipelineStageCreateInfo,
-                    mainShader.FragShaderPipelineStageCreateInfo,
+                    mainShader.FragShaderPipelineStageCreateInfo
                 },
                 DepthStencilState = useDepthImage
                     ? new PipelineDepthStencilStateCreateInfo
@@ -120,19 +119,19 @@ public class CreateDebugPipe
                         MaxDepthBounds = 1,
                         StencilTestEnable = false,
                         Back = new StencilOpState(),
-                        Flags = new PipelineDepthStencilStateCreateFlags(),
+                        Flags = new PipelineDepthStencilStateCreateFlags()
                     }
-                    : null,
+                    : null
             }
         }).Single();
 
-        DescriptorPool descriptorPool = deviceSystem.Device.CreateDescriptorPool(10000,
+        var descriptorPool = deviceSystem.Device.CreateDescriptorPool(10000,
             descriptorInfos.Select(descriptor => new DescriptorPoolSize
             {
                 Type = descriptor.DescriptorType,
-                DescriptorCount = descriptor.DescriptorCount,
+                DescriptorCount = descriptor.DescriptorCount
             }).ToArray());
-        DescriptorSet descriptorSet = deviceSystem.Device.AllocateDescriptorSets(descriptorPool, descriptorSetLayout).Single();
+        var descriptorSet = deviceSystem.Device.AllocateDescriptorSets(descriptorPool, descriptorSetLayout).Single();
 
         deviceSystem.Device.UpdateDescriptorSets(
             descriptorInfos.Select(descriptor => new WriteDescriptorSet
@@ -144,7 +143,7 @@ public class CreateDebugPipe
                 DestinationArrayElement = descriptor.DestinationArrayElement,
                 BufferInfo = descriptor.BufferInfo,
                 ImageInfo = descriptor.ImageInfo,
-                TexelBufferView = descriptor.TexelBufferView,
+                TexelBufferView = descriptor.TexelBufferView
             }).ToArray(), null);
 
         var graphicsPipelineLayer = new GraphicsPipelineLayer(renderPassLayer, pipeline, pipelineLayout, descriptorPool, descriptorSet, descriptorSetLayout);

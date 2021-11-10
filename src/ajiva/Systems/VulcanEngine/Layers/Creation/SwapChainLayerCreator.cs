@@ -11,10 +11,7 @@ public static class SwapChainLayerCreator
 {
     public static SwapChainLayer DefaultChecked(DeviceSystem deviceSystem, Canvas canvas)
     {
-        if (deviceSystem.Device is null || deviceSystem.PhysicalDevice is null)
-        {
-            throw new NotInitializedException(nameof(deviceSystem), deviceSystem);
-        }
+        if (deviceSystem.Device is null || deviceSystem.PhysicalDevice is null) throw new NotInitializedException(nameof(deviceSystem), deviceSystem);
         return Default(deviceSystem, canvas);
     }
 
@@ -25,16 +22,13 @@ public static class SwapChainLayerCreator
         var surfaceFormat = swapChainSupport.Formats.ChooseSwapSurfaceFormat();
 
         var imageCount = swapChainSupport.Capabilities.MinImageCount + 1;
-        if (swapChainSupport.Capabilities.MaxImageCount > 0 && imageCount > swapChainSupport.Capabilities.MaxImageCount)
-        {
-            imageCount = swapChainSupport.Capabilities.MaxImageCount;
-        }
+        if (swapChainSupport.Capabilities.MaxImageCount > 0 && imageCount > swapChainSupport.Capabilities.MaxImageCount) imageCount = swapChainSupport.Capabilities.MaxImageCount;
 
         var queueFamilies = deviceSystem.PhysicalDevice!.FindQueueFamilies(canvas);
 
         var queueFamilyIndices = queueFamilies.Indices.ToArray();
 
-        Swapchain swapChain = deviceSystem.Device!.CreateSwapchain(canvas.SurfaceHandle,
+        var swapChain = deviceSystem.Device!.CreateSwapchain(canvas.SurfaceHandle,
             imageCount,
             surfaceFormat.Format,
             surfaceFormat.ColorSpace,
@@ -51,7 +45,7 @@ public static class SwapChainLayerCreator
             true,
             null); //todo take old swapchain
 
-        AImage[] swapChainImage = swapChain.GetImages().Select(x => new AImage(false)
+        var swapChainImage = swapChain.GetImages().Select(x => new AImage(false)
         {
             Image = x,
             View = x.CreateImageView(deviceSystem.Device!, surfaceFormat.Format, ImageAspectFlags.Color)

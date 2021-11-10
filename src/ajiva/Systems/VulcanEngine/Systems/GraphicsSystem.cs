@@ -44,7 +44,7 @@ public class GraphicsSystem : SystemBase, IInit, IUpdate
             RecreateCurrentGraphicsLayout();
             reInitAjivaLayerRendererNeeded = false;
         }
-            
+
         ajivaLayerRenderer!.UpdateSubmitInfoChecked();
 
         if (ChangingObserver.UpdateCycle(delta.Iteration)) UpdateGraphicsData();
@@ -123,7 +123,7 @@ public class GraphicsSystem : SystemBase, IInit, IUpdate
 
     private void LayerChangedOnOnChanged(IAjivaLayer sender)
     {
-        if (!reInitAjivaLayerRendererNeeded) 
+        if (!reInitAjivaLayerRendererNeeded)
             reInitAjivaLayerRendererNeeded = true;
     }
 }

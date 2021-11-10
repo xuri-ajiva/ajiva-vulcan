@@ -4,6 +4,8 @@ namespace ajiva.Components.Transform;
 
 public interface ITransform<TV, TM> : IDisposingLogger, IComponent where TV : struct, IReadOnlyList<float> where TM : struct, IReadOnlyList<float>
 {
+    public delegate void ModifyRef(ref TV vec);
+
     TV Position { get; set; }
     TV Rotation { get; set; }
     TV Scale { get; set; }
@@ -16,6 +18,4 @@ public interface ITransform<TV, TM> : IDisposingLogger, IComponent where TV : st
     void RefRotation(ModifyRef mod);
     void RefScale(ModifyRef mod);
     string ToString();
-
-    public delegate void ModifyRef(ref TV vec);
 }

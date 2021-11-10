@@ -4,6 +4,8 @@ namespace ajiva.Application;
 
 public class Config
 {
+    private static Config? _default;
+
     public Config()
     {
         AssetPath = Const.Default.AssetsFile;
@@ -11,10 +13,8 @@ public class Config
 
     public WindowConfig Window { get; set; } = new WindowConfig();
     public ShaderConfig ShaderConfig { get; set; } = new ShaderConfig();
-        
-    public string AssetPath { get; set; }
 
-    private static Config? _default;
+    public string AssetPath { get; set; }
     public static Config Default
     {
         get
@@ -26,7 +26,7 @@ public class Config
                 : new Config();
             File.WriteAllText(Const.Default.Config,
                 JsonSerializer.Serialize(_default,
-                    new JsonSerializerOptions()
+                    new JsonSerializerOptions
                         { WriteIndented = true }
                 )
             );
@@ -42,7 +42,6 @@ public class WindowConfig
     public int PosX { set; get; } = 200;
     public int PosY { set; get; } = 300;
 }
-
 public class ShaderConfig
 {
     // ReSharper disable InconsistentNaming

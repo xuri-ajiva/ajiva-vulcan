@@ -8,7 +8,7 @@ public class TransformFormEntity<T, TV, TM> : ChangingObserverEntity where T : c
     {
         TransformLazy = new Lazy<T>(() => (this.TryGetComponent<T>(out var transform) ? transform : default)!);
     }
-                                                        
+
     public Lazy<T> TransformLazy { get; }
     public T Transform => TransformLazy.Value;
 }

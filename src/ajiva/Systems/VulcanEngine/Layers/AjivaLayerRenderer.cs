@@ -11,26 +11,29 @@ namespace ajiva.Systems.VulcanEngine.Layers;
 
 public class AjivaLayerRenderer : DisposingLogger
 {
-    internal readonly DeviceSystem DeviceSystem;
+    private readonly object bufferLock = new object();
     internal readonly Canvas Canvas;
-    private SwapChainLayer swapChainLayer;
+    internal readonly DeviceSystem DeviceSystem;
+    private readonly Fence fence;
     private readonly Semaphore imageAvailable;
     private readonly Semaphore renderFinished;
-    private readonly object bufferLock = new object();
     private readonly object submitInfoLock = new object();
-    private readonly Fence fence;
+    private SwapChainLayer swapChainLayer;
 
     public AjivaLayerRenderer(DeviceSystem deviceSystem, Canvas canvas)
     {
-        this.DeviceSystem = deviceSystem;
-        this.Canvas = canvas;
+        DeviceSystem = deviceSystem;
+        Canvas = canvas;
         imageAvailable = deviceSystem.Device!.CreateSemaphore()!;
         renderFinished = deviceSystem.Device!.CreateSemaphore()!;
         fence = deviceSystem.Device.CreateFence();
     }
 
-    public List<DynamicLayerAjivaLayerRenderSystemData> DynamicLayerSystemData { get; } = new();
-        
+    public List<DynamicLayerAjivaLayerRenderSystemData> DynamicLayerSystemData { get; } = new List<DynamicLayerAjivaLayerRenderSystemData>();
+
+    public Result[] ResultsCache { get; private set; }
+    public SubmitInfo[] SubmitInfoCache { get; private set; }
+
     public void Init(IList<IAjivaLayer> layers)
     {
         ReCreateSwapchainLayer();
@@ -42,10 +45,7 @@ public class AjivaLayerRenderer : DisposingLogger
 
     public void ForceFillBuffers()
     {
-        foreach (var systemData in DynamicLayerSystemData)
-        {
-            systemData.FillNextBufferBlocking(CancellationToken.None);
-        }
+        foreach (var systemData in DynamicLayerSystemData) systemData.FillNextBufferBlocking(CancellationToken.None);
     }
 
     public void ReCreateSwapchainLayer()
@@ -74,10 +74,7 @@ public class AjivaLayerRenderer : DisposingLogger
 
     private void DeleteDynamicLayerData()
     {
-        foreach (var data in DynamicLayerSystemData)
-        {
-            data.Dispose();
-        }
+        foreach (var data in DynamicLayerSystemData) data.Dispose();
         DynamicLayerSystemData.Clear();
     }
 
@@ -96,10 +93,7 @@ public class AjivaLayerRenderer : DisposingLogger
 
     public void CheckBuffersUpToDate()
     {
-        foreach (var systemData in DynamicLayerSystemData.Where(x => !x.IsVersionUpToDate && !x.IsBackgroundTaskRunning))
-        {
-            systemData.FillNextBufferAsync();
-        }
+        foreach (var systemData in DynamicLayerSystemData.Where(x => !x.IsVersionUpToDate && !x.IsBackgroundTaskRunning)) systemData.FillNextBufferAsync();
     }
 
     public void UpdateSubmitInfoChecked()
@@ -120,9 +114,8 @@ public class AjivaLayerRenderer : DisposingLogger
 
     public void CreateSubmitInfo()
     {
-        SubmitInfo[] submitInfos = new SubmitInfo[swapChainLayer.SwapChainImages.Length];
+        var submitInfos = new SubmitInfo[swapChainLayer.SwapChainImages.Length];
         for (var nextImage = 0; nextImage < submitInfos.Length; nextImage++)
-        {
             submitInfos[nextImage] = new SubmitInfo
             {
                 CommandBuffers = new CommandBuffer[DynamicLayerSystemData.Count],
@@ -139,9 +132,10 @@ public class AjivaLayerRenderer : DisposingLogger
                     imageAvailable
                 }
             };
-        }
         lock (submitInfoLock)
+        {
             SubmitInfoCache = submitInfos;
+        }
 
         ResultsCache = new Result[1];
     }
@@ -171,9 +165,6 @@ public class AjivaLayerRenderer : DisposingLogger
         }
     }
 
-    public Result[] ResultsCache { get; private set; }
-    public SubmitInfo[] SubmitInfoCache { get; private set; }
-
     /// <inheritdoc />
     protected override void ReleaseUnmanagedResources(bool disposing)
     {
@@ -195,11 +186,11 @@ public class AjivaLayerRenderer : DisposingLogger
 }
 public class RenderLayerGuard
 {
+    public CommandBuffer Buffer { get; set; }
+    public GraphicsPipelineLayer Pipeline { get; set; }
+
     public void BindDescriptor(uint dynamicOffset)
     {
         Buffer.BindDescriptorSets(PipelineBindPoint.Graphics, Pipeline.PipelineLayout, 0, Pipeline.DescriptorSet, dynamicOffset);
     }
-
-    public CommandBuffer Buffer { get; set; }
-    public GraphicsPipelineLayer Pipeline { get; set; }
 }

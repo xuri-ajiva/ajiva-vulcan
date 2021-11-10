@@ -9,17 +9,23 @@ namespace ajiva.Systems.VulcanEngine.Systems;
 [Dependent(typeof(WindowSystem))]
 public class DeviceSystem : SystemBase, IInit
 {
+    private QueueFamilyIndices queueFamilies;
+
+    /// <inheritdoc />
+    public DeviceSystem(IAjivaEcs ecs) : base(ecs)
+    {
+    }
+
     internal PhysicalDevice? PhysicalDevice { get; private set; }
     internal Device? Device { get; private set; }
-    private QueueFamilyIndices queueFamilies;
 
     internal Queue? GraphicsQueue { get; private set; }
     internal Queue? PresentQueue { get; private set; }
     internal Queue? TransferQueue { get; private set; }
 
-    internal Queue<Action<CommandBuffer>> GraphicsQueueQueue { get; private set; } = new();
-    internal Queue<Action<CommandBuffer>> PresentQueueQueue { get; private set; } = new();
-    internal Queue<Action<CommandBuffer>> TransferQueueQueue { get; private set; } = new();
+    internal Queue<Action<CommandBuffer>> GraphicsQueueQueue { get; } = new Queue<Action<CommandBuffer>>();
+    internal Queue<Action<CommandBuffer>> PresentQueueQueue { get; } = new Queue<Action<CommandBuffer>>();
+    internal Queue<Action<CommandBuffer>> TransferQueueQueue { get; } = new Queue<Action<CommandBuffer>>();
 
     public Fence TransferQueueFence { get; private set; }
     public Fence PresentQueueFence { get; private set; }
@@ -29,13 +35,22 @@ public class DeviceSystem : SystemBase, IInit
     private CommandPool? BackgroundCommandPool { get; set; }
     private CommandPool? ForegroundCommandPool { get; set; }
 
-    private object TransientCommandPoolLock { get; } = new();
-    private object BackgroundCommandPoolLock { get; } = new();
-    private object ForegroundCommandPoolLock { get; } = new();
+    private object TransientCommandPoolLock { get; } = new object();
+    private object BackgroundCommandPoolLock { get; } = new object();
+    private object ForegroundCommandPoolLock { get; } = new object();
 
     public CommandBuffer? TransientSingleCommandBuffer { get; private set; }
     public CommandBuffer? BackgroundSingleCommandBuffer { get; private set; }
     public CommandBuffer? ForegroundSingleCommandBuffer { get; private set; }
+
+    private List<IDisposable> Disposables { get; set; } = new List<IDisposable>();
+
+    /// <inheritdoc />
+    public void Init()
+    {
+        PickPhysicalDevice(Ecs.GetInstance<Instance>());
+        CreateLogicalDevice();
+    }
 
     private void PickPhysicalDevice(Instance instance)
     {
@@ -55,13 +70,13 @@ public class DeviceSystem : SystemBase, IInit
                     QueuePriorities = new[]
                     {
                         1f
-                    },
+                    }
                 }).ToArray(),
             null,
-            KhrExtensions.Swapchain, DeviceCreateFlags.None, new PhysicalDeviceFeatures()
+            KhrExtensions.Swapchain, DeviceCreateFlags.None, new PhysicalDeviceFeatures
             {
                 SamplerAnisotropy = true,
-                FillModeNonSolid = true,
+                FillModeNonSolid = true
             });
 
         GraphicsQueue = Device.GetQueue(queueFamilies.GraphicsFamily!.Value, 0);
@@ -85,18 +100,66 @@ public class DeviceSystem : SystemBase, IInit
         var memoryProperties = PhysicalDevice!.GetMemoryProperties();
 
         for (var i = 0; i < memoryProperties.MemoryTypes.Length; i++)
-        {
             if ((typeFilter & (1u << i)) > 0
                 && memoryProperties.MemoryTypes[i].PropertyFlags.HasFlag(flags))
-            {
                 return (uint)i;
-            }
-        }
 
-        throw new("No compatible memory type.");
+        throw new Exception("No compatible memory type.");
     }
 
 #endregion
+
+    /// <inheritdoc />
+    protected override void ReleaseUnmanagedResources(bool disposing)
+    {
+        foreach (var buffer in Disposables) buffer.Dispose();
+        Disposables.Clear();
+        Disposables = null!;
+
+        TransferQueueFence.Dispose();
+        PresentQueueFence.Dispose();
+        GraphicsQueueFence.Dispose();
+
+        TransientCommandPool?.FreeCommandBuffers(TransientSingleCommandBuffer);
+        TransientCommandPool?.Dispose();
+        ForegroundCommandPool?.FreeCommandBuffers(ForegroundSingleCommandBuffer);
+        ForegroundCommandPool?.Dispose();
+        BackgroundCommandPool?.FreeCommandBuffers(BackgroundSingleCommandBuffer);
+        BackgroundCommandPool?.Dispose();
+        Device?.Dispose();
+
+        TransientSingleCommandBuffer = null;
+        ForegroundSingleCommandBuffer = null;
+        BackgroundSingleCommandBuffer = null;
+        ForegroundCommandPool = null;
+        BackgroundCommandPool = null;
+        TransientCommandPool = null;
+        Device = null;
+        PhysicalDevice = null;
+    }
+
+    public void WatchObject(IDisposable disposable)
+    {
+        Disposables.Add(disposable);
+    }
+
+    public CommandBuffer[] AllocateCommandBuffers(CommandBufferLevel bufferLevel, int count, CommandPoolSelector selector)
+    {
+        lock (GetCommandPoolLock(selector))
+        {
+            System.Diagnostics.Debug.Assert(Device != null, nameof(Device) + " != null");
+            return Device.AllocateCommandBuffers(GetCommandPool(selector), bufferLevel, (uint)count);
+        }
+    }
+
+    public CommandBuffer AllocateCommandBuffer(CommandBufferLevel bufferLevel, CommandPoolSelector selector)
+    {
+        lock (GetCommandPoolLock(selector))
+        {
+            System.Diagnostics.Debug.Assert(Device != null, nameof(Device) + " != null");
+            return Device.AllocateCommandBuffers(GetCommandPool(selector), bufferLevel, 1)[0];
+        }
+    }
 
 #region CommandPool
 
@@ -162,15 +225,17 @@ public class DeviceSystem : SystemBase, IInit
     {
         EnsureCommandPoolsExists();
 
-        GetQueueByType(queueType, poolSelector, out var queue, out Fence fence, out Queue<Action<CommandBuffer>> queueQueue, out var commandBuffer, out var poolLock);
+        GetQueueByType(queueType, poolSelector, out var queue, out var fence, out var queueQueue, out var commandBuffer, out var poolLock);
         lock (poolLock)
         lock (queue)
+        {
             ExecuteOnQueueWithFence(action, queue, fence, poolLock, commandBuffer, queueType);
+        }
     }
 
     public void QueueSingleTimeCommand(QueueType queueType, CommandPoolSelector poolSelector, Action<CommandBuffer> action)
     {
-        GetQueueByType(queueType, poolSelector, out var queue, out Fence fence, out Queue<Action<CommandBuffer>> queueQueue, out var commandBuffer, out var poolLock);
+        GetQueueByType(queueType, poolSelector, out var queue, out var fence, out var queueQueue, out var commandBuffer, out var poolLock);
         queueQueue.Enqueue(action);
     }
 
@@ -178,21 +243,18 @@ public class DeviceSystem : SystemBase, IInit
     {
         EnsureCommandPoolsExists();
 
-        GetQueueByType(queueType, poolSelector, out var queue, out Fence fence, out Queue<Action<CommandBuffer>> queueQueue, out var commandBuffer, out var poolLock);
+        GetQueueByType(queueType, poolSelector, out var queue, out var fence, out var queueQueue, out var commandBuffer, out var poolLock);
 
         lock (commandBuffer)
         {
             if (queue is null)
-                throw new("Init not done!");
+                throw new Exception("Init not done!");
 
             lock (queue)
             {
                 while (queueQueue.Count != 0)
                 {
-                    if (fence.GetStatus() == Result.Success)
-                    {
-                        ALog.Error("Fence Error");
-                    }
+                    if (fence.GetStatus() == Result.Success) ALog.Error("Fence Error");
 
                     var action = queueQueue.Dequeue();
                     ExecuteOnQueueWithFence(action, queue, fence, poolLock, commandBuffer, queueType);
@@ -223,7 +285,7 @@ public class DeviceSystem : SystemBase, IInit
             CommandBuffers = new[]
             {
                 singleCommandBuffer
-            },
+            }
         }, fence);
 
         queue.WaitIdle();
@@ -231,9 +293,11 @@ public class DeviceSystem : SystemBase, IInit
         fence.Reset();
 
         if (type != QueueType.GraphicsQueue) return;
-            
+
         lock (commandPoolLock)
+        {
             singleCommandBuffer.Reset(CommandBufferResetFlags.ReleaseResources);
+        }
     }
 
     private void GetQueueByType(QueueType queueType, CommandPoolSelector commandPoolSelector, out Queue queue, out Fence fence, out Queue<Action<CommandBuffer>> queueQueue, out CommandBuffer commandBuffer, out object poolLock)
@@ -265,77 +329,7 @@ public class DeviceSystem : SystemBase, IInit
     private const ulong DEFAULT_TIMEOUT = 10_000_000UL; // 10 ms in ns
 
 #endregion
-
-    /// <inheritdoc />
-    protected override void ReleaseUnmanagedResources(bool disposing)
-    {
-        foreach (var buffer in Disposables)
-        {
-            buffer.Dispose();
-        }
-        Disposables.Clear();
-        Disposables = null!;
-
-        TransferQueueFence.Dispose();
-        PresentQueueFence.Dispose();
-        GraphicsQueueFence.Dispose();
-
-        TransientCommandPool?.FreeCommandBuffers(TransientSingleCommandBuffer);
-        TransientCommandPool?.Dispose();
-        ForegroundCommandPool?.FreeCommandBuffers(ForegroundSingleCommandBuffer);
-        ForegroundCommandPool?.Dispose();
-        BackgroundCommandPool?.FreeCommandBuffers(BackgroundSingleCommandBuffer);
-        BackgroundCommandPool?.Dispose();
-        Device?.Dispose();
-
-        TransientSingleCommandBuffer = null;
-        ForegroundSingleCommandBuffer = null;
-        BackgroundSingleCommandBuffer = null;
-        ForegroundCommandPool = null;
-        BackgroundCommandPool = null;
-        TransientCommandPool = null;
-        Device = null;
-        PhysicalDevice = null;
-    }
-
-    /// <inheritdoc />
-    public void Init()
-    {
-        PickPhysicalDevice(Ecs.GetInstance<Instance>());
-        CreateLogicalDevice();
-    }
-
-    /// <inheritdoc />
-    public DeviceSystem(IAjivaEcs ecs) : base(ecs)
-    {
-    }
-
-    private List<IDisposable> Disposables { get; set; } = new List<IDisposable>();
-
-    public void WatchObject(IDisposable disposable)
-    {
-        Disposables.Add(disposable);
-    }
-
-    public CommandBuffer[] AllocateCommandBuffers(CommandBufferLevel bufferLevel, int count, CommandPoolSelector selector)
-    {
-        lock (GetCommandPoolLock(selector))
-        {
-            System.Diagnostics.Debug.Assert(Device != null, nameof(Device) + " != null");
-            return Device.AllocateCommandBuffers(GetCommandPool(selector), bufferLevel, (uint)count);
-        }
-    }
-
-    public CommandBuffer AllocateCommandBuffer(CommandBufferLevel bufferLevel, CommandPoolSelector selector)
-    {
-        lock (GetCommandPoolLock(selector))
-        {
-            System.Diagnostics.Debug.Assert(Device != null, nameof(Device) + " != null");
-            return Device.AllocateCommandBuffers(GetCommandPool(selector), bufferLevel, 1)[0];
-        }
-    }
 }
-
 public enum CommandPoolSelector
 {
     Foreground,
@@ -346,5 +340,5 @@ public enum QueueType
 {
     GraphicsQueue,
     PresentQueue,
-    TransferQueue,
+    TransferQueue
 }

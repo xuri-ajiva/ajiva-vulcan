@@ -4,20 +4,33 @@ using ajiva.Models;
 using ajiva.Systems.VulcanEngine.Systems;
 using SharpVk;
 using SharpVk.Multivendor;
+using Version = SharpVk.Version;
 
 namespace ajiva.Systems.VulcanEngine;
 
 public static class Statics
 {
+    private static readonly DebugReportCallbackDelegate DebugReportDelegate = (flags, objectType, o, location, messageCode, layerPrefix, message, userData) =>
+    {
+        var stackframe = new StackFrame(2, true);
+        var stackframe2 = new StackFrame(3, true);
+        var stackframe3 = new StackFrame(4, true);
+        ALog.Error($"[{flags}] ({objectType}) {layerPrefix}");
+        ALog.Error(message);
+        ALog.Error($"File: {stackframe.GetFileName()}:{stackframe.GetFileLineNumber()} from {stackframe2.GetFileName()}:{stackframe2.GetFileLineNumber()} from {stackframe3.GetFileName()}:{stackframe3.GetFileLineNumber()}");
+
+        return false;
+    };
+
     public static ImageView CreateImageView(this Image image, Device device, Format format, ImageAspectFlags aspectFlags)
     {
-        return device.CreateImageView(image, ImageViewType.ImageView2d, format, ComponentMapping.Identity, new()
+        return device.CreateImageView(image, ImageViewType.ImageView2d, format, ComponentMapping.Identity, new ImageSubresourceRange
         {
             AspectMask = aspectFlags,
             BaseMipLevel = 0,
             LevelCount = 1,
             BaseArrayLayer = 0,
-            LayerCount = 1,
+            LayerCount = 1
         });
     }
 
@@ -53,25 +66,10 @@ public static class Statics
         throw new ArgumentOutOfRangeException(nameof(candidates), candidates, "failed to find supported format!");
     }
 
-    private static readonly DebugReportCallbackDelegate DebugReportDelegate = (flags, objectType, o, location, messageCode, layerPrefix, message, userData) =>
-    {
-        var stackframe = new StackFrame(2, true);
-        var stackframe2 = new StackFrame(3, true);
-        var stackframe3 = new StackFrame(4, true);
-        ALog.Error($"[{flags}] ({objectType}) {layerPrefix}");
-        ALog.Error(message);
-        ALog.Error($"File: {stackframe.GetFileName()}:{stackframe.GetFileLineNumber()} from {stackframe2.GetFileName()}:{stackframe2.GetFileLineNumber()} from {stackframe3.GetFileName()}:{stackframe3.GetFileLineNumber()}");
-
-        return false;
-    };
-
     public static void LogStackTrace()
     {
         var stackFrame = new StackTrace(true);
-        foreach (var frame in stackFrame.GetFrames())
-        {
-            Console.WriteLine($"{frame.GetFileName()}:{frame.GetFileLineNumber()}");
-        }
+        foreach (var frame in stackFrame.GetFrames()) Console.WriteLine($"{frame.GetFileName()}:{frame.GetFileLineNumber()}");
     }
 
     /*private static DataTarget dataTarget = DataTarget.AttachToProcess(Environment.ProcessId, false);
@@ -81,7 +79,7 @@ public static class Statics
     {
         //if (Instance != null) return;
 
-        List<string> enabledLayers = new();
+        var enabledLayers = new List<string>();
 
         var props = Instance.EnumerateLayerProperties();
 
@@ -111,10 +109,10 @@ public static class Statics
             applicationInfo: new ApplicationInfo
             {
                 ApplicationName = "ajiva",
-                ApplicationVersion = new(0, 0, 1),
+                ApplicationVersion = new Version(0, 0, 1),
                 EngineName = "ajiva-engine",
-                EngineVersion = new(0, 0, 1),
-                ApiVersion = new(1, 0, 0)
+                EngineVersion = new Version(0, 0, 1),
+                ApiVersion = new Version(1, 0, 0)
             });
 
         var debugReportCallback = instance.CreateDebugReportCallback(DebugReportDelegate, DebugReportFlags.Error | DebugReportFlags.Warning | DebugReportFlags.PerformanceWarning);

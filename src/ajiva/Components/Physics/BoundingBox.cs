@@ -12,10 +12,22 @@ namespace ajiva.Components.Physics;
 
 public class BoundingBox : DisposingLogger, IComponent
 {
-    private void CalculateDynamics()
+    private ICollider? collider;
+
+    private readonly OnChangedDelegate ColliderChangedDelegate;
+    private vec3 maxPos;
+    private vec3 minPos;
+    private Transform3d? transform;
+
+    private readonly IChangingObserverOnlyAfter<ITransform<vec3, mat4>, mat4>.OnChangedDelegate TransformChangedDelegate;
+    private uint version;
+
+    private DebugBox? visual;
+
+    public BoundingBox()
     {
-        SizeHalf = (MaxPos - MinPos) / 2;
-        Center = MinPos + SizeHalf;
+        ColliderChangedDelegate = ColliderChanged;
+        TransformChangedDelegate = TransformChanged;
     }
 
     public vec3 MinPos
@@ -40,17 +52,12 @@ public class BoundingBox : DisposingLogger, IComponent
     public vec3 Center { get; private set; }
 
     public IAjivaEcs Ecs { private get; set; }
-
-    private ICollider? collider;
     public ICollider Collider
     {
         get => collider!;
         set
         {
-            if (collider is not null)
-            {
-                collider.ChangingObserver.OnChanged -= ColliderChangedDelegate;
-            }
+            if (collider is not null) collider.ChangingObserver.OnChanged -= ColliderChangedDelegate;
             value.ChangingObserver.OnChanged += ColliderChangedDelegate;
             collider = value;
         }
@@ -60,17 +67,18 @@ public class BoundingBox : DisposingLogger, IComponent
         get => transform!;
         set
         {
-            if (transform is not null)
-            {
-                transform.ChangingObserver.OnChanged -= TransformChangedDelegate;
-            }
+            if (transform is not null) transform.ChangingObserver.OnChanged -= TransformChangedDelegate;
             value.ChangingObserver.OnChanged += TransformChangedDelegate;
 
             transform = value;
         }
     }
 
-    IChangingObserverOnlyAfter<ITransform<vec3, mat4>, mat4>.OnChangedDelegate TransformChangedDelegate;
+    private void CalculateDynamics()
+    {
+        SizeHalf = (MaxPos - MinPos) / 2;
+        Center = MinPos + SizeHalf;
+    }
 
     private void TransformChanged(ITransform<vec3, mat4> sender, mat4 after)
     {
@@ -87,23 +95,9 @@ public class BoundingBox : DisposingLogger, IComponent
         }
     }
 
-    private OnChangedDelegate ColliderChangedDelegate;
-
     private void ColliderChanged(IChangingObserver changingObserver)
     {
         ComputeBoxBg();
-    }
-
-    private DebugBox? visual;
-    private Transform3d? transform;
-    private uint version = 0;
-    private vec3 maxPos;
-    private vec3 minPos;
-
-    public BoundingBox()
-    {
-        ColliderChangedDelegate = ColliderChanged;
-        TransformChangedDelegate = TransformChanged;
     }
 
     private WorkResult ComputeBox()

@@ -5,9 +5,9 @@ namespace ajiva.Models.Buffer;
 
 public class UniformBuffer<T> : ThreadSaveCreatable where T : struct, IComp<T>
 {
+    public delegate bool BufferValueUpdateDelegate(uint index, ref T value);
+
     private readonly DeviceSystem system;
-    public WritableCopyBuffer<T> Staging { get; }
-    public BufferOfT<T> Uniform { get; }
 
     public UniformBuffer(DeviceSystem system, int itemCount)
     {
@@ -15,9 +15,12 @@ public class UniformBuffer<T> : ThreadSaveCreatable where T : struct, IComp<T>
 
         this.system = system;
 
-        Staging = new(value);
-        Uniform = new(value);
+        Staging = new WritableCopyBuffer<T>(value);
+        Uniform = new BufferOfT<T>(value);
     }
+
+    public WritableCopyBuffer<T> Staging { get; }
+    public BufferOfT<T> Uniform { get; }
 
     /// <inheritdoc />
     protected override void Create()
@@ -54,16 +57,12 @@ public class UniformBuffer<T> : ThreadSaveCreatable where T : struct, IComp<T>
         Uniform[id] = data;
     }
 
-    public delegate bool BufferValueUpdateDelegate(uint index, ref T value);
-
     public void UpdateExpresion(BufferValueUpdateDelegate updateFunc)
     {
-        List<uint> updated = new();
+        List<uint> updated = new List<uint>();
         for (uint i = 0; i < Staging.Length; i++)
-        {
             if (updateFunc(i, ref Staging.GetRef(i)))
                 updated.Add(i);
-        }
         CopyRegions(updated);
     }
 
@@ -80,41 +79,46 @@ public class UniformBuffer<T> : ThreadSaveCreatable where T : struct, IComp<T>
         Staging.CopyRegions(Uniform, SimplifyFyRegions(updated), system);
     }
 
-    private BufferCopy[] RegionsToBufferCopy(List<uint> updated)
-        //stupid idea
-        => updated.Select(GetRegion).ToArray();
+    private BufferCopy[] RegionsToBufferCopy(List<uint> updated) //stupid idea
+    {
+    return updated.Select(GetRegion).ToArray();
+    }
+
     private BufferCopy[] SimplifyFyRegions(List<uint> updated)
     {
         updated.Sort();
 
-        List<Regions> simple = new();
+        List<Regions> simple = new List<Regions>();
 
-        Regions cur = new();
+        Regions cur = new Regions();
         foreach (var u in updated)
-        {
             if (u - cur.End > cur.Length)
             {
                 simple.Add(cur);
-                cur = new(u, u);
+                cur = new Regions(u, u);
             }
             else
             {
                 cur.Extend(u);
             }
-        }
 
         simple.Add(cur);
-            
+
         return simple
             .Where(x => x.Length > 0)
             .Select(x => new BufferCopy
             {
                 Size = Uniform.SizeOfT * x.Length,
                 DestinationOffset = Uniform.SizeOfT * x.Begin,
-                SourceOffset = Uniform.SizeOfT * x.Begin,
+                SourceOffset = Uniform.SizeOfT * x.Begin
             }).ToArray();
     }
-        
+
+    private BufferCopy GetRegion(uint id)
+    {
+        return new BufferCopy
+            { Size = Uniform.SizeOfT, DestinationOffset = Uniform.SizeOfT * id, SourceOffset = Uniform.SizeOfT * id };
+    }
 
     private struct Regions
     {
@@ -140,5 +144,4 @@ public class UniformBuffer<T> : ThreadSaveCreatable where T : struct, IComp<T>
             End = end;
         }
     }
-    private BufferCopy GetRegion(uint id) => new() {Size = Uniform.SizeOfT, DestinationOffset = Uniform.SizeOfT * id, SourceOffset = Uniform.SizeOfT * id};
 }

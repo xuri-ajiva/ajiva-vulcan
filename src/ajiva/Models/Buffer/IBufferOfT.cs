@@ -4,8 +4,8 @@ namespace ajiva.Models.Buffer;
 
 public interface IBufferOfT
 {
-    SharpVk.Buffer? Buffer {get;}
-    DeviceMemory? Memory {get;}
+    SharpVk.Buffer? Buffer { get; }
+    DeviceMemory? Memory { get; }
     int Length { get; }
     uint SizeOfT { get; }
     uint Size { get; }

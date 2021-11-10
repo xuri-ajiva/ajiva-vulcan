@@ -26,7 +26,6 @@ public class WorkInfo
     {
         try
         {
-
             return Work.Invoke(this, UserParam);
         }
         catch (Exception e)

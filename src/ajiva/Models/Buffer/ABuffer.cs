@@ -5,14 +5,14 @@ namespace ajiva.Models.Buffer;
 
 public class ABuffer : DisposingLogger
 {
-    public SharpVk.Buffer? Buffer { get; private set; }
-    public DeviceMemory? Memory { get; private set; }
-    public uint Size { get; protected set; }
-
     public ABuffer(uint size)
     {
         Size = size;
     }
+
+    public SharpVk.Buffer? Buffer { get; private set; }
+    public DeviceMemory? Memory { get; private set; }
+    public uint Size { get; protected set; }
 
     public void Create(DeviceSystem system, BufferUsageFlags usage, MemoryPropertyFlags flags)
     {
@@ -47,19 +47,20 @@ public class ABuffer : DisposingLogger
 
     public DisposablePointer MapDisposer()
     {
-        return new(Memory!, Size);
+        return new DisposablePointer(Memory!, Size);
     }
 
     public class DisposablePointer : IDisposable
     {
         private readonly DeviceMemory memory;
-        public IntPtr Ptr { get; }
 
         public DisposablePointer(DeviceMemory memory, ulong size)
         {
             this.memory = memory;
             Ptr = memory.Map(0, size, MemoryMapFlags.None);
         }
+
+        public IntPtr Ptr { get; }
 
         /// <inheritdoc />
         public void Dispose()

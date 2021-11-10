@@ -12,12 +12,10 @@ public class AssetHelper
         return string.Create(name.Length, name, (span, s) =>
         {
             for (var i = 0; i < s.Length; i++)
-            {
                 if (s[i] is '\\' or '/')
                     span[i] = ':';
                 else
                     span[i] = char.ToLower(s[i]);
-            }
         });
         return name;
     }

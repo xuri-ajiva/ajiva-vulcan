@@ -27,7 +27,7 @@ public struct Vertex2D
 
     public static VertexInputBindingDescription GetBindingDescription()
     {
-        return new()
+        return new VertexInputBindingDescription
         {
             Binding = 0,
             Stride = (uint)Marshal.SizeOf<Vertex2D>(),
@@ -37,16 +37,16 @@ public struct Vertex2D
 
     public static VertexInputAttributeDescription[] GetAttributeDescriptions()
     {
-        return new VertexInputAttributeDescription[]
+        return new[]
         {
-            new()
+            new VertexInputAttributeDescription
             {
                 Binding = 0,
                 Location = 0,
                 Format = Format.R32G32SFloat,
                 Offset = (uint)Marshal.OffsetOf<Vertex2D>(nameof(Position))
             },
-            new()
+            new VertexInputAttributeDescription
             {
                 Binding = 0,
                 Location = 1,

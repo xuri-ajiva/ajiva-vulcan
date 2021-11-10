@@ -14,7 +14,7 @@ public partial class ATexture
 {
     public static ATexture FromFile(IAjivaEcs ecs, string assetName)
     {
-        return new()
+        return new ATexture
         {
             Image = CreateTextureImageFromAsset(ecs, assetName),
             Sampler = CreateTextureSampler(ecs.GetSystem<DeviceSystem>())
@@ -23,7 +23,7 @@ public partial class ATexture
 
     public static ATexture FromBitmap(IAjivaEcs ecs, Bitmap bitmap)
     {
-        return new()
+        return new ATexture
         {
             Image = CreateTextureImageFromBitmap(ecs, bitmap),
             Sampler = CreateTextureSampler(ecs.GetSystem<DeviceSystem>())
@@ -43,12 +43,12 @@ public partial class ATexture
         var texHeight = (uint)bm.Height;
         var imageSize = texWidth * texHeight * 4u;
 
-        using ABuffer aBuffer = new(imageSize);
+        using ABuffer aBuffer = new ABuffer(imageSize);
         aBuffer.Create(ecs.GetSystem<DeviceSystem>(), BufferUsageFlags.TransferSource, MemoryPropertyFlags.HostVisible | MemoryPropertyFlags.HostCached);
 
         unsafe
         {
-            var scp0 = bm.LockBits(new(0, 0, bm.Width, bm.Height), ImageLockMode.ReadWrite, PixelFormat.Format32bppPArgb);
+            var scp0 = bm.LockBits(new Rectangle(0, 0, bm.Width, bm.Height), ImageLockMode.ReadWrite, PixelFormat.Format32bppPArgb);
 
             using (var map = aBuffer.MapDisposer())
             {
@@ -62,7 +62,7 @@ public partial class ATexture
 
         var image = ecs.GetComponentSystem<ImageSystem, AImage>();
 
-        AImage aImage = image.CreateImageAndView(texWidth, texHeight, Format.R8G8B8A8Srgb, ImageTiling.Optimal, ImageUsageFlags.TransferDestination | ImageUsageFlags.Sampled, MemoryPropertyFlags.DeviceLocal, ImageAspectFlags.Color);
+        var aImage = image.CreateImageAndView(texWidth, texHeight, Format.R8G8B8A8Srgb, ImageTiling.Optimal, ImageUsageFlags.TransferDestination | ImageUsageFlags.Sampled, MemoryPropertyFlags.DeviceLocal, ImageAspectFlags.Color);
 
         image.TransitionImageLayout(aImage.Image, Format.R8G8B8A8Srgb, ImageLayout.Undefined, ImageLayout.TransferDestinationOptimal);
         image.CopyBufferToImage(aBuffer.Buffer!, aImage.Image, texWidth, texHeight);
