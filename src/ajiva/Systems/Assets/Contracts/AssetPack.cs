@@ -1,32 +1,26 @@
-﻿using System.Collections.Generic;
-using System.IO;
-using ProtoBuf;
+﻿using ProtoBuf;
 
-namespace ajiva.Systems.Assets.Contracts
+namespace ajiva.Systems.Assets.Contracts;
+
+[ProtoContract]
+public class AssetPack
 {
-    [ProtoContract]
-    public class AssetPack
+    private readonly object @lock = new object();
+
+    [ProtoMember(1)]
+    public Dictionary<AssetType, AssetObjects> Assets { get; set; } = new Dictionary<AssetType, AssetObjects>();
+
+    public void Add(AssetType assetType, string name, byte[] data)
     {
-        [ProtoMember(1)]
-        public Dictionary<AssetType, AssetObjects> Assets { get; set; } = new();
-
-        private object @lock = new object();
-
-        public void Add(AssetType assetType, string name, byte[] data)
+        lock (@lock)
         {
-            lock (@lock)
-            {
-                if (!Assets.ContainsKey(assetType))
-                {
-                    Assets.Add(assetType, new AssetObjects(assetType));
-                }
-                Assets[assetType].Add(name, data);
-            }
+            if (!Assets.ContainsKey(assetType)) Assets.Add(assetType, new AssetObjects(assetType));
+            Assets[assetType].Add(name, data);
         }
+    }
 
-        public void Add(AssetType assetType, string relPathName, FileInfo fileInfo)
-        {
-            Add(assetType, AssetHelper.Combine(relPathName, fileInfo.Name), File.ReadAllBytes(fileInfo.FullName));
-        }
+    public void Add(AssetType assetType, string relPathName, FileInfo fileInfo)
+    {
+        Add(assetType, AssetHelper.Combine(relPathName, fileInfo.Name), File.ReadAllBytes(fileInfo.FullName));
     }
 }

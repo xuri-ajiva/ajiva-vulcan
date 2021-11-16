@@ -1,69 +1,66 @@
 ﻿using System.Globalization;
-using System.Threading;
-using ajiva.Utils;
 
-namespace ajiva.Worker
+namespace ajiva.Worker;
+
+public class Worker
 {
-    public class Worker
+    internal readonly int WorkerId;
+    private readonly Thread workingThread;
+
+    private bool exit;
+
+    public Worker(WorkerPool workerPool, in int workerId)
     {
-        internal string WorkName { get; private protected set; }
+        WorkerId = workerId;
+        WorkerPool = workerPool;
+        WorkName = "";
 
-        internal readonly int WorkerId;
-        public WorkerPool WorkerPool { get; }
-        private readonly Thread workingThread;
-
-        public Worker(WorkerPool workerPool, in int workerId)
+        State.Publish(WorkResult.Waiting);
+        workingThread = new Thread(Work)
         {
-            WorkerId = workerId;
-            WorkerPool = workerPool;
-            WorkName = "";
+            Name = $"WorkerThread {workerId.ToString()} from {WorkerPool.Name}",
+            CurrentCulture = CultureInfo.InvariantCulture
+        };
+    }
 
+    internal string WorkName { get; private protected set; }
+    public WorkerPool WorkerPool { get; }
+
+    public Notify<WorkResult> State { get; } = new Notify<WorkResult>();
+
+    private void Work(object? state)
+    {
+        while (!exit)
+        {
+            WorkInfo? work;
             State.Publish(WorkResult.Waiting);
-            workingThread = new(Work)
+            WorkerPool.SyncSemaphore.WaitOne();
+            if (WorkerPool.CancellationTokenSource.IsCancellationRequested)
+                return;
+
+            lock (WorkerPool.AvailableLock)
             {
-                Name = $"WorkerThread {workerId.ToString()} from {WorkerPool.Name}",
-                CurrentCulture = CultureInfo.InvariantCulture
-            };
-        }
+                State.Publish(WorkResult.Locking);
 
-        private void Work(object? state)
-        {
-            while (!exit)
-            {
-                WorkInfo? work;
-                State.Publish(WorkResult.Waiting);
-                WorkerPool.SyncSemaphore.WaitOne();
-                if (WorkerPool.CancellationTokenSource.IsCancellationRequested)
-                    return;
-                
-                lock (WorkerPool.AvailableLock)
-                {
-                    State.Publish(WorkResult.Locking);
-
-                    if (!WorkerPool.TryGetWork(out work)) continue;
-                }
-                if (work == null) continue;
-
-                WorkName = work.Name;
-                work.ActiveWorker = this;
-                State.Publish(WorkResult.Working);
-                var result = work.Invoke();
-                State.Publish(result);
+                if (!WorkerPool.TryGetWork(out work)) continue;
             }
+            if (work == null) continue;
+
+            WorkName = work.Name;
+            work.ActiveWorker = this;
+            State.Publish(WorkResult.Working);
+            var result = work.Invoke();
+            State.Publish(result);
         }
+    }
 
-        public Notify<WorkResult> State { get; } = new();
+    public void Start()
+    {
+        workingThread.Start();
+    }
 
-        public void Start()
-        {
-            workingThread.Start();
-        }
-
-        private bool exit;
-
-        ~Worker()
-        {
-            exit = true;
-        }
+    ~Worker()
+    {
+        exit = true;
     }
 }

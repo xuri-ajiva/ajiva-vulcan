@@ -1,41 +1,35 @@
 <Project Sdk="Microsoft.NET.Sdk">
-
     <PropertyGroup>
         <RootNamespace>ajiva</RootNamespace>
         <OutputType>Exe</OutputType>
-        <TargetFramework>net5.0-windows</TargetFramework>
+        <TargetFramework>net6.0</TargetFramework>
         <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
         <Nullable>enable</Nullable>
         <IsPackable>false</IsPackable>
     </PropertyGroup>
-    
     <ItemGroup>
         <PackageReference Include="protobuf-net" Version="3.0.101" />
         <PackageReference Include="System.Drawing.Common" Version="5.0.0" />
         <PackageReference Include="System.Linq.Async" Version="5.0.0" />
         <PackageReference Include="System.Reactive.Linq" Version="5.0.0" />
     </ItemGroup>
-        
     <ItemGroup>
-      <Compile Remove="Systems\VulcanEngine\SpirV-ShaderHelper\VertexOutput.cs" />
-      <Compile Remove="Systems\VulcanEngine\Layer2d\UiRenderer.cs" />
-      <Compile Remove="Components\RenderAble\RenderRect2D.cs" />
+        <Compile Remove="Systems\VulcanEngine\SpirV-ShaderHelper\VertexOutput.cs" />
+        <Compile Remove="Systems\VulcanEngine\Layer2d\UiRenderer.cs" />
+        <Compile Remove="Components\RenderAble\RenderRect2D.cs" />
     </ItemGroup>
-
     <ItemGroup>
-      <Folder Include="Systems\VulcanEngine\SpirV-ShaderHelper" />
+        <Folder Include="Systems\VulcanEngine\SpirV-ShaderHelper" />
     </ItemGroup>
-
     <ItemGroup>
-      <ProjectReference Include="..\..\libs\ajiva-utils\src\Ajiva.Include\Ajiva.Include.csproj" />
-      <ProjectReference Include="..\..\libs\ajiva-utils\src\Ajiva.Wrapper\Ajiva.Wrapper.csproj" />
-      <ProjectReference Include="..\..\Libs\GlmSharp\GlmSharp\GlmSharp\GlmSharp.csproj" />
-      <ProjectReference Include="..\..\libs\SharpVk\src\SharpVk.Glfw\SharpVk.Glfw.csproj" />
-      <ProjectReference Include="..\..\libs\SharpVk\src\SharpVk.Shanq.GlmSharp\SharpVk.Shanq.GlmSharp.csproj" />
-      <ProjectReference Include="..\..\libs\SharpVk\src\SharpVk\SharpVk.csproj" />
-      <ProjectReference Include="..\ajiva.Ecs\ajiva.Ecs.csproj" />
+        <ProjectReference Include="..\..\libs\ajiva-utils\src\Ajiva.Include\Ajiva.Include.csproj" />
+        <ProjectReference Include="..\..\libs\ajiva-utils\src\Ajiva.Wrapper\Ajiva.Wrapper.csproj" />
+        <ProjectReference Include="..\..\Libs\GlmSharp\GlmSharp\GlmSharp\GlmSharp.csproj" />
+        <ProjectReference Include="..\..\libs\SharpVk\src\SharpVk.Glfw\SharpVk.Glfw.csproj" />
+        <ProjectReference Include="..\..\libs\SharpVk\src\SharpVk.Shanq.GlmSharp\SharpVk.Shanq.GlmSharp.csproj" />
+        <ProjectReference Include="..\..\libs\SharpVk\src\SharpVk\SharpVk.csproj" />
+        <ProjectReference Include="..\ajiva.Ecs\ajiva.Ecs.csproj" />
     </ItemGroup>
-
     <PropertyGroup>
         <PathMap>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)'))=./</PathMap>
     </PropertyGroup>

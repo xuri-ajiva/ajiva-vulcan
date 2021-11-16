@@ -1,26 +1,22 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using ajiva.Systems.Assets.Contracts;
+﻿using ajiva.Systems.Assets.Contracts;
 
-namespace ajiva.Systems.Assets
+namespace ajiva.Systems.Assets;
+
+public class AssetSpecification
 {
-    public class AssetSpecification
+    public AssetSpecification(string root, Dictionary<AssetType, string> pathMap)
     {
-        public DirectoryInfo Root { get; }
-        public Dictionary<AssetType, string> PathMap { get; }
+        Root = new DirectoryInfo(root);
+        PathMap = pathMap;
+    }
 
-        public AssetSpecification(string root, Dictionary<AssetType, string> pathMap)
-        {
-            Root = new DirectoryInfo(root);
-            PathMap = pathMap;
-        }
+    public DirectoryInfo Root { get; }
+    public Dictionary<AssetType, string> PathMap { get; }
 
-        public DirectoryInfo Get(AssetType type)
-        {
-            if (!PathMap.ContainsKey(type))
-                throw new Exception("Type Not existent");
-            return new DirectoryInfo(Path.Combine(Root.FullName, PathMap[type]));
-        }
+    public DirectoryInfo Get(AssetType type)
+    {
+        if (!PathMap.ContainsKey(type))
+            throw new Exception("Type Not existent");
+        return new DirectoryInfo(Path.Combine(Root.FullName, PathMap[type]));
     }
 }

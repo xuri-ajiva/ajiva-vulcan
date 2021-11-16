@@ -1,51 +1,35 @@
-﻿using System.Collections.Generic;
-using ajiva.Components.Media;
-using ajiva.Utils;
-using SharpVk;
+﻿using SharpVk;
 
-namespace ajiva.Systems.VulcanEngine.Layers.Models
+namespace ajiva.Systems.VulcanEngine.Layers.Models;
+
+public class RenderPassLayer : DisposingLogger
 {
-    public class RenderPassLayer : DisposingLogger
+    /// <inheritdoc />
+    public RenderPassLayer(SwapChainLayer parent, RenderPass renderPass, Framebuffer[] frameBuffers, ClearValue[] clearValues)
     {
-        private AImage? DepthImage { get; }
-        public RenderPass RenderPass { get; }
-        public CommandPool CommandPool { get; }
-        public Framebuffer[] FrameBuffers { get; }
-        public CommandBuffer[] RenderBuffers { get; }
+        RenderPass = renderPass;
+        FrameBuffers = frameBuffers;
+        ClearValues = clearValues;
+        Parent = parent;
+    }
 
-        public List<GraphicsPipelineLayer> Children { get; } = new();
-        public SwapChainLayer Parent { get; }
+    public ClearValue[] ClearValues { get; }
+    public RenderPass RenderPass { get; }
+    public Framebuffer[] FrameBuffers { get; }
 
-        /// <inheritdoc />
-        public RenderPassLayer(SwapChainLayer parent, RenderPass renderPass, AImage? depthImage, CommandPool commandPool, Framebuffer[] frameBuffers, CommandBuffer[] renderBuffers)
-        {
-            DepthImage = depthImage;
-            RenderPass = renderPass;
-            CommandPool = commandPool;
-            FrameBuffers = frameBuffers;
-            RenderBuffers = renderBuffers;
-            Parent = parent;
-        }
+    public List<GraphicsPipelineLayer> Children { get; } = new List<GraphicsPipelineLayer>();
+    public SwapChainLayer Parent { get; }
 
-        /// <inheritdoc />
-        protected override void ReleaseUnmanagedResources(bool disposing)
-        {
-            foreach (var child in Children)
-            {
-                child.Dispose();
-            }
-            DepthImage?.Dispose();
-            RenderPass.Dispose();
-            CommandPool.FreeCommandBuffers(RenderBuffers);
-            foreach (var frameBuffer in FrameBuffers)
-            {
-                frameBuffer.Dispose();
-            }
-        }
+    /// <inheritdoc />
+    protected override void ReleaseUnmanagedResources(bool disposing)
+    {
+        foreach (var child in Children) child.Dispose();
+        RenderPass.Dispose();
+        foreach (var frameBuffer in FrameBuffers) frameBuffer.Dispose();
+    }
 
-        public void AddChild(GraphicsPipelineLayer graphicsPipelineLayer)
-        {
-            Children.Add(graphicsPipelineLayer);
-        }
+    public void AddChild(GraphicsPipelineLayer graphicsPipelineLayer)
+    {
+        Children.Add(graphicsPipelineLayer);
     }
 }

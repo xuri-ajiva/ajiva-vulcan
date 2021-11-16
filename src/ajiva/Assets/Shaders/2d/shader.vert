@@ -19,7 +19,7 @@ layout(location = 0) out vec3 fragColor;
 layout(location = 1) out vec2 fragTexCoord;
 
 void main() {
-    vec4 translated = model.model * vec4(inPosition,1,1);
+    vec4 translated = model.model * vec4(inPosition, 1, 1);
     vec4 pos = data.proj * data.view * (translated + vec4(data.mousePos, 1.0f, 1.0f));
     gl_Position =  vec4(vec2(pos), 0, 1);
     fragColor = inColor;

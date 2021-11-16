@@ -1,11 +1,10 @@
 ﻿using SharpVk;
 
-namespace ajiva.Components.RenderAble
+namespace ajiva.Components.RenderAble;
+
+public interface IRenderMeshPool
 {
-    public interface IRenderMeshPool
-    {
-        uint LastMeshId { get; }
-        void DrawMesh(CommandBuffer buffer, uint meshId);
-        void Reset();
-    }
+    uint LastMeshId { get; }
+    void DrawMesh(CommandBuffer buffer, uint meshId);
+    void Reset();
 }

@@ -1,6 +1,5 @@
-﻿namespace ajiva.Entities
+﻿namespace ajiva.Entities;
+
+public class Rect : DefaultEntity
 {
-    public class Rect : DefaultEntity
-    {
-    }
 }

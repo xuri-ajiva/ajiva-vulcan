@@ -1,19 +1,14 @@
-﻿using System;
-using System.Collections.Generic;
-using ajiva.Components.Media;
-using ajiva.Components.Transform;
-using ajiva.Ecs.Entity;
+﻿using ajiva.Components.Transform;
 
-namespace ajiva.Entities
+namespace ajiva.Entities;
+
+public class TransformFormEntity<T, TV, TM> : ChangingObserverEntity where T : class, ITransform<TV, TM> where TV : struct, IReadOnlyList<float> where TM : struct, IReadOnlyList<float>
 {
-    public class TransformFormEntity<T, TV, TM> : ChangingObserverEntity where T : class, ITransform<TV, TM> where TV : struct, IReadOnlyList<float> where TM : struct, IReadOnlyList<float>
+    public TransformFormEntity() : base(0)
     {
-        public TransformFormEntity() : base(0)
-        {
-            TransformLazy = new Lazy<T>(() => (this.TryGetComponent<T>(out var transform) ? transform : default)!);
-        }
-                                                        
-        public Lazy<T> TransformLazy { get; }
-        public T Transform => TransformLazy.Value;
+        TransformLazy = new Lazy<T>(() => (this.TryGetComponent<T>(out var transform) ? transform : default)!);
     }
+
+    public Lazy<T> TransformLazy { get; }
+    public T Transform => TransformLazy.Value;
 }

@@ -1,146 +1,129 @@
-﻿using System;
-using System.Collections.Generic;
-using ajiva.Components.Media;
-using ajiva.Components.RenderAble;
-using ajiva.Ecs;
-using ajiva.Ecs.System;
-using ajiva.Ecs.Utils;
+﻿using ajiva.Ecs;
 using ajiva.Systems.VulcanEngine.Layer;
 using ajiva.Systems.VulcanEngine.Layers;
-using ajiva.Utils;
 using ajiva.Utils.Changing;
-using Ajiva.Wrapper.Logger;
 using SharpVk;
 
-namespace ajiva.Systems.VulcanEngine.Systems
+namespace ajiva.Systems.VulcanEngine.Systems;
+
+[Dependent(typeof(TextureSystem))]
+public class GraphicsSystem : SystemBase, IInit, IUpdate
 {
-    [Dependent(typeof(TextureSystem))]
-    public class GraphicsSystem : SystemBase, IInit, IUpdate
+    private static readonly object CurrentGraphicsLayoutSwapLock = new object();
+
+    private AjivaLayerRenderer? ajivaLayerRenderer;
+
+    private DeviceSystem deviceSystem;
+
+    private bool reInitAjivaLayerRendererNeeded = true;
+    private WindowSystem windowSystem;
+
+    /// <inheritdoc />
+    public GraphicsSystem(IAjivaEcs ecs) : base(ecs)
     {
-        public IOverTimeChangingObserver ChangingObserver { get; } = new OverTimeChangingObserver(100);
+    }
 
-        public Dictionary<AjivaVulkanPipeline, IAjivaLayer> Layers { get; } = new();
+    public IOverTimeChangingObserver ChangingObserver { get; } = new OverTimeChangingObserver(100);
 
-        private static readonly object CurrentGraphicsLayoutSwapLock = new();
+    public Dictionary<AjivaVulkanPipeline, IAjivaLayer> Layers { get; } = new Dictionary<AjivaVulkanPipeline, IAjivaLayer>();
 
-        /// <inheritdoc />
-        protected override void ReleaseUnmanagedResources(bool disposing)
-        {
-            ajivaLayerRenderer?.Dispose();
-            ajivaLayerRenderer = null!;
-        }
+    private Format DepthFormat { get; set; }
 
-        public void RecreateCurrentGraphicsLayout()
-        {
-            lock (CurrentGraphicsLayoutSwapLock)
-            {
-                deviceSystem.WaitIdle();
+    /// <inheritdoc />
+    public void Init()
+    {
+        ResolveDeps();
+        windowSystem.OnResize += WindowResized;
+    }
 
-                ReCreateRenderUnion();
-            }
-        }
-
-        private bool recreateCurrentGraphicsLayoutNeeded = true;
-
-        /// <inheritdoc />
-        public void Init()
-        {
-            ResolveDeps();
-            //RecreateCurrentGraphicsLayout();
-            ChangingObserver.Changed();
-            //ChangingObserver.OnUpdate += _ => UpdateGraphicsData();
-            windowSystem.OnResize += WindowResized;
-        }
-
-        private void WindowResized()
+    /// <inheritdoc />
+    public void Update(UpdateInfo delta)
+    {
+        if (reInitAjivaLayerRendererNeeded || ajivaLayerRenderer is null)
         {
             RecreateCurrentGraphicsLayout();
+            reInitAjivaLayerRendererNeeded = false;
         }
 
-        /// <inheritdoc />
-        public void Update(UpdateInfo delta)
+        ajivaLayerRenderer!.UpdateSubmitInfoChecked();
+
+        if (ChangingObserver.UpdateCycle(delta.Iteration)) UpdateGraphicsData();
+        lock (CurrentGraphicsLayoutSwapLock)
         {
-            if (recreateCurrentGraphicsLayoutNeeded)
+            DrawFrame();
+        }
+    }
+
+    /// <inheritdoc />
+    protected override void ReleaseUnmanagedResources(bool disposing)
+    {
+        ajivaLayerRenderer?.Dispose();
+        ajivaLayerRenderer = null!;
+    }
+
+    public void RecreateCurrentGraphicsLayout()
+    {
+        lock (CurrentGraphicsLayoutSwapLock)
+        {
+            deviceSystem.WaitIdle();
+
+            ReCreateRenderUnion();
+        }
+    }
+
+    private void WindowResized()
+    {
+        RecreateCurrentGraphicsLayout();
+    }
+
+    public void DrawFrame()
+    {
+        var render = deviceSystem.GraphicsQueue!;
+        var presentation = deviceSystem.PresentQueue!;
+
+        deviceSystem.ExecuteSingleTimeCommands(QueueType.GraphicsQueue, CommandPoolSelector.Foreground);
+        deviceSystem.ExecuteSingleTimeCommands(QueueType.GraphicsQueue, CommandPoolSelector.Background);
+        deviceSystem.ExecuteSingleTimeCommands(QueueType.TransferQueue, CommandPoolSelector.Transit);
+
+        lock (presentation)
+        {
+            lock (render)
             {
-                RecreateCurrentGraphicsLayout();
-                recreateCurrentGraphicsLayoutNeeded = false;
+                ajivaLayerRenderer!.DrawFrame(render, presentation);
             }
-            if (ChangingObserver.UpdateCycle(delta.Iteration))
-                UpdateGraphicsData();
-            lock (CurrentGraphicsLayoutSwapLock)
-                DrawFrame();
         }
+    }
 
-        /// <inheritdoc />
-        public GraphicsSystem(IAjivaEcs ecs) : base(ecs)
-        {
-        }
+    public void ResolveDeps()
+    {
+        deviceSystem = Ecs.GetSystem<DeviceSystem>();
+        windowSystem = Ecs.GetSystem<WindowSystem>();
 
-#region gl
+        DepthFormat = (deviceSystem.PhysicalDevice ?? throw new InvalidOperationException()).FindDepthFormat();
+    }
 
-        private Format DepthFormat { get; set; }
+    protected void ReCreateRenderUnion()
+    {
+        ajivaLayerRenderer ??= new AjivaLayerRenderer(deviceSystem, windowSystem.Canvas);
 
-        private AjivaLayerRenderer ajivaLayerRenderer;
+        ajivaLayerRenderer.Init(Layers.Values.ToList());
+    }
 
-        public void DrawFrame()
-        {
-            var render = deviceSystem.GraphicsQueue!;
-            var presentation = deviceSystem.PresentQueue!;
+    public void UpdateGraphicsData()
+    {
+        ChangingObserver.Updated();
+        ajivaLayerRenderer?.ForceFillBuffers();
+    }
 
-            deviceSystem.ExecuteSingleTimeCommands(QueueType.GraphicsQueue);
+    public void AddUpdateLayer(IAjivaLayer layer)
+    {
+        layer.LayerChanged.OnChanged += LayerChangedOnOnChanged;
+        Layers.Add(layer.PipelineLayer, layer);
+    }
 
-            lock (presentation)
-            {
-                lock (render)
-                {
-                    ajivaLayerRenderer.DrawFrame(render, presentation);
-                }
-            }
-        }
-
-        private DeviceSystem deviceSystem;
-        private WindowSystem windowSystem;
-
-        public void ResolveDeps()
-        {
-            deviceSystem = Ecs.GetSystem<DeviceSystem>();
-            windowSystem = Ecs.GetSystem<WindowSystem>();
-
-            DepthFormat = (deviceSystem.PhysicalDevice ?? throw new InvalidOperationException()).FindDepthFormat();
-        }
-
-        private const int DISPOSE_DALEY = 3000;
-
-        protected void ReCreateRenderUnion()
-        {
-            ajivaLayerRenderer?.DisposeIn(DISPOSE_DALEY);
-
-            var imageAvailable = deviceSystem.Device!.CreateSemaphore()!;
-            var renderFinished = deviceSystem.Device!.CreateSemaphore()!;
-
-            ajivaLayerRenderer = new AjivaLayerRenderer(imageAvailable, renderFinished);
-
-            ajivaLayerRenderer.PrepareRenderSubmitInfo(deviceSystem, windowSystem.Canvas, Layers);
-
-            UpdateGraphicsData();
-        }
-
-        public void UpdateGraphicsData()
-        {
-            //LogHelper.Log("Updating BufferData");
-            ChangingObserver.Updated();
-            ajivaLayerRenderer.FillBuffers(deviceSystem);
-            /*foreach (var (_, layer) in layerSystem.Layers)
-            {
-                renderUnion.FillFrameBuffer(layer.PipelineLayer, layer.GetRenders(), meshPool);
-            }*/
-        }
-
-#endregion
-
-        public void AddUpdateLayer(IAjivaLayer layer)
-        {
-            Layers.Add(layer.PipelineLayer, layer);
-        }
+    private void LayerChangedOnOnChanged(IAjivaLayer sender)
+    {
+        if (!reInitAjivaLayerRendererNeeded)
+            reInitAjivaLayerRendererNeeded = true;
     }
 }

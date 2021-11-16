@@ -1,14 +1,12 @@
 ﻿using System;
-using ajiva.Ecs.Entity;
 
-namespace ajiva.Ecs.Factory
+namespace ajiva.Ecs.Factory;
+
+public interface IEntityFactory : IDisposable
 {
-    public interface IEntityFactory : IDisposable
-    {
-        IEntity Create(IAjivaEcs system, uint id);
-    }
-    public interface IEntityFactory<T> : IEntityFactory where T : class, IEntity
-    {
-        new T Create(IAjivaEcs system, uint id);
-    }
+    IEntity Create(IAjivaEcs system, uint id);
+}
+public interface IEntityFactory<T> : IEntityFactory where T : class, IEntity
+{
+    new T Create(IAjivaEcs system, uint id);
 }

@@ -1,9 +1,5 @@
-﻿using ajiva.Ecs.Entity;
+﻿namespace ajiva.Entities;
 
-namespace ajiva.Entities
+public class DefaultEntity : AEntity
 {
-    public class DefaultEntity : AEntity
-    {
-
-    }
 }

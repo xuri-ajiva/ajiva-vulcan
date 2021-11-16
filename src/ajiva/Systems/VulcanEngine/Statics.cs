@@ -1,142 +1,132 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
+﻿using System.Diagnostics;
 using ajiva.Components.Media;
 using ajiva.Models;
 using ajiva.Systems.VulcanEngine.Systems;
-using Ajiva.Wrapper.Logger;
 using SharpVk;
 using SharpVk.Multivendor;
+using Version = SharpVk.Version;
 
-namespace ajiva.Systems.VulcanEngine
+namespace ajiva.Systems.VulcanEngine;
+
+public static class Statics
 {
-    public static class Statics
+    private static readonly DebugReportCallbackDelegate DebugReportDelegate = (flags, objectType, o, location, messageCode, layerPrefix, message, userData) =>
     {
-        public static ImageView CreateImageView(this Image image, Device device, Format format, ImageAspectFlags aspectFlags)
+        var stackframe = new StackFrame(2, true);
+        var stackframe2 = new StackFrame(3, true);
+        var stackframe3 = new StackFrame(4, true);
+        ALog.Error($"[{flags}] ({objectType}) {layerPrefix}");
+        ALog.Error(message);
+        ALog.Error($"File: {stackframe.GetFileName()}:{stackframe.GetFileLineNumber()} from {stackframe2.GetFileName()}:{stackframe2.GetFileLineNumber()} from {stackframe3.GetFileName()}:{stackframe3.GetFileLineNumber()}");
+
+        return false;
+    };
+
+    public static ImageView CreateImageView(this Image image, Device device, Format format, ImageAspectFlags aspectFlags)
+    {
+        return device.CreateImageView(image, ImageViewType.ImageView2d, format, ComponentMapping.Identity, new ImageSubresourceRange
         {
-            return device.CreateImageView(image, ImageViewType.ImageView2d, format, ComponentMapping.Identity, new()
+            AspectMask = aspectFlags,
+            BaseMipLevel = 0,
+            LevelCount = 1,
+            BaseArrayLayer = 0,
+            LayerCount = 1
+        });
+    }
+
+    public static Format FindDepthFormat(this PhysicalDevice physicalDevice)
+    {
+        return FindSupportedFormat(physicalDevice, new[]
             {
-                AspectMask = aspectFlags,
-                BaseMipLevel = 0,
-                LevelCount = 1,
-                BaseArrayLayer = 0,
-                LayerCount = 1,
-            });
-        }
+                Format.D32SFloat, Format.D32SFloatS8UInt, Format.D24UNormS8UInt
+            },
+            ImageTiling.Optimal,
+            FormatFeatureFlags.DepthStencilAttachment
+            //VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT
+        );
+    }
 
-        public static Format FindDepthFormat(this PhysicalDevice physicalDevice)
+    private static Format FindSupportedFormat(PhysicalDevice physicalDevice, IEnumerable<Format> candidates, ImageTiling tiling, FormatFeatureFlags features)
+    {
+        foreach (var format in candidates)
         {
-            return FindSupportedFormat(physicalDevice, new[]
-                {
-                    Format.D32SFloat, Format.D32SFloatS8UInt, Format.D24UNormS8UInt
-                },
-                ImageTiling.Optimal,
-                FormatFeatureFlags.DepthStencilAttachment
-                //VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT
-            );
-        }
+            var props = physicalDevice.GetFormatProperties(format);
 
-        private static Format FindSupportedFormat(PhysicalDevice physicalDevice, IEnumerable<Format> candidates, ImageTiling tiling, FormatFeatureFlags features)
-        {
-            foreach (var format in candidates)
+            switch (tiling)
             {
-                var props = physicalDevice.GetFormatProperties(format);
-
-                switch (tiling)
-                {
-                    case ImageTiling.Linear when (props.LinearTilingFeatures & features) == features:
-                        return format;
-                    case ImageTiling.Optimal when (props.OptimalTilingFeatures & features) == features:
-                        return format;
-                    default:
-                        throw new ArgumentOutOfRangeException(nameof(tiling), tiling, "failed to find supported format!");
-                }
-            }
-
-            throw new ArgumentOutOfRangeException(nameof(candidates), candidates, "failed to find supported format!");
-        }
-
-        private static readonly ConsoleRolBlock DebugReportBlock = new(10, nameof(DebugReportBlock));
-
-        private static readonly DebugReportCallbackDelegate DebugReportDelegate = (flags, objectType, o, location, messageCode, layerPrefix, message, userData) =>
-        {
-            DebugReportBlock.WriteNext($"[{flags}] ({objectType}) {layerPrefix}");
-            DebugReportBlock.WriteNext(message);
-
-            var stackframe = new StackFrame(2, true);
-            var stackframe2 = new StackFrame(3, true);
-            var stackframe3 = new StackFrame(4, true);
-            DebugReportBlock.WriteNext($"File: {stackframe.GetFileName()}:{stackframe.GetFileLineNumber()} from {stackframe2.GetFileName()}:{stackframe2.GetFileLineNumber()} from {stackframe3.GetFileName()}:{stackframe3.GetFileLineNumber()}");
-
-            return false;
-        };
-
-        public static void LogStackTrace()
-        {
-            var stackFrame = new StackTrace(true);
-            foreach (var frame in stackFrame.GetFrames())
-            {
-                Console.WriteLine($"{frame.GetFileName()}:{frame.GetFileLineNumber()}");
+                case ImageTiling.Linear when (props.LinearTilingFeatures & features) == features:
+                    return format;
+                case ImageTiling.Optimal when (props.OptimalTilingFeatures & features) == features:
+                    return format;
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(tiling), tiling, "failed to find supported format!");
             }
         }
 
-        /*private static DataTarget dataTarget = DataTarget.AttachToProcess(Environment.ProcessId, false);
-        private static ClrRuntime runtime = dataTarget.ClrVersions.First().CreateRuntime();*/
+        throw new ArgumentOutOfRangeException(nameof(candidates), candidates, "failed to find supported format!");
+    }
 
-        public static (Instance instance, DebugReportCallback debugReportCallback) CreateInstance(IEnumerable<string> enabledExtensionNames)
+    public static void LogStackTrace()
+    {
+        var stackFrame = new StackTrace(true);
+        foreach (var frame in stackFrame.GetFrames()) Console.WriteLine($"{frame.GetFileName()}:{frame.GetFileLineNumber()}");
+    }
+
+    /*private static DataTarget dataTarget = DataTarget.AttachToProcess(Environment.ProcessId, false);
+    private static ClrRuntime runtime = dataTarget.ClrVersions.First().CreateRuntime();*/
+
+    public static (Instance instance, DebugReportCallback debugReportCallback) CreateInstance(IEnumerable<string> enabledExtensionNames)
+    {
+        //if (Instance != null) return;
+
+        var enabledLayers = new List<string>();
+
+        var props = Instance.EnumerateLayerProperties();
+
+        void AddAvailableLayer(string layerName)
         {
-            //if (Instance != null) return;
-
-            List<string> enabledLayers = new();
-
-            var props = Instance.EnumerateLayerProperties();
-
-            void AddAvailableLayer(string layerName)
-            {
-                if (props.Any(x => x.LayerName == layerName))
-                    enabledLayers.Add(layerName);
-            }
+            if (props.Any(x => x.LayerName == layerName))
+                enabledLayers.Add(layerName);
+        }
 #if DEBUG
 
-            AddAvailableLayer("VK_LAYER_LUNARG_standard_validation");
-            AddAvailableLayer("VK_LAYER_KHRONOS_validation");
-            AddAvailableLayer("VK_LAYER_GOOGLE_unique_objects");
-            //AddAvailableLayer("VK_LAYER_LUNARG_api_dump");
-            AddAvailableLayer("VK_LAYER_LUNARG_core_validation");
-            AddAvailableLayer("VK_LAYER_LUNARG_image");
-            AddAvailableLayer("VK_LAYER_LUNARG_object_tracker");
-            AddAvailableLayer("VK_LAYER_LUNARG_parameter_validation");
-            AddAvailableLayer("VK_LAYER_LUNARG_swapchain");
-            AddAvailableLayer("VK_LAYER_GOOGLE_threading");
-            AddAvailableLayer("VK_LAYER_RENDERDOC_Capture");
+        AddAvailableLayer("VK_LAYER_LUNARG_standard_validation");
+        AddAvailableLayer("VK_LAYER_KHRONOS_validation");
+        AddAvailableLayer("VK_LAYER_GOOGLE_unique_objects");
+        //AddAvailableLayer("VK_LAYER_LUNARG_api_dump");
+        AddAvailableLayer("VK_LAYER_LUNARG_core_validation");
+        AddAvailableLayer("VK_LAYER_LUNARG_image");
+        AddAvailableLayer("VK_LAYER_LUNARG_object_tracker");
+        AddAvailableLayer("VK_LAYER_LUNARG_parameter_validation");
+        AddAvailableLayer("VK_LAYER_LUNARG_swapchain");
+        AddAvailableLayer("VK_LAYER_GOOGLE_threading");
+        AddAvailableLayer("VK_LAYER_RENDERDOC_Capture");
 #endif
 
-            var instance = Instance.Create(
-                enabledLayers.ToArray(),
-                enabledExtensionNames.Append(ExtExtensions.DebugReport).ToArray(),
-                applicationInfo: new ApplicationInfo
-                {
-                    ApplicationName = "ajiva",
-                    ApplicationVersion = new(0, 0, 1),
-                    EngineName = "ajiva-engine",
-                    EngineVersion = new(0, 0, 1),
-                    ApiVersion = new(1, 0, 0)
-                });
+        var instance = Instance.Create(
+            enabledLayers.ToArray(),
+            enabledExtensionNames.Append(ExtExtensions.DebugReport).ToArray(),
+            applicationInfo: new ApplicationInfo
+            {
+                ApplicationName = "ajiva",
+                ApplicationVersion = new Version(0, 0, 1),
+                EngineName = "ajiva-engine",
+                EngineVersion = new Version(0, 0, 1),
+                ApiVersion = new Version(1, 0, 0)
+            });
 
-            var debugReportCallback = instance.CreateDebugReportCallback(DebugReportDelegate, DebugReportFlags.Error | DebugReportFlags.Warning | DebugReportFlags.PerformanceWarning);
+        var debugReportCallback = instance.CreateDebugReportCallback(DebugReportDelegate, DebugReportFlags.Error | DebugReportFlags.Warning | DebugReportFlags.PerformanceWarning);
 
-            return (instance, debugReportCallback);
-        }
+        return (instance, debugReportCallback);
+    }
 
-        public static bool HasStencilComponent(this Format format)
-        {
-            return format == Format.D32SFloatS8UInt || format == Format.D24UNormS8UInt;
-        }
+    public static bool HasStencilComponent(this Format format)
+    {
+        return format == Format.D32SFloatS8UInt || format == Format.D24UNormS8UInt;
+    }
 
-        public static AImage CreateDepthImage(this PhysicalDevice device, ImageSystem imageSystem, Canvas canvas)
-        {
-            return imageSystem.CreateManagedImage(device.FindDepthFormat(), ImageAspectFlags.Depth, canvas);
-        }
+    public static AImage CreateDepthImage(this PhysicalDevice device, ImageSystem imageSystem, Canvas canvas)
+    {
+        return imageSystem.CreateManagedImage(device.FindDepthFormat(), ImageAspectFlags.Depth, canvas);
     }
 }

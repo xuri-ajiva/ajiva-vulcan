@@ -1,51 +1,67 @@
-﻿using System.Collections.Generic;
-using ajiva.Systems.VulcanEngine.Systems;
+﻿using ajiva.Systems.VulcanEngine.Systems;
 using SharpVk;
 
-namespace ajiva.Components.RenderAble
+namespace ajiva.Components.RenderAble;
+
+public class MeshPool
 {
-    public class MeshPool : IRenderMeshPool
+    private readonly DeviceSystem deviceSystem;
+
+    public MeshPool(DeviceSystem deviceSystem)
     {
-        private readonly DeviceSystem deviceSystem;
+        this.deviceSystem = deviceSystem;
+    }
 
-        public MeshPool(DeviceSystem deviceSystem)
+    public Dictionary<uint, IMesh> Meshes { get; } = new Dictionary<uint, IMesh>();
+
+    public RenderInstanceReadyMeshPool Use()
+    {
+        return new RenderInstanceReadyMeshPool(this);
+    }
+
+    public IMesh GetMesh(uint meshId)
+    {
+        return Meshes[meshId];
+    }
+
+    public void AddMesh(IMesh mesh)
+    {
+        mesh.Create(deviceSystem);
+        Meshes.Add(mesh.MeshId, mesh);
+    }
+}
+public class RenderInstanceReadyMeshPool : IRenderMeshPool
+{
+    private static readonly object Lock = new object();
+    private readonly MeshPool meshPool;
+
+    public RenderInstanceReadyMeshPool(MeshPool meshPool)
+    {
+        this.meshPool = meshPool;
+    }
+
+    /// <inheritdoc />
+    public uint LastMeshId { get; private set; } = uint.MaxValue;
+
+    /// <inheritdoc />
+    public void DrawMesh(CommandBuffer buffer, uint meshId)
+    {
+        var mesh = meshPool.Meshes[meshId]; // todo: check if exists and take error mesh
+
+        if (meshId != LastMeshId)
         {
-            this.deviceSystem = deviceSystem;
+            LastMeshId = meshId;
+            mesh.Bind(buffer);
         }
-
-        public Dictionary<uint, IMesh> Meshes { get; } = new();
-
-        /// <inheritdoc />
-        public uint LastMeshId { get; set; }
-
-        /// <inheritdoc />
-        public void DrawMesh(CommandBuffer buffer, uint meshId)
+        lock (Lock)
         {
-            IMesh mesh = Meshes[meshId]; // todo: check if exists and take error mesh
-
-            if (meshId != LastMeshId)
-            {
-                LastMeshId = meshId;
-                mesh.Bind(buffer);
-            }
             mesh.DrawIndexed(buffer);
         }
+    }
 
-        public IMesh GetMesh(uint meshId)
-        {
-            return Meshes[meshId];
-        }
-
-        /// <inheritdoc />
-        public void Reset()
-        {
-            LastMeshId = uint.MaxValue;
-        }
-
-        public void AddMesh(IMesh mesh)
-        {
-            mesh.Create(deviceSystem);
-            Meshes.Add(mesh.MeshId, mesh);
-        }
+    /// <inheritdoc />
+    public void Reset()
+    {
+        LastMeshId = uint.MaxValue;
     }
 }

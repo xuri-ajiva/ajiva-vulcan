@@ -1,8 +1,7 @@
-﻿namespace ajiva.Systems.VulcanEngine.Layer
+﻿namespace ajiva.Systems.VulcanEngine.Layer;
+
+public enum AjivaEngineLayer
 {
-    public enum AjivaEngineLayer
-    {
-        Layer3d,
-        Layer2d,
-    }
+    Layer3d,
+    Layer2d
 }

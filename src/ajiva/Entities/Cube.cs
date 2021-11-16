@@ -1,6 +1,5 @@
-﻿namespace ajiva.Entities
+﻿namespace ajiva.Entities;
+
+public class Cube : DefaultEntity
 {
-    public class Cube : DefaultEntity
-    {
-    }
 }

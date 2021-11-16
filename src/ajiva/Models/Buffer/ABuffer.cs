@@ -1,79 +1,84 @@
-﻿using System;
-using ajiva.Systems.VulcanEngine.Systems;
-using ajiva.Utils;
+﻿using ajiva.Systems.VulcanEngine.Systems;
 using SharpVk;
 
-namespace ajiva.Models.Buffer
+namespace ajiva.Models.Buffer;
+
+public class ABuffer : DisposingLogger
 {
-    public class ABuffer : DisposingLogger
+    static object _lock = new object();
+    public ABuffer(uint size)
     {
-        public SharpVk.Buffer? Buffer { get; private set; }
-        public DeviceMemory? Memory { get; private set; }
-        public uint Size { get; protected set; }
+        Size = size;
+    }
 
-        public ABuffer(uint size)
-        {
-            Size = size;
-        }
+    public SharpVk.Buffer? Buffer { get; private set; }
+    public DeviceMemory? Memory { get; private set; }
+    public uint Size { get; protected set; }
 
-        public void Create(DeviceSystem system, BufferUsageFlags usage, MemoryPropertyFlags flags)
-        {
-            //todo: system.EnsureDevicesExist();
+    public void Create(DeviceSystem system, BufferUsageFlags usage, MemoryPropertyFlags flags)
+    {
+        //todo: system.EnsureDevicesExist();
 
-            Buffer = system.Device!.CreateBuffer(Size, usage, SharingMode.Exclusive, null);
+        Buffer = system.Device!.CreateBuffer(Size, usage, SharingMode.Exclusive, null);
 
-            var memRequirements = Buffer.GetMemoryRequirements();
+        var memRequirements = Buffer.GetMemoryRequirements();
 
-            Memory = system.Device.AllocateMemory(memRequirements.Size, system.FindMemoryType(memRequirements.MemoryTypeBits, flags));
-            Buffer.BindMemory(Memory, 0);
-            system.WatchObject(this);
-        }
+        Memory = system.Device.AllocateMemory(memRequirements.Size, system.FindMemoryType(memRequirements.MemoryTypeBits, flags));
+        Buffer.BindMemory(Memory, 0);
+        system.WatchObject(this);
+    }
 
-        /// <inheritdoc />
-        protected override void ReleaseUnmanagedResources(bool disposing)
-        {
-            Buffer?.Dispose();
-            Memory?.Free();
-        }
+    /// <inheritdoc />
+    protected override void ReleaseUnmanagedResources(bool disposing)
+    {
+        Buffer?.Dispose();
+        Memory?.Free();
+    }
 
-        public IntPtr Map()
+    public IntPtr Map()
+    {
+        lock (_lock)
         {
             ATrace.Assert(Memory != null, nameof(Memory) + " != null");
             return Memory.Map(0, Size, MemoryMapFlags.None);
         }
+    }
 
-        public void Unmap()
+    public void Unmap()
+    {
+        lock (_lock)
         {
             Memory?.Unmap();
         }
+    }
 
-        public DisposablePointer MapDisposer()
+    public DisposablePointer MapDisposer()
+    {
+        return new DisposablePointer(this, Size);
+    }
+
+    public class DisposablePointer : IDisposable
+    {
+        private readonly ABuffer buffer;
+
+        public DisposablePointer(ABuffer buffer, ulong size)
         {
-            return new(Memory!, Size);
+            this.buffer = buffer;
+            Ptr = buffer.Map();
         }
 
-        public class DisposablePointer : IDisposable
+        public IntPtr Ptr { get; }
+
+        /// <inheritdoc />
+        public void Dispose()
         {
-            private readonly DeviceMemory memory;
-            public IntPtr Ptr { get; }
+            buffer.Unmap();
+            GC.SuppressFinalize(this);
+        }
 
-            public DisposablePointer(DeviceMemory memory, ulong size)
-            {
-                this.memory = memory;
-                Ptr = memory.Map(0, size, MemoryMapFlags.None);
-            }
-
-            /// <inheritdoc />
-            public void Dispose()
-            {
-                memory.Unmap();
-                GC.SuppressFinalize(this);
-            }
-
-            public unsafe void* ToPointer()
-            {
-                return Ptr.ToPointer();
-            }
+        public unsafe void* ToPointer()
+        {
+            return Ptr.ToPointer();
         }
     }
 }

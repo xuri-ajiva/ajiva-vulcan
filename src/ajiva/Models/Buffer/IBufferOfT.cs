@@ -1,17 +1,15 @@
-﻿using System;
-using SharpVk;
+﻿using SharpVk;
 
-namespace ajiva.Models.Buffer
+namespace ajiva.Models.Buffer;
+
+public interface IBufferOfT
 {
-    public interface IBufferOfT
-    {
-        SharpVk.Buffer? Buffer {get;}
-        DeviceMemory? Memory {get;}
-        int Length { get; }
-        uint SizeOfT { get; }
-        uint Size { get; }
-        IntPtr Map();
-        void Unmap();
-        ABuffer.DisposablePointer MapDisposer();
-    }
+    SharpVk.Buffer? Buffer { get; }
+    DeviceMemory? Memory { get; }
+    int Length { get; }
+    uint SizeOfT { get; }
+    uint Size { get; }
+    IntPtr Map();
+    void Unmap();
+    ABuffer.DisposablePointer MapDisposer();
 }

@@ -1,15 +1,12 @@
-﻿using ajiva.Utils;
+﻿namespace ajiva.Ecs.System;
 
-namespace ajiva.Ecs.System
+public abstract class SystemBase : DisposingLogger, ISystem
 {
-    public abstract class SystemBase : DisposingLogger, ISystem
+    /// <inheritdoc />
+    protected SystemBase(IAjivaEcs ecs)
     {
-        protected IAjivaEcs Ecs { get; }
-
-        /// <inheritdoc />
-        protected SystemBase(IAjivaEcs ecs)
-        {
-            Ecs = ecs;
-        }
+        Ecs = ecs;
     }
+
+    protected IAjivaEcs Ecs { get; }
 }

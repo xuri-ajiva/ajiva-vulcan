@@ -1,31 +1,42 @@
-﻿using System;
-using System.Collections.Generic;
-using ajiva.Components;
-using ajiva.Components.Media;
-using ajiva.Components.RenderAble;
-using ajiva.Ecs.Utils;
-using ajiva.Models;
-using ajiva.Models.Buffer;
-using ajiva.Models.Buffer.ChangeAware;
+﻿using ajiva.Models.Buffer.ChangeAware;
 using ajiva.Systems.VulcanEngine.Layers.Models;
-using ajiva.Systems.VulcanEngine.Systems;
-using SharpVk;
-using SharpVk.Glfw.extras;
+using ajiva.Utils.Changing;
 
-namespace ajiva.Systems.VulcanEngine.Layer
+namespace ajiva.Systems.VulcanEngine.Layer;
+
+public interface IAjivaLayer<T> : IAjivaLayer, IDisposable where T : unmanaged
 {
-    public interface IAjivaLayer<T> : IAjivaLayer, IDisposable where T : unmanaged
+    new List<IAjivaLayerRenderSystem<T>> LayerRenderComponentSystems { get; }
+    public IAChangeAwareBackupBufferOfT<T> LayerUniform { get; }
+}
+public static class AjivaLayerExtensions
+{
+    public static void AddLayer<T>(this IAjivaLayer<T> ajivaLayer, IAjivaLayerRenderSystem<T> ajivaLayerRenderSystem) where T : unmanaged
     {
-        new List<IAjivaLayerRenderSystem<T>> LayerRenderComponentSystems { get; }
-        public IAChangeAwareBackupBufferOfT<T> LayerUniform { get; }
-        public void AddLayer(IAjivaLayerRenderSystem<T> layer);
+        ajivaLayerRenderSystem.AjivaLayer = ajivaLayer;
+        ajivaLayer.LayerRenderComponentSystems.Add(ajivaLayerRenderSystem);
+        ajivaLayer.LayerChanged.Changed();
     }
-    public interface IAjivaLayer
+}
+public interface IAjivaLayer
+{
+    public IChangingObserver<IAjivaLayer> LayerChanged { get; }
+    List<IAjivaLayerRenderSystem> LayerRenderComponentSystems { get; }
+    AjivaVulkanPipeline PipelineLayer { get; }
+    RenderPassLayer CreateRenderPassLayer(SwapChainLayer swapChainLayer, PositionAndMax layerIndex, PositionAndMax layerRenderComponentSystemsIndex);
+}
+public struct PositionAndMax
+{
+    public PositionAndMax(int index, int start, int end)
     {
-        List<IAjivaLayerRenderSystem> LayerRenderComponentSystems { get; }
-        AjivaVulkanPipeline PipelineLayer { get; }
-        ClearValue[] ClearValues { get;  }
+        Index = index;
+        Start = start;
+        End = end;
+    }
 
-        RenderPassLayer CreateRenderPassLayer(SwapChainLayer swapChainLayer);
-    }
+    public bool First => Index == Start;
+    public bool Last => Index == End;
+    public int Index { get; init; }
+    public int Start { get; init; }
+    public int End { get; init; }
 }

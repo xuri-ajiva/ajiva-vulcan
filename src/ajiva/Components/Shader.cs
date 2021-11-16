@@ -1,109 +1,106 @@
-﻿using System;
-using System.IO;
-using System.Linq;
-using System.Runtime.CompilerServices;
-using ajiva.Ecs;
-using ajiva.Ecs.Component;
+﻿using System.Runtime.CompilerServices;
 using ajiva.Models;
-using ajiva.Models.Buffer;
 using ajiva.Systems.Assets;
 using ajiva.Systems.Assets.Contracts;
-using ajiva.Systems.VulcanEngine;
 using ajiva.Systems.VulcanEngine.Systems;
-using GlmSharp;
 using SharpVk;
 using SharpVk.Shanq;
 using SharpVk.Shanq.GlmSharp;
+using Buffer = System.Buffer;
 
-namespace ajiva.Components
+namespace ajiva.Components;
+
+public class Shader : ThreadSaveCreatable
 {
-    public class Shader : ThreadSaveCreatable
+    private readonly DeviceSystem system;
+
+    public Shader(DeviceSystem system, string name)
     {
-        private readonly DeviceSystem system;
-        public ShaderModule? FragShader { get; private set; }
-        public ShaderModule? VertShader { get; private set; }
+        this.system = system;
+        Name = name;
+    }
 
-        public Shader(DeviceSystem system, string name)
-        {
-            this.system = system;
-            Name = name;
-        }
+    public ShaderModule? FragShader { get; private set; }
+    public ShaderModule? VertShader { get; private set; }
 
-        private static uint[] LoadShaderData(AssetManager assetManager, string assetName, out int codeSize)
-        {
-            var fileBytes = assetManager.GetAsset(AssetType.Shader, assetName);
-            var shaderData = new uint[(int)MathF.Ceiling(fileBytes.Length / 4f)];
+    public string Name { get; }
 
-            System.Buffer.BlockCopy(fileBytes, 0, shaderData, 0, fileBytes.Length);
+    public PipelineShaderStageCreateInfo VertShaderPipelineStageCreateInfo =>
+        new PipelineShaderStageCreateInfo
+            { Stage = ShaderStageFlags.Vertex, Module = VertShader, Name = Name };
 
-            codeSize = fileBytes.Length;
+    public PipelineShaderStageCreateInfo FragShaderPipelineStageCreateInfo =>
+        new PipelineShaderStageCreateInfo
+            { Stage = ShaderStageFlags.Fragment, Module = FragShader, Name = Name };
 
-            return shaderData;
-        }
+    private static uint[] LoadShaderData(AssetManager assetManager, string assetName, out int codeSize)
+    {
+        var fileBytes = assetManager.GetAsset(AssetType.Shader, assetName);
+        var shaderData = new uint[(int)MathF.Ceiling(fileBytes.Length / 4f)];
 
-        private ShaderModule? CreateShader(AssetManager assetManager, string assetName)
-        {
-            var shaderData = LoadShaderData(assetManager, assetName, out var codeSize);
+        Buffer.BlockCopy(fileBytes, 0, shaderData, 0, fileBytes.Length);
 
-            var shader = system.Device!.CreateShaderModule(codeSize, shaderData);
-            system.WatchObject(shader);
-            return shader;
-        }
+        codeSize = fileBytes.Length;
 
-        [MethodImpl(MethodImplOptions.Synchronized)]
-        public void CreateShaderModules(AssetManager assetManager, string assetDir)
-        {
-            if (Created) return;
-            VertShader = CreateShader(assetManager, AssetHelper.Combine(assetDir, Const.Default.VertexShaderName));
+        return shaderData;
+    }
 
-            FragShader = CreateShader(assetManager, AssetHelper.Combine(assetDir, Const.Default.FragmentShaderName));
-            Created = true;
-        }
+    private ShaderModule? CreateShader(AssetManager assetManager, string assetName)
+    {
+        var shaderData = LoadShaderData(assetManager, assetName, out var codeSize);
 
-        [MethodImpl(MethodImplOptions.Synchronized)]
-        public void CreateShaderModules(AssetManager assetManager, string vertexShaderName, string fragmentShaderName)
-        {
-            if (Created) return;
-            VertShader = CreateShader(assetManager, vertexShaderName);
+        var shader = system.Device!.CreateShaderModule(codeSize, shaderData);
+        system.WatchObject(shader);
+        return shader;
+    }
 
-            FragShader = CreateShader(assetManager, fragmentShaderName);
-            Created = true;
-        }
+    [MethodImpl(MethodImplOptions.Synchronized)]
+    public void CreateShaderModules(AssetManager assetManager, string assetDir)
+    {
+        if (Created) return;
+        VertShader = CreateShader(assetManager, AssetHelper.Combine(assetDir, Const.Default.VertexShaderName));
 
-        [MethodImpl(MethodImplOptions.Synchronized)]
-        public void CreateShaderModules<TV, TF>(Func<IShanqFactory, IQueryable<TV>> vertexShaderFunc, Func<IShanqFactory, IQueryable<TF>> fragmentShaderFunc)
-        {
-            if (Created) return;
-            VertShader = system.Device.CreateVertexModule(vertexShaderFunc);
+        FragShader = CreateShader(assetManager, AssetHelper.Combine(assetDir, Const.Default.FragmentShaderName));
+        Created = true;
+    }
 
-            FragShader = system.Device.CreateFragmentModule(fragmentShaderFunc);
-            Created = true;
-        }
+    [MethodImpl(MethodImplOptions.Synchronized)]
+    public void CreateShaderModules(AssetManager assetManager, string vertexShaderName, string fragmentShaderName)
+    {
+        if (Created) return;
+        VertShader = CreateShader(assetManager, vertexShaderName);
 
-        public static Shader CreateShaderFrom(AssetManager assetManager, string dir, DeviceSystem system, string name)
-        {
-            var sh = new Shader(system, name);
-            sh.CreateShaderModules(assetManager, dir);
-            return sh;
-        }
+        FragShader = CreateShader(assetManager, fragmentShaderName);
+        Created = true;
+    }
 
-        /// <inheritdoc />
-        protected override void ReleaseUnmanagedResources(bool disposing)
-        {
-            FragShader?.Dispose();
-            VertShader?.Dispose();
-        }
+    [MethodImpl(MethodImplOptions.Synchronized)]
+    public void CreateShaderModules<TV, TF>(Func<IShanqFactory, IQueryable<TV>> vertexShaderFunc, Func<IShanqFactory, IQueryable<TF>> fragmentShaderFunc)
+    {
+        if (Created) return;
+        VertShader = system.Device.CreateVertexModule(vertexShaderFunc);
 
-        /// <inheritdoc />
-        protected override void Create()
-        {
-            throw new NotSupportedException("Create with Specific Arguments");
-        }
+        FragShader = system.Device.CreateFragmentModule(fragmentShaderFunc);
+        Created = true;
+    }
 
-        public string Name { get; }
+    public static Shader CreateShaderFrom(AssetManager assetManager, string dir, DeviceSystem system, string name)
+    {
+        var sh = new Shader(system, name);
+        sh.CreateShaderModules(assetManager, dir);
+        return sh;
+    }
 
-        public PipelineShaderStageCreateInfo VertShaderPipelineStageCreateInfo => new() { Stage = ShaderStageFlags.Vertex, Module = VertShader, Name = Name, };
+    /// <inheritdoc />
+    protected override void ReleaseUnmanagedResources(bool disposing)
+    {
+        FragShader?.Dispose();
+        VertShader?.Dispose();
+    }
 
-        public PipelineShaderStageCreateInfo FragShaderPipelineStageCreateInfo => new() { Stage = ShaderStageFlags.Fragment, Module = FragShader, Name = Name, };
+    /// <inheritdoc />
+    protected override void Create()
+    {
+        throw new NotSupportedException("Create with Specific Arguments");
     }
 }
