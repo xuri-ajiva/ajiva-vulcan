@@ -195,7 +195,10 @@ public class Ajiva3dLayerSystem : SystemBase, IInit, IUpdate, IAjivaLayer<Unifor
             changed = true;
         }
         if (changed)
-            LayerUniform.Commit(0);
+            lock (MainLock)
+            {
+                LayerUniform.Commit(0);
+            }
     }
 
     private void OnWindowMouseMove(object? _, AjivaMouseMotionCallbackEventArgs e)

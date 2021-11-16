@@ -5,6 +5,7 @@ namespace ajiva.Models.Buffer;
 
 public class ABuffer : DisposingLogger
 {
+    static object _lock = new object();
     public ABuffer(uint size)
     {
         Size = size;
@@ -36,13 +37,19 @@ public class ABuffer : DisposingLogger
 
     public IntPtr Map()
     {
-        ATrace.Assert(Memory != null, nameof(Memory) + " != null");
-        return Memory.Map(0, Size, MemoryMapFlags.None);
+        lock (_lock)
+        {
+            ATrace.Assert(Memory != null, nameof(Memory) + " != null");
+            return Memory.Map(0, Size, MemoryMapFlags.None);
+        }
     }
 
     public void Unmap()
     {
-        Memory?.Unmap();
+        lock (_lock)
+        {
+            Memory?.Unmap();
+        }
     }
 
     public DisposablePointer MapDisposer()
