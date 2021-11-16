@@ -24,7 +24,7 @@
     <ItemGroup>
         <ProjectReference Include="..\..\libs\ajiva-utils\src\Ajiva.Include\Ajiva.Include.csproj" />
         <ProjectReference Include="..\..\libs\ajiva-utils\src\Ajiva.Wrapper\Ajiva.Wrapper.csproj" />
-        <ProjectReference Include="..\..\Libs\GlmSharp\GlmSharp\GlmSharp\GlmSharp.csproj" />
+        <ProjectReference Include="..\..\libs\GlmSharp\GlmSharp\GlmSharp\GlmSharp.csproj" />
         <ProjectReference Include="..\..\libs\SharpVk\src\SharpVk.Glfw\SharpVk.Glfw.csproj" />
         <ProjectReference Include="..\..\libs\SharpVk\src\SharpVk.Shanq.GlmSharp\SharpVk.Shanq.GlmSharp.csproj" />
         <ProjectReference Include="..\..\libs\SharpVk\src\SharpVk\SharpVk.csproj" />

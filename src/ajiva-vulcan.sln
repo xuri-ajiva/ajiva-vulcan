@@ -41,13 +41,13 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SharpVk.Tests", "..\libs\Sh
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "GlmSharp", "GlmSharp", "{9A005094-1825-4877-8712-3922BE1CDB83}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GlmSharp", "..\Libs\GlmSharp\GlmSharp\GlmSharp\GlmSharp.csproj", "{A5F19443-DD85-4398-AD24-A2B00C816771}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GlmSharp", "..\libs\GlmSharp\GlmSharp\GlmSharp\GlmSharp.csproj", "{A5F19443-DD85-4398-AD24-A2B00C816771}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GlmSharpCompat", "..\Libs\GlmSharp\GlmSharp\GlmSharpCompat\GlmSharpCompat.csproj", "{E8DC311E-9E7B-44C9-9364-8A745FB7A5C0}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GlmSharpCompat", "..\libs\GlmSharp\GlmSharp\GlmSharpCompat\GlmSharpCompat.csproj", "{E8DC311E-9E7B-44C9-9364-8A745FB7A5C0}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GlmSharpGenerator", "..\Libs\GlmSharp\GlmSharp\GlmSharpGenerator\GlmSharpGenerator.csproj", "{B3D61E66-23B3-44E3-8B13-0674634C6944}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GlmSharpGenerator", "..\libs\GlmSharp\GlmSharp\GlmSharpGenerator\GlmSharpGenerator.csproj", "{B3D61E66-23B3-44E3-8B13-0674634C6944}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GlmSharpTest", "..\Libs\GlmSharp\GlmSharp\GlmSharpTest\GlmSharpTest.csproj", "{9760B071-A070-4992-A4F0-780FF31E2FE6}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GlmSharpTest", "..\libs\GlmSharp\GlmSharp\GlmSharpTest\GlmSharpTest.csproj", "{9760B071-A070-4992-A4F0-780FF31E2FE6}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
