@@ -112,6 +112,9 @@ public class Mesh2dRenderLayer : ComponentSystemBase<RenderMesh2D>, IInit, IUpda
     }
 
     /// <inheritdoc />
+    public PeriodicTimer Timer { get; } = new PeriodicTimer(TimeSpan.FromMilliseconds(15));
+
+    /// <inheritdoc />
     public override RenderMesh2D RegisterComponent(IEntity entity, RenderMesh2D component)
     {
         if (!entity.TryGetComponent<Transform2d>(out var transform))

@@ -58,6 +58,9 @@ public class WindowSystem : SystemBase, IUpdate, IInit
         if (!windowReady)
             Ecs.IssueClose();
     }
+    /// <inheritdoc />
+    public PeriodicTimer Timer { get; } = new PeriodicTimer(TimeSpan.FromMilliseconds(5));
+
 
     public event KeyEventHandler? OnKeyEvent;
     public event Action? OnResize;

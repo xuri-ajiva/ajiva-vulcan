@@ -178,6 +178,9 @@ public class Ajiva3dLayerSystem : SystemBase, IInit, IUpdate, IAjivaLayer<Unifor
         }
     }
 
+    /// <inheritdoc />
+    public PeriodicTimer Timer { get; } = new PeriodicTimer(TimeSpan.FromMilliseconds(10));
+
     private void UpdateCamaraProjView()
     {
         var byRef = LayerUniform.GetForChange(0);

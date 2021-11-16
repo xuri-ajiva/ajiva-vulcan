@@ -88,6 +88,9 @@ public static class Cameras
             UpdatePosition((float)info.Delta.TotalMilliseconds);
         }
 
+        /// <inheritdoc />
+        public PeriodicTimer Timer { get; } = new PeriodicTimer(TimeSpan.FromMilliseconds(10));
+
         public override void OnMouseMoved(float xRel, float yRel)
         {
             Transform.RefRotation((ref vec3 r) =>

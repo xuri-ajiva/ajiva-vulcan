@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Reflection;
+using System.Threading;
 using System.Threading.Tasks;
 using Ajiva.Wrapper.Logger;
 using Microsoft.CSharp.RuntimeBinder;
@@ -43,7 +45,7 @@ public class AjivaEcs : DisposingLogger, IAjivaEcs
     /// <inheritdoc />
     public bool Available { get; private set; }
 
-#region Add
+    #region Add
 
     /// <inheritdoc />
     public void RegisterEntity<T>(T entity) where T : class, IEntity
@@ -127,9 +129,9 @@ public class AjivaEcs : DisposingLogger, IAjivaEcs
         Params.Add(name, data);
     }
 
-#endregion
+    #endregion
 
-#region Get
+    #region Get
 
     /// <inheritdoc />
     public IComponentSystem<T> GetComponentSystemByComponent<T>() where T : class, IComponent
@@ -187,9 +189,9 @@ public class AjivaEcs : DisposingLogger, IAjivaEcs
         return true;
     }
 
-#endregion
+    #endregion
 
-#region Create
+    #region Create
 
     /// <inheritdoc />
     public T CreateSystemOrComponentSystem<T>() where T : class, ISystem
@@ -330,9 +332,9 @@ public class AjivaEcs : DisposingLogger, IAjivaEcs
         return false;
     }
 
-#endregion
+    #endregion
 
-#region Delete
+    #region Delete
 
     public bool TryUnRegisterEntity(uint id, [MaybeNullWhen(false)] out IEntity entity)
     {
@@ -364,9 +366,9 @@ public class AjivaEcs : DisposingLogger, IAjivaEcs
         return GetComponentSystemByComponent<T>().DeleteComponent(entity, component);
     }
 
-#endregion
+    #endregion
 
-#region Live
+    #region Live
 
     /// <inheritdoc />
     public void InitSystems()
@@ -512,5 +514,72 @@ public class AjivaEcs : DisposingLogger, IAjivaEcs
             inits.Add(init);
     }
 
-#endregion
+    /// <inheritdoc />
+    public async Task RunUpdates(CancellationToken cancellationToken)
+    {
+        if (updates.Count < 1) return;
+
+
+        PeriodicTimer timer = new(TimeSpan.FromMilliseconds(10));
+        var task = Task.Run(async () =>
+         {
+             var iteration = 0L;
+
+             var now = Stopwatch.GetTimestamp();
+
+             var info = new UpdateInfo(TimeSpan.Zero, 0);
+
+             while (await timer.WaitForNextTickAsync(cancellationToken))
+             {
+                 iteration++;
+                 var end = Stopwatch.GetTimestamp();
+
+                 var cur = info with
+                 {
+                     Delta = new TimeSpan(end - now),
+                     Iteration = iteration
+                 };
+                 foreach (var update in updates)
+                 {
+                     try
+                     {
+                         update.Update(cur);
+                     }
+                     catch (Exception)
+                     {
+                     }
+                 }
+
+                 now = end;
+             }
+         }, cancellationToken);
+
+        await Task.WhenAll(task);
+
+        return;
+
+        var tasks = updates.Select(update => Task.Run(async () =>
+            {
+                var iteration = 0L;
+
+                var now = Stopwatch.GetTimestamp();
+
+                var info = new UpdateInfo(TimeSpan.Zero, 0);
+
+                while (await update.Timer.WaitForNextTickAsync(cancellationToken))
+                {
+                    iteration++;
+                    var end = Stopwatch.GetTimestamp();
+                    update.Update(info with
+                    {
+                        Delta = new TimeSpan(end - now),
+                        Iteration = iteration
+                    });
+                    now = end;
+                }
+            }, cancellationToken));
+        await Task.WhenAll(tasks);
+    }
+
+    #endregion
 }

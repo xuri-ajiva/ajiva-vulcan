@@ -55,6 +55,9 @@ public class GraphicsSystem : SystemBase, IInit, IUpdate
     }
 
     /// <inheritdoc />
+    public PeriodicTimer Timer { get; } = new PeriodicTimer(TimeSpan.FromMilliseconds(10));
+
+    /// <inheritdoc />
     protected override void ReleaseUnmanagedResources(bool disposing)
     {
         ajivaLayerRenderer?.Dispose();

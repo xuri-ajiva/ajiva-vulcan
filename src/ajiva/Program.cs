@@ -33,9 +33,12 @@ public static class Program
 
         Glfw3.Init();
 
+        CancellationTokenSource cancellationTokenSource = new CancellationTokenSource();
+        
+        cancellationTokenSource.CancelAfter(TimeSpan.FromMinutes(10));
         var app01 = new AjivaApplication();
         app01.Init();
-        app01.Run();
+        app01.Run(cancellationTokenSource.Token);
 
         TaskWatcher.Cancel();
 

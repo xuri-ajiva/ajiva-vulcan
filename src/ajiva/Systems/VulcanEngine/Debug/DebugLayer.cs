@@ -111,6 +111,10 @@ public class DebugLayer : ComponentSystemBase<DebugComponent>, IInit, IUpdate, I
     }
 
     /// <inheritdoc />
+    public PeriodicTimer Timer { get; } = new PeriodicTimer(TimeSpan.FromMilliseconds(15));
+    
+
+    /// <inheritdoc />
     public override DebugComponent RegisterComponent(IEntity entity, DebugComponent component)
     {
         if (!entity.TryGetComponent<Transform3d>(out var transform))

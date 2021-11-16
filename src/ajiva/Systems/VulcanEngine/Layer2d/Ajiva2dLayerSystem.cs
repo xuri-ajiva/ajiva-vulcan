@@ -12,7 +12,7 @@ using SharpVk;
 namespace ajiva.Systems.VulcanEngine.Layer2d;
 
 [Dependent(typeof(WindowSystem), typeof(GraphicsSystem))]
-public class Ajiva2dLayerSystem : SystemBase, IInit, IUpdate, IAjivaLayer<UniformLayer2d>
+public class Ajiva2dLayerSystem : SystemBase, IInit, IAjivaLayer<UniformLayer2d>
 {
     private WindowSystem window;
 
@@ -144,10 +144,6 @@ public class Ajiva2dLayerSystem : SystemBase, IInit, IUpdate, IAjivaLayer<Unifor
         };
     }
 
-    /// <inheritdoc />
-    public void Update(UpdateInfo delta)
-    {
-    }
 
     private void BuildLayerUniform(Canvas canvas)
     {

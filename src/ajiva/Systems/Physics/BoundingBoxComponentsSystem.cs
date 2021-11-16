@@ -18,6 +18,10 @@ public class BoundingBoxComponentsSystem : ComponentSystemBase<BoundingBox>, IUp
         //DoPhysicFrame();
     }
 
+    /// <inheritdoc />
+    public PeriodicTimer Timer { get; } = new PeriodicTimer(TimeSpan.FromMilliseconds(30));
+
+
     public void DoPhysicFrame()
     {
         foreach (var (box1, e1) in ComponentEntityMap.Where(x => !x.Key.Collider.IsStatic))

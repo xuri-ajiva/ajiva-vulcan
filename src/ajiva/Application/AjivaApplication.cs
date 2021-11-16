@@ -47,10 +47,11 @@ public class AjivaApplication : DisposingLogger
         return entityComponentSystem.Available;
     }
 
-    public void Run()
+    public async Task Run(CancellationToken cancellationToken)
     {
         Running = true;
-        RunHelper.RunDelta(FrameLoop, TimeSpan.MaxValue);
+        /*RunHelper.RunDelta(FrameLoop, TimeSpan.MaxValue);*/
+        await entityComponentSystem.RunUpdates(cancellationToken);
         Running = false;
     }
 
