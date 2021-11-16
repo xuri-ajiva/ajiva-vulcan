@@ -54,17 +54,17 @@ public class ABuffer : DisposingLogger
 
     public DisposablePointer MapDisposer()
     {
-        return new DisposablePointer(Memory!, Size);
+        return new DisposablePointer(this, Size);
     }
 
     public class DisposablePointer : IDisposable
     {
-        private readonly DeviceMemory memory;
+        private readonly ABuffer buffer;
 
-        public DisposablePointer(DeviceMemory memory, ulong size)
+        public DisposablePointer(ABuffer buffer, ulong size)
         {
-            this.memory = memory;
-            Ptr = memory.Map(0, size, MemoryMapFlags.None);
+            this.buffer = buffer;
+            Ptr = buffer.Map();
         }
 
         public IntPtr Ptr { get; }
@@ -72,7 +72,7 @@ public class ABuffer : DisposingLogger
         /// <inheritdoc />
         public void Dispose()
         {
-            memory.Unmap();
+            buffer.Unmap();
             GC.SuppressFinalize(this);
         }
 
