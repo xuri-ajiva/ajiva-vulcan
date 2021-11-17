@@ -14,7 +14,7 @@ public static class Program
 
     private static readonly object ConsoleLock = new object();
 
-    private static async Task Main(string[] args)
+    private static void Main(string[] args)
     {
         if (args.Length > 0)
         {
@@ -36,9 +36,16 @@ public static class Program
         CancellationTokenSource cancellationTokenSource = new CancellationTokenSource();
 
         cancellationTokenSource.CancelAfter(TimeSpan.FromMinutes(10));
-        var app01 = new AjivaApplication();
+        var app01 = new AjivaApplication(cancellationTokenSource);
         app01.Init();
-        await app01.Run(cancellationTokenSource.Token);
+        try
+        {
+            app01.Run().Wait(cancellationTokenSource.Token);
+        }
+        catch (Exception e)
+        {
+            ALog.Error(e);
+        }
 
         TaskWatcher.Cancel();
 
