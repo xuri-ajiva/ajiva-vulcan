@@ -19,7 +19,7 @@ public class BoundingBoxComponentsSystem : ComponentSystemBase<BoundingBox>, IUp
     }
 
     /// <inheritdoc />
-    public PeriodicTimer Timer { get; } = new PeriodicTimer(TimeSpan.FromMilliseconds(30));
+    public PeriodicUpdateInfo Info { get; } = new PeriodicUpdateInfo(TimeSpan.FromMilliseconds(30));
 
 
     public void DoPhysicFrame()

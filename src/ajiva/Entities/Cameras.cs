@@ -89,7 +89,7 @@ public static class Cameras
         }
 
         /// <inheritdoc />
-        public PeriodicTimer Timer { get; } = new PeriodicTimer(TimeSpan.FromMilliseconds(10));
+        public PeriodicUpdateInfo Info { get; } = new PeriodicUpdateInfo(TimeSpan.FromMilliseconds(10));
 
         public override void OnMouseMoved(float xRel, float yRel)
         {

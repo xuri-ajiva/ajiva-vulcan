@@ -111,7 +111,7 @@ public class DebugLayer : ComponentSystemBase<DebugComponent>, IInit, IUpdate, I
     }
 
     /// <inheritdoc />
-    public PeriodicTimer Timer { get; } = new PeriodicTimer(TimeSpan.FromMilliseconds(15));
+    public PeriodicUpdateInfo Info { get; } = new PeriodicUpdateInfo(TimeSpan.FromMilliseconds(15));
     
 
     /// <inheritdoc />

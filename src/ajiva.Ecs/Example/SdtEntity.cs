@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Threading;
 
 namespace ajiva.Ecs.Example;
 
@@ -15,7 +14,7 @@ public class SdtEntity : AEntity, IUpdate
     }
 
     /// <inheritdoc />
-    public PeriodicTimer Timer { get; } = new PeriodicTimer(TimeSpan.FromSeconds(1));
+    public PeriodicUpdateInfo Info { get; } = new PeriodicUpdateInfo(TimeSpan.FromSeconds(1));
 
     /// <inheritdoc />
     protected override void ReleaseUnmanagedResources(bool disposing)

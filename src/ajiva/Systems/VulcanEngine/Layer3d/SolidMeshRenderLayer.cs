@@ -112,7 +112,7 @@ public class SolidMeshRenderLayer : ComponentSystemBase<RenderMesh3D>, IInit, IU
     }
 
     /// <inheritdoc />
-    public PeriodicTimer Timer { get; } = new PeriodicTimer(TimeSpan.FromMilliseconds(15));
+    public PeriodicUpdateInfo Info { get; } = new PeriodicUpdateInfo(TimeSpan.FromMilliseconds(15));
 
     /// <inheritdoc />
     public override RenderMesh3D RegisterComponent(IEntity entity, RenderMesh3D component)

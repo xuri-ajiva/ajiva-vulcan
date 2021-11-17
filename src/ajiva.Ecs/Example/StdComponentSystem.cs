@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Threading;
 
 namespace ajiva.Ecs.Example;
 
@@ -21,7 +20,7 @@ public class StdComponentSystem : ComponentSystemBase<StdComponent>, IUpdate
     }
 
     /// <inheritdoc />
-    public PeriodicTimer Timer { get; } = new PeriodicTimer(TimeSpan.FromSeconds(1));
+    public PeriodicUpdateInfo Info { get; } = new PeriodicUpdateInfo(TimeSpan.FromSeconds(1));
 
     /// <inheritdoc />
     public override StdComponent CreateComponent(IEntity entity)

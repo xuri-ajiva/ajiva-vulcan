@@ -236,7 +236,10 @@ public class DeviceSystem : SystemBase, IInit
     public void QueueSingleTimeCommand(QueueType queueType, CommandPoolSelector poolSelector, Action<CommandBuffer> action)
     {
         GetQueueByType(queueType, poolSelector, out var queue, out var fence, out var queueQueue, out var commandBuffer, out var poolLock);
-        queueQueue.Enqueue(action);
+        lock (queueQueue)
+        {
+            queueQueue.Enqueue(action);
+        }
     }
 
     public void ExecuteSingleTimeCommands(QueueType queueType, CommandPoolSelector poolSelector)

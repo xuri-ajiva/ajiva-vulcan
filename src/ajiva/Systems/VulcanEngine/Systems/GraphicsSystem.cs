@@ -55,7 +55,7 @@ public class GraphicsSystem : SystemBase, IInit, IUpdate
     }
 
     /// <inheritdoc />
-    public PeriodicTimer Timer { get; } = new PeriodicTimer(TimeSpan.FromMilliseconds(10));
+    public PeriodicUpdateInfo Info { get; } = new PeriodicUpdateInfo(TimeSpan.FromMilliseconds(10));
 
     /// <inheritdoc />
     protected override void ReleaseUnmanagedResources(bool disposing)

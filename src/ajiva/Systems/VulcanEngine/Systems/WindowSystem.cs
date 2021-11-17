@@ -59,7 +59,7 @@ public class WindowSystem : SystemBase, IUpdate, IInit
             Ecs.IssueClose();
     }
     /// <inheritdoc />
-    public PeriodicTimer Timer { get; } = new PeriodicTimer(TimeSpan.FromMilliseconds(5));
+    public PeriodicUpdateInfo Info { get; } = new PeriodicUpdateInfo(TimeSpan.FromMilliseconds(5));
 
 
     public event KeyEventHandler? OnKeyEvent;
