@@ -12,15 +12,15 @@ namespace ajiva.Ecs;
 
 public class AjivaEcs : DisposingLogger, IAjivaEcs
 {
+    public CancellationTokenSource CancellationTokenSource { get; }
     private static readonly Type Me = typeof(AjivaEcs);
 
     private readonly object @lock = new object();
-    private readonly bool multiThreading;
     private uint currentEntityId;
 
-    public AjivaEcs(bool multiThreading)
+    public AjivaEcs(CancellationTokenSource cancellationTokenSource)
     {
-        this.multiThreading = multiThreading;
+        CancellationTokenSource = cancellationTokenSource;
     }
 
     public Dictionary<uint, IEntity> Entities { get; } = new Dictionary<uint, IEntity>();
@@ -426,17 +426,18 @@ public class AjivaEcs : DisposingLogger, IAjivaEcs
     {
         if (updates.Count < 1) return;
         lock (@lock)
-            if (multiThreading)
-                Parallel.ForEach(updates, d => d.Update(delta));
-            else
-                foreach (var update in updates)
-                    update.Update(delta);
+            foreach (var update in updates)
+                update.Update(delta);
     }
 
     /// <inheritdoc />
     public void IssueClose()
     {
-        lock (@lock) Available = false;
+        lock (@lock)
+        {
+            Available = false;
+            CancellationTokenSource.Cancel();
+        }
     }
 
     /// <inheritdoc />
@@ -444,6 +445,12 @@ public class AjivaEcs : DisposingLogger, IAjivaEcs
     {
         lock (@lock)
         {
+            foreach (var update in updates)
+            {
+                UpdateRunner.Cancel(update);
+            }
+            UpdateRunner.WaitHandle(LogStatus, CancellationToken.None).Wait();
+
             foreach (var factory in Factories.Values)
             {
                 factory.Dispose();
@@ -516,7 +523,7 @@ public class AjivaEcs : DisposingLogger, IAjivaEcs
     private PeriodicUpdateRunner UpdateRunner = new();
 
     /// <inheritdoc />
-    public async Task RunUpdates(CancellationToken cancellationToken)
+    public async Task RunUpdates()
     {
         if (updates.Count < 1) return;
         foreach (var update in updates)
@@ -525,7 +532,17 @@ public class AjivaEcs : DisposingLogger, IAjivaEcs
             UpdateRunner.Start(update);
         }
 
-        await UpdateRunner.WaitHandle(cancellationToken);
+        await UpdateRunner.WaitHandle(LogStatus, CancellationTokenSource.Token);
+    }
+
+    private void LogStatus(Dictionary<IUpdate, PeriodicUpdateRunner.UpdateData> updateDatas)
+    {
+        ALog.Info($"PendingWorkItemCount: {ThreadPool.PendingWorkItemCount}, EntitiesCount: {EntitiesCount}");
+        ALog.Info(new string('-', 100));
+        foreach (var (key, value) in updateDatas)
+        {
+            ALog.Info($"[ITERATION:{value.Iteration:X8}] | {value.Iteration.ToString(),-8}| {key.GetType().Name,-40}: Delta: {new TimeSpan(value.Delta):G}");
+        }
     }
 
 #endregion

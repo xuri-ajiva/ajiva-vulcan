@@ -29,29 +29,24 @@ public class AjivaApplication : DisposingLogger
     private const int posRange = 10;
     private const float scale = 0.7f;
 
-    private readonly IAjivaEcs entityComponentSystem = new AjivaEcs(false);
+    private readonly IAjivaEcs entityComponentSystem;
     private DebugReportCallback debugReportCallback;
     private readonly Random r = new Random();
 
     private Instance vulcanInstance;
-    private bool Running { get; set; }
 
-    private bool FrameLoop(UpdateInfo info)
+    public AjivaApplication(CancellationTokenSource tokenSource)
     {
-        if (info.Iteration % 100 == 0)
-            ALog.Debug($"iteration: {info.Iteration}, delta: {info.Delta}, FPS: {1000.0f / info.Delta.TotalMilliseconds:F4}," +
-                       $" PendingWorkItemCount: {ThreadPool.PendingWorkItemCount}, EntitiesCount: {entityComponentSystem.EntitiesCount}," +
-                       $"  ComponentsCount: {entityComponentSystem.ComponentsCount}");
-
-        entityComponentSystem.Update(info);
-        return entityComponentSystem.Available;
+        entityComponentSystem = new AjivaEcs(tokenSource);
     }
 
-    public async Task Run(CancellationToken cancellationToken)
+    private bool Running { get; set; }
+    
+
+    public async Task Run()
     {
         Running = true;
-        /*RunHelper.RunDelta(FrameLoop, TimeSpan.MaxValue);*/
-        await entityComponentSystem.RunUpdates(cancellationToken);
+        await entityComponentSystem.RunUpdates();
         Running = false;
     }
 

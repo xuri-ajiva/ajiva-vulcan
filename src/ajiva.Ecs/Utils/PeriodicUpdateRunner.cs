@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
-using Ajiva.Wrapper.Logger;
 
 namespace ajiva.Ecs.Utils;
 
@@ -11,7 +10,7 @@ public record PeriodicUpdateInfo(TimeSpan Interval);
 
 public class PeriodicUpdateRunner
 {
-    private class UpdateData
+    public class UpdateData
     {
         public long Iteration;
         public Thread Runner;
@@ -78,7 +77,7 @@ public class PeriodicUpdateRunner
         updateDatas[update].Source.Cancel();
     }
 
-    public async Task WaitHandle(CancellationToken cancellation)
+    public async Task WaitHandle(Action<Dictionary<IUpdate, UpdateData>> logStatus,CancellationToken cancellation)
     {
         DateTime begin = DateTime.Now;
         foreach (var (key, value) in updateDatas)
@@ -88,21 +87,12 @@ public class PeriodicUpdateRunner
                 if ((DateTime.Now - begin).Seconds > 20)
                 {
                     begin = DateTime.Now;
-                    LogStatus();
+                    logStatus.Invoke(updateDatas);
                 }
 
                 await Task.Delay(10, cancellation);
                 if (cancellation.IsCancellationRequested) return;
             }
-        }
-    }
-
-    private void LogStatus()
-    {
-        ALog.Info(new string('-', 100));
-        foreach (var (key, value) in updateDatas)
-        {
-            ALog.Info($"[ITERATION:{value.Iteration:X8}] | {value.Iteration.ToString(),-8}| {key.GetType().Name,-40}: Delta: {new TimeSpan(value.Delta):G}");
         }
     }
 }
