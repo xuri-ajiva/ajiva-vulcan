@@ -1,4 +1,5 @@
-﻿using System.Runtime.CompilerServices;
+﻿using System.Collections.Concurrent;
+using System.Runtime.CompilerServices;
 using ajiva.Ecs;
 using ajiva.Models;
 using SharpVk;
@@ -23,9 +24,9 @@ public class DeviceSystem : SystemBase, IInit
     internal Queue? PresentQueue { get; private set; }
     internal Queue? TransferQueue { get; private set; }
 
-    internal Queue<Action<CommandBuffer>> GraphicsQueueQueue { get; } = new Queue<Action<CommandBuffer>>();
-    internal Queue<Action<CommandBuffer>> PresentQueueQueue { get; } = new Queue<Action<CommandBuffer>>();
-    internal Queue<Action<CommandBuffer>> TransferQueueQueue { get; } = new Queue<Action<CommandBuffer>>();
+    internal ConcurrentQueue<Action<CommandBuffer>> GraphicsQueueQueue { get; } = new ConcurrentQueue<Action<CommandBuffer>>();
+    internal ConcurrentQueue<Action<CommandBuffer>> PresentQueueQueue { get; } = new ConcurrentQueue<Action<CommandBuffer>>();
+    internal ConcurrentQueue<Action<CommandBuffer>> TransferQueueQueue { get; } = new ConcurrentQueue<Action<CommandBuffer>>();
 
     public Fence TransferQueueFence { get; private set; }
     public Fence PresentQueueFence { get; private set; }
@@ -252,11 +253,13 @@ public class DeviceSystem : SystemBase, IInit
 
             lock (queue)
             {
-                while (queueQueue.Count != 0)
+                while (queueQueue.TryDequeue(out var action))
                 {
-                    if (fence.GetStatus() == Result.Success) ALog.Error("Fence Error");
+                    if (fence.GetStatus() == Result.Success)
+                    {
+                        ALog.Error("Fence Error");
+                    }
 
-                    var action = queueQueue.Dequeue();
                     ExecuteOnQueueWithFence(action, queue, fence, poolLock, commandBuffer, queueType);
                 }
             }
@@ -300,7 +303,7 @@ public class DeviceSystem : SystemBase, IInit
         }
     }
 
-    private void GetQueueByType(QueueType queueType, CommandPoolSelector commandPoolSelector, out Queue queue, out Fence fence, out Queue<Action<CommandBuffer>> queueQueue, out CommandBuffer commandBuffer, out object poolLock)
+    private void GetQueueByType(QueueType queueType, CommandPoolSelector commandPoolSelector, out Queue queue, out Fence fence, out ConcurrentQueue<Action<CommandBuffer>> queueQueue, out CommandBuffer commandBuffer, out object poolLock)
     {
         commandBuffer = GetSingleCommandBuffer(commandPoolSelector);
         poolLock = GetCommandPoolLock(commandPoolSelector);
