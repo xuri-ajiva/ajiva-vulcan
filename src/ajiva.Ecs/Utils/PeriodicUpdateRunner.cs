@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -35,6 +36,8 @@ public class PeriodicUpdateRunner
         }) { Name = $"Update Runner for {update}" };
         data.Runner = runner;
         updateDatas.Add(update, data);
+        if (Running)
+            runner.Start();
     }
 
     private void RunDelta(IUpdate update, UpdateData data)
@@ -72,12 +75,32 @@ public class PeriodicUpdateRunner
         updateDatas[update].Runner.Start();
     }
 
+    public void Start()
+    {
+        Running = true;
+        foreach (var data in updateDatas)
+        {
+            data.Value.Runner.Start();
+        }
+    }
+
+    public void Stop()
+    {
+        Running = false;
+        foreach (var data in updateDatas)
+        {
+            data.Value.Source.Cancel();
+        }
+    }
+
+    public bool Running { get; private set; }
+
     public void Cancel(IUpdate update)
     {
         updateDatas[update].Source.Cancel();
     }
 
-    public async Task WaitHandle(Action<Dictionary<IUpdate, UpdateData>> logStatus,CancellationToken cancellation)
+    public async Task WaitHandle(Action<Dictionary<IUpdate, UpdateData>> logStatus, CancellationToken cancellation)
     {
         DateTime begin = DateTime.Now;
         foreach (var (key, value) in updateDatas)
@@ -94,5 +117,10 @@ public class PeriodicUpdateRunner
                 if (cancellation.IsCancellationRequested) return;
             }
         }
+    }
+
+    public IEnumerable<IUpdate> GetUpdating()
+    {
+        return updateDatas.Keys.ToList();
     }
 }
