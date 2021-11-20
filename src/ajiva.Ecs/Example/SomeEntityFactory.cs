@@ -6,7 +6,7 @@ public class SomeEntityFactory : EntityFactoryBase<SdtEntity>
     public override SdtEntity Create(IAjivaEcs system, uint id)
     {
         var ent = new SdtEntity { Id = id };
-        system.TryAttachNewComponentToEntity<StdComponent>(ent, out _);
+        system.TryAttachComponentToEntity(ent, new StdComponent());
         return ent;
     }
 
