@@ -2,7 +2,7 @@
 
 namespace ajiva.Ecs.Factory;
 
-public interface IEntityFactory : IDisposable
+public interface IEntityFactory : IDisposable, IAjivaEcsObject
 {
     IEntity Create(IAjivaEcs system, uint id);
 }
