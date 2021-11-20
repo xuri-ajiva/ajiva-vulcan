@@ -87,7 +87,7 @@ public class BoundingBox : DisposingLogger, IComponent
 
     private void ComputeBoxBg()
     {
-        var vp = Ecs.GetSystem<WorkerPool>();
+        var vp = Ecs.Get<WorkerPool>();
         lock (this)
         {
             var vCpy = ++version;

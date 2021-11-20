@@ -15,7 +15,7 @@ public class TextureSystem : ComponentSystemBase<TextureComponent>, IInit, IText
 
     public TextureSystem(IAjivaEcs ecs) : base(ecs)
     {
-        config = ecs.TryGetPara<Config>(Const.Default.Config, out var _config) ? _config.ShaderConfig : Config.Default.ShaderConfig;
+        config = ecs.Get<Config>().ShaderConfig;
         INextId<ATexture>.MaxId = (uint)config.TEXTURE_SAMPLER_COUNT;
         TextureSamplerImageViews = new DescriptorImageInfo[config.TEXTURE_SAMPLER_COUNT];
         Textures = new List<ATexture>();

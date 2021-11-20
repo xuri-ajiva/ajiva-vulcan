@@ -4,7 +4,6 @@ using ajiva.Models;
 using ajiva.Systems.VulcanEngine.Interfaces;
 using ajiva.Systems.VulcanEngine.Layer;
 using GlmSharp;
-using SharpVk;
 using SharpVk.Glfw;
 
 namespace ajiva.Systems.VulcanEngine.Systems;
@@ -40,7 +39,7 @@ public class WindowSystem : SystemBase, IUpdate, IInit, IWindowSystem
         windowThread.SetApartmentState(ApartmentState.STA);
         Canvas = new Canvas(new SurfaceHandle());
 
-        windowConfig = Ecs.TryGetPara<Config>(Const.Default.Config, out var config) ? config.Window : new WindowConfig();
+        windowConfig = Ecs.Get<Config>().Window;
     }
 
     public Canvas Canvas { get; }
@@ -114,7 +113,7 @@ public class WindowSystem : SystemBase, IUpdate, IInit, IWindowSystem
     public void EnsureSurfaceExists()
     {
         if (!Canvas.HasSurface)
-            Canvas.SurfaceHandle.Surface = Ecs.GetInstance<Instance>().CreateGlfw3Surface(window);
+            Canvas.SurfaceHandle.Surface = Ecs.Get<IVulcanInstance>().CreateGlfw3Surface(window);
     }
 
     public void InitWindow()

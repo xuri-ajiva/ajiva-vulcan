@@ -1,6 +1,5 @@
 ﻿using System.Runtime.CompilerServices;
 using ajiva.Components;
-using ajiva.Components.Media;
 using ajiva.Components.RenderAble;
 using ajiva.Components.Transform;
 using ajiva.Ecs;
@@ -77,7 +76,7 @@ public class Mesh2dRenderLayer : ComponentSystemBase<RenderMesh2D>, IInit, IUpda
     /// <inheritdoc />
     public GraphicsPipelineLayer CreateGraphicsPipelineLayer(RenderPassLayer renderPassLayer)
     {
-        var res = GraphicsPipelineLayerCreator.Default(renderPassLayer.Parent, renderPassLayer, Ecs.GetSystem<DeviceSystem>(), true, Vertex2D.GetBindingDescription(), Vertex2D.GetAttributeDescriptions(), MainShader, PipelineDescriptorInfos);
+        var res = GraphicsPipelineLayerCreator.Default(renderPassLayer.Parent, renderPassLayer, Ecs.Get<DeviceSystem>(), true, Vertex2D.GetBindingDescription(), Vertex2D.GetAttributeDescriptions(), MainShader, PipelineDescriptorInfos);
 
         foreach (var entity in ComponentEntityMap) entity.Key.ChangingObserver.Changed();
 
@@ -90,16 +89,16 @@ public class Mesh2dRenderLayer : ComponentSystemBase<RenderMesh2D>, IInit, IUpda
     /// <inheritdoc />
     public void Init()
     {
-        var deviceSystem = Ecs.GetSystem<DeviceSystem>();
+        var deviceSystem = Ecs.Get<DeviceSystem>();
 
-        MainShader = Shader.CreateShaderFrom(Ecs.GetSystem<AssetManager>(), "2d", deviceSystem, "main");
+        MainShader = Shader.CreateShaderFrom(Ecs.Get<AssetManager>(), "2d", deviceSystem, "main");
         Models = new AChangeAwareBackupBufferOfT<SolidUniformModel2d>(1000000, deviceSystem);
-        meshPool = Ecs.GetInstance<MeshPool>();
+        meshPool = Ecs.Get<IMeshPool>();
 
         PipelineDescriptorInfos = Layers.PipelineDescriptorInfos.CreateFrom(
             AjivaLayer.LayerUniform.Uniform.Buffer!, (uint)AjivaLayer.LayerUniform.SizeOfT,
             Models.Uniform.Buffer!, (uint)Models.SizeOfT,
-            Ecs.GetComponentSystem<TextureSystem, TextureComponent>().TextureSamplerImageViews
+            Ecs.Get<ITextureSystem>().TextureSamplerImageViews
         );
     }
 

@@ -100,8 +100,8 @@ public class GraphicsSystem : SystemBase, IInit, IUpdate, IGraphicsSystem
 
     public void ResolveDeps()
     {
-        deviceSystem = Ecs.GetSystem<DeviceSystem>();
-        windowSystem = Ecs.GetSystem<WindowSystem>();
+        deviceSystem = Ecs.Get<DeviceSystem>();
+        windowSystem = Ecs.Get<WindowSystem>();
 
         DepthFormat = (deviceSystem.PhysicalDevice ?? throw new InvalidOperationException()).FindDepthFormat();
     }

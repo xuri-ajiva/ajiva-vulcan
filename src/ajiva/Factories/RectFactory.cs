@@ -11,11 +11,15 @@ public class RectFactory : EntityFactoryBase<Rect>
     public override Rect Create(IAjivaEcs system, uint id)
     {
         var rect = new Rect { Id = id };
-        system.TryAttachNewComponentToEntity<Transform2d>(rect, out _);
-        if (system.TryAttachNewComponentToEntity<RenderMesh2D>(rect, out var renderMesh))
+        system.TryAttachComponentToEntity(rect, new Transform2d());
+        var renderMesh = new RenderMesh2D
         {
-            renderMesh.Render = true;
-            renderMesh.SetMesh(MeshPrefab.Rect);
+            Render = true
+        };
+        renderMesh.SetMesh(MeshPrefab.Rect);
+
+        if (system.TryAttachComponentToEntity(rect, renderMesh))
+        {
         }
         //system.AttachComponentToEntity<ATexture>(cube);
         return rect;

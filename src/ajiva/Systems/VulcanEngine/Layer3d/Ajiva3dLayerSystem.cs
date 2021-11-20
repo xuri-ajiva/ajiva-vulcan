@@ -5,6 +5,7 @@ using ajiva.Ecs;
 using ajiva.Entities;
 using ajiva.Models.Buffer.ChangeAware;
 using ajiva.Models.Layers.Layer3d;
+using ajiva.Systems.VulcanEngine.Interfaces;
 using ajiva.Systems.VulcanEngine.Layer;
 using ajiva.Systems.VulcanEngine.Layers.Models;
 using ajiva.Systems.VulcanEngine.Systems;
@@ -66,11 +67,11 @@ public class Ajiva3dLayerSystem : SystemBase, IInit, IUpdate, IAjivaLayer<Unifor
     /// <inheritdoc />
     public RenderPassLayer CreateRenderPassLayer(SwapChainLayer swapChainLayer, PositionAndMax layerIndex, PositionAndMax layerRenderComponentSystemsIndex)
     {
-        var deviceSystem = Ecs.GetSystem<DeviceSystem>();
+        var deviceSystem = Ecs.Get<DeviceSystem>();
 
         if (depthImage is null)
         {
-            var imageSystem = Ecs.GetComponentSystem<ImageSystem, AImage>();
+            var imageSystem = Ecs.Get<IImageSystem>();
             depthFormat = deviceSystem.PhysicalDevice!.FindDepthFormat();
             depthImage = imageSystem.CreateManagedImage(depthFormat, ImageAspectFlags.Depth, swapChainLayer.Canvas);
         }
@@ -149,7 +150,7 @@ public class Ajiva3dLayerSystem : SystemBase, IInit, IUpdate, IAjivaLayer<Unifor
     /// <inheritdoc />
     public void Init()
     {
-        window = Ecs.GetSystem<WindowSystem>();
+        window = Ecs.Get<WindowSystem>();
 
         window.OnResize += OnWindowResize;
 
@@ -157,7 +158,7 @@ public class Ajiva3dLayerSystem : SystemBase, IInit, IUpdate, IAjivaLayer<Unifor
 
         window.OnMouseMove += OnWindowMouseMove;
 
-        var deviceSystem = Ecs.GetSystem<DeviceSystem>();
+        var deviceSystem = Ecs.Get<DeviceSystem>();
 
         LayerUniform = new AChangeAwareBackupBufferOfT<UniformViewProj3d>(1, deviceSystem);
 
@@ -251,7 +252,7 @@ public class Ajiva3dLayerSystem : SystemBase, IInit, IUpdate, IAjivaLayer<Unifor
         {
             foreach (var renderSystem in LayerRenderComponentSystems) renderSystem.Dispose();
             LayerUniform.Dispose();
-            Ecs.GetSystem<DeviceSystem>().WaitIdle();
+            Ecs.Get<DeviceSystem>().WaitIdle();
             mainCamara?.Dispose();
         }
         base.ReleaseUnmanagedResources(disposing);

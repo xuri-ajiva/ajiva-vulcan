@@ -40,7 +40,7 @@ public static class Program
         app01.Init();
         try
         {
-            app01.Run().Wait(cancellationTokenSource.Token);
+            app01.Run();
         }
         catch (Exception e)
         {

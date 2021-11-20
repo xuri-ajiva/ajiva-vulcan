@@ -1,8 +1,6 @@
-﻿using ajiva.Components.Physics;
-using ajiva.Components.RenderAble;
+﻿using ajiva.Components.RenderAble;
 using ajiva.Components.Transform;
 using ajiva.Ecs;
-using ajiva.Ecs.Example;
 using ajiva.Entities;
 using ajiva.Factories;
 using ajiva.Generators.Texture;
@@ -11,6 +9,7 @@ using ajiva.Systems.Assets;
 using ajiva.Systems.Physics;
 using ajiva.Systems.VulcanEngine;
 using ajiva.Systems.VulcanEngine.Debug;
+using ajiva.Systems.VulcanEngine.Interfaces;
 using ajiva.Systems.VulcanEngine.Layer;
 using ajiva.Systems.VulcanEngine.Layer2d;
 using ajiva.Systems.VulcanEngine.Layer3d;
@@ -38,59 +37,59 @@ public class AjivaApplication : DisposingLogger
     public AjivaApplication(CancellationTokenSource tokenSource)
     {
         entityComponentSystem = new AjivaEcs(tokenSource);
+        entityComponentSystem.AddTasT(entityComponentSystem);
     }
 
     private bool Running { get; set; }
-    
 
-    public async Task Run()
+    public void Run()
     {
         Running = true;
-        await entityComponentSystem.RunUpdates();
+        entityComponentSystem.StartUpdates();
+        entityComponentSystem.WaitForExit();
         Running = false;
     }
 
     public void Init()
     {
-        entityComponentSystem.AddParam(Const.Default.Config, Config.Default);
+        entityComponentSystem.Add<Config, Config>(Config.Default);
 
         (vulcanInstance, debugReportCallback) = Statics.CreateInstance(Glfw3.GetRequiredInstanceExtensions());
-        var deviceSystem = entityComponentSystem.CreateSystemOrComponentSystem<DeviceSystem>();
+        var deviceSystem = entityComponentSystem.Add<DeviceSystem, IDeviceSystem>();
 
         var meshPool = new MeshPool(deviceSystem);
-        entityComponentSystem.AddInstance(meshPool);
+        entityComponentSystem.Add<MeshPool, IMeshPool>(meshPool);
 
-        entityComponentSystem.AddInstance(vulcanInstance);
+        entityComponentSystem.Add<VulcanInstance, IVulcanInstance>(new VulcanInstance(vulcanInstance));
 
-        entityComponentSystem.AddSystem(new WorkerPool(Environment.ProcessorCount / 2, "AjivaWorkerPool", entityComponentSystem) { Enabled = true });
-        var window = entityComponentSystem.CreateSystemOrComponentSystem<WindowSystem>();
-        entityComponentSystem.CreateSystemOrComponentSystem<BoxTextureGenerator>();
+        entityComponentSystem.Add<WorkerPool, IWorkerPool>(new WorkerPool(Environment.ProcessorCount / 2, "AjivaWorkerPool", entityComponentSystem) { Enabled = true });
+        var window = entityComponentSystem.Add<WindowSystem, IWindowSystem>();
+        entityComponentSystem.Add<BoxTextureGenerator, BoxTextureGenerator>();
 
         //var layerSystem = entityComponentSystem.CreateSystemOrComponentSystem<LayerSystem>();
 
-        entityComponentSystem.CreateSystemOrComponentSystem<TextureSystem>();
-        entityComponentSystem.CreateSystemOrComponentSystem<ImageSystem>();
-        entityComponentSystem.CreateSystemOrComponentSystem<TransformComponentSystem>();
-        entityComponentSystem.CreateSystemOrComponentSystem<Transform2dComponentSystem>();
-        entityComponentSystem.CreateSystemOrComponentSystem<AssetManager>();
+        entityComponentSystem.Add<TextureSystem, ITextureSystem>();
+        entityComponentSystem.Add<ImageSystem, IImageSystem>();
+        entityComponentSystem.Add<TransformComponentSystem, ITransformComponentSystem>();
+        entityComponentSystem.Add<Transform2dComponentSystem, ITransform2dComponentSystem>();
+        entityComponentSystem.Add<AssetManager, IAssetManager>();
 
-        var graphicsSystem = entityComponentSystem.CreateSystemOrComponentSystem<GraphicsSystem>();
-        entityComponentSystem.AddEntityFactory(new SomeEntityFactory());
+        var graphicsSystem = entityComponentSystem.Add<GraphicsSystem, IGraphicsSystem>();
 
-        entityComponentSystem.AddEntityFactory(new CubeFactory(meshPool));
-        entityComponentSystem.AddEntityFactory(new RectFactory());
-        entityComponentSystem.AddEntityFactory(new Cameras.FpsCamaraFactory());
-        entityComponentSystem.AddEntityFactory(new DebugBoxFactory());
+        entityComponentSystem.AddTasT(new CubeFactory(meshPool));
+        entityComponentSystem.AddTasT(new RectFactory());
+        entityComponentSystem.AddTasT(new Cameras.FpsCamaraFactory());
+        entityComponentSystem.AddTasT(new DebugBoxFactory());
 
         window.OnKeyEvent += WindowOnOnKeyEvent;
-        var ajiva3dLayerSystem = entityComponentSystem.CreateSystemOrComponentSystem<Ajiva3dLayerSystem>();
-        var ajiva2dLayerSystem = entityComponentSystem.CreateSystemOrComponentSystem<Ajiva2dLayerSystem>();
-        var solidMeshRenderLayer = entityComponentSystem.CreateSystemOrComponentSystem<SolidMeshRenderLayer>();
-        var debugLayer = entityComponentSystem.CreateSystemOrComponentSystem<DebugLayer>();
-        var rectRender = entityComponentSystem.CreateSystemOrComponentSystem<Mesh2dRenderLayer>();
+        var ajiva3dLayerSystem = entityComponentSystem.Add<Ajiva3dLayerSystem, Ajiva3dLayerSystem>();
+        var ajiva2dLayerSystem = entityComponentSystem.Add<Ajiva2dLayerSystem, Ajiva2dLayerSystem>();
+        var solidMeshRenderLayer = entityComponentSystem.Add<SolidMeshRenderLayer, SolidMeshRenderLayer>();
+        var debugLayer = entityComponentSystem.Add<DebugLayer, DebugLayer>();
+        var rectRender = entityComponentSystem.Add<Mesh2dRenderLayer, Mesh2dRenderLayer>();
 
-        var collisionsComponentSystem = entityComponentSystem.CreateSystemOrComponentSystem<CollisionsComponentSystem>();
-        var boundingBoxComponentsSystem = entityComponentSystem.CreateSystemOrComponentSystem<BoundingBoxComponentsSystem>();
+        var collisionsComponentSystem = entityComponentSystem.Add<CollisionsComponentSystem, CollisionsComponentSystem>();
+        var boundingBoxComponentsSystem = entityComponentSystem.Add<BoundingBoxComponentsSystem, BoundingBoxComponentsSystem>();
 
         graphicsSystem.AddUpdateLayer(ajiva3dLayerSystem);
         graphicsSystem.AddUpdateLayer(ajiva2dLayerSystem);
@@ -102,7 +101,7 @@ public class AjivaApplication : DisposingLogger
         var meshPref = MeshPrefab.Cube;
         var r = new Random();
 
-        entityComponentSystem.InitSystems();
+        entityComponentSystem.Init();
 
         meshPool.AddMesh(MeshPrefab.Cube);
         meshPool.AddMesh(MeshPrefab.Rect);
@@ -133,7 +132,7 @@ public class AjivaApplication : DisposingLogger
         if (inputaction != InputAction.Press) return;
         // ReSharper disable once SwitchStatementMissingSomeEnumCasesNoDefault
         var meshPref = MeshPrefab.Cube;
-        var wp = entityComponentSystem.GetSystem<WorkerPool>();
+        var wp = entityComponentSystem.Get<IWorkerPool>();
 
         if (key is > Key.Num0 and <= Key.Num9)
         {
@@ -142,7 +141,7 @@ public class AjivaApplication : DisposingLogger
             const float sz = .5f;
             wp.EnqueueWork((info, param) =>
             {
-                using var change = entityComponentSystem.GetSystem<GraphicsSystem>().ChangingObserver.BeginBigChange();
+                using var change = entityComponentSystem.Get<IGraphicsSystem>().ChangingObserver.BeginBigChange();
 
                 var res = Parallel.For(0, rep, new ParallelOptions
                     { MaxDegreeOfParallelism = Environment.ProcessorCount / 2 }, i =>
@@ -168,20 +167,20 @@ public class AjivaApplication : DisposingLogger
         switch (key)
         {
             case Key.Q:
-                Task.Run(() => entityComponentSystem.GetSystem<GraphicsSystem>().UpdateGraphicsData());
+                Task.Run(() => entityComponentSystem.Get<IGraphicsSystem>().UpdateGraphicsData());
                 break;
             case Key.F1:
-                var s1 = entityComponentSystem.GetComponentSystem<DebugLayer, DebugComponent>();
+                var s1 = entityComponentSystem.Get<DebugLayer>();
                 s1.Render.Value = !s1.Render;
                 break;
             case Key.F2:
-                var s2 = entityComponentSystem.GetComponentSystemUnSave<SolidMeshRenderLayer>();
+                var s2 = entityComponentSystem.Get<SolidMeshRenderLayer>();
                 s2.Render.Value = !s2.Render;
                 break;
 
             case Key.B:
                 {
-                    using var change = entityComponentSystem.GetSystem<GraphicsSystem>().ChangingObserver.BeginBigChange();
+                    using var change = entityComponentSystem.Get<GraphicsSystem>().ChangingObserver.BeginBigChange();
 
                     for (var i = 0; i < 100; i++)
                     {
@@ -214,7 +213,7 @@ public class AjivaApplication : DisposingLogger
                 break;
 
             case Key.P:
-                var bbs = entityComponentSystem.GetComponentSystem<BoundingBoxComponentsSystem, BoundingBox>();
+                var bbs = entityComponentSystem.Get<BoundingBoxComponentsSystem>();
                 wp.EnqueueWork((info, param) =>
                 {
                     bbs.DoPhysicFrame();
@@ -228,7 +227,7 @@ public class AjivaApplication : DisposingLogger
                 }*/
                 break;
             case Key.F:
-                var sys = entityComponentSystem.GetSystem<Ajiva3dLayerSystem>();
+                var sys = entityComponentSystem.Get<Ajiva3dLayerSystem>();
                 if (entityComponentSystem.TryCreateEntity<Cube>(out var cn))
                 {
                     if (cn.TryGetComponent<RenderMesh3D>(out var render))
@@ -250,7 +249,7 @@ public class AjivaApplication : DisposingLogger
     /// <inheritdoc />
     protected override void ReleaseUnmanagedResources(bool disposing)
     {
-        entityComponentSystem.GetSystem<DeviceSystem>().WaitIdle();
+        entityComponentSystem.Get<DeviceSystem>().WaitIdle();
 
         entityComponentSystem.Dispose();
 

@@ -14,7 +14,7 @@ public static class Cameras
         {
             var cam = new FpsCamera { Id = id };
             system.TryAttachComponentToEntity(cam, new Transform3d());
-            system.TryAttachNewComponentToEntity<RenderMesh3D>(cam, out _);
+            system.TryAttachComponentToEntity(cam, new RenderMesh3D());
             system.RegisterUpdate(cam);
             cam.OnMouseMoved(0.0f, 0.0f);
             return cam;

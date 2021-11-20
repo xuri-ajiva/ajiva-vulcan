@@ -17,7 +17,7 @@ public class AssetManager : SystemBase, IInit, IAssetManager
     /// <inheritdoc />
     public void Init()
     {
-        if (Ecs.TryGetPara<Config>(Const.Default.Config, out var config)) AssetPack = Serializer.Deserialize<AssetPack>(new ReadOnlyMemory<byte>(File.ReadAllBytes(config.AssetPath)));
+        AssetPack = Serializer.Deserialize<AssetPack>(new ReadOnlyMemory<byte>(File.ReadAllBytes(Ecs.Get<Config>().AssetPath)));
     }
 
     public byte[] GetAsset(AssetType assetType, string name)

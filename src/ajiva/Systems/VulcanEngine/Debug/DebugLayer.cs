@@ -1,6 +1,5 @@
 ﻿using System.Runtime.CompilerServices;
 using ajiva.Components;
-using ajiva.Components.Media;
 using ajiva.Components.RenderAble;
 using ajiva.Components.Transform;
 using ajiva.Ecs;
@@ -77,7 +76,7 @@ public class DebugLayer : ComponentSystemBase<DebugComponent>, IInit, IUpdate, I
     /// <inheritdoc />
     public GraphicsPipelineLayer CreateGraphicsPipelineLayer(RenderPassLayer renderPassLayer)
     {
-        return CreateDebugPipe.Default(renderPassLayer.Parent, renderPassLayer, Ecs.GetSystem<DeviceSystem>(), true, Vertex3D.GetBindingDescription(), Vertex3D.GetAttributeDescriptions(), MainShader, PipelineDescriptorInfos);
+        return CreateDebugPipe.Default(renderPassLayer.Parent, renderPassLayer, Ecs.Get<DeviceSystem>(), true, Vertex3D.GetBindingDescription(), Vertex3D.GetAttributeDescriptions(), MainShader, PipelineDescriptorInfos);
     }
 
     /// <inheritdoc />
@@ -89,16 +88,16 @@ public class DebugLayer : ComponentSystemBase<DebugComponent>, IInit, IUpdate, I
     /// <inheritdoc />
     public void Init()
     {
-        var deviceSystem = Ecs.GetSystem<DeviceSystem>();
+        var deviceSystem = Ecs.Get<DeviceSystem>();
 
-        MainShader = Shader.CreateShaderFrom(Ecs.GetSystem<AssetManager>(), "3d/debug", deviceSystem, "main");
+        MainShader = Shader.CreateShaderFrom(Ecs.Get<AssetManager>(), "3d/debug", deviceSystem, "main");
         Models = new AChangeAwareBackupBufferOfT<DebugUniformModel>(Const.Default.ModelBufferSize, deviceSystem);
-        meshPool = Ecs.GetInstance<MeshPool>();
+        meshPool = Ecs.Get<IMeshPool>();
 
         PipelineDescriptorInfos = Layers.PipelineDescriptorInfos.CreateFrom(
             AjivaLayer.LayerUniform.Uniform.Buffer!, (uint)AjivaLayer.LayerUniform.SizeOfT,
             Models.Uniform.Buffer!, (uint)Models.SizeOfT,
-            Ecs.GetComponentSystem<TextureSystem, TextureComponent>().TextureSamplerImageViews
+            Ecs.Get<ITextureSystem>().TextureSamplerImageViews
         );
     }
 

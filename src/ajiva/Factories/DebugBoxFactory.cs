@@ -13,13 +13,17 @@ public class DebugBoxFactory : EntityFactoryBase<DebugBox>
     {
         var box = new DebugBox { Id = id };
         //return cube.Create3DRenderedObject(system);
-        system.TryAttachNewComponentToEntity<Transform3d>(box, out _);
-        if (system.TryAttachNewComponentToEntity<DebugComponent>(box, out var debugComponent))
+        system.TryAttachComponentToEntity(box, new Transform3d());
+        var debugComponent = new DebugComponent
         {
-            debugComponent.DrawTransform = true;
-            debugComponent.DrawWireframe = true;
-            debugComponent.Render = true;
-            debugComponent.SetMesh(MeshPrefab.Cube);
+            DrawTransform = true,
+            DrawWireframe = true,
+            Render = true
+        };
+        debugComponent.SetMesh(MeshPrefab.Cube);
+        if (system.TryAttachComponentToEntity(box,  debugComponent))
+        {
+
         }
         //system.AttachComponentToEntity<ATexture>(cube);
         return box;

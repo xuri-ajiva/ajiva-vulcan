@@ -1,6 +1,7 @@
 ﻿using System.Runtime.CompilerServices;
 using ajiva.Ecs;
 using ajiva.Models;
+using ajiva.Systems.VulcanEngine.Interfaces;
 using SharpVk;
 using SharpVk.Khronos;
 
@@ -48,20 +49,20 @@ public class DeviceSystem : SystemBase, IInit, IDeviceSystem
     /// <inheritdoc />
     public void Init()
     {
-        PickPhysicalDevice(Ecs.GetInstance<Instance>());
+        PickPhysicalDevice(Ecs.Get<IVulcanInstance>());
         CreateLogicalDevice();
     }
 
-    private void PickPhysicalDevice(Instance instance)
+    private void PickPhysicalDevice(IVulcanInstance instance)
     {
         var availableDevices = instance.EnumeratePhysicalDevices();
 
-        PhysicalDevice = availableDevices.First(x => x.IsSuitableDevice(Ecs.GetSystem<WindowSystem>().Canvas));
+        PhysicalDevice = availableDevices.First(x => x.IsSuitableDevice(Ecs.Get<WindowSystem>().Canvas));
     }
 
     private void CreateLogicalDevice()
     {
-        queueFamilies = PhysicalDevice!.FindQueueFamilies(Ecs.GetSystem<WindowSystem>().Canvas);
+        queueFamilies = PhysicalDevice!.FindQueueFamilies(Ecs.Get<WindowSystem>().Canvas);
 
         Device = PhysicalDevice!.CreateDevice(queueFamilies.Indices
                 .Select(index => new DeviceQueueCreateInfo

@@ -45,7 +45,7 @@ public class Ajiva2dLayerSystem : SystemBase, IInit, IAjivaLayer<UniformLayer2d>
         var firstPass = layerIndex.First && layerRenderComponentSystemsIndex.First;
         var lastPass = layerIndex.Last && layerRenderComponentSystemsIndex.Last;
 
-        var deviceSystem = Ecs.GetSystem<DeviceSystem>();
+        var deviceSystem = Ecs.Get<DeviceSystem>();
         var renderPass = deviceSystem.Device!.CreateRenderPass(new[]
             {
                 new AttachmentDescription(AttachmentDescriptionFlags.None,
@@ -110,11 +110,11 @@ public class Ajiva2dLayerSystem : SystemBase, IInit, IAjivaLayer<UniformLayer2d>
     /// <inheritdoc />
     public void Init()
     {
-        window = Ecs.GetSystem<WindowSystem>();
+        window = Ecs.Get<WindowSystem>();
 
         var canvas = window.Canvas;
 
-        var deviceSystem = Ecs.GetSystem<DeviceSystem>();
+        var deviceSystem = Ecs.Get<DeviceSystem>();
 
         /*MainShader = Shader.CreateShaderFrom("./Shaders/2d", deviceSystem, "main");
         PipelineDescriptorInfos = ajiva.Systems.VulcanEngine.Unions.PipelineDescriptorInfos.CreateFrom(

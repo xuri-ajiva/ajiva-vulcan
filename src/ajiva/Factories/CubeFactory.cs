@@ -24,20 +24,29 @@ public class CubeFactory : EntityFactoryBase<Cube>
     {
         var cube = new Cube { Id = id };
         //return cube.Create3DRenderedObject(system);
-        system.TryAttachNewComponentToEntity<Transform3d>(cube, out _);
-        if (system.TryAttachNewComponentToEntity<RenderMesh3D>(cube, out var renderMesh))
+        system.TryAttachComponentToEntity(cube, new Transform3d());
+        var renderMesh = new RenderMesh3D();
+        renderMesh.Render = true;
+        renderMesh.SetMesh(mesh);
+
+        if (system.TryAttachComponentToEntity(cube, renderMesh))
         {
-            renderMesh.Render = true;
-            renderMesh.SetMesh(mesh);
         }
-        if (system.TryAttachNewComponentToEntity<TextureComponent>(cube, out var textureComponent)) textureComponent.TextureId = 1;
-        if (system.TryAttachNewComponentToEntity<CollisionsComponent>(cube, out var colider))
+        if (system.TryAttachComponentToEntity(cube, new TextureComponent
+            {
+                TextureId = 1,
+            }))
         {
-            if (system.TryAttachNewComponentToEntity<BoundingBox>(cube, out var boundingBox))
+        }
+        if (system.TryAttachComponentToEntity(cube, new CollisionsComponent
+            {
+                Pool = meshPool,
+                MeshId = mesh.MeshId
+            }))
+        {
+            if (system.TryAttachComponentToEntity(cube, new BoundingBox()))
             {
             }
-            colider.Pool = meshPool;
-            colider.MeshId = mesh.MeshId;
         }
 
         //system.AttachComponentToEntity<ATexture>(cube);

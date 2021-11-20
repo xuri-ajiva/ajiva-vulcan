@@ -11,7 +11,7 @@ public class TransformEntityFactory : EntityFactoryBase<TransformFormEntity<Tran
     public override TransformFormEntity<Transform3d, vec3, mat4> Create(IAjivaEcs system, uint id)
     {
         var entity = new TransformFormEntity<Transform3d, vec3, mat4> { Id = id };
-        system.TryAttachNewComponentToEntity<Transform3d>(entity, out var transform);
+        system.TryAttachComponentToEntity(entity, new Transform3d());
         return entity;
     }
 

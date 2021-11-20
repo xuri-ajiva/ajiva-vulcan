@@ -9,7 +9,7 @@ public class ShaderSystem : SystemBase, IInit
     /// <inheritdoc />
     public void Init(AjivaEcs ecs)
     {
-        var ds = ecs.GetSystem<DeviceSystem>();
+        var ds = ecs.Get<DeviceSystem>();
 
         if (!ShaderUnions.ContainsKey(AjivaEngineLayer.Layer2d))
         {
