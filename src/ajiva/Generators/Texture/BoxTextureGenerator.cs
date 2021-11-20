@@ -1,6 +1,7 @@
 ﻿using System.Drawing;
 using ajiva.Components.Media;
 using ajiva.Ecs;
+using ajiva.Systems.VulcanEngine.Interfaces;
 using ajiva.Systems.VulcanEngine.Systems;
 using ajiva.Worker;
 

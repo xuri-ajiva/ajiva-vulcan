@@ -21,7 +21,7 @@ namespace ajiva.Systems.VulcanEngine.Layer3d;
 public class SolidMeshRenderLayer : ComponentSystemBase<RenderMesh3D>, IInit, IUpdate, IAjivaLayerRenderSystem<UniformViewProj3d>
 {
     private readonly object mainLock = new object();
-    private MeshPool meshPool;
+    private IMeshPool meshPool;
 
     /// <inheritdoc />
     public SolidMeshRenderLayer(IAjivaEcs ecs) : base(ecs)

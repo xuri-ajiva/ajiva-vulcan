@@ -3,12 +3,13 @@ using ajiva.Application;
 using ajiva.Components.Media;
 using ajiva.Ecs;
 using ajiva.Systems.Assets;
+using ajiva.Systems.VulcanEngine.Interfaces;
 using SharpVk;
 
 namespace ajiva.Systems.VulcanEngine.Systems;
 
 [Dependent(typeof(ImageSystem), typeof(AssetManager))]
-public class TextureSystem : ComponentSystemBase<TextureComponent>, IInit
+public class TextureSystem : ComponentSystemBase<TextureComponent>, IInit, ITextureSystem
 {
     private readonly ShaderConfig config;
 

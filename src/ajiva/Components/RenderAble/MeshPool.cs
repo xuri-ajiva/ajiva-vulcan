@@ -3,7 +3,7 @@ using SharpVk;
 
 namespace ajiva.Components.RenderAble;
 
-public class MeshPool
+public class MeshPool : IMeshPool
 {
     private readonly DeviceSystem deviceSystem;
 

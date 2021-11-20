@@ -7,7 +7,7 @@ using SharpVk.Khronos;
 namespace ajiva.Systems.VulcanEngine.Systems;
 
 [Dependent(typeof(WindowSystem))]
-public class DeviceSystem : SystemBase, IInit
+public class DeviceSystem : SystemBase, IInit, IDeviceSystem
 {
     private QueueFamilyIndices queueFamilies;
 
@@ -16,8 +16,8 @@ public class DeviceSystem : SystemBase, IInit
     {
     }
 
-    internal PhysicalDevice? PhysicalDevice { get; private set; }
-    internal Device? Device { get; private set; }
+    public PhysicalDevice? PhysicalDevice { get; private set; }
+    public Device? Device { get; private set; }
 
     internal Queue? GraphicsQueue { get; private set; }
     internal Queue? PresentQueue { get; private set; }

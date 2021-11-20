@@ -1,6 +1,7 @@
 ﻿using ajiva.Components.Media;
 using ajiva.Ecs;
 using ajiva.Models;
+using ajiva.Systems.VulcanEngine.Interfaces;
 using SharpVk;
 using SharpVk.NVidia;
 using Buffer = SharpVk.Buffer;
@@ -8,7 +9,7 @@ using Buffer = SharpVk.Buffer;
 namespace ajiva.Systems.VulcanEngine.Systems;
 
 [Dependent(typeof(DeviceSystem))]
-public class ImageSystem : ComponentSystemBase<AImage>, IInit
+public class ImageSystem : ComponentSystemBase<AImage>, IInit, IImageSystem
 {
     /// <inheritdoc />
     public ImageSystem(IAjivaEcs ecs) : base(ecs)

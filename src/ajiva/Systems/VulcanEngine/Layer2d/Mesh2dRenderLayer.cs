@@ -8,6 +8,7 @@ using ajiva.Models;
 using ajiva.Models.Buffer.ChangeAware;
 using ajiva.Models.Layers.Layer2d;
 using ajiva.Systems.Assets;
+using ajiva.Systems.VulcanEngine.Interfaces;
 using ajiva.Systems.VulcanEngine.Layer;
 using ajiva.Systems.VulcanEngine.Layer3d;
 using ajiva.Systems.VulcanEngine.Layers;
@@ -22,7 +23,7 @@ namespace ajiva.Systems.VulcanEngine.Layer2d;
 public class Mesh2dRenderLayer : ComponentSystemBase<RenderMesh2D>, IInit, IUpdate, IAjivaLayerRenderSystem<UniformLayer2d>
 {
     private readonly object mainLock = new object();
-    private MeshPool meshPool;
+    private IMeshPool meshPool;
 
     /// <inheritdoc />
     public Mesh2dRenderLayer(IAjivaEcs ecs) : base(ecs)

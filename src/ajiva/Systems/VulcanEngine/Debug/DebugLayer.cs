@@ -8,6 +8,7 @@ using ajiva.Models;
 using ajiva.Models.Buffer.ChangeAware;
 using ajiva.Models.Layers.Layer3d;
 using ajiva.Systems.Assets;
+using ajiva.Systems.VulcanEngine.Interfaces;
 using ajiva.Systems.VulcanEngine.Layer;
 using ajiva.Systems.VulcanEngine.Layers;
 using ajiva.Systems.VulcanEngine.Layers.Models;
@@ -21,7 +22,7 @@ namespace ajiva.Systems.VulcanEngine.Debug;
 public class DebugLayer : ComponentSystemBase<DebugComponent>, IInit, IUpdate, IAjivaLayerRenderSystem<UniformViewProj3d>
 {
     private readonly object mainLock = new object();
-    private MeshPool meshPool;
+    private IMeshPool meshPool;
 
     /// <inheritdoc />
     /// <inheritdoc />

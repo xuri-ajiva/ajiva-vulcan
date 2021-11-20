@@ -5,7 +5,7 @@ using ProtoBuf;
 
 namespace ajiva.Systems.Assets;
 
-public class AssetManager : SystemBase, IInit
+public class AssetManager : SystemBase, IInit, IAssetManager
 {
     /// <inheritdoc />
     public AssetManager(IAjivaEcs ecs) : base(ecs)

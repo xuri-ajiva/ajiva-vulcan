@@ -1,6 +1,7 @@
 ﻿using ajiva.Application;
 using ajiva.Ecs;
 using ajiva.Models;
+using ajiva.Systems.VulcanEngine.Interfaces;
 using ajiva.Systems.VulcanEngine.Layer;
 using GlmSharp;
 using SharpVk;
@@ -8,7 +9,7 @@ using SharpVk.Glfw;
 
 namespace ajiva.Systems.VulcanEngine.Systems;
 
-public class WindowSystem : SystemBase, IUpdate, IInit
+public class WindowSystem : SystemBase, IUpdate, IInit, IWindowSystem
 {
     private readonly CursorPosDelegate cursorPosDelegate;
 
@@ -58,9 +59,9 @@ public class WindowSystem : SystemBase, IUpdate, IInit
         if (!windowReady)
             Ecs.IssueClose();
     }
+
     /// <inheritdoc />
     public PeriodicUpdateInfo Info { get; } = new PeriodicUpdateInfo(TimeSpan.FromMilliseconds(5));
-
 
     public event KeyEventHandler? OnKeyEvent;
     public event Action? OnResize;
