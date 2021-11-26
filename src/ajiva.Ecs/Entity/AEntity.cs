@@ -1,14 +1,87 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
+using Ajiva.Wrapper.Logger;
 
 namespace ajiva.Ecs.Entity;
 
-public abstract class AEntity : DisposingLogger, IEntity
+public abstract class AEntity : DisposingLogger, IEntity, IFluentEntity<AEntity>
 {
     public static uint CurrentId { get; [MethodImpl(MethodImplOptions.Synchronized)] private set; }
 
     /// <inheritdoc />
     public uint Id { get; init; } = CurrentId++;
 
-    public IDictionary<TypeKey, IComponent> Components { get; } = new Dictionary<TypeKey, IComponent>();
+    public IDictionary<Type, IComponent> Components { get; } = new Dictionary<Type, IComponent>();
+
+    public bool TryGetComponent<T>([MaybeNullWhen(false)] out T value) where T : IComponent
+    {
+        if (Components.TryGetValue(typeof(T), out var tmp))
+        {
+            value = (T)tmp;
+            return true;
+        }
+        value = default;
+        return false;
+    }
+
+    public bool HasComponent<T>() where T : IComponent
+    {
+        return Components.ContainsKey(typeof(T));
+    }
+
+    public T? RemoveComponent<T>() where T : IComponent
+    {
+        return Components.Remove(typeof(T), out var component) ? (T)component : default;
+    }
+
+    public bool TryRemoveComponent<T>([MaybeNullWhen(false)] out IComponent component) where T : IComponent
+    {
+        return Components.Remove(typeof(T), out component);
+    }
+
+    public T AddComponent<T, TAs>(T component) where T : IComponent where TAs : T
+    {
+        if (HasComponent<T>())
+        {
+            ALog.Warn($"{Id} already Contains {component}");
+            return component;
+        }
+        Components.Add(typeof(T), component);
+        return component;
+    }
+
+    /// <inheritdoc />
+    public AEntity Register(IAjivaEcs ecs)
+    {
+        foreach (var component in Components)
+        {
+            ecs.RegisterComponent(this, component.Value);
+        }
+        ecs.RegisterEntity(this);
+        return this;
+    }
+
+    /// <inheritdoc />
+    public AEntity Configure<TV>(Action<TV> configuration) where TV : IComponent
+    {
+        if (TryGetComponent<TV>(out var value))
+        {
+            configuration.Invoke(value);
+        }
+
+        return this;
+    }
+
+    /// <inheritdoc />
+    public AEntity Unregister(IAjivaEcs ecs)
+    {
+        foreach (var component in Components)
+        {
+            ecs.UnRegisterComponent(this, component.Value);
+        }
+        ecs.TryUnRegisterEntity(this);
+        return this;
+    }
 }
