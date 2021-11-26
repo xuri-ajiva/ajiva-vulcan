@@ -44,9 +44,9 @@ public class AjivaEcs : DisposingLogger, IAjivaEcs
     }
 
     /// <inheritdoc />
-    public bool TryAttachComponentToEntity<T>(IEntity entity, T component) where T : class, IComponent
+    public bool TryAttachComponentToEntity<T, TAs>(IEntity entity, T component)  where TAs : IComponent where T : class, TAs
     {
-        entity.AddComponent(component);
+        entity.AddComponent<T, TAs>(component);
         RegisterComponent(entity, component);
         return true;
     }
@@ -80,14 +80,9 @@ public class AjivaEcs : DisposingLogger, IAjivaEcs
     }
 
     /// <inheritdoc />
-    public bool TryCreateEntity<T>([MaybeNullWhen(false)] out T entity) where T : class, IEntity
+    public bool TryUnRegisterEntity<T>(T entity) where T : IEntity
     {
-        lock (@lock)
-        {
-            entity = Get<T, IEntityFactory<T>>().Create(this, currentEntityId++);
-        }
-        Entities.Add(entity.Id, entity);
-        return true;
+        throw new NotImplementedException();
     }
 
 #endregion
@@ -107,7 +102,7 @@ public class AjivaEcs : DisposingLogger, IAjivaEcs
     /// <inheritdoc />
     public void Init()
     {
-        var isInti = new List<IInit> {this};
+        var isInti = new List<IInit> { this };
         foreach (var init in ObjectContainer.GetAllAssignableTo<IInit>())
         {
             InitOne(init, isInti);
@@ -146,12 +141,13 @@ public class AjivaEcs : DisposingLogger, IAjivaEcs
     }
 
     public bool DisposingInprogress = false;
+
     /// <inheritdoc />
     protected override void ReleaseUnmanagedResources(bool disposing)
     {
         lock (@lock)
         {
-            if(DisposingInprogress) return;
+            if (DisposingInprogress) return;
             DisposingInprogress = true;
             foreach (var update in UpdateRunner.GetUpdating())
             {

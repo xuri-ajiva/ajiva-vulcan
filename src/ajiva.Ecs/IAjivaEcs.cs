@@ -8,15 +8,17 @@ public interface IAjivaEcs : IDisposingLogger, IInit, IAjivaEcsObjectContainer<I
 {
 #region Entity
 
-    bool TryCreateEntity<T>([MaybeNullWhen(false)] out T entity) where T : class, IEntity;
     void RegisterEntity<T>(T entity) where T : class, IEntity;
+    bool TryUnRegisterEntity<T>(uint id, [MaybeNullWhen(false)] out T entity) where T : IEntity;
+    bool TryUnRegisterEntity<T>(T entity) where T : IEntity;
 
 #endregion
 
 #region Component
 
     T RegisterComponent<T>(IEntity entity, T component) where T : class, IComponent;
-    bool TryAttachComponentToEntity<T>(IEntity entity, T component) where T : class, IComponent;
+    T UnRegisterComponent<T>(IEntity entity, T component) where T : class, IComponent;
+    bool TryAttachComponentToEntity<T, TAs>(IEntity entity, T component) where TAs : IComponent where T : class, TAs;
     bool TryDetachComponentFromEntity<T>(IEntity entity, [MaybeNullWhen(false)] out T component) where T : class, IComponent;
 
 #endregion
@@ -24,13 +26,6 @@ public interface IAjivaEcs : IDisposingLogger, IInit, IAjivaEcsObjectContainer<I
 #region Create
 
     T Create<T>(Func<Type, object?> missing) where T : class;
-
-#endregion
-
-#region Delete
-
-    bool TryUnRegisterEntity<T>(uint id, [MaybeNullWhen(false)] out T entity) where T : IEntity;
-    T UnRegisterComponent<T>(IEntity entity, T component) where T : class, IComponent;
 
 #endregion
 

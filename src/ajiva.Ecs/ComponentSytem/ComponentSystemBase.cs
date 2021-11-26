@@ -56,7 +56,7 @@ public abstract class ComponentSystemBase<T> : DisposingLogger, IComponentSystem
     {
         foreach (var (component, entity) in ComponentEntityMap)
         {
-            entity?.RemoveComponent<T>();
+            entity?.TryRemoveComponent<T>(out var _);
             component?.Dispose();
         }
         ComponentEntityMap.Clear();

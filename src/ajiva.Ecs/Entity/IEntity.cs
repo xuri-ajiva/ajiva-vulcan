@@ -9,5 +9,5 @@ public interface IEntity : IDisposable, IAjivaEcsObject
     bool TryGetComponent<T>([MaybeNullWhen(false)] out T value) where T : IComponent;
     bool HasComponent<T>() where T : IComponent;
     bool TryRemoveComponent<T>([MaybeNullWhen(false)] out IComponent component) where T : IComponent;
-    T AddComponent<T, TAs>(T component) where T : IComponent where TAs : T;
+    T AddComponent<T, TAs>(T component) where TAs : IComponent where T : class, TAs;
 }

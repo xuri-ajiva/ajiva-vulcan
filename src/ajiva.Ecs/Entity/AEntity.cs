@@ -1,17 +1,25 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
-using System.Runtime.CompilerServices;
 using Ajiva.Wrapper.Logger;
 
 namespace ajiva.Ecs.Entity;
 
 public abstract class AEntity : DisposingLogger, IEntity, IFluentEntity<AEntity>
 {
-    public static uint CurrentId { get; [MethodImpl(MethodImplOptions.Synchronized)] private set; }
+    public AEntity()
+    {
+        lock (CurrentIdLock)
+        {
+            Id = CurrentId++;
+        }
+    }
+
+    private static uint CurrentId;
+    private static readonly object CurrentIdLock = new();
 
     /// <inheritdoc />
-    public uint Id { get; init; } = CurrentId++;
+    public uint Id { get; init; }
 
     public IDictionary<Type, IComponent> Components { get; } = new Dictionary<Type, IComponent>();
 
@@ -41,7 +49,7 @@ public abstract class AEntity : DisposingLogger, IEntity, IFluentEntity<AEntity>
         return Components.Remove(typeof(T), out component);
     }
 
-    public T AddComponent<T, TAs>(T component) where T : IComponent where TAs : T
+    public T AddComponent<T, TAs>(T component) where TAs : IComponent where T : class,TAs
     {
         if (HasComponent<T>())
         {

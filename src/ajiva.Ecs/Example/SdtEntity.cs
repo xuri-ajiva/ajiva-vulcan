@@ -4,6 +4,11 @@ namespace ajiva.Ecs.Example;
 
 public class SdtEntity : AEntity, IUpdate
 {
+    public SdtEntity() 
+    {
+        this.AddComponent(new StdComponent());
+    }
+
     /// <inheritdoc />
     public void Update(UpdateInfo delta)
     {

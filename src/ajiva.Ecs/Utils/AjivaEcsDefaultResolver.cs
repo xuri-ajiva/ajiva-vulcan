@@ -33,12 +33,6 @@ public class AjivaEcsDefaultResolver : IAjivaEcsResolver
     /// <inheritdoc />
     public IEnumerable<Type> ResolveAs(Type type)
     {
-        foreach (var tpe in type.GetInterfaces().Where(x => x.IsGenericType && (x.IsAssignableTo(typeof(IComponentSystem)) || x.IsAssignableTo(typeof(IEntityFactory)))))
-        {
-            foreach (var typeArgument in tpe.GenericTypeArguments)
-            {
-                yield return typeArgument;
-            }
-        }
+        return type.GetInterfaces().Where(x => x.IsGenericType && x.IsAssignableTo(typeof(IComponentSystem))).SelectMany(tpe => tpe.GenericTypeArguments);
     }
 }
