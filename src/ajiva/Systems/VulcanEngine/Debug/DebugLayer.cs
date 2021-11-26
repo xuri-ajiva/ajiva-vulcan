@@ -112,7 +112,6 @@ public class DebugLayer : ComponentSystemBase<DebugComponent>, IInit, IUpdate, I
 
     /// <inheritdoc />
     public PeriodicUpdateInfo Info { get; } = new PeriodicUpdateInfo(TimeSpan.FromMilliseconds(15));
-    
 
     /// <inheritdoc />
     public override DebugComponent RegisterComponent(IEntity entity, DebugComponent component)
@@ -122,6 +121,7 @@ public class DebugLayer : ComponentSystemBase<DebugComponent>, IInit, IUpdate, I
 
         component.Models = Models;
         transform.ChangingObserver.OnChanged += component.OnTransformChange;
+        component.TransformChange(transform, transform.ModelMat);
 
         var res = base.RegisterComponent(entity, component);
         GraphicsDataChanged.Changed();
@@ -166,9 +166,13 @@ public class DebugComponent : RenderMeshIdUnique<DebugComponent>
     public bool DrawWireframe { get; set; }
     public bool NoDepthTest { get; set; }
 
-    private void TransformChange(ITransform<vec3, mat4> _, mat4 after)
+    public void TransformChange(ITransform<vec3, mat4> _, mat4 after)
     {
-        if (Models is null) return;
+        if (Models is null)
+        {
+            ALog.Warn("RenderMeshUpdate Failed!");
+            return;
+        }
 
         var change = Models.GetForChange((int)Id);
 

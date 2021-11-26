@@ -134,7 +134,8 @@ return colDir; // If you need info of the side that collided
         component.Ecs = Ecs;
         if (entity.TryGetComponent<Transform3d>(out var transform)) component.Transform = transform;
         if (entity.TryGetComponent<CollisionsComponent>(out var collider)) component.Collider = collider;
-
+        component.ComputeBoxBg();
+        
         return base.RegisterComponent(entity, component);
     }
 

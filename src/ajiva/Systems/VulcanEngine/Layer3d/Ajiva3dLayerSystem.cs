@@ -17,7 +17,7 @@ using SharpVk.Glfw;
 
 namespace ajiva.Systems.VulcanEngine.Layer3d;
 
-[Dependent(typeof(WindowSystem), typeof(GraphicsSystem))]
+[Dependent(typeof(WindowSystem), typeof(GraphicsSystem), typeof(TransformComponentSystem))]
 public class Ajiva3dLayerSystem : SystemBase, IInit, IUpdate, IAjivaLayer<UniformViewProj3d>
 {
     private Format depthFormat;
@@ -161,13 +161,6 @@ public class Ajiva3dLayerSystem : SystemBase, IInit, IUpdate, IAjivaLayer<Unifor
         var deviceSystem = Ecs.Get<DeviceSystem>();
 
         LayerUniform = new AChangeAwareBackupBufferOfT<UniformViewProj3d>(1, deviceSystem);
-
-        if (Ecs.TryCreateEntity<Cameras.FpsCamera>(out var mCamTmp))
-            MainCamara = mCamTmp;
-        else
-            ALog.Error("cam not created");
-        MainCamara.UpdatePerspective(90, window.Canvas.Width, window.Canvas.Height);
-        MainCamara.MovementSpeed = .01f;
     }
 
     /// <inheritdoc />
@@ -175,8 +168,21 @@ public class Ajiva3dLayerSystem : SystemBase, IInit, IUpdate, IAjivaLayer<Unifor
     {
         lock (MainLock)
         {
+            if (mainCamara is null)
+            {
+                CreateMainCamara();
+            }
+
             UpdateCamaraProjView();
         }
+    }
+
+    private void CreateMainCamara()
+    {
+        MainCamara = new Cameras.FpsCamera(Ecs);
+        MainCamara.Register(Ecs);
+        MainCamara.UpdatePerspective(90, window.Canvas.Width, window.Canvas.Height);
+        MainCamara.MovementSpeed = .01f;
     }
 
     /// <inheritdoc />

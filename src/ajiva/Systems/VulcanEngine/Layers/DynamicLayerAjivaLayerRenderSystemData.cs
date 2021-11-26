@@ -76,7 +76,7 @@ public class DynamicLayerAjivaLayerRenderSystemData : DisposingLogger
 
     private void AllocateNewBuffers()
     {
-        var buffers = new RenderBuffer(renderer.DeviceSystem.AllocateCommandBuffers(CommandBufferLevel.Primary, RenderPass.FrameBuffers.Length, CommandPoolSelector.Background), 0);
+        var buffers = new RenderBuffer(renderer.DeviceSystem.AllocateCommandBuffers(CommandBufferLevel.Primary, RenderPass.FrameBuffers.Length, CommandPoolSelector.Background), -1);
         AllocatedBuffers.Add(buffers.CommandBuffers);
         RenderBuffers.Enqueue(buffers);
     }
@@ -166,7 +166,7 @@ public class DynamicLayerAjivaLayerRenderSystemData : DisposingLogger
         if (commandBuffers.Any(x => x is null))
             FreeBuffers(commandBuffers);
         else
-            RenderBuffers.Enqueue(new RenderBuffer(commandBuffers, 0));
+            RenderBuffers.Enqueue(new RenderBuffer(commandBuffers, -1));
     }
 
     private void FreeBuffers(CommandBuffer?[] commandBuffers)

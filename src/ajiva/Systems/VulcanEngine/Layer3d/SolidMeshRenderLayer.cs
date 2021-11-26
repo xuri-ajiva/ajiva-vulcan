@@ -123,6 +123,7 @@ public class SolidMeshRenderLayer : ComponentSystemBase<RenderMesh3D>, IInit, IU
 
         component.Models = Models;
         transform.ChangingObserver.OnChanged += component.OnTransformChange;
+        component. TransformChange(transform, transform.ModelMat);
 
         if (entity.TryGetComponent<TextureComponent>(out var texture)) component.TextureComponent = texture;
 

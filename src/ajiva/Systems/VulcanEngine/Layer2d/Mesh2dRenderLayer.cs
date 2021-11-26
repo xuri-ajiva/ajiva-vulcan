@@ -122,6 +122,7 @@ public class Mesh2dRenderLayer : ComponentSystemBase<RenderMesh2D>, IInit, IUpda
 
         component.Models = Models;
         transform.ChangingObserver.OnChanged += component.OnTransformChange;
+        component.TransformChange(transform, transform.ModelMat);
 
         var res = base.RegisterComponent(entity, component);
         GraphicsDataChanged.Changed();
