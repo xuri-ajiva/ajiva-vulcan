@@ -45,7 +45,6 @@ public class AjivaEcsObjectContainer<TResolvingConstrain> : DisposingLogger, IAj
                 Add<T, T>(value);
                 break;
             }
-            return (TAs)Values[typeof(T)];
         }
         return (TAs)Values[typeof(T)];
     }

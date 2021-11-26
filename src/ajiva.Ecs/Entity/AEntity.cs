@@ -63,9 +63,9 @@ public abstract class AEntity : DisposingLogger, IEntity, IFluentEntity<AEntity>
     /// <inheritdoc />
     public AEntity Register(IAjivaEcs ecs)
     {
-        foreach (var component in Components)
+        foreach (var (type, component) in Components)
         {
-            ecs.RegisterComponent(this, component.Value);
+            ecs.RegisterComponent(this, type, component);
         }
         ecs.RegisterEntity(this);
         return this;
@@ -85,9 +85,9 @@ public abstract class AEntity : DisposingLogger, IEntity, IFluentEntity<AEntity>
     /// <inheritdoc />
     public AEntity Unregister(IAjivaEcs ecs)
     {
-        foreach (var component in Components)
+        foreach (var (type, component) in Components)
         {
-            ecs.UnRegisterComponent(this, component.Value);
+            ecs.UnRegisterComponent(this, type, component);
         }
         ecs.TryUnRegisterEntity(this);
         return this;

@@ -6,6 +6,8 @@ namespace ajiva.Ecs.ComponentSytem;
 public interface IComponentSystem : ISystem
 {
     Type ComponentType { get; }
+    IComponent RegisterComponent(IEntity entity, IComponent component);
+    IComponent UnRegisterComponent(IEntity entity, IComponent component);
 }
 public interface IComponentSystem<T> : IComponentSystem where T : class, IComponent
 {

@@ -24,7 +24,14 @@ public class AjivaEcs : DisposingLogger, IAjivaEcs
     public Dictionary<uint, IEntity> Entities { get; } = new Dictionary<uint, IEntity>();
 
     /// <inheritdoc />
-    public long EntitiesCount => Entities.Count;
+    public long EntitiesCount
+    {
+        get
+        {
+            lock (Entities)
+                return Entities.Count;
+        }
+    }
 
     /// <inheritdoc />
     public long ComponentsCount => 0; /* Entities.Sum(x => x.Value.Components.Count);*/ //sequence failed
@@ -34,20 +41,29 @@ public class AjivaEcs : DisposingLogger, IAjivaEcs
     /// <inheritdoc />
     public void RegisterEntity<T>(T entity) where T : class, IEntity
     {
-        Entities.Add(entity.Id, entity);
+        lock (Entities)
+        {
+            Entities.Add(entity.Id, entity);
+        }
     }
 
     /// <inheritdoc />
-    public T RegisterComponent<T>(IEntity entity, T component) where T : class, IComponent
+    public T RegisterComponent<T>(IEntity entity, Type type, T component) where T : class, IComponent
     {
-        return Get<T, IComponentSystem<T>>().RegisterComponent(entity, component);
+        return (T)Get<IComponentSystem>(type).RegisterComponent(entity, component);
     }
 
     /// <inheritdoc />
-    public bool TryAttachComponentToEntity<T, TAs>(IEntity entity, T component)  where TAs : IComponent where T : class, TAs
+    public T UnRegisterComponent<T>(IEntity entity, Type type, T component) where T : class, IComponent
+    {
+        return (T)Get<IComponentSystem>(type).UnRegisterComponent(entity, component);
+    }
+
+    /// <inheritdoc />
+    public bool TryAttachComponentToEntity<T, TAs>(IEntity entity, T component) where TAs : IComponent where T : class, TAs
     {
         entity.AddComponent<T, TAs>(component);
-        RegisterComponent(entity, component);
+        RegisterComponent(entity, typeof(TAs), component);
         return true;
     }
 
@@ -59,7 +75,7 @@ public class AjivaEcs : DisposingLogger, IAjivaEcs
             component = default;
             return false;
         }
-        component = UnRegisterComponent(entity, (T)ctnt);
+        component = UnRegisterComponent(entity, ctnt.GetType(), (T)ctnt);
         return true;
     }
 
@@ -83,16 +99,6 @@ public class AjivaEcs : DisposingLogger, IAjivaEcs
     public bool TryUnRegisterEntity<T>(T entity) where T : IEntity
     {
         throw new NotImplementedException();
-    }
-
-#endregion
-
-#region Delete
-
-    /// <inheritdoc />
-    public T UnRegisterComponent<T>(IEntity entity, T component) where T : class, IComponent
-    {
-        return Get<T, IComponentSystem<T>>().UnRegisterComponent(entity, component);
     }
 
 #endregion

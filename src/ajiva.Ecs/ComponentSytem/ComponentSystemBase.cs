@@ -14,6 +14,12 @@ public abstract class ComponentSystemBase<T> : DisposingLogger, IComponentSystem
     protected IAjivaEcs Ecs { get; }
     public Type ComponentType { get; } = typeof(T);
 
+    /// <inheritdoc />
+    public IComponent RegisterComponent(IEntity entity, IComponent component) => RegisterComponent(entity, (T)component);
+
+    /// <inheritdoc />
+    public IComponent UnRegisterComponent(IEntity entity, IComponent component) => UnRegisterComponent(entity, (T)component);
+
     public Dictionary<T, IEntity> ComponentEntityMap { get; private set; } = new();
 
     /// <inheritdoc />
