@@ -3,7 +3,7 @@ using ajiva.Utils.Changing;
 
 namespace ajiva.Components.Physics;
 
-public interface ICollider
+public interface ICollider : IComponent
 {
     public IChangingObserver ChangingObserver { get; }
 

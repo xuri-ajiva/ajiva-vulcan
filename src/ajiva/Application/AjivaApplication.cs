@@ -2,7 +2,6 @@
 using ajiva.Components.Transform;
 using ajiva.Ecs;
 using ajiva.Entities;
-using ajiva.Factories;
 using ajiva.Generators.Texture;
 using ajiva.Systems;
 using ajiva.Systems.Assets;
@@ -76,11 +75,6 @@ public class AjivaApplication : DisposingLogger
 
         var graphicsSystem = entityComponentSystem.Add<GraphicsSystem, IGraphicsSystem>();
 
-        entityComponentSystem.AddTasT(new CubeFactory(meshPool));
-        entityComponentSystem.AddTasT(new RectFactory());
-        entityComponentSystem.AddTasT(new Cameras.FpsCamaraFactory());
-        entityComponentSystem.AddTasT(new DebugBoxFactory());
-
         window.OnKeyEvent += WindowOnOnKeyEvent;
         var ajiva3dLayerSystem = entityComponentSystem.Add<Ajiva3dLayerSystem, Ajiva3dLayerSystem>();
         var ajiva2dLayerSystem = entityComponentSystem.Add<Ajiva2dLayerSystem, Ajiva2dLayerSystem>();
@@ -106,24 +100,22 @@ public class AjivaApplication : DisposingLogger
         meshPool.AddMesh(MeshPrefab.Cube);
         meshPool.AddMesh(MeshPrefab.Rect);
 
-        if (entityComponentSystem.TryCreateEntity<Rect>(out var rect))
+        var rect = new Rect().Configure<RenderMesh3D>(x =>
         {
-            if (rect.TryGetComponent<RenderMesh2D>(out var rectMesh))
-            {
-                rectMesh.SetMesh(MeshPrefab.Rect);
-                rectMesh.Render = true;
-            }
-            if (rect.TryGetComponent<Transform2d>(out var rectTrans)) rectTrans.Scale = new vec2(.05f);
-        }
+            x.SetMesh(MeshPrefab.Rect);
+            x.Render = true;
+        }).Configure<Transform2d>(x =>
+        {
+            x.Scale = new vec2(.05f);
+        }).Register(entityComponentSystem);
 
         for (var i = 0; i < 10; i++)
         {
-            if (!entityComponentSystem.TryCreateEntity<Cube>(out var cube)) continue;
-            if (cube.TryGetComponent<Transform3d>(out var trans))
+            var cube = new Cube(entityComponentSystem).Configure<Transform3d>(trans =>
             {
                 trans.Position = new vec3(r.Next(-posRange, posRange), r.Next(-posRange, posRange), r.Next(-posRange, posRange));
                 trans.Rotation = new vec3(r.Next(0, 100), r.Next(0, 100), r.Next(0, 100));
-            }
+            }).Register(entityComponentSystem);
         }
     }
 
@@ -148,20 +140,19 @@ public class AjivaApplication : DisposingLogger
                 {
                     for (var j = 0; j < rep; j++)
                     {
-                        if (!entityComponentSystem.TryCreateEntity<Cube>(out var cube)) continue;
-
-                        if (!cube.TryGetComponent<Transform3d>(out var trans)) continue;
-
-                        trans.Position = new vec3(i * sz, -index * 2, j * sz);
-                        trans.Rotation = new vec3(i * 90, j * 90, 0);
-                        trans.Scale = new vec3(sz / 2);
+                        var cube = new Cube(entityComponentSystem).Configure<Transform3d>(trans =>
+                        {
+                            trans.Position = new vec3(i * sz, -index * 2, j * sz);
+                            trans.Rotation = new vec3(i * 90, j * 90, 0);
+                            trans.Scale = new vec3((sz / 2)*.98f);
+                        }).Register(entityComponentSystem);
                     }
                 });
                 while (!res.IsCompleted) Task.Delay(10);
 
                 change.Dispose();
                 return WorkResult.Succeeded;
-            }, exception => ALog.Error(exception), $"Creation of {rep * rep} Cubes");
+            }, ALog.Error, $"Creation of {rep * rep} Cubes");
         }
 
         switch (key)
@@ -184,32 +175,21 @@ public class AjivaApplication : DisposingLogger
 
                     for (var i = 0; i < 100; i++)
                     {
-                        if (!entityComponentSystem.TryCreateEntity<Cube>(out var cube)) continue;
-
-                        if (cube.TryGetComponent<RenderMesh3D>(out var render))
-                        {
-                            render.SetMesh(meshPref);
-                            render.Render = true;
-                        }
-
-                        if (cube.TryGetComponent<Transform3d>(out var trans))
+                        var cube = new Cube(entityComponentSystem).Configure<Transform3d>(trans =>
                         {
                             trans.Position = new vec3(r.Next(-posRange, posRange), r.Next(-posRange, posRange), r.Next(-posRange, posRange));
                             trans.Rotation = new vec3(r.Next(0, 100), r.Next(0, 100), r.Next(0, 100));
-                        }
+                        }).Register(entityComponentSystem);
                     }
                     change.Dispose();
                     break;
                 }
 
             case Key.R:
-                if (!entityComponentSystem.TryCreateEntity<Rect>(out var rect)) break;
-
-                if (rect.TryGetComponent<RenderMesh2D>(out var renderRect))
+                var rect = new Rect().Configure<Transform2d>(x =>
                 {
-                    renderRect.SetMesh(MeshPrefab.Rect);
-                    renderRect.Render = true;
-                }
+                    x.Scale = new vec2(.05f);
+                }).Register(entityComponentSystem);
                 break;
 
             case Key.P:
@@ -228,20 +208,12 @@ public class AjivaApplication : DisposingLogger
                 break;
             case Key.F:
                 var sys = entityComponentSystem.Get<Ajiva3dLayerSystem>();
-                if (entityComponentSystem.TryCreateEntity<Cube>(out var cn))
+                var cubex = new Cube(entityComponentSystem).Configure<Transform3d>(trans =>
                 {
-                    if (cn.TryGetComponent<RenderMesh3D>(out var render))
-                    {
-                        render.SetMesh(meshPref);
-                        render.Render = true;
-                    }
+                    trans.Position = sys.MainCamara.Transform.Position + sys.MainCamara.FrontNormalized * 25;
+                    trans.Rotation = sys.MainCamara.Transform.Rotation;
+                }).Register(entityComponentSystem);
 
-                    if (cn.TryGetComponent<Transform3d>(out var trans))
-                    {
-                        trans.Position = sys.MainCamara.Transform.Position + sys.MainCamara.FrontNormalized * 25;
-                        trans.Rotation = sys.MainCamara.Transform.Rotation;
-                    }
-                }
                 break;
         }
     }

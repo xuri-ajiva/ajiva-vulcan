@@ -17,7 +17,7 @@ public class RenderMesh2D : RenderMeshIdUnique<RenderMesh2D>
 
     public IAChangeAwareBackupBufferOfT<SolidUniformModel2d> Models { get; set; }
 
-    private void TransformChange(ITransform<vec2, mat4> sender, mat4 after)
+    public void TransformChange(ITransform<vec2, mat4> sender, mat4 after)
     {
         Models.GetForChange((int)Id).Value.Model = after;
     }

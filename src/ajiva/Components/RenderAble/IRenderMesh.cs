@@ -1,6 +1,6 @@
 ﻿namespace ajiva.Components.RenderAble;
 
-public interface IRenderMesh
+public interface IRenderMesh : IComponent
 {
     bool Render { get; set; }
     uint MeshId { get; set; }

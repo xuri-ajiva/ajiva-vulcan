@@ -1,5 +1,4 @@
-﻿using System.Diagnostics;
-using ajiva.Components.RenderAble;
+﻿using ajiva.Components.RenderAble;
 using ajiva.Components.Transform;
 using ajiva.Ecs;
 using ajiva.Entities;
@@ -85,7 +84,7 @@ public class BoundingBox : DisposingLogger, IComponent
         ComputeBoxBg();
     }
 
-    private void ComputeBoxBg()
+    public void ComputeBoxBg()
     {
         var vp = Ecs.Get<WorkerPool>();
         lock (this)
@@ -142,12 +141,15 @@ public class BoundingBox : DisposingLogger, IComponent
     {
         if (visual is null)
         {
-            var res = Ecs.TryCreateEntity<DebugBox>(out visual);
-            Debug.Assert(res, "Ecs.TryCreateEntity<BoxRenderer>(out visual)");
+            visual = new DebugBox();
+            visual.Register(Ecs);
         }
-        if (!visual.TryGetComponent<Transform3d>(out var trans)) return;
-        trans.Position = Center;
-        trans.Scale = SizeHalf * 1.01f;
+
+        visual.Configure<Transform3d>(trans =>
+        {
+            trans.Position = Center;
+            trans.Scale = SizeHalf * 1.01f;
+        });
     }
 
     public void ModifyPositionRelative(vec3 vec3)
@@ -156,7 +158,4 @@ public class BoundingBox : DisposingLogger, IComponent
         MaxPos += vec3;
         UpdateVisual();
     }
-}
-internal class BoxRenderer : DefaultEntity
-{
 }

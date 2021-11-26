@@ -20,9 +20,13 @@ public class RenderMesh3D : RenderMeshIdUnique<RenderMesh3D>
 
     public IAChangeAwareBackupBufferOfT<SolidUniformModel>? Models { get; set; }
 
-    private void TransformChange(ITransform<vec3, mat4> _, mat4 after)
+    public void TransformChange(ITransform<vec3, mat4> _, mat4 after)
     {
-        if (Models is null) return;
+        if (Models is null)
+        {
+            ALog.Warn("RenderMeshUpdate Failed!");
+            return;
+        }
 
         var data = Models.GetForChange((int)Id);
         data.Value.Model = after;

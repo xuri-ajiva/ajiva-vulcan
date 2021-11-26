@@ -27,7 +27,7 @@ public class MeshPool : IMeshPool
     public void AddMesh(IMesh mesh)
     {
         mesh.Create(deviceSystem);
-        Meshes.Add(mesh.MeshId, mesh);
+        Meshes.Add(mesh.MeshId, mesh); //todo add check if already added
     }
 }
 public class RenderInstanceReadyMeshPool : IRenderMeshPool
