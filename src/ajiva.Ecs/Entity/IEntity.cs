@@ -10,4 +10,5 @@ public interface IEntity : IDisposable, IAjivaEcsObject
     bool HasComponent<T>() where T : IComponent;
     bool TryRemoveComponent<T>([MaybeNullWhen(false)] out IComponent component) where T : IComponent;
     T AddComponent<T, TAs>(T component) where TAs : IComponent where T : class, TAs;
+    T Get<T>() where T : IComponent;
 }

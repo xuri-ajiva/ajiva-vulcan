@@ -61,6 +61,12 @@ public abstract class AEntity : DisposingLogger, IEntity, IFluentEntity<AEntity>
     }
 
     /// <inheritdoc />
+    public T Get<T>() where T : IComponent
+    {
+        return (T)Components[typeof(T)];
+    }
+
+    /// <inheritdoc />
     public AEntity Register(IAjivaEcs ecs)
     {
         foreach (var (type, component) in Components)
