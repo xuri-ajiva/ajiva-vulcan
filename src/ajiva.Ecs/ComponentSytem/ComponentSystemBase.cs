@@ -4,7 +4,7 @@ using Ajiva.Wrapper.Logger;
 
 namespace ajiva.Ecs.ComponentSytem;
 
-public abstract class ComponentSystemBase<T> : DisposingLogger, IComponentSystem<T> where T : class, IComponent, new()
+public abstract class ComponentSystemBase<T> : DisposingLogger, IComponentSystem<T> where T : IComponent
 {
     public ComponentSystemBase(IAjivaEcs ecs)
     {
@@ -21,12 +21,6 @@ public abstract class ComponentSystemBase<T> : DisposingLogger, IComponentSystem
     public IComponent UnRegisterComponent(IEntity entity, IComponent component) => UnRegisterComponent(entity, (T)component);
 
     public Dictionary<T, IEntity> ComponentEntityMap { get; private set; } = new();
-
-    /// <inheritdoc />
-    public virtual T CreateComponent(IEntity entity)
-    {
-        return RegisterComponent(entity, new T());
-    }
 
     /// <inheritdoc />
     public virtual T RegisterComponent(IEntity entity, T component)
@@ -48,14 +42,6 @@ public abstract class ComponentSystemBase<T> : DisposingLogger, IComponentSystem
                 }
             }
         return component;
-    }
-
-    /// <inheritdoc />
-    public virtual IEntity DeleteComponent(IEntity entity, T component)
-    {
-        var cmp = UnRegisterComponent(entity, component);
-        cmp?.Dispose();
-        return entity;
     }
 
     protected override void ReleaseUnmanagedResources(bool disposing)

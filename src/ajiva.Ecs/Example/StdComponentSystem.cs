@@ -21,11 +21,4 @@ public class StdComponentSystem : ComponentSystemBase<StdComponent>, IUpdate
 
     /// <inheritdoc />
     public PeriodicUpdateInfo Info { get; } = new PeriodicUpdateInfo(TimeSpan.FromSeconds(1));
-
-    /// <inheritdoc />
-    public override StdComponent CreateComponent(IEntity entity)
-    {
-        var cmp = new StdComponent { Health = 100 };
-        return RegisterComponent(entity, cmp);
-    }
 }
