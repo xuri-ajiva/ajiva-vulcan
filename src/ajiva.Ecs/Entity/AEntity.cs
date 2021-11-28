@@ -21,7 +21,7 @@ public abstract class AEntity : DisposingLogger, IEntity, IFluentEntity<AEntity>
     /// <inheritdoc />
     public uint Id { get; init; }
 
-    public IDictionary<Type, IComponent> Components { get; } = new Dictionary<Type, IComponent>();
+    public Dictionary<Type, IComponent> Components { get; } = new Dictionary<Type, IComponent>();
 
     public bool TryGetComponent<T>([MaybeNullWhen(false)] out T value) where T : IComponent
     {
@@ -49,14 +49,13 @@ public abstract class AEntity : DisposingLogger, IEntity, IFluentEntity<AEntity>
         return Components.Remove(typeof(T), out component);
     }
 
-    public T AddComponent<T, TAs>(T component) where TAs : IComponent where T : class,TAs
+    public T AddComponent<T, TAs>(T component) where TAs : IComponent where T : class, TAs
     {
-        if (HasComponent<T>())
-        {
-            ALog.Warn($"{Id} already Contains {component}");
-            return component;
-        }
-        Components.Add(typeof(T), component);
+        if (!HasComponent<TAs>()) Components.TryAdd(typeof(TAs), component);
+        else ALog.Warn($"{Id} already Contains {component} As {typeof(TAs)}");
+
+        /*if (!HasComponent<T>()) Components.TryAdd(typeof(T), component);
+        else ALog.Warn($"{Id} already Contains {component}");*/
         return component;
     }
 
@@ -64,6 +63,22 @@ public abstract class AEntity : DisposingLogger, IEntity, IFluentEntity<AEntity>
     public T Get<T>() where T : IComponent
     {
         return (T)Components[typeof(T)];
+    }
+
+    /// <inheritdoc />
+    public T GetAny<T>() where T : IComponent
+    {
+        if (Components.ContainsKey(typeof(T)))
+            return Get<T>();
+
+        foreach (var (type, value) in Components)
+        {
+            if (type.IsAssignableTo(typeof(T)))
+            {
+                return (T)value;
+            }
+        }
+        throw new KeyNotFoundException();
     }
 
     /// <inheritdoc />

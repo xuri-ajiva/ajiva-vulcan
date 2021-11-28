@@ -67,6 +67,22 @@ public class AjivaEcsObjectContainer<TResolvingConstrain> : DisposingLogger, IAj
     }
 
     /// <inheritdoc />
+    public TAs GetAny<TAs>(Type type) where TAs: IAjivaEcsObject
+    {
+        if (Values.ContainsKey(type))
+            return (TAs)Values[type];
+
+        foreach (var (typed, value) in Values)
+        {
+            if (typed.IsAssignableTo(type))
+            {
+                return (TAs)value;
+            }
+        }
+        throw new KeyNotFoundException();
+    }
+
+    /// <inheritdoc />
     public void AddResolver<T>() where T : class, IAjivaEcsResolver, new()
     {
         Resolvers.Add(new T());
@@ -150,6 +166,8 @@ public interface IAjivaEcsObjectContainer<in TEcsType> where TEcsType : notnull
     T Get<T>() where T : class, TEcsType => Get<T, T>();
     TAs Get<T, TAs>() where TAs : TEcsType where T : class, TEcsType;
     TAs Get<TAs>(Type type) where TAs : TEcsType;
+
+    public TAs GetAny<TAs>(Type type) where TAs: IAjivaEcsObject;
     void AddResolver<T>() where T : class, IAjivaEcsResolver, new();
 
     T Create<T>() where T : class;

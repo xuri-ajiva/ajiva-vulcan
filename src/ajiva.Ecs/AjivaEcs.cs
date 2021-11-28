@@ -50,13 +50,13 @@ public class AjivaEcs : DisposingLogger, IAjivaEcs
     /// <inheritdoc />
     public T RegisterComponent<T>(IEntity entity, Type type, T component) where T : class, IComponent
     {
-        return (T)Get<IComponentSystem>(type).RegisterComponent(entity, component);
+        return (T)GetAny<IComponentSystem>(type).RegisterComponent(entity, component);
     }
 
     /// <inheritdoc />
     public T UnRegisterComponent<T>(IEntity entity, Type type, T component) where T : class, IComponent
     {
-        return (T)Get<IComponentSystem>(type).UnRegisterComponent(entity, component);
+        return (T)GetAny<IComponentSystem>(type).UnRegisterComponent(entity, component);
     }
 
     /// <inheritdoc />
@@ -251,6 +251,12 @@ public class AjivaEcs : DisposingLogger, IAjivaEcs
     public TAs Get<TAs>(Type type) where TAs : IAjivaEcsObject
     {
         return ObjectContainer.Get<TAs>(type);
+    }
+
+    /// <inheritdoc />
+    public TAs GetAny<TAs>(Type type) where TAs: IAjivaEcsObject
+    {
+        return ObjectContainer.GetAny<TAs>(type);
     }
 
     /// <inheritdoc />
