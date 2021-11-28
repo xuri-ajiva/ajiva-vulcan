@@ -26,6 +26,6 @@ public class Cube : DefaultEntity
         //this.AddComponent<RenderMesh3D,IRenderMesh>(new RenderMesh3D() { Render = true, MeshId = mesh.MeshId });
         this.AddComponent(new TextureComponent { TextureId = 1, });
         AddComponent<CollisionsComponent, ICollider>(new CollisionsComponent { Pool = meshPool, MeshId = mesh.MeshId });
-        this.AddComponent(new BoundingBox());
+        AddComponent<BoundingBox, IBoundingBox>(new BoundingBox(ecs, this));
     }
 }
