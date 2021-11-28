@@ -1,5 +1,6 @@
 ﻿using ajiva.Components.RenderAble;
 using ajiva.Components.Transform;
+using ajiva.Components.Transform.Kd;
 using ajiva.Ecs;
 using ajiva.Entities;
 using ajiva.Models;
@@ -9,82 +10,46 @@ using GlmSharp;
 
 namespace ajiva.Components.Physics;
 
-public class BoundingBox : DisposingLogger, IComponent
+public class BoundingBox : DisposingLogger, IComponent, IBoundingBox
 {
-    private ICollider? collider;
+    private readonly IModelMatTransform transform;
 
-    private readonly OnChangedDelegate ColliderChangedDelegate;
-    private vec3 maxPos;
-    private vec3 minPos;
-    private Transform3d? transform;
-
-    private readonly IChangingObserverOnlyAfter<ITransform<vec3, mat4>, mat4>.OnChangedDelegate TransformChangedDelegate;
     private uint version;
 
     private DebugBox? visual;
 
-    public BoundingBox()
+    public BoundingBox(IAjivaEcs ecs, IEntity entity)
     {
-        ColliderChangedDelegate = ColliderChanged;
-        TransformChangedDelegate = TransformChanged;
+        Ecs = ecs;
+        Collider = entity.Get<ICollider>();
+        transform = entity.GetAny<IModelMatTransform>();
+        Collider.ChangingObserver.OnChanged += ColliderChanged;
+        transform.ChangingObserver.OnChanged += TransformChanged;
+        MinPos = new KdVec(3);
+        MaxPos = new KdVec(3);
+        Center = new KdTransform(3);
     }
 
-    public vec3 MinPos
-    {
-        get => minPos;
-        private set
-        {
-            minPos = value;
-            CalculateDynamics();
-        }
-    }
-    public vec3 MaxPos
-    {
-        get => maxPos;
-        private set
-        {
-            maxPos = value;
-            CalculateDynamics();
-        }
-    }
-    public vec3 SizeHalf { get; private set; }
-    public vec3 Center { get; private set; }
+    /// <inheritdoc />
+    public KdVec MaxPos { get; }
 
-    public IAjivaEcs Ecs { private get; set; }
-    public ICollider Collider
-    {
-        get => collider!;
-        set
-        {
-            if (collider is not null) collider.ChangingObserver.OnChanged -= ColliderChangedDelegate;
-            value.ChangingObserver.OnChanged += ColliderChangedDelegate;
-            collider = value;
-        }
-    }
-    public Transform3d Transform
-    {
-        get => transform!;
-        set
-        {
-            if (transform is not null) transform.ChangingObserver.OnChanged -= TransformChangedDelegate;
-            value.ChangingObserver.OnChanged += TransformChangedDelegate;
+    /// <inheritdoc />
+    public ICollider Collider { get; }
 
-            transform = value;
-        }
+    /// <inheritdoc />
+    public KdTransform Center { get; }
+
+    /// <inheritdoc />
+    public KdVec MinPos { get; }
+
+    public IAjivaEcs Ecs { get; }
+
+    private void TransformChanged(mat4 value)
+    {
+        ComputeBoxBackground();
     }
 
-    private void CalculateDynamics()
-    {
-        SizeHalf = (MaxPos - MinPos) / 2;
-        Center = MinPos + SizeHalf;
-    }
-
-    private void TransformChanged(ITransform<vec3, mat4> sender, mat4 after)
-    {
-        ComputeBoxBg();
-    }
-
-    public void ComputeBoxBg()
+    public void ComputeBoxBackground()
     {
         var vp = Ecs.Get<WorkerPool>();
         lock (this)
@@ -96,17 +61,17 @@ public class BoundingBox : DisposingLogger, IComponent
 
     private void ColliderChanged(IChangingObserver changingObserver)
     {
-        ComputeBoxBg();
+        ComputeBoxBackground();
     }
 
     private WorkResult ComputeBox()
     {
-        var mesh = collider!.Pool.GetMesh(collider.MeshId);
+        var mesh = Collider!.Pool.GetMesh(Collider.MeshId);
         if (mesh is not Mesh<Vertex3D> vMesh) return WorkResult.Failed;
         if (vMesh.Vertices is null) return WorkResult.Failed;
 
         float x1 = float.PositiveInfinity, x2 = float.NegativeInfinity, y1 = float.PositiveInfinity, y2 = float.NegativeInfinity, z1 = float.PositiveInfinity, z2 = float.NegativeInfinity; // 1 = min, 2 = max
-        var mm = Transform.ModelMat;
+        var mm = transform.ModelMat;
         for (var i = 0; i < vMesh.Vertices.Length; i++)
         {
             var v = mm * vMesh.Vertices[i].Position;
@@ -128,16 +93,16 @@ public class BoundingBox : DisposingLogger, IComponent
 
         lock (this)
         {
-            minPos = new vec3(x1, y1, z1); //no update
-            MaxPos = new vec3(x2, y2, z2); //update dynamics
+            MinPos.Update(x1, y1, z1);
+            MaxPos.Update(x2, y2, z2);
 
-            UpdateVisual();
+            UpdateDynamicDataVisual();
 
             return WorkResult.Succeeded;
         }
     }
 
-    private void UpdateVisual()
+    private void UpdateDynamicDataVisual()
     {
         if (visual is null)
         {
@@ -145,17 +110,36 @@ public class BoundingBox : DisposingLogger, IComponent
             visual.Register(Ecs);
         }
 
+        var size = (MaxPos - MinPos) / 2.0f;
+
+        Center.Scale.Update(size);
+        Center.Position.Update(MinPos + size);
+        
         visual.Configure<Transform3d>(trans =>
         {
-            trans.Position = Center;
-            trans.Scale = SizeHalf * 1.01f;
+            trans.RefPosition((ref vec3 vec) =>
+            {
+                vec.x = Center.Position[0];
+                vec.y = Center.Position[1];
+                vec.z = Center.Position[2];
+            });
+
+            trans.RefScale((ref vec3 vec) =>
+            {
+                vec.x = size[0];
+                vec.y = size[1];
+                vec.z = size[2];
+            });
         });
+
     }
 
-    public void ModifyPositionRelative(vec3 vec3)
+    /// <inheritdoc />
+    protected override void ReleaseUnmanagedResources(bool disposing)
     {
-        minPos += vec3;
-        MaxPos += vec3;
-        UpdateVisual();
+        base.ReleaseUnmanagedResources(disposing);
+
+        transform.ChangingObserver.OnChanged += TransformChanged;
+        Collider.ChangingObserver.OnChanged += ColliderChanged;
     }
 }
