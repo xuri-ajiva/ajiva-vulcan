@@ -153,12 +153,6 @@ public class ImageSystem : ComponentSystemBase<AImage>, IInit, IImageSystem
 
         Ecs.Get<DeviceSystem>().ExecuteSingleTimeCommand(QueueType.GraphicsQueue, CommandPoolSelector.Foreground, command => command.PipelineBarrier(sourceStage, destinationStage, ArrayProxy<MemoryBarrier>.Null, ArrayProxy<BufferMemoryBarrier>.Null, barrier));
     }
-
-    /// <inheritdoc />
-    public override AImage CreateComponent(IEntity entity)
-    {
-        throw new NotImplementedException();
-    }
-
+    
 #endregion
 }

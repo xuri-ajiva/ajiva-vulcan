@@ -45,15 +45,6 @@ public class TextureSystem : ComponentSystemBase<TextureComponent>, IInit, IText
     }
 
     /// <inheritdoc />
-    public override TextureComponent CreateComponent(IEntity entity)
-    {
-        return new TextureComponent
-        {
-            TextureId = 0
-        };
-    }
-
-    /// <inheritdoc />
     protected override void ReleaseUnmanagedResources(bool disposing)
     {
         for (var i = 0; i < config.TEXTURE_SAMPLER_COUNT; i++) TextureSamplerImageViews[i] = default;
