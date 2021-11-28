@@ -95,7 +95,7 @@ public struct KdVec : IKdVec, IKdVecReadOnly
         var res = new KdVec(lhs.Dimensions);
         for (var i = 0; i < lhs.Dimensions; i++)
         {
-            res.values[i] = lhs.values[i] - rhs[i];
+            res.values[i] = lhs.values[i] + rhs[i];
         }
 
         return res;
