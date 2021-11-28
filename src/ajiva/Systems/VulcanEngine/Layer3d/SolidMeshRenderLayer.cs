@@ -8,6 +8,7 @@ using ajiva.Models;
 using ajiva.Models.Buffer.ChangeAware;
 using ajiva.Models.Layers.Layer3d;
 using ajiva.Systems.Assets;
+using ajiva.Systems.VulcanEngine.Interfaces;
 using ajiva.Systems.VulcanEngine.Layer;
 using ajiva.Systems.VulcanEngine.Layers;
 using ajiva.Systems.VulcanEngine.Layers.Creation;
@@ -21,7 +22,7 @@ namespace ajiva.Systems.VulcanEngine.Layer3d;
 public class SolidMeshRenderLayer : ComponentSystemBase<RenderMesh3D>, IInit, IUpdate, IAjivaLayerRenderSystem<UniformViewProj3d>
 {
     private readonly object mainLock = new object();
-    private MeshPool meshPool;
+    private IMeshPool meshPool;
 
     /// <inheritdoc />
     public SolidMeshRenderLayer(IAjivaEcs ecs) : base(ecs)
@@ -76,7 +77,7 @@ public class SolidMeshRenderLayer : ComponentSystemBase<RenderMesh3D>, IInit, IU
     /// <inheritdoc />
     public GraphicsPipelineLayer CreateGraphicsPipelineLayer(RenderPassLayer renderPassLayer)
     {
-        var res = GraphicsPipelineLayerCreator.Default(renderPassLayer.Parent, renderPassLayer, Ecs.GetSystem<DeviceSystem>(), true, Vertex3D.GetBindingDescription(), Vertex3D.GetAttributeDescriptions(), MainShader, PipelineDescriptorInfos);
+        var res = GraphicsPipelineLayerCreator.Default(renderPassLayer.Parent, renderPassLayer, Ecs.Get<DeviceSystem>(), true, Vertex3D.GetBindingDescription(), Vertex3D.GetAttributeDescriptions(), MainShader, PipelineDescriptorInfos);
 
         foreach (var entity in ComponentEntityMap) entity.Key.ChangingObserver.Changed();
 
@@ -89,16 +90,16 @@ public class SolidMeshRenderLayer : ComponentSystemBase<RenderMesh3D>, IInit, IU
     /// <inheritdoc />
     public void Init()
     {
-        var deviceSystem = Ecs.GetSystem<DeviceSystem>();
+        var deviceSystem = Ecs.Get<DeviceSystem>();
 
-        MainShader = Shader.CreateShaderFrom(Ecs.GetSystem<AssetManager>(), "3d/Solid", deviceSystem, "main");
+        MainShader = Shader.CreateShaderFrom(Ecs.Get<AssetManager>(), "3d/Solid", deviceSystem, "main");
         Models = new AChangeAwareBackupBufferOfT<SolidUniformModel>(Const.Default.ModelBufferSize, deviceSystem);
-        meshPool = Ecs.GetInstance<MeshPool>();
+        meshPool = Ecs.Get<IMeshPool>();
 
         PipelineDescriptorInfos = Layers.PipelineDescriptorInfos.CreateFrom(
             AjivaLayer.LayerUniform.Uniform.Buffer!, (uint)AjivaLayer.LayerUniform.SizeOfT,
             Models.Uniform.Buffer!, (uint)Models.SizeOfT,
-            Ecs.GetComponentSystem<TextureSystem, TextureComponent>().TextureSamplerImageViews
+            Ecs.Get<ITextureSystem>().TextureSamplerImageViews
         );
     }
 
@@ -112,6 +113,9 @@ public class SolidMeshRenderLayer : ComponentSystemBase<RenderMesh3D>, IInit, IU
     }
 
     /// <inheritdoc />
+    public PeriodicUpdateInfo Info { get; } = new PeriodicUpdateInfo(TimeSpan.FromMilliseconds(15));
+
+    /// <inheritdoc />
     public override RenderMesh3D RegisterComponent(IEntity entity, RenderMesh3D component)
     {
         if (!entity.TryGetComponent<Transform3d>(out var transform))
@@ -119,6 +123,7 @@ public class SolidMeshRenderLayer : ComponentSystemBase<RenderMesh3D>, IInit, IU
 
         component.Models = Models;
         transform.ChangingObserver.OnChanged += component.OnTransformChange;
+        component. TransformChange(transform.ModelMat);
 
         if (entity.TryGetComponent<TextureComponent>(out var texture)) component.TextureComponent = texture;
 

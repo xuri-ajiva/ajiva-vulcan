@@ -4,6 +4,11 @@ namespace ajiva.Ecs.Example;
 
 public class SdtEntity : AEntity, IUpdate
 {
+    public SdtEntity() 
+    {
+        this.AddComponent(new StdComponent());
+    }
+
     /// <inheritdoc />
     public void Update(UpdateInfo delta)
     {
@@ -12,6 +17,9 @@ public class SdtEntity : AEntity, IUpdate
             health.Health += new Random().Next(-10, 10);
         }
     }
+
+    /// <inheritdoc />
+    public PeriodicUpdateInfo Info { get; } = new PeriodicUpdateInfo(TimeSpan.FromSeconds(1));
 
     /// <inheritdoc />
     protected override void ReleaseUnmanagedResources(bool disposing)

@@ -1,6 +1,7 @@
 ﻿using System.Drawing;
 using ajiva.Components.Media;
 using ajiva.Ecs;
+using ajiva.Systems.VulcanEngine.Interfaces;
 using ajiva.Systems.VulcanEngine.Systems;
 using ajiva.Worker;
 
@@ -19,7 +20,7 @@ public class BoxTextureGenerator : SystemBase, IInit
     /// <inheritdoc />
     public void Init()
     {
-        Ecs.GetSystem<WorkerPool>().EnqueueWork(delegate
+        Ecs.Get<WorkerPool>().EnqueueWork(delegate
         {
             var bitmap = new Bitmap(4048, 4048);
 
@@ -34,11 +35,11 @@ public class BoxTextureGenerator : SystemBase, IInit
             MissingTexture = ATexture.FromBitmap(Ecs, bitmap);
             //MissingTexture.TextureId = 0;
 
-            Ecs.GetComponentSystem<TextureSystem, TextureComponent>().AddAndMapTextureToDescriptor(MissingTexture);
+            Ecs.Get<ITextureSystem>().AddAndMapTextureToDescriptor(MissingTexture);
 
             return WorkResult.Succeeded;
         }, ALog.WriteLine, "Missing Texture Generator");
 
-        //Ecs.GetSystem<WorkerPool>().;
+        //Ecs.Get<WorkerPool>().;
     }
 }

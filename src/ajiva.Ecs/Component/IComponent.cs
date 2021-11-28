@@ -2,6 +2,6 @@
 
 namespace ajiva.Ecs.Component;
 
-public interface IComponent : IDisposable
+public interface IComponent : IDisposable, IAjivaEcsObject
 {
 }

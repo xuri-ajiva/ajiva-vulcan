@@ -12,7 +12,7 @@ using SharpVk;
 namespace ajiva.Systems.VulcanEngine.Layer2d;
 
 [Dependent(typeof(WindowSystem), typeof(GraphicsSystem))]
-public class Ajiva2dLayerSystem : SystemBase, IInit, IUpdate, IAjivaLayer<UniformLayer2d>
+public class Ajiva2dLayerSystem : SystemBase, IInit, IAjivaLayer<UniformLayer2d>
 {
     private WindowSystem window;
 
@@ -45,7 +45,7 @@ public class Ajiva2dLayerSystem : SystemBase, IInit, IUpdate, IAjivaLayer<Unifor
         var firstPass = layerIndex.First && layerRenderComponentSystemsIndex.First;
         var lastPass = layerIndex.Last && layerRenderComponentSystemsIndex.Last;
 
-        var deviceSystem = Ecs.GetSystem<DeviceSystem>();
+        var deviceSystem = Ecs.Get<DeviceSystem>();
         var renderPass = deviceSystem.Device!.CreateRenderPass(new[]
             {
                 new AttachmentDescription(AttachmentDescriptionFlags.None,
@@ -110,11 +110,11 @@ public class Ajiva2dLayerSystem : SystemBase, IInit, IUpdate, IAjivaLayer<Unifor
     /// <inheritdoc />
     public void Init()
     {
-        window = Ecs.GetSystem<WindowSystem>();
+        window = Ecs.Get<WindowSystem>();
 
         var canvas = window.Canvas;
 
-        var deviceSystem = Ecs.GetSystem<DeviceSystem>();
+        var deviceSystem = Ecs.Get<DeviceSystem>();
 
         /*MainShader = Shader.CreateShaderFrom("./Shaders/2d", deviceSystem, "main");
         PipelineDescriptorInfos = ajiva.Systems.VulcanEngine.Unions.PipelineDescriptorInfos.CreateFrom(
@@ -144,10 +144,6 @@ public class Ajiva2dLayerSystem : SystemBase, IInit, IUpdate, IAjivaLayer<Unifor
         };
     }
 
-    /// <inheritdoc />
-    public void Update(UpdateInfo delta)
-    {
-    }
 
     private void BuildLayerUniform(Canvas canvas)
     {

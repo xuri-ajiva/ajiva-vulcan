@@ -1,4 +1,5 @@
 ﻿using ajiva.Ecs;
+using ajiva.Systems.VulcanEngine.Interfaces;
 using ajiva.Systems.VulcanEngine.Layer;
 using ajiva.Systems.VulcanEngine.Layers;
 using ajiva.Utils.Changing;
@@ -7,7 +8,7 @@ using SharpVk;
 namespace ajiva.Systems.VulcanEngine.Systems;
 
 [Dependent(typeof(TextureSystem))]
-public class GraphicsSystem : SystemBase, IInit, IUpdate
+public class GraphicsSystem : SystemBase, IInit, IUpdate, IGraphicsSystem
 {
     private static readonly object CurrentGraphicsLayoutSwapLock = new object();
 
@@ -27,7 +28,7 @@ public class GraphicsSystem : SystemBase, IInit, IUpdate
 
     public Dictionary<AjivaVulkanPipeline, IAjivaLayer> Layers { get; } = new Dictionary<AjivaVulkanPipeline, IAjivaLayer>();
 
-    private Format DepthFormat { get; set; }
+    public Format DepthFormat { get; set; }
 
     /// <inheritdoc />
     public void Init()
@@ -53,6 +54,9 @@ public class GraphicsSystem : SystemBase, IInit, IUpdate
             DrawFrame();
         }
     }
+
+    /// <inheritdoc />
+    public PeriodicUpdateInfo Info { get; } = new PeriodicUpdateInfo(TimeSpan.FromMilliseconds(10));
 
     /// <inheritdoc />
     protected override void ReleaseUnmanagedResources(bool disposing)
@@ -96,8 +100,8 @@ public class GraphicsSystem : SystemBase, IInit, IUpdate
 
     public void ResolveDeps()
     {
-        deviceSystem = Ecs.GetSystem<DeviceSystem>();
-        windowSystem = Ecs.GetSystem<WindowSystem>();
+        deviceSystem = Ecs.Get<DeviceSystem>();
+        windowSystem = Ecs.Get<WindowSystem>();
 
         DepthFormat = (deviceSystem.PhysicalDevice ?? throw new InvalidOperationException()).FindDepthFormat();
     }

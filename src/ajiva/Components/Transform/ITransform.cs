@@ -13,7 +13,7 @@ public interface ITransform<TV, TM> : IDisposingLogger, IComponent where TV : st
     TM RotationMat { get; }
     TM PositionMat { get; }
     TM ModelMat { get; }
-    IChangingObserverOnlyAfter<ITransform<TV, TM>, TM> ChangingObserver { get; }
+    IChangingObserverOnlyValue<TM> ChangingObserver { get; }
     void RefPosition(ModifyRef mod);
     void RefRotation(ModifyRef mod);
     void RefScale(ModifyRef mod);

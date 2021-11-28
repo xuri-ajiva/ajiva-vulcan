@@ -4,7 +4,7 @@ using Ajiva.Wrapper.Logger;
 
 namespace ajiva.Ecs.ComponentSytem;
 
-public abstract class ComponentSystemBase<T> : DisposingLogger, IComponentSystem<T> where T : class, IComponent, new()
+public abstract class ComponentSystemBase<T> : DisposingLogger, IComponentSystem<T> where T : IComponent
 {
     public ComponentSystemBase(IAjivaEcs ecs)
     {
@@ -14,13 +14,27 @@ public abstract class ComponentSystemBase<T> : DisposingLogger, IComponentSystem
     protected IAjivaEcs Ecs { get; }
     public Type ComponentType { get; } = typeof(T);
 
-    public Dictionary<T, IEntity> ComponentEntityMap { get; private set; } = new();
+    /// <inheritdoc />
+    public IComponent RegisterComponent(IEntity entity, IComponent component)
+    {
+        if (component is T cast)
+        {
+            return ComponentEntityMap.ContainsKey(cast) ? component : RegisterComponent(entity, cast);
+        }
+        throw new InvalidCastException();
+    }
 
     /// <inheritdoc />
-    public virtual T CreateComponent(IEntity entity)
+    public IComponent UnRegisterComponent(IEntity entity, IComponent component)
     {
-        return RegisterComponent(entity, new T());
+        if (component is T cast)
+        {
+            return ComponentEntityMap.ContainsKey(cast) ? UnRegisterComponent(entity, cast) : cast;
+        }
+        throw new InvalidCastException();
     }
+
+    public Dictionary<T, IEntity> ComponentEntityMap { get; private set; } = new();
 
     /// <inheritdoc />
     public virtual T RegisterComponent(IEntity entity, T component)
@@ -44,19 +58,11 @@ public abstract class ComponentSystemBase<T> : DisposingLogger, IComponentSystem
         return component;
     }
 
-    /// <inheritdoc />
-    public virtual IEntity DeleteComponent(IEntity entity, T component)
-    {
-        var cmp = UnRegisterComponent(entity, component);
-        cmp?.Dispose();
-        return entity;
-    }
-
     protected override void ReleaseUnmanagedResources(bool disposing)
     {
         foreach (var (component, entity) in ComponentEntityMap)
         {
-            entity?.RemoveComponent<T>();
+            entity?.TryRemoveComponent<T>(out var _);
             component?.Dispose();
         }
         ComponentEntityMap.Clear();

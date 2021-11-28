@@ -7,20 +7,6 @@ namespace ajiva.Entities;
 
 public static class Cameras
 {
-    public class FpsCamaraFactory : EntityFactoryBase<FpsCamera>
-    {
-        /// <inheritdoc />
-        public override FpsCamera Create(IAjivaEcs system, uint id)
-        {
-            var cam = new FpsCamera { Id = id };
-            system.TryAttachComponentToEntity(cam, new Transform3d());
-            system.TryAttachNewComponentToEntity<RenderMesh3D>(cam, out _);
-            system.RegisterUpdate(cam);
-            cam.OnMouseMoved(0.0f, 0.0f);
-            return cam;
-        }
-    }
-
     public abstract class Camera : TransformFormEntity<Transform3d, vec3, mat4>
     {
         public readonly __Keys Keys = new __Keys();
@@ -88,6 +74,9 @@ public static class Cameras
             UpdatePosition((float)info.Delta.TotalMilliseconds);
         }
 
+        /// <inheritdoc />
+        public PeriodicUpdateInfo Info { get; } = new PeriodicUpdateInfo(TimeSpan.FromMilliseconds(10));
+
         public override void OnMouseMoved(float xRel, float yRel)
         {
             Transform.RefRotation((ref vec3 r) =>
@@ -144,6 +133,13 @@ public static class Cameras
         {
             Translate(vec3.UnitY * amount);
             UpdateMatrices();
+        }
+
+        public FpsCamera(IAjivaEcs ecs)
+        {
+            this.AddComponent(new RenderMesh3D());
+            ecs.RegisterUpdate(this);
+            OnMouseMoved(0.0f, 0.0f);
         }
     }
 }

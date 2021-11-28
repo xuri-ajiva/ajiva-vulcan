@@ -2,13 +2,14 @@
 using System.Runtime.CompilerServices;
 using ajiva.Ecs;
 using ajiva.Models;
+using ajiva.Systems.VulcanEngine.Interfaces;
 using SharpVk;
 using SharpVk.Khronos;
 
 namespace ajiva.Systems.VulcanEngine.Systems;
 
 [Dependent(typeof(WindowSystem))]
-public class DeviceSystem : SystemBase, IInit
+public class DeviceSystem : SystemBase, IInit, IDeviceSystem
 {
     private QueueFamilyIndices queueFamilies;
 
@@ -17,8 +18,8 @@ public class DeviceSystem : SystemBase, IInit
     {
     }
 
-    internal PhysicalDevice? PhysicalDevice { get; private set; }
-    internal Device? Device { get; private set; }
+    public PhysicalDevice? PhysicalDevice { get; private set; }
+    public Device? Device { get; private set; }
 
     internal Queue? GraphicsQueue { get; private set; }
     internal Queue? PresentQueue { get; private set; }
@@ -49,20 +50,20 @@ public class DeviceSystem : SystemBase, IInit
     /// <inheritdoc />
     public void Init()
     {
-        PickPhysicalDevice(Ecs.GetInstance<Instance>());
+        PickPhysicalDevice(Ecs.Get<IVulcanInstance>());
         CreateLogicalDevice();
     }
 
-    private void PickPhysicalDevice(Instance instance)
+    private void PickPhysicalDevice(IVulcanInstance instance)
     {
         var availableDevices = instance.EnumeratePhysicalDevices();
 
-        PhysicalDevice = availableDevices.First(x => x.IsSuitableDevice(Ecs.GetSystem<WindowSystem>().Canvas));
+        PhysicalDevice = availableDevices.First(x => x.IsSuitableDevice(Ecs.Get<WindowSystem>().Canvas));
     }
 
     private void CreateLogicalDevice()
     {
-        queueFamilies = PhysicalDevice!.FindQueueFamilies(Ecs.GetSystem<WindowSystem>().Canvas);
+        queueFamilies = PhysicalDevice!.FindQueueFamilies(Ecs.Get<WindowSystem>().Canvas);
 
         Device = PhysicalDevice!.CreateDevice(queueFamilies.Indices
                 .Select(index => new DeviceQueueCreateInfo
@@ -237,7 +238,10 @@ public class DeviceSystem : SystemBase, IInit
     public void QueueSingleTimeCommand(QueueType queueType, CommandPoolSelector poolSelector, Action<CommandBuffer> action)
     {
         GetQueueByType(queueType, poolSelector, out var queue, out var fence, out var queueQueue, out var commandBuffer, out var poolLock);
-        queueQueue.Enqueue(action);
+        lock (queueQueue)
+        {
+            queueQueue.Enqueue(action);
+        }
     }
 
     public void ExecuteSingleTimeCommands(QueueType queueType, CommandPoolSelector poolSelector)
