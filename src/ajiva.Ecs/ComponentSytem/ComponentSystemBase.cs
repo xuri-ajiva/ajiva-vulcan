@@ -15,10 +15,24 @@ public abstract class ComponentSystemBase<T> : DisposingLogger, IComponentSystem
     public Type ComponentType { get; } = typeof(T);
 
     /// <inheritdoc />
-    public IComponent RegisterComponent(IEntity entity, IComponent component) => RegisterComponent(entity, (T)component);
+    public IComponent RegisterComponent(IEntity entity, IComponent component)
+    {
+        if (component is T cast)
+        {
+            return ComponentEntityMap.ContainsKey(cast) ? component : RegisterComponent(entity, cast);
+        }
+        throw new InvalidCastException();
+    }
 
     /// <inheritdoc />
-    public IComponent UnRegisterComponent(IEntity entity, IComponent component) => UnRegisterComponent(entity, (T)component);
+    public IComponent UnRegisterComponent(IEntity entity, IComponent component)
+    {
+        if (component is T cast)
+        {
+            return ComponentEntityMap.ContainsKey(cast) ? UnRegisterComponent(entity, cast) : cast;
+        }
+        throw new InvalidCastException();
+    }
 
     public Dictionary<T, IEntity> ComponentEntityMap { get; private set; } = new();
 
