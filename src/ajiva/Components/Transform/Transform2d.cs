@@ -3,7 +3,7 @@ using GlmSharp;
 
 namespace ajiva.Components.Transform;
 
-public class Transform2d : DisposingLogger, IComponent, ITransform<vec2, mat4>
+public class Transform2d : DisposingLogger, IComponent, ITransform<vec2, mat4>, IModelMatTransform
 {
     private vec2 position;
     private vec2 rotation;
@@ -11,7 +11,7 @@ public class Transform2d : DisposingLogger, IComponent, ITransform<vec2, mat4>
 
     public Transform2d(vec2 position, vec2 rotation, vec2 scale)
     {
-        ChangingObserver = new ChangingObserverOnlyAfter<ITransform<vec2, mat4>, mat4>(this, () => ModelMat, 0);
+        ChangingObserver = new ChangingObserverOnlyValue<mat4>(() => ModelMat);
         ChangingObserver.RaiseAndSetIfChanged(ref this.position, position);
         ChangingObserver.RaiseAndSetIfChanged(ref this.rotation, rotation);
         ChangingObserver.RaiseAndSetIfChanged(ref this.scale, scale);
@@ -51,7 +51,7 @@ public class Transform2d : DisposingLogger, IComponent, ITransform<vec2, mat4>
     }
 
     /// <inheritdoc />
-    public IChangingObserverOnlyAfter<ITransform<vec2, mat4>, mat4> ChangingObserver { get; }
+    public IChangingObserverOnlyValue<mat4> ChangingObserver { get; }
 
     public void RefPosition(ITransform<vec2, mat4>.ModifyRef mod)
     {

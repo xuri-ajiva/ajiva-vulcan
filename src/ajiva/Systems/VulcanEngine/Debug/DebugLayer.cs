@@ -121,7 +121,7 @@ public class DebugLayer : ComponentSystemBase<DebugComponent>, IInit, IUpdate, I
 
         component.Models = Models;
         transform.ChangingObserver.OnChanged += component.OnTransformChange;
-        component.TransformChange(transform, transform.ModelMat);
+        component.TransformChange(transform.ModelMat);
 
         var res = base.RegisterComponent(entity, component);
         GraphicsDataChanged.Changed();
@@ -158,7 +158,7 @@ public class DebugComponent : RenderMeshIdUnique<DebugComponent>
         OnTransformChange = TransformChange;
     }
 
-    public IChangingObserverOnlyAfter<ITransform<vec3, mat4>, mat4>.OnChangedDelegate OnTransformChange { get; }
+    public IChangingObserverOnlyValue<mat4>.OnChangedDelegate OnTransformChange { get; }
 
     public IAChangeAwareBackupBufferOfT<DebugUniformModel>? Models { get; set; }
 
@@ -166,7 +166,7 @@ public class DebugComponent : RenderMeshIdUnique<DebugComponent>
     public bool DrawWireframe { get; set; }
     public bool NoDepthTest { get; set; }
 
-    public void TransformChange(ITransform<vec3, mat4> _, mat4 after)
+    public void TransformChange(mat4 value)
     {
         if (Models is null)
         {
@@ -176,6 +176,6 @@ public class DebugComponent : RenderMeshIdUnique<DebugComponent>
 
         var change = Models.GetForChange((int)Id);
 
-        change.Value.Model = after;
+        change.Value.Model = value;
     }
 }
