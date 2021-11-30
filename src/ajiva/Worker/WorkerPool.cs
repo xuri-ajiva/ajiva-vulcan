@@ -3,7 +3,7 @@ using ajiva.Ecs;
 
 namespace ajiva.Worker;
 
-public class WorkerPool : SystemBase
+public class WorkerPool : SystemBase, IWorkerPool
 {
     internal readonly object AvailableLock = new object();
 

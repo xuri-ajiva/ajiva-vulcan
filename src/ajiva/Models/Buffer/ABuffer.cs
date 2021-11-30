@@ -1,4 +1,4 @@
-﻿using ajiva.Systems.VulcanEngine.Systems;
+﻿using ajiva.Systems.VulcanEngine.Interfaces;
 using SharpVk;
 
 namespace ajiva.Models.Buffer;
@@ -6,6 +6,7 @@ namespace ajiva.Models.Buffer;
 public class ABuffer : DisposingLogger
 {
     static object _lock = new object();
+
     public ABuffer(uint size)
     {
         Size = size;
@@ -15,7 +16,7 @@ public class ABuffer : DisposingLogger
     public DeviceMemory? Memory { get; private set; }
     public uint Size { get; protected set; }
 
-    public void Create(DeviceSystem system, BufferUsageFlags usage, MemoryPropertyFlags flags)
+    public void Create(IDeviceSystem system, BufferUsageFlags usage, MemoryPropertyFlags flags)
     {
         //todo: system.EnsureDevicesExist();
 
@@ -64,15 +65,20 @@ public class ABuffer : DisposingLogger
         public DisposablePointer(ABuffer buffer, ulong size)
         {
             this.buffer = buffer;
-            Ptr = buffer.Map();
+            ptr = new Lazy<IntPtr>(buffer.Map);
         }
 
-        public IntPtr Ptr { get; }
+        private Lazy<IntPtr> ptr;
+        public IntPtr Ptr => ptr.Value;
 
         /// <inheritdoc />
         public void Dispose()
         {
-            buffer.Unmap();
+            if (ptr.IsValueCreated)
+            {
+                ptr = null!;
+                buffer.Unmap();
+            }
             GC.SuppressFinalize(this);
         }
 

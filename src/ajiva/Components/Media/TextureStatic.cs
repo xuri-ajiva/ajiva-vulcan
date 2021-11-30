@@ -17,7 +17,7 @@ public partial class ATexture
         return new ATexture
         {
             Image = CreateTextureImageFromAsset(ecs, assetName),
-            Sampler = CreateTextureSampler(ecs.GetSystem<DeviceSystem>())
+            Sampler = CreateTextureSampler(ecs.Get<DeviceSystem>())
         };
     }
 
@@ -26,13 +26,13 @@ public partial class ATexture
         return new ATexture
         {
             Image = CreateTextureImageFromBitmap(ecs, bitmap),
-            Sampler = CreateTextureSampler(ecs.GetSystem<DeviceSystem>())
+            Sampler = CreateTextureSampler(ecs.Get<DeviceSystem>())
         };
     }
 
     private static AImage CreateTextureImageFromAsset(IAjivaEcs ecs, string assetName)
     {
-        var img = System.Drawing.Image.FromStream(ecs.GetSystem<AssetManager>().GetAssetAsStream(AssetType.Texture, assetName));
+        var img = System.Drawing.Image.FromStream(ecs.Get<AssetManager>().GetAssetAsStream(AssetType.Texture, assetName));
         var bm = new Bitmap(img);
         return CreateTextureImageFromBitmap(ecs, bm);
     }
@@ -44,7 +44,7 @@ public partial class ATexture
         var imageSize = texWidth * texHeight * 4u;
 
         using ABuffer aBuffer = new ABuffer(imageSize);
-        aBuffer.Create(ecs.GetSystem<DeviceSystem>(), BufferUsageFlags.TransferSource, MemoryPropertyFlags.HostVisible | MemoryPropertyFlags.HostCached);
+        aBuffer.Create(ecs.Get<DeviceSystem>(), BufferUsageFlags.TransferSource, MemoryPropertyFlags.HostVisible | MemoryPropertyFlags.HostCached);
 
         unsafe
         {
@@ -60,7 +60,7 @@ public partial class ATexture
             }
         }
 
-        var image = ecs.GetComponentSystem<ImageSystem, AImage>();
+        var image = ecs.Get<ImageSystem>();
 
         var aImage = image.CreateImageAndView(texWidth, texHeight, Format.R8G8B8A8Srgb, ImageTiling.Optimal, ImageUsageFlags.TransferDestination | ImageUsageFlags.Sampled, MemoryPropertyFlags.DeviceLocal, ImageAspectFlags.Color);
 

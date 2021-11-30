@@ -3,18 +3,19 @@ using ajiva.Application;
 using ajiva.Components.Media;
 using ajiva.Ecs;
 using ajiva.Systems.Assets;
+using ajiva.Systems.VulcanEngine.Interfaces;
 using SharpVk;
 
 namespace ajiva.Systems.VulcanEngine.Systems;
 
 [Dependent(typeof(ImageSystem), typeof(AssetManager))]
-public class TextureSystem : ComponentSystemBase<TextureComponent>, IInit
+public class TextureSystem : ComponentSystemBase<TextureComponent>, IInit, ITextureSystem
 {
     private readonly ShaderConfig config;
 
     public TextureSystem(IAjivaEcs ecs) : base(ecs)
     {
-        config = ecs.TryGetPara<Config>(Const.Default.Config, out var _config) ? _config.ShaderConfig : Config.Default.ShaderConfig;
+        config = ecs.Get<Config>().ShaderConfig;
         INextId<ATexture>.MaxId = (uint)config.TEXTURE_SAMPLER_COUNT;
         TextureSamplerImageViews = new DescriptorImageInfo[config.TEXTURE_SAMPLER_COUNT];
         Textures = new List<ATexture>();
@@ -41,15 +42,6 @@ public class TextureSystem : ComponentSystemBase<TextureComponent>, IInit
         if (config.TEXTURE_SAMPLER_COUNT <= texture.TextureId) throw new ArgumentException($"{nameof(texture.TextureId)} is more then {nameof(config.TEXTURE_SAMPLER_COUNT)}", nameof(IBindCtx));
 
         TextureSamplerImageViews[texture.TextureId] = texture.DescriptorImageInfo;
-    }
-
-    /// <inheritdoc />
-    public override TextureComponent CreateComponent(IEntity entity)
-    {
-        return new TextureComponent
-        {
-            TextureId = 0
-        };
     }
 
     /// <inheritdoc />

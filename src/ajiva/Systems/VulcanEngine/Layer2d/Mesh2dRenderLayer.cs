@@ -1,13 +1,14 @@
 ﻿using System.Runtime.CompilerServices;
 using ajiva.Components;
-using ajiva.Components.Media;
+using ajiva.Components.Mesh;
 using ajiva.Components.RenderAble;
 using ajiva.Components.Transform;
 using ajiva.Ecs;
-using ajiva.Models;
 using ajiva.Models.Buffer.ChangeAware;
 using ajiva.Models.Layers.Layer2d;
+using ajiva.Models.Vertex;
 using ajiva.Systems.Assets;
+using ajiva.Systems.VulcanEngine.Interfaces;
 using ajiva.Systems.VulcanEngine.Layer;
 using ajiva.Systems.VulcanEngine.Layer3d;
 using ajiva.Systems.VulcanEngine.Layers;
@@ -22,7 +23,7 @@ namespace ajiva.Systems.VulcanEngine.Layer2d;
 public class Mesh2dRenderLayer : ComponentSystemBase<RenderMesh2D>, IInit, IUpdate, IAjivaLayerRenderSystem<UniformLayer2d>
 {
     private readonly object mainLock = new object();
-    private MeshPool meshPool;
+    private IMeshPool meshPool;
 
     /// <inheritdoc />
     public Mesh2dRenderLayer(IAjivaEcs ecs) : base(ecs)
@@ -76,7 +77,7 @@ public class Mesh2dRenderLayer : ComponentSystemBase<RenderMesh2D>, IInit, IUpda
     /// <inheritdoc />
     public GraphicsPipelineLayer CreateGraphicsPipelineLayer(RenderPassLayer renderPassLayer)
     {
-        var res = GraphicsPipelineLayerCreator.Default(renderPassLayer.Parent, renderPassLayer, Ecs.GetSystem<DeviceSystem>(), true, Vertex2D.GetBindingDescription(), Vertex2D.GetAttributeDescriptions(), MainShader, PipelineDescriptorInfos);
+        var res = GraphicsPipelineLayerCreator.Default(renderPassLayer.Parent, renderPassLayer, Ecs.Get<DeviceSystem>(), true, Vertex2D.GetBindingDescription(), Vertex2D.GetAttributeDescriptions(), MainShader, PipelineDescriptorInfos);
 
         foreach (var entity in ComponentEntityMap) entity.Key.ChangingObserver.Changed();
 
@@ -89,16 +90,16 @@ public class Mesh2dRenderLayer : ComponentSystemBase<RenderMesh2D>, IInit, IUpda
     /// <inheritdoc />
     public void Init()
     {
-        var deviceSystem = Ecs.GetSystem<DeviceSystem>();
+        var deviceSystem = Ecs.Get<DeviceSystem>();
 
-        MainShader = Shader.CreateShaderFrom(Ecs.GetSystem<AssetManager>(), "2d", deviceSystem, "main");
+        MainShader = Shader.CreateShaderFrom(Ecs.Get<AssetManager>(), "2d", deviceSystem, "main");
         Models = new AChangeAwareBackupBufferOfT<SolidUniformModel2d>(1000000, deviceSystem);
-        meshPool = Ecs.GetInstance<MeshPool>();
+        meshPool = Ecs.Get<IMeshPool>();
 
         PipelineDescriptorInfos = Layers.PipelineDescriptorInfos.CreateFrom(
             AjivaLayer.LayerUniform.Uniform.Buffer!, (uint)AjivaLayer.LayerUniform.SizeOfT,
             Models.Uniform.Buffer!, (uint)Models.SizeOfT,
-            Ecs.GetComponentSystem<TextureSystem, TextureComponent>().TextureSamplerImageViews
+            Ecs.Get<ITextureSystem>().TextureSamplerImageViews
         );
     }
 
@@ -112,6 +113,9 @@ public class Mesh2dRenderLayer : ComponentSystemBase<RenderMesh2D>, IInit, IUpda
     }
 
     /// <inheritdoc />
+    public PeriodicUpdateInfo Info { get; } = new PeriodicUpdateInfo(TimeSpan.FromMilliseconds(15));
+
+    /// <inheritdoc />
     public override RenderMesh2D RegisterComponent(IEntity entity, RenderMesh2D component)
     {
         if (!entity.TryGetComponent<Transform2d>(out var transform))
@@ -119,6 +123,7 @@ public class Mesh2dRenderLayer : ComponentSystemBase<RenderMesh2D>, IInit, IUpda
 
         component.Models = Models;
         transform.ChangingObserver.OnChanged += component.OnTransformChange;
+        component.TransformChange(transform.ModelMat);
 
         var res = base.RegisterComponent(entity, component);
         GraphicsDataChanged.Changed();

@@ -1,13 +1,15 @@
-﻿using System.Runtime.CompilerServices;
+﻿using System.Collections.Concurrent;
+using System.Runtime.CompilerServices;
 using ajiva.Ecs;
 using ajiva.Models;
+using ajiva.Systems.VulcanEngine.Interfaces;
 using SharpVk;
 using SharpVk.Khronos;
 
 namespace ajiva.Systems.VulcanEngine.Systems;
 
 [Dependent(typeof(WindowSystem))]
-public class DeviceSystem : SystemBase, IInit
+public class DeviceSystem : SystemBase, IInit, IDeviceSystem
 {
     private QueueFamilyIndices queueFamilies;
 
@@ -16,16 +18,16 @@ public class DeviceSystem : SystemBase, IInit
     {
     }
 
-    internal PhysicalDevice? PhysicalDevice { get; private set; }
-    internal Device? Device { get; private set; }
+    public PhysicalDevice? PhysicalDevice { get; private set; }
+    public Device? Device { get; private set; }
 
     internal Queue? GraphicsQueue { get; private set; }
     internal Queue? PresentQueue { get; private set; }
     internal Queue? TransferQueue { get; private set; }
 
-    internal Queue<Action<CommandBuffer>> GraphicsQueueQueue { get; } = new Queue<Action<CommandBuffer>>();
-    internal Queue<Action<CommandBuffer>> PresentQueueQueue { get; } = new Queue<Action<CommandBuffer>>();
-    internal Queue<Action<CommandBuffer>> TransferQueueQueue { get; } = new Queue<Action<CommandBuffer>>();
+    internal ConcurrentQueue<Action<CommandBuffer>> GraphicsQueueQueue { get; } = new ConcurrentQueue<Action<CommandBuffer>>();
+    internal ConcurrentQueue<Action<CommandBuffer>> PresentQueueQueue { get; } = new ConcurrentQueue<Action<CommandBuffer>>();
+    internal ConcurrentQueue<Action<CommandBuffer>> TransferQueueQueue { get; } = new ConcurrentQueue<Action<CommandBuffer>>();
 
     public Fence TransferQueueFence { get; private set; }
     public Fence PresentQueueFence { get; private set; }
@@ -48,20 +50,20 @@ public class DeviceSystem : SystemBase, IInit
     /// <inheritdoc />
     public void Init()
     {
-        PickPhysicalDevice(Ecs.GetInstance<Instance>());
+        PickPhysicalDevice(Ecs.Get<IVulcanInstance>());
         CreateLogicalDevice();
     }
 
-    private void PickPhysicalDevice(Instance instance)
+    private void PickPhysicalDevice(IVulcanInstance instance)
     {
         var availableDevices = instance.EnumeratePhysicalDevices();
 
-        PhysicalDevice = availableDevices.First(x => x.IsSuitableDevice(Ecs.GetSystem<WindowSystem>().Canvas));
+        PhysicalDevice = availableDevices.First(x => x.IsSuitableDevice(Ecs.Get<WindowSystem>().Canvas));
     }
 
     private void CreateLogicalDevice()
     {
-        queueFamilies = PhysicalDevice!.FindQueueFamilies(Ecs.GetSystem<WindowSystem>().Canvas);
+        queueFamilies = PhysicalDevice!.FindQueueFamilies(Ecs.Get<WindowSystem>().Canvas);
 
         Device = PhysicalDevice!.CreateDevice(queueFamilies.Indices
                 .Select(index => new DeviceQueueCreateInfo
@@ -236,7 +238,10 @@ public class DeviceSystem : SystemBase, IInit
     public void QueueSingleTimeCommand(QueueType queueType, CommandPoolSelector poolSelector, Action<CommandBuffer> action)
     {
         GetQueueByType(queueType, poolSelector, out var queue, out var fence, out var queueQueue, out var commandBuffer, out var poolLock);
-        queueQueue.Enqueue(action);
+        lock (queueQueue)
+        {
+            queueQueue.Enqueue(action);
+        }
     }
 
     public void ExecuteSingleTimeCommands(QueueType queueType, CommandPoolSelector poolSelector)
@@ -252,11 +257,13 @@ public class DeviceSystem : SystemBase, IInit
 
             lock (queue)
             {
-                while (queueQueue.Count != 0)
+                while (queueQueue.TryDequeue(out var action))
                 {
-                    if (fence.GetStatus() == Result.Success) ALog.Error("Fence Error");
+                    if (fence.GetStatus() == Result.Success)
+                    {
+                        ALog.Error("Fence Error");
+                    }
 
-                    var action = queueQueue.Dequeue();
                     ExecuteOnQueueWithFence(action, queue, fence, poolLock, commandBuffer, queueType);
                 }
             }
@@ -300,7 +307,7 @@ public class DeviceSystem : SystemBase, IInit
         }
     }
 
-    private void GetQueueByType(QueueType queueType, CommandPoolSelector commandPoolSelector, out Queue queue, out Fence fence, out Queue<Action<CommandBuffer>> queueQueue, out CommandBuffer commandBuffer, out object poolLock)
+    private void GetQueueByType(QueueType queueType, CommandPoolSelector commandPoolSelector, out Queue queue, out Fence fence, out ConcurrentQueue<Action<CommandBuffer>> queueQueue, out CommandBuffer commandBuffer, out object poolLock)
     {
         commandBuffer = GetSingleCommandBuffer(commandPoolSelector);
         poolLock = GetCommandPoolLock(commandPoolSelector);

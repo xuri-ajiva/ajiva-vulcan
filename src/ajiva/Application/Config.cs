@@ -1,8 +1,9 @@
 ﻿using System.Text.Json;
+using ajiva.Ecs;
 
 namespace ajiva.Application;
 
-public class Config
+public class Config : IAjivaEcsObject
 {
     private static Config? _default;
 

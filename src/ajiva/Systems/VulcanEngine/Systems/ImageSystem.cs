@@ -1,6 +1,7 @@
 ﻿using ajiva.Components.Media;
 using ajiva.Ecs;
 using ajiva.Models;
+using ajiva.Systems.VulcanEngine.Interfaces;
 using SharpVk;
 using SharpVk.NVidia;
 using Buffer = SharpVk.Buffer;
@@ -8,7 +9,7 @@ using Buffer = SharpVk.Buffer;
 namespace ajiva.Systems.VulcanEngine.Systems;
 
 [Dependent(typeof(DeviceSystem))]
-public class ImageSystem : ComponentSystemBase<AImage>, IInit
+public class ImageSystem : ComponentSystemBase<AImage>, IInit, IImageSystem
 {
     /// <inheritdoc />
     public ImageSystem(IAjivaEcs ecs) : base(ecs)
@@ -23,7 +24,7 @@ public class ImageSystem : ComponentSystemBase<AImage>, IInit
     public AImage CreateImageAndView(uint width, uint height, Format format, ImageTiling tiling, ImageUsageFlags usage, MemoryPropertyFlags properties, ImageAspectFlags aspectFlags)
     {
         var aImage = new AImage(true);
-        var deviceSystem = Ecs.GetSystem<DeviceSystem>();
+        var deviceSystem = Ecs.Get<DeviceSystem>();
         var device = deviceSystem.Device!;
 
         aImage.Image = device.CreateImage(ImageType.Image2d, format, new Extent3D(width, height, 1), 1, 1, SampleCountFlags.SampleCount1, tiling, usage, SharingMode.Exclusive, ArrayProxy<uint>.Null, ImageLayout.Undefined);
@@ -71,7 +72,7 @@ public class ImageSystem : ComponentSystemBase<AImage>, IInit
 
     public void CopyBufferToImage(Buffer buffer, Image image, uint width, uint height)
     {
-        Ecs.GetSystem<DeviceSystem>().ExecuteSingleTimeCommand(QueueType.TransferQueue, CommandPoolSelector.Transit, command =>
+        Ecs.Get<DeviceSystem>().ExecuteSingleTimeCommand(QueueType.TransferQueue, CommandPoolSelector.Transit, command =>
         {
             command.CopyBufferToImage(buffer, image, ImageLayout.TransferDestinationOptimal, new BufferImageCopy
             {
@@ -150,14 +151,8 @@ public class ImageSystem : ComponentSystemBase<AImage>, IInit
                 throw new ArgumentException("unsupported layout transition!");
         }
 
-        Ecs.GetSystem<DeviceSystem>().ExecuteSingleTimeCommand(QueueType.GraphicsQueue, CommandPoolSelector.Foreground, command => command.PipelineBarrier(sourceStage, destinationStage, ArrayProxy<MemoryBarrier>.Null, ArrayProxy<BufferMemoryBarrier>.Null, barrier));
+        Ecs.Get<DeviceSystem>().ExecuteSingleTimeCommand(QueueType.GraphicsQueue, CommandPoolSelector.Foreground, command => command.PipelineBarrier(sourceStage, destinationStage, ArrayProxy<MemoryBarrier>.Null, ArrayProxy<BufferMemoryBarrier>.Null, barrier));
     }
-
-    /// <inheritdoc />
-    public override AImage CreateComponent(IEntity entity)
-    {
-        throw new NotImplementedException();
-    }
-
+    
 #endregion
 }

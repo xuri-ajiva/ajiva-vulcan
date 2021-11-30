@@ -1,6 +1,6 @@
 ﻿using ajiva.Components.Media;
-using ajiva.Components.Transform;
 using ajiva.Models.Buffer.ChangeAware;
+using ajiva.Models.Instance;
 using ajiva.Models.Layers.Layer3d;
 using ajiva.Utils.Changing;
 using GlmSharp;
@@ -14,18 +14,42 @@ public class RenderMesh3D : RenderMeshIdUnique<RenderMesh3D>
         OnTransformChange = TransformChange;
     }
 
-    public IChangingObserverOnlyAfter<ITransform<vec3, mat4>, mat4>.OnChangedDelegate OnTransformChange { get; }
+    public IChangingObserverOnlyValue<mat4>.OnChangedDelegate OnTransformChange { get; }
 
     public TextureComponent? TextureComponent { get; set; }
 
     public IAChangeAwareBackupBufferOfT<SolidUniformModel>? Models { get; set; }
+    public IAChangeAwareBackupBufferOfT<MeshInstanceData>? InstanceData { get; set; }
 
-    private void TransformChange(ITransform<vec3, mat4> _, mat4 after)
+    public void TransformChange(mat4 value)
     {
-        if (Models is null) return;
+        if (Models is null)
+        {
+            ALog.Warn("RenderMeshUpdate Failed!");
+            return;
+        }
+        else
+        {
+            
+            var data = Models.GetForChange((int)Id);
+            data.Value.Model = value;
+            data.Value.TextureSamplerId = TextureComponent?.TextureId ?? 0;
+        }
+        if (InstanceData is null)
+        {
+            ALog.Warn("RenderMeshUpdate Failed!");
+            return;
+        }
+        else
+        {
+            
+            var data = InstanceData.GetForChange((int)Id);
+            data.Value.Position = new vec3(value.m30,value.m31,value.m32);
+            data.Value.Rotation = vec3.Zero;
+            data.Value.Scale = vec3.Ones;
+            data.Value.TextureIndex = TextureComponent?.TextureId ?? 0;
+            data.Value.Padding = vec2.Ones;
+        }
 
-        var data = Models.GetForChange((int)Id);
-        data.Value.Model = after;
-        data.Value.TextureSamplerId = TextureComponent?.TextureId ?? 0;
     }
 }

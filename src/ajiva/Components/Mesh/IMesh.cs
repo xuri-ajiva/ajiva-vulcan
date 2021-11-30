@@ -1,11 +1,14 @@
-﻿using ajiva.Systems.VulcanEngine.Systems;
+﻿using ajiva.Models.Buffer;
+using ajiva.Systems.VulcanEngine.Systems;
 using SharpVk;
 
-namespace ajiva.Components.RenderAble;
+namespace ajiva.Components.Mesh;
 
 public interface IMesh : IDisposingLogger
 {
     uint MeshId { get; set; }
+    IBufferOfT VertexBuffer { get; }
+    IBufferOfT IndexBuffer { get; }
     void Create(DeviceSystem system);
 
     void Bind(CommandBuffer commandBuffer);

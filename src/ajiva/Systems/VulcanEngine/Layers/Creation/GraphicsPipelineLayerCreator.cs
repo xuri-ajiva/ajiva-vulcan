@@ -7,7 +7,7 @@ namespace ajiva.Systems.VulcanEngine.Layers.Creation;
 
 public static class GraphicsPipelineLayerCreator
 {
-    public static GraphicsPipelineLayer Default(SwapChainLayer swapChainLayer, RenderPassLayer renderPassLayer, DeviceSystem deviceSystem, bool useDepthImage, VertexInputBindingDescription bindingDescription, VertexInputAttributeDescription[] attributeDescriptions, Shader mainShader, PipelineDescriptorInfos[] descriptorInfos)
+    public static GraphicsPipelineLayer Default(SwapChainLayer swapChainLayer, RenderPassLayer renderPassLayer, DeviceSystem deviceSystem, bool useDepthImage, VertexInputBindingDescription[] bindingDescriptions, VertexInputAttributeDescription[] attributeDescriptions, Shader mainShader, PipelineDescriptorInfos[] descriptorInfos)
     {
         System.Diagnostics.Debug.Assert(deviceSystem.Device != null, "deviceSystem.Device != null");
         var descriptorSetLayout = deviceSystem.Device.CreateDescriptorSetLayout(
@@ -30,10 +30,7 @@ public static class GraphicsPipelineLayerCreator
                 Subpass = 0,
                 VertexInputState = new PipelineVertexInputStateCreateInfo
                 {
-                    VertexBindingDescriptions = new[]
-                    {
-                        bindingDescription
-                    },
+                    VertexBindingDescriptions = bindingDescriptions,
                     VertexAttributeDescriptions = attributeDescriptions
                 },
                 InputAssemblyState = new PipelineInputAssemblyStateCreateInfo
@@ -121,7 +118,14 @@ public static class GraphicsPipelineLayerCreator
                         Back = new StencilOpState(),
                         Flags = new PipelineDepthStencilStateCreateFlags()
                     }
-                    : null
+                    : null,
+                DynamicState = new PipelineDynamicStateCreateInfo
+                {
+                    DynamicStates = new[]
+                    {
+                        DynamicState.Viewport, DynamicState.Scissor, 
+                    }
+                }
             }
         }).Single();
 

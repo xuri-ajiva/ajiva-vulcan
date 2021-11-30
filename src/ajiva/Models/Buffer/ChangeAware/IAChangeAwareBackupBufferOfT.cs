@@ -13,6 +13,7 @@ public interface IAChangeAwareBackupBufferOfT<T> : IDisposable where T : unmanag
     ByRef<T>[] Value { get; }
     BitArray Changed { get; }
     void Set(int index, T value);
+    void Set(int index, ByRef<T> value);
     ByRef<T> Get(int index);
     void CommitChanges();
     void Commit(int index);

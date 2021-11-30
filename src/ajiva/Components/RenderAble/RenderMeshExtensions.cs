@@ -1,4 +1,6 @@
-﻿namespace ajiva.Components.RenderAble;
+﻿using ajiva.Components.Mesh;
+
+namespace ajiva.Components.RenderAble;
 
 public static class RenderMeshExtensions
 {

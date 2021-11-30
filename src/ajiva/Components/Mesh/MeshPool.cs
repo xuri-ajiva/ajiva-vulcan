@@ -1,9 +1,10 @@
-﻿using ajiva.Systems.VulcanEngine.Systems;
+﻿using ajiva.Components.RenderAble;
+using ajiva.Systems.VulcanEngine.Systems;
 using SharpVk;
 
-namespace ajiva.Components.RenderAble;
+namespace ajiva.Components.Mesh;
 
-public class MeshPool
+public class MeshPool : IMeshPool
 {
     private readonly DeviceSystem deviceSystem;
 
@@ -27,7 +28,7 @@ public class MeshPool
     public void AddMesh(IMesh mesh)
     {
         mesh.Create(deviceSystem);
-        Meshes.Add(mesh.MeshId, mesh);
+        Meshes.Add(mesh.MeshId, mesh); //todo add check if already added
     }
 }
 public class RenderInstanceReadyMeshPool : IRenderMeshPool

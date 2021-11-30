@@ -1,5 +1,5 @@
 ﻿using System.Collections;
-using ajiva.Systems.VulcanEngine.Systems;
+using ajiva.Systems.VulcanEngine.Interfaces;
 using SharpVk;
 
 namespace ajiva.Models.Buffer.ChangeAware;
@@ -8,7 +8,7 @@ public class AChangeAwareBackupBufferOfT<T> : DisposingLogger, IAChangeAwareBack
 {
     private int currentMax;
 
-    public AChangeAwareBackupBufferOfT(int length, DeviceSystem deviceSystem)
+    public AChangeAwareBackupBufferOfT(int length, IDeviceSystem deviceSystem, BufferUsageFlags usageFlags = BufferUsageFlags.UniformBuffer)
     {
         Length = length;
         Changed = new BitArray(length);
@@ -26,10 +26,10 @@ public class AChangeAwareBackupBufferOfT<T> : DisposingLogger, IAChangeAwareBack
         Uniform = new ABuffer((uint)(Length * SizeOfT));
 
         Staging.Create(deviceSystem, BufferUsageFlags.TransferSource, MemoryPropertyFlags.HostVisible | MemoryPropertyFlags.HostCoherent);
-        Uniform.Create(deviceSystem, BufferUsageFlags.TransferDestination | BufferUsageFlags.UniformBuffer, MemoryPropertyFlags.DeviceLocal);
+        Uniform.Create(deviceSystem, BufferUsageFlags.TransferDestination | usageFlags, MemoryPropertyFlags.DeviceLocal);
     }
 
-    private DeviceSystem deviceSystem { get; }
+    private IDeviceSystem deviceSystem { get; }
 
     public ByRef<T> this[in int index]
     {
@@ -57,6 +57,14 @@ public class AChangeAwareBackupBufferOfT<T> : DisposingLogger, IAChangeAwareBack
 
     /// <inheritdoc />
     public void Set(int index, T value)
+    {
+        CheckBounds(index);
+        Value[index] = value;
+        Changed[index] = true;
+    }
+
+    /// <inheritdoc />
+    public void Set(int index, ByRef<T> value)
     {
         CheckBounds(index);
         Value[index] = value;
