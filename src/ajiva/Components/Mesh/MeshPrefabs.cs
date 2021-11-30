@@ -1,4 +1,4 @@
-﻿using ajiva.Models;
+﻿using ajiva.Models.Vertex;
 using GlmSharp;
 
 namespace ajiva.Components.Mesh;

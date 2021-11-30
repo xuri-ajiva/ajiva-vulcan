@@ -2,8 +2,8 @@
 using ajiva.Components.Transform.Kd;
 using ajiva.Ecs;
 using ajiva.Entities;
-using ajiva.Models;
 using ajiva.Models.Buffer;
+using ajiva.Models.Vertex;
 using ajiva.Utils.Changing;
 using ajiva.Worker;
 using GlmSharp;

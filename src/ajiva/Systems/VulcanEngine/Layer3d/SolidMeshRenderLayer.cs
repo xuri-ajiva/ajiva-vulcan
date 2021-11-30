@@ -97,39 +97,21 @@ public class SolidMeshRenderLayer : ComponentSystemBase<RenderInstanceMesh>, IIn
     {
         var bind = new[]
         {
-            new VertexInputBindingDescription(VERTEX_BUFFER_BIND_ID, (uint)Marshal.SizeOf<Vertex3D>(), VertexInputRate.Vertex),
+            Vertex3D.GetBindingDescription(VERTEX_BUFFER_BIND_ID),
             new VertexInputBindingDescription(INSTANCE_BUFFER_BIND_ID, (uint)Marshal.SizeOf<MeshInstanceData>(), VertexInputRate.Instance)
         };
-        var attrib = new[]
-        {
-            new VertexInputAttributeDescription(0, VERTEX_BUFFER_BIND_ID, Format.R32G32B32SFloat, (uint)Marshal.OffsetOf<Vertex3D>(nameof(Vertex3D.Position))),
-            new VertexInputAttributeDescription(1, VERTEX_BUFFER_BIND_ID, Format.R32G32B32SFloat, (uint)Marshal.OffsetOf<Vertex3D>(nameof(Vertex3D.Colour))),
-            new VertexInputAttributeDescription(2, VERTEX_BUFFER_BIND_ID, Format.R32G32SFloat, (uint)Marshal.OffsetOf<Vertex3D>(nameof(Vertex3D.TextCoord))),
-            new VertexInputAttributeDescription(3, INSTANCE_BUFFER_BIND_ID, Format.R32G32B32SFloat, (uint)Marshal.OffsetOf<MeshInstanceData>(nameof(MeshInstanceData.Position))),
-            new VertexInputAttributeDescription(4, INSTANCE_BUFFER_BIND_ID, Format.R32G32B32SFloat, (uint)Marshal.OffsetOf<MeshInstanceData>(nameof(MeshInstanceData.Rotation))),
-            new VertexInputAttributeDescription(5, INSTANCE_BUFFER_BIND_ID, Format.R32G32B32SFloat, (uint)Marshal.OffsetOf<MeshInstanceData>(nameof(MeshInstanceData.Scale))),
-            new VertexInputAttributeDescription(6, INSTANCE_BUFFER_BIND_ID, Format.R32SInt, (uint)Marshal.OffsetOf<MeshInstanceData>(nameof(MeshInstanceData.TextureIndex))),
-            new VertexInputAttributeDescription(7, INSTANCE_BUFFER_BIND_ID, Format.R32G32SFloat, (uint)Marshal.OffsetOf<MeshInstanceData>(nameof(MeshInstanceData.Padding))),
-        };
 
-        /*
-         *
-            new VertexInputAttributeDescription(3, INSTANCE_BUFFER_BIND_ID, Format.R32G32B32A32SFloat, (uint)Marshal.OffsetOf<MeshInstanceData>(nameof(MeshInstanceData.Model1))),
-            new VertexInputAttributeDescription(4, INSTANCE_BUFFER_BIND_ID, Format.R32G32B32A32SFloat, (uint)Marshal.OffsetOf<MeshInstanceData>(nameof(MeshInstanceData.Model2))),
-            new VertexInputAttributeDescription(5, INSTANCE_BUFFER_BIND_ID, Format.R32G32B32A32SFloat, (uint)Marshal.OffsetOf<MeshInstanceData>(nameof(MeshInstanceData.Model3))),
-            new VertexInputAttributeDescription(6, INSTANCE_BUFFER_BIND_ID, Format.R32G32B32A32SFloat, (uint)Marshal.OffsetOf<MeshInstanceData>(nameof(MeshInstanceData.TextureSamplerId))),
-         * 
-         */
-        var res = GraphicsPipelineLayerCreator.Default(renderPassLayer.Parent, renderPassLayer, Ecs.Get<DeviceSystem>(), true,
-            bind,
-            attrib,
-            MainShader, PipelineDescriptorInfos);
+        var attrib = new ViAdBuilder<MeshInstanceData>(Vertex3D.GetAttributeDescriptions(VERTEX_BUFFER_BIND_ID), INSTANCE_BUFFER_BIND_ID)
+            .Add(nameof(MeshInstanceData.Position), Format.R32G32B32SFloat)
+            .Add(nameof(MeshInstanceData.Rotation), Format.R32G32B32SFloat)
+            .Add(nameof(MeshInstanceData.Scale), Format.R32G32B32SFloat)
+            .Add(nameof(MeshInstanceData.TextureIndex), Format.R32SInt)
+            .Add(nameof(MeshInstanceData.Padding), Format.R32G32SFloat)
+            .ToArray();
 
-        foreach (var entity in ComponentEntityMap)
-        {
-            //todo?
-            //entity.Key.ChangingObserver.Changed();
-        }
+        var res = GraphicsPipelineLayerCreator.Default(renderPassLayer.Parent, renderPassLayer,
+            Ecs.Get<DeviceSystem>(), true,
+            bind, attrib, MainShader, PipelineDescriptorInfos);
 
         return res;
     }

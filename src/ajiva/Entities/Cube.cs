@@ -5,7 +5,7 @@ using ajiva.Components.Physics;
 using ajiva.Components.RenderAble;
 using ajiva.Components.Transform;
 using ajiva.Ecs;
-using ajiva.Models;
+using ajiva.Models.Vertex;
 
 namespace ajiva.Entities;
 

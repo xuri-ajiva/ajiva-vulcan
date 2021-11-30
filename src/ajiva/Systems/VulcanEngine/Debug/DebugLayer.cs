@@ -4,9 +4,9 @@ using ajiva.Components.Mesh;
 using ajiva.Components.RenderAble;
 using ajiva.Components.Transform;
 using ajiva.Ecs;
-using ajiva.Models;
 using ajiva.Models.Buffer.ChangeAware;
 using ajiva.Models.Layers.Layer3d;
+using ajiva.Models.Vertex;
 using ajiva.Systems.Assets;
 using ajiva.Systems.VulcanEngine.Interfaces;
 using ajiva.Systems.VulcanEngine.Layer;
@@ -77,7 +77,7 @@ public class DebugLayer : ComponentSystemBase<DebugComponent>, IInit, IUpdate, I
     /// <inheritdoc />
     public GraphicsPipelineLayer CreateGraphicsPipelineLayer(RenderPassLayer renderPassLayer)
     {
-        return CreateDebugPipe.Default(renderPassLayer.Parent, renderPassLayer, Ecs.Get<DeviceSystem>(), true, Vertex3D.GetBindingDescription(), Vertex3D.GetAttributeDescriptions(), MainShader, PipelineDescriptorInfos);
+        return CreateDebugPipe.Default(renderPassLayer.Parent, renderPassLayer, Ecs.Get<DeviceSystem>(), true, Vertex3D.GetBindingDescription(0),Vertex3D.GetAttributeDescriptions(0).ToArray(), MainShader, PipelineDescriptorInfos);
     }
 
     /// <inheritdoc />
