@@ -3,7 +3,7 @@ using GlmSharp;
 using SharpVk;
 using SharpVk.Shanq;
 
-namespace ajiva.Models;
+namespace ajiva.Models.Vertex;
 
 public struct Vertex2D
 {
