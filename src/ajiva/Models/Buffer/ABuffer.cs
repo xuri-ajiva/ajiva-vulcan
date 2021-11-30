@@ -65,15 +65,20 @@ public class ABuffer : DisposingLogger
         public DisposablePointer(ABuffer buffer, ulong size)
         {
             this.buffer = buffer;
-            Ptr = buffer.Map();
+            ptr = new Lazy<IntPtr>(buffer.Map);
         }
 
-        public IntPtr Ptr { get; }
+        private Lazy<IntPtr> ptr;
+        public IntPtr Ptr => ptr.Value;
 
         /// <inheritdoc />
         public void Dispose()
         {
-            buffer.Unmap();
+            if (ptr.IsValueCreated)
+            {
+                ptr = null!;
+                buffer.Unmap();
+            }
             GC.SuppressFinalize(this);
         }
 
