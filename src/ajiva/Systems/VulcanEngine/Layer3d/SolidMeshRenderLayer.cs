@@ -1,15 +1,12 @@
 ﻿using System.Runtime.InteropServices;
 using ajiva.Components;
-using ajiva.Components.Media;
-using ajiva.Components.Mesh;
 using ajiva.Components.Mesh.Instance;
 using ajiva.Components.RenderAble;
 using ajiva.Components.Transform;
 using ajiva.Ecs;
-using ajiva.Models;
-using ajiva.Models.Buffer.ChangeAware;
 using ajiva.Models.Instance;
 using ajiva.Models.Layers.Layer3d;
+using ajiva.Models.Vertex;
 using ajiva.Systems.Assets;
 using ajiva.Systems.VulcanEngine.Interfaces;
 using ajiva.Systems.VulcanEngine.Layer;
@@ -23,10 +20,8 @@ using SharpVk;
 namespace ajiva.Systems.VulcanEngine.Layer3d;
 
 [Dependent(typeof(Ajiva3dLayerSystem))]
-public class SolidMeshRenderLayer : ComponentSystemBase<RenderInstanceMesh>, IInit, IUpdate, IAjivaLayerRenderSystem<UniformViewProj3d>
+public class SolidMeshRenderLayer : ComponentSystemBase<RenderInstanceMesh>, IInit, IAjivaLayerRenderSystem<UniformViewProj3d>
 {
-    private readonly object mainLock = new object();
-    private IMeshPool meshPool;
     private IInstanceMeshPool instanceMeshPool;
 
     /// <inheritdoc />
@@ -34,9 +29,6 @@ public class SolidMeshRenderLayer : ComponentSystemBase<RenderInstanceMesh>, IIn
     {
         GraphicsDataChanged = new ChangingObserver<IAjivaLayerRenderSystem>(this);
     }
-
-    public IAChangeAwareBackupBufferOfT<SolidUniformModel> Models { get; set; }
-    public IAChangeAwareBackupBufferOfT<MeshInstanceData> InstanceData { get; set; }
 
     public PipelineDescriptorInfos[] PipelineDescriptorInfos { get; set; }
 
@@ -51,27 +43,12 @@ public class SolidMeshRenderLayer : ComponentSystemBase<RenderInstanceMesh>, IIn
     /// <inheritdoc />
     public void DrawComponents(RenderLayerGuard renderGuard, CancellationToken cancellationToken)
     {
-        renderGuard.BindDescriptor(0);
+        renderGuard.BindDescriptor();
 
         foreach (var instancedMesh in SnapShot)
         {
             instanceMeshPool.DrawInstanced(instancedMesh, renderGuard.Buffer, VERTEX_BUFFER_BIND_ID, INSTANCE_BUFFER_BIND_ID);
         }
-        /*//renderGuard.Buffer.BindDescriptorSets(PipelineBindPoint.Compute, renderGuard.Pipeline.PipelineLayout, 0, renderGuard.Pipeline.DescriptorSet, 0);
-        var readyMeshPool = meshPool.Use();
-        foreach (var render in SnapShot.Where(x => x.Render).GroupBy(x => x.MeshId))
-        {
-            var mesh3Ds = render.ToList();
-
-            if (cancellationToken.IsCancellationRequested) return;
-            renderGuard.BindDescriptor(0);
-            var mesh = (Mesh<Vertex3D>)meshPool.GetMesh(render.Key);
-
-            renderGuard.Buffer.BindVertexBuffers(VERTEX_BUFFER_BIND_ID, mesh.VertexBuffer.Buffer, 0);
-            renderGuard.Buffer.BindVertexBuffers(INSTANCE_BUFFER_BIND_ID, InstanceData.Uniform.Buffer, 0);
-            renderGuard.Buffer.BindIndexBuffer(mesh.IndexBuffer.Buffer, 0, IndexType.Uint16);
-            renderGuard.Buffer.DrawIndexed((uint)mesh.IndexBuffer.Length, (uint)mesh3Ds.Count, 0, 0, 0);
-        }*/
     }
 
     /// <inheritdoc />
@@ -128,26 +105,17 @@ public class SolidMeshRenderLayer : ComponentSystemBase<RenderInstanceMesh>, IIn
         var deviceSystem = Ecs.Get<DeviceSystem>();
 
         MainShader = Shader.CreateShaderFrom(Ecs.Get<AssetManager>(), "3d/SolidInstance", deviceSystem, "main");
-        Models = new AChangeAwareBackupBufferOfT<SolidUniformModel>(Const.Default.ModelBufferSize, deviceSystem);
-        InstanceData = new AChangeAwareBackupBufferOfT<MeshInstanceData>(Const.Default.ModelBufferSize, deviceSystem, BufferUsageFlags.VertexBuffer);
-        meshPool = Ecs.Get<IMeshPool>();
         instanceMeshPool = Ecs.Get<IInstanceMeshPool>();
 
-        PipelineDescriptorInfos = Layers.PipelineDescriptorInfos.CreateFrom(
-            AjivaLayer.LayerUniform.Uniform.Buffer!, (uint)AjivaLayer.LayerUniform.SizeOfT,
-            Models.Uniform.Buffer!, (uint)Models.SizeOfT,
-            Ecs.Get<ITextureSystem>().TextureSamplerImageViews
-        );
-    }
-
-    /// <inheritdoc />
-    public void Update(UpdateInfo delta)
-    {
-        lock (mainLock)
+        var textureSamplerImageViews = Ecs.Get<ITextureSystem>().TextureSamplerImageViews;
+        PipelineDescriptorInfos = new[]
         {
-            Models.CommitChanges();
-            InstanceData.CommitChanges();
-        }
+            new PipelineDescriptorInfos(DescriptorType.UniformBuffer, ShaderStageFlags.Vertex, 0, 1, BufferInfo: new[]
+            {
+                new DescriptorBufferInfo { Buffer = AjivaLayer.LayerUniform.Uniform.Buffer!, Offset = 0, Range = (uint)AjivaLayer.LayerUniform.SizeOfT }
+            }),
+            new(DescriptorType.CombinedImageSampler, ShaderStageFlags.Fragment, 2, (uint)textureSamplerImageViews.Length, ImageInfo: textureSamplerImageViews)
+        };
     }
 
     /// <inheritdoc />
@@ -159,13 +127,6 @@ public class SolidMeshRenderLayer : ComponentSystemBase<RenderInstanceMesh>, IIn
         if (!entity.TryGetComponent<Transform3d>(out var transform))
             throw new ArgumentException("Entity needs and transform in order to be rendered as debug");
 
-        transform.ChangingObserver.OnChanged += component.OnTransformChange;
-        component.TransformChange(transform.ModelMat);
-
-        if (entity.TryGetComponent<TextureComponent>(out var texture)) component.TextureComponent = texture;
-
-        //component.ChangingObserver.OnChanged += _ => Models.GetForChange((int)component.Id).Value.TextureSamplerId = component.Id;
-
         var res = base.RegisterComponent(entity, component);
         GraphicsDataChanged.Changed();
         return res;
@@ -176,8 +137,6 @@ public class SolidMeshRenderLayer : ComponentSystemBase<RenderInstanceMesh>, IIn
     {
         if (!entity.TryGetComponent<Transform3d>(out var transform))
             throw new ArgumentException("Entity needs and transform in order to be rendered as debug");
-
-        transform.ChangingObserver.OnChanged -= component.OnTransformChange;
 
         var res = base.UnRegisterComponent(entity, component);
         GraphicsDataChanged.Changed();
