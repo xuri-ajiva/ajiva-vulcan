@@ -34,9 +34,9 @@ public class Cube : DefaultEntity
             }
         }
 
-        this.AddComponent(new Transform3d());
-        this.AddComponent(new RenderInstanceMesh(instanceMeshPool.CreateInstance(instancedMesh)));
-        this.AddComponent(new TextureComponent { TextureId = 1, });
+        var transform = this.AddComponent(new Transform3d());
+        var textureComponent = this.AddComponent(new TextureComponent { TextureId = 1, });
+        this.AddComponent(new RenderInstanceMesh(instanceMeshPool.CreateInstance(instancedMesh), transform, textureComponent));
         AddComponent<CollisionsComponent, ICollider>(new CollisionsComponent { Pool = meshPool, MeshId = mesh.MeshId });
         AddComponent<BoundingBox, IBoundingBox>(new BoundingBox(ecs, this));
     }

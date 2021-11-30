@@ -7,23 +7,26 @@ namespace ajiva.Components.RenderAble;
 
 public class RenderInstanceMesh : DisposingLogger, IComponent
 {
+    private readonly Transform3d transform;
     public IInstancedMeshInstance Instance { get; }
 
-    public RenderInstanceMesh(IInstancedMeshInstance instance)
+    public RenderInstanceMesh(IInstancedMeshInstance instance, Transform3d transform, TextureComponent textureComponent)
     {
+        this.transform = transform;
+        transform.ChangingObserver.OnChanged += TransformChange;
         Instance = instance;
+        TextureComponent = textureComponent;
     }
 
-    public IChangingObserverOnlyValue<mat4>.OnChangedDelegate OnTransformChange { get; }
-    public TextureComponent? TextureComponent { get; set; }
+    public TextureComponent? TextureComponent { get; }
 
     public void TransformChange(mat4 value)
     {
         Instance.UpdateData(data =>
         {
-            data.Value.Position = new vec3(value.m30, value.m31, value.m32);
-            data.Value.Rotation = vec3.Zero;
-            data.Value.Scale = vec3.Ones;
+            data.Value.Position = transform.Position;
+            data.Value.Rotation = glm.Radians(transform.Rotation);
+            data.Value.Scale = transform.Scale;
             data.Value.TextureIndex = TextureComponent?.TextureId ?? 0;
             data.Value.Padding = vec2.Ones;
         });
