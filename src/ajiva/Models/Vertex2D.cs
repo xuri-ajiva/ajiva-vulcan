@@ -25,13 +25,16 @@ public struct Vertex2D
     [Location(1)] public vec3 Colour;
     [Location(3)] public vec2 TextCoord;
 
-    public static VertexInputBindingDescription GetBindingDescription()
+    public static VertexInputBindingDescription[] GetBindingDescription()
     {
-        return new VertexInputBindingDescription
+        return new[]
         {
-            Binding = 0,
-            Stride = (uint)Marshal.SizeOf<Vertex2D>(),
-            InputRate = VertexInputRate.Vertex
+            new VertexInputBindingDescription
+            {
+                Binding = 0,
+                Stride = (uint)Marshal.SizeOf<Vertex2D>(),
+                InputRate = VertexInputRate.Vertex
+            }
         };
     }
 

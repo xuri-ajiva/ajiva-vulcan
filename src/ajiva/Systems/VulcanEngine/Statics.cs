@@ -34,6 +34,18 @@ public static class Statics
         });
     }
 
+    public static ImageView CreateImageViewArray(this Image image, Device device, Format format, ImageAspectFlags aspectFlags, uint length)
+    {
+        return device.CreateImageView(image, ImageViewType.ImageView2dArray, format, ComponentMapping.Identity, new ImageSubresourceRange
+        {
+            AspectMask = aspectFlags,
+            BaseMipLevel = 0,
+            LevelCount = 1,
+            BaseArrayLayer = 0,
+            LayerCount = length,
+        });
+    }
+
     public static Format FindDepthFormat(this PhysicalDevice physicalDevice)
     {
         return FindSupportedFormat(physicalDevice, new[]
