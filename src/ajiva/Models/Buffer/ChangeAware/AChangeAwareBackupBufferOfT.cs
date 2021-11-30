@@ -1,5 +1,5 @@
 ﻿using System.Collections;
-using ajiva.Systems.VulcanEngine.Systems;
+using ajiva.Systems.VulcanEngine.Interfaces;
 using SharpVk;
 
 namespace ajiva.Models.Buffer.ChangeAware;
@@ -57,6 +57,14 @@ public class AChangeAwareBackupBufferOfT<T> : DisposingLogger, IAChangeAwareBack
 
     /// <inheritdoc />
     public void Set(int index, T value)
+    {
+        CheckBounds(index);
+        Value[index] = value;
+        Changed[index] = true;
+    }
+
+    /// <inheritdoc />
+    public void Set(int index, ByRef<T> value)
     {
         CheckBounds(index);
         Value[index] = value;
