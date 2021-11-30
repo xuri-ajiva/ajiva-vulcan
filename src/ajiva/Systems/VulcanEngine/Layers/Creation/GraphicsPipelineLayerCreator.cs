@@ -118,7 +118,14 @@ public static class GraphicsPipelineLayerCreator
                         Back = new StencilOpState(),
                         Flags = new PipelineDepthStencilStateCreateFlags()
                     }
-                    : null
+                    : null,
+                DynamicState = new PipelineDynamicStateCreateInfo
+                {
+                    DynamicStates = new[]
+                    {
+                        DynamicState.Viewport, DynamicState.Scissor, 
+                    }
+                }
             }
         }).Single();
 

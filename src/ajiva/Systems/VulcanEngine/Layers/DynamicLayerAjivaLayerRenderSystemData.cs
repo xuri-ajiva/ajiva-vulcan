@@ -188,6 +188,8 @@ public class DynamicLayerAjivaLayerRenderSystemData : DisposingLogger
                 renderer.Canvas.Rect,
                 RenderPass.ClearValues,
                 SubpassContents.Inline);
+            commandBuffer.SetViewport(0, new Viewport(0, 0, renderer.Canvas.Width, renderer.Canvas.Height, 0, 1));
+            commandBuffer.SetScissor(0, renderer.Canvas.Rect);
             commandBuffer.BindPipeline(PipelineBindPoint.Graphics, GraphicsPipeline.Pipeline);
             guard.Pipeline = GraphicsPipeline;
             guard.Buffer = commandBuffer;
