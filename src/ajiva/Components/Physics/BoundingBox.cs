@@ -1,16 +1,16 @@
-﻿using ajiva.Components.RenderAble;
-using ajiva.Components.Transform;
+﻿using ajiva.Components.Transform;
 using ajiva.Components.Transform.Kd;
 using ajiva.Ecs;
 using ajiva.Entities;
 using ajiva.Models;
+using ajiva.Models.Buffer;
 using ajiva.Utils.Changing;
 using ajiva.Worker;
 using GlmSharp;
 
 namespace ajiva.Components.Physics;
 
-public class BoundingBox : DisposingLogger, IComponent, IBoundingBox
+public class BoundingBox : DisposingLogger, IBoundingBox
 {
     private readonly IModelMatTransform transform;
 
@@ -67,14 +67,14 @@ public class BoundingBox : DisposingLogger, IComponent, IBoundingBox
     private WorkResult ComputeBox()
     {
         var mesh = Collider!.Pool.GetMesh(Collider.MeshId);
-        if (mesh is not Mesh<Vertex3D> vMesh) return WorkResult.Failed;
-        if (vMesh.Vertices is null) return WorkResult.Failed;
-
+        if (mesh.VertexBuffer is null) return WorkResult.Failed;
+        var buff = (BufferOfT<Vertex3D>)mesh.VertexBuffer;
+        
         float x1 = float.PositiveInfinity, x2 = float.NegativeInfinity, y1 = float.PositiveInfinity, y2 = float.NegativeInfinity, z1 = float.PositiveInfinity, z2 = float.NegativeInfinity; // 1 = min, 2 = max
         var mm = transform.ModelMat;
-        for (var i = 0; i < vMesh.Vertices.Length; i++)
+        for (var i = 0; i < buff.Length; i++)
         {
-            var v = mm * vMesh.Vertices[i].Position;
+            var v = mm * buff[i].Position;
             if (x1 > v.x)
                 x1 = v.x;
             if (x2 < v.x)

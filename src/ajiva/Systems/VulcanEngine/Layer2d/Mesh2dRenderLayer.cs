@@ -1,5 +1,6 @@
 ﻿using System.Runtime.CompilerServices;
 using ajiva.Components;
+using ajiva.Components.Mesh;
 using ajiva.Components.RenderAble;
 using ajiva.Components.Transform;
 using ajiva.Ecs;

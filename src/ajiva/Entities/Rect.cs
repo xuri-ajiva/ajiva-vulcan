@@ -1,4 +1,5 @@
-﻿using ajiva.Components.RenderAble;
+﻿using ajiva.Components.Mesh;
+using ajiva.Components.RenderAble;
 using ajiva.Components.Transform;
 using ajiva.Ecs;
 

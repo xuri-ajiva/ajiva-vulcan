@@ -1,6 +1,8 @@
 ﻿using System.Runtime.InteropServices;
 using ajiva.Components;
 using ajiva.Components.Media;
+using ajiva.Components.Mesh;
+using ajiva.Components.Mesh.Instance;
 using ajiva.Components.RenderAble;
 using ajiva.Components.Transform;
 using ajiva.Ecs;

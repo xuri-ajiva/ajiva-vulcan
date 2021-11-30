@@ -1,4 +1,4 @@
-﻿using ajiva.Components.RenderAble;
+﻿using ajiva.Components.Mesh;
 using ajiva.Utils.Changing;
 
 namespace ajiva.Components.Physics;

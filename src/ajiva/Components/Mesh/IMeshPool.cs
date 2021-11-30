@@ -1,10 +1,9 @@
 ﻿using ajiva.Ecs;
 
-namespace ajiva.Components.RenderAble;
+namespace ajiva.Components.Mesh;
 
 public interface IMeshPool : IAjivaEcsObject
 {
-    Dictionary<uint, IMesh> Meshes { get; }
     RenderInstanceReadyMeshPool Use();
     IMesh GetMesh(uint meshId);
     void AddMesh(IMesh mesh);

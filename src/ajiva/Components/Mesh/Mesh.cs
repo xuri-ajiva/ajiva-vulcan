@@ -2,13 +2,15 @@
 using ajiva.Systems.VulcanEngine.Systems;
 using SharpVk;
 
-namespace ajiva.Components.RenderAble;
+namespace ajiva.Components.Mesh;
 
 public class Mesh<T> : DisposingLogger, IMesh where T : struct
 {
     public readonly ushort[] IndicesData;
     public readonly T[] VerticesData;
     private DeviceSystem? deviceComponent;
+    private BufferOfT<ushort>? indexBuffer;
+    private BufferOfT<T>? vertexBuffer;
 
     public Mesh(T[] verticesData, ushort[] indicesData)
     {
@@ -18,35 +20,36 @@ public class Mesh<T> : DisposingLogger, IMesh where T : struct
         MeshId = INextId<IMesh>.Next();
     }
 
-    public BufferOfT<T>? Vertices { get; protected set; }
-    public BufferOfT<ushort>? Indeces { get; protected set; }
+    public IBufferOfT VertexBuffer => vertexBuffer;
+    public IBufferOfT IndexBuffer => indexBuffer;
 
     /// <inheritdoc />
     public uint MeshId { get; set; }
+
 
     /// <inheritdoc />
     public void Create(DeviceSystem system)
     {
         if (deviceComponent != null) return; // if we have an deviceComponent we are created!
         deviceComponent = system;
-        Vertices = CreateShaderBuffer(VerticesData, BufferUsageFlags.VertexBuffer);
-        Indeces = CreateShaderBuffer(IndicesData, BufferUsageFlags.IndexBuffer);
+        vertexBuffer = CreateShaderBuffer(VerticesData, BufferUsageFlags.VertexBuffer);
+        indexBuffer = CreateShaderBuffer(IndicesData, BufferUsageFlags.IndexBuffer);
     }
 
     /// <inheritdoc />
     public void Bind(CommandBuffer commandBuffer)
     {
-        ATrace.Assert(Vertices != null, nameof(Vertices) + " != null");
-        ATrace.Assert(Indeces != null, nameof(Indeces) + " != null");
-        commandBuffer.BindVertexBuffers(0, Vertices.Buffer, 0);
-        commandBuffer.BindIndexBuffer(Indeces.Buffer, 0, IndexType.Uint16);
+        ATrace.Assert(VertexBuffer != null, nameof(VertexBuffer) + " != null");
+        ATrace.Assert(IndexBuffer != null, nameof(IndexBuffer) + " != null");
+        commandBuffer.BindVertexBuffers(0, VertexBuffer.Buffer, 0);
+        commandBuffer.BindIndexBuffer(IndexBuffer.Buffer, 0, IndexType.Uint16);
     }
 
     /// <inheritdoc />
     public void DrawIndexed(CommandBuffer commandBuffer)
     {
-        ATrace.Assert(Indeces != null, nameof(Indeces) + " != null");
-        commandBuffer.DrawIndexed((uint)Indeces.Length, 1, 0, 0, 0);
+        ATrace.Assert(IndexBuffer != null, nameof(IndexBuffer) + " != null");
+        commandBuffer.DrawIndexed((uint)indexBuffer.Length, 1, 0, 0, 0);
     }
 
     private BufferOfT<TV> CreateShaderBuffer<TV>(TV[] val, BufferUsageFlags bufferUsage) where TV : struct
@@ -66,8 +69,8 @@ public class Mesh<T> : DisposingLogger, IMesh where T : struct
     /// <inheritdoc />
     protected override void ReleaseUnmanagedResources(bool disposing)
     {
-        Vertices?.Dispose();
-        Indeces?.Dispose();
+        vertexBuffer?.Dispose();
+        indexBuffer?.Dispose();
         INextId<IMesh>.Remove(MeshId);
     }
 
