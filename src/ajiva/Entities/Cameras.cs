@@ -1,5 +1,4 @@
-﻿using ajiva.Components.RenderAble;
-using ajiva.Components.Transform;
+﻿using ajiva.Components.Transform;
 using ajiva.Ecs;
 using GlmSharp;
 
@@ -137,7 +136,7 @@ public static class Cameras
 
         public FpsCamera(IAjivaEcs ecs)
         {
-            this.AddComponent(new RenderMesh3D());
+            //this.AddComponent(new RenderMesh3D());
             ecs.RegisterUpdate(this);
             OnMouseMoved(0.0f, 0.0f);
         }
