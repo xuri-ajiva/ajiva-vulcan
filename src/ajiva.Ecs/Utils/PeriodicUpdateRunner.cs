@@ -35,7 +35,8 @@ public class PeriodicUpdateRunner
             RunDelta(update, data);
         }) { Name = $"Update Runner for {update}" };
         data.Runner = runner;
-        updateDatas.Add(update, data);
+        lock (updateDatas)
+            updateDatas.Add(update, data);
         if (Running)
             runner.Start();
     }
@@ -72,25 +73,30 @@ public class PeriodicUpdateRunner
 
     public void Start(IUpdate update)
     {
-        updateDatas[update].Runner.Start();
+        lock (updateDatas)
+            updateDatas[update].Runner.Start();
     }
 
     public void Start()
     {
         Running = true;
-        foreach (var data in updateDatas)
+        lock (updateDatas)
         {
-            data.Value.Runner.Start();
+            foreach (var data in updateDatas)
+            {
+                data.Value.Runner.Start();
+            }
         }
     }
 
     public void Stop()
     {
         Running = false;
-        foreach (var data in updateDatas)
-        {
-            data.Value.Source.Cancel();
-        }
+        lock (updateDatas)
+            foreach (var data in updateDatas)
+            {
+                data.Value.Source.Cancel();
+            }
     }
 
     public bool Running { get; private set; }
@@ -103,14 +109,15 @@ public class PeriodicUpdateRunner
     public async Task WaitHandle(Action<Dictionary<IUpdate, UpdateData>> logStatus, CancellationToken cancellation)
     {
         DateTime begin = DateTime.Now;
-        foreach (var (key, value) in updateDatas)
+        foreach (var (key, value) in updateDatas.ToArray())
         {
             while (value.Runner.IsAlive)
             {
                 if ((DateTime.Now - begin).Seconds > 20)
                 {
                     begin = DateTime.Now;
-                    logStatus.Invoke(updateDatas);
+                    lock (updateDatas)
+                        logStatus.Invoke(updateDatas);
                 }
 
                 await Task.Delay(10, cancellation);
