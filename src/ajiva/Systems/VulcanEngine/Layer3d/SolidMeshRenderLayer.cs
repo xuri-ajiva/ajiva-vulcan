@@ -23,10 +23,11 @@ using SharpVk;
 namespace ajiva.Systems.VulcanEngine.Layer3d;
 
 [Dependent(typeof(Ajiva3dLayerSystem))]
-public class SolidMeshRenderLayer : ComponentSystemBase<RenderMesh3D>, IInit, IUpdate, IAjivaLayerRenderSystem<UniformViewProj3d>
+public class SolidMeshRenderLayer : ComponentSystemBase<RenderInstanceMesh>, IInit, IUpdate, IAjivaLayerRenderSystem<UniformViewProj3d>
 {
     private readonly object mainLock = new object();
     private IMeshPool meshPool;
+    private IInstanceMeshPool instanceMeshPool;
 
     /// <inheritdoc />
     public SolidMeshRenderLayer(IAjivaEcs ecs) : base(ecs)
@@ -41,7 +42,7 @@ public class SolidMeshRenderLayer : ComponentSystemBase<RenderMesh3D>, IInit, IU
 
     public Shader MainShader { get; set; }
 
-    public List<RenderMesh3D> SnapShot { get; set; }
+    public IEnumerable<IInstancedMesh> SnapShot { get; set; }
     public IAjivaLayer<UniformViewProj3d> AjivaLayer { get; set; }
 
     /// <inheritdoc />
@@ -50,7 +51,13 @@ public class SolidMeshRenderLayer : ComponentSystemBase<RenderMesh3D>, IInit, IU
     /// <inheritdoc />
     public void DrawComponents(RenderLayerGuard renderGuard, CancellationToken cancellationToken)
     {
-        //renderGuard.Buffer.BindDescriptorSets(PipelineBindPoint.Compute, renderGuard.Pipeline.PipelineLayout, 0, renderGuard.Pipeline.DescriptorSet, 0);
+        renderGuard.BindDescriptor(0);
+
+        foreach (var instancedMesh in SnapShot)
+        {
+            instanceMeshPool.DrawInstanced(instancedMesh, renderGuard.Buffer, VERTEX_BUFFER_BIND_ID, INSTANCE_BUFFER_BIND_ID);
+        }
+        /*//renderGuard.Buffer.BindDescriptorSets(PipelineBindPoint.Compute, renderGuard.Pipeline.PipelineLayout, 0, renderGuard.Pipeline.DescriptorSet, 0);
         var readyMeshPool = meshPool.Use();
         foreach (var render in SnapShot.Where(x => x.Render).GroupBy(x => x.MeshId))
         {
@@ -60,11 +67,11 @@ public class SolidMeshRenderLayer : ComponentSystemBase<RenderMesh3D>, IInit, IU
             renderGuard.BindDescriptor(0);
             var mesh = (Mesh<Vertex3D>)meshPool.GetMesh(render.Key);
 
-            renderGuard.Buffer.BindVertexBuffers(VERTEX_BUFFER_BIND_ID, mesh.Vertices.Buffer, 0);
+            renderGuard.Buffer.BindVertexBuffers(VERTEX_BUFFER_BIND_ID, mesh.VertexBuffer.Buffer, 0);
             renderGuard.Buffer.BindVertexBuffers(INSTANCE_BUFFER_BIND_ID, InstanceData.Uniform.Buffer, 0);
-            renderGuard.Buffer.BindIndexBuffer(mesh.Indeces.Buffer, 0, IndexType.Uint16);
-            renderGuard.Buffer.DrawIndexed((uint)mesh.Indeces.Length, (uint)mesh3Ds.Count, 0, 0, 0);
-        }
+            renderGuard.Buffer.BindIndexBuffer(mesh.IndexBuffer.Buffer, 0, IndexType.Uint16);
+            renderGuard.Buffer.DrawIndexed((uint)mesh.IndexBuffer.Length, (uint)mesh3Ds.Count, 0, 0, 0);
+        }*/
     }
 
     /// <inheritdoc />
@@ -75,7 +82,7 @@ public class SolidMeshRenderLayer : ComponentSystemBase<RenderMesh3D>, IInit, IU
     {
         lock (ComponentEntityMap)
         {
-            SnapShot = ComponentEntityMap.Keys.Where(x => x.Render).ToList();
+            SnapShot = ComponentEntityMap.Keys.Select(x => x.Instance.InstancedMesh).DistinctBy(x => x.InstancedId).ToList();
         }
     }
 
@@ -104,7 +111,7 @@ public class SolidMeshRenderLayer : ComponentSystemBase<RenderMesh3D>, IInit, IU
             new VertexInputAttributeDescription(6, INSTANCE_BUFFER_BIND_ID, Format.R32SInt, (uint)Marshal.OffsetOf<MeshInstanceData>(nameof(MeshInstanceData.TextureIndex))),
             new VertexInputAttributeDescription(7, INSTANCE_BUFFER_BIND_ID, Format.R32G32SFloat, (uint)Marshal.OffsetOf<MeshInstanceData>(nameof(MeshInstanceData.Padding))),
         };
-        
+
         /*
          *
             new VertexInputAttributeDescription(3, INSTANCE_BUFFER_BIND_ID, Format.R32G32B32A32SFloat, (uint)Marshal.OffsetOf<MeshInstanceData>(nameof(MeshInstanceData.Model1))),
@@ -118,7 +125,11 @@ public class SolidMeshRenderLayer : ComponentSystemBase<RenderMesh3D>, IInit, IU
             attrib,
             MainShader, PipelineDescriptorInfos);
 
-        foreach (var entity in ComponentEntityMap) entity.Key.ChangingObserver.Changed();
+        foreach (var entity in ComponentEntityMap)
+        {
+            //todo?
+            //entity.Key.ChangingObserver.Changed();
+        }
 
         return res;
     }
@@ -138,6 +149,7 @@ public class SolidMeshRenderLayer : ComponentSystemBase<RenderMesh3D>, IInit, IU
         Models = new AChangeAwareBackupBufferOfT<SolidUniformModel>(Const.Default.ModelBufferSize, deviceSystem);
         InstanceData = new AChangeAwareBackupBufferOfT<MeshInstanceData>(Const.Default.ModelBufferSize, deviceSystem, BufferUsageFlags.VertexBuffer);
         meshPool = Ecs.Get<IMeshPool>();
+        instanceMeshPool = Ecs.Get<IInstanceMeshPool>();
 
         PipelineDescriptorInfos = Layers.PipelineDescriptorInfos.CreateFrom(
             AjivaLayer.LayerUniform.Uniform.Buffer!, (uint)AjivaLayer.LayerUniform.SizeOfT,
@@ -160,13 +172,11 @@ public class SolidMeshRenderLayer : ComponentSystemBase<RenderMesh3D>, IInit, IU
     public PeriodicUpdateInfo Info { get; } = new PeriodicUpdateInfo(TimeSpan.FromMilliseconds(15));
 
     /// <inheritdoc />
-    public override RenderMesh3D RegisterComponent(IEntity entity, RenderMesh3D component)
+    public override RenderInstanceMesh RegisterComponent(IEntity entity, RenderInstanceMesh component)
     {
         if (!entity.TryGetComponent<Transform3d>(out var transform))
             throw new ArgumentException("Entity needs and transform in order to be rendered as debug");
 
-        component.Models = Models;
-        component.InstanceData = InstanceData;
         transform.ChangingObserver.OnChanged += component.OnTransformChange;
         component.TransformChange(transform.ModelMat);
 
@@ -180,7 +190,7 @@ public class SolidMeshRenderLayer : ComponentSystemBase<RenderMesh3D>, IInit, IU
     }
 
     /// <inheritdoc />
-    public override RenderMesh3D UnRegisterComponent(IEntity entity, RenderMesh3D component)
+    public override RenderInstanceMesh UnRegisterComponent(IEntity entity, RenderInstanceMesh component)
     {
         if (!entity.TryGetComponent<Transform3d>(out var transform))
             throw new ArgumentException("Entity needs and transform in order to be rendered as debug");

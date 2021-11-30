@@ -1,4 +1,6 @@
-﻿using ajiva.Components.RenderAble;
+﻿using ajiva.Components.Mesh;
+using ajiva.Components.Mesh.Instance;
+using ajiva.Components.RenderAble;
 using ajiva.Components.Transform;
 using ajiva.Ecs;
 using ajiva.Entities;
@@ -57,7 +59,9 @@ public class AjivaApplication : DisposingLogger
         var deviceSystem = entityComponentSystem.Add<DeviceSystem, IDeviceSystem>();
 
         var meshPool = new MeshPool(deviceSystem);
+        var instanceMeshPool = new InstanceMeshPool(deviceSystem);
         entityComponentSystem.Add<MeshPool, IMeshPool>(meshPool);
+        entityComponentSystem.Add<InstanceMeshPool, IInstanceMeshPool>(instanceMeshPool);
 
         entityComponentSystem.Add<VulcanInstance, IVulcanInstance>(new VulcanInstance(vulcanInstance));
 
