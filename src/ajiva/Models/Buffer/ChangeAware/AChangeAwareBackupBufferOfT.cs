@@ -8,7 +8,7 @@ public class AChangeAwareBackupBufferOfT<T> : DisposingLogger, IAChangeAwareBack
 {
     private int currentMax;
 
-    public AChangeAwareBackupBufferOfT(int length, DeviceSystem deviceSystem, BufferUsageFlags usageFlags = BufferUsageFlags.UniformBuffer)
+    public AChangeAwareBackupBufferOfT(int length, IDeviceSystem deviceSystem, BufferUsageFlags usageFlags = BufferUsageFlags.UniformBuffer)
     {
         Length = length;
         Changed = new BitArray(length);
@@ -29,7 +29,7 @@ public class AChangeAwareBackupBufferOfT<T> : DisposingLogger, IAChangeAwareBack
         Uniform.Create(deviceSystem, BufferUsageFlags.TransferDestination | usageFlags, MemoryPropertyFlags.DeviceLocal);
     }
 
-    private DeviceSystem deviceSystem { get; }
+    private IDeviceSystem deviceSystem { get; }
 
     public ByRef<T> this[in int index]
     {
