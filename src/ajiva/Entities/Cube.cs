@@ -11,16 +11,27 @@ namespace ajiva.Entities;
 
 public class Cube : DefaultEntity
 {
-    private readonly MeshPool meshPool;
-    private readonly Mesh<Vertex3D> mesh;
+    private static MeshPool meshPool;
+    private static Mesh<Vertex3D> mesh;
+    private static InstanceMeshPool instanceMeshPool;
+    private static IInstancedMesh instancedMesh;
+
+    private static object initLock = new();
+    private static bool isInit = false;
 
     /// <inheritdoc />
     public Cube(IAjivaEcs ecs)
     {
-        if (meshPool == null)
+        lock (initLock)
         {
-            meshPool = ecs.Get<MeshPool>();
-            mesh = MeshPrefab.Cube;
+            if (!isInit)
+            {
+                meshPool = ecs.Get<MeshPool>();
+                instanceMeshPool = ecs.Get<InstanceMeshPool>();
+                mesh = MeshPrefab.Cube;
+                instancedMesh = instanceMeshPool.AsInstanced(mesh);
+                isInit = true;
+            }
         }
 
         this.AddComponent(new Transform3d());
