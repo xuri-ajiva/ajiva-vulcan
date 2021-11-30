@@ -193,4 +193,9 @@ public class RenderLayerGuard
     {
         Buffer.BindDescriptorSets(PipelineBindPoint.Graphics, Pipeline.PipelineLayout, 0, Pipeline.DescriptorSet, dynamicOffset);
     }
+
+    public void BindDescriptor()
+    {
+        Buffer.BindDescriptorSets(PipelineBindPoint.Graphics, Pipeline.PipelineLayout, 0, Pipeline.DescriptorSet, ArrayProxy<uint>.Null);
+    }
 }
