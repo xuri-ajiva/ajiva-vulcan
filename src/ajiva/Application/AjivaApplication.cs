@@ -115,11 +115,14 @@ public class AjivaApplication : DisposingLogger
 
         for (var i = 0; i < 10; i++)
         {
-            var cube = new Cube(entityComponentSystem).Configure<Transform3d>(trans =>
-            {
-                trans.Position = new vec3(r.Next(-posRange, posRange), r.Next(-posRange, posRange), r.Next(-posRange, posRange));
-                trans.Rotation = new vec3(r.Next(0, 100), r.Next(0, 100), r.Next(0, 100));
-            }).Register(entityComponentSystem);
+            //BUG: If we configure before register the data is not uploaded properly
+            var cube = new Cube(entityComponentSystem)
+                .Register(entityComponentSystem)
+                .Configure<Transform3d>(trans =>
+                {
+                    trans.Position = new vec3(r.Next(-posRange, posRange), r.Next(-posRange, posRange), r.Next(-posRange, posRange));
+                    trans.Rotation = new vec3(r.Next(0, 100), r.Next(0, 100), r.Next(0, 100));
+                });
         }
     }
 
@@ -144,12 +147,14 @@ public class AjivaApplication : DisposingLogger
                 {
                     for (var j = 0; j < rep; j++)
                     {
-                        var cube = new Cube(entityComponentSystem).Configure<Transform3d>(trans =>
-                        {
-                            trans.Position = new vec3(i * sz, -index * 2, j * sz);
-                            trans.Rotation = new vec3(i * 90, j * 90, 0);
-                            trans.Scale = new vec3((sz / 2)*.98f);
-                        }).Register(entityComponentSystem);
+                        var cube = new Cube(entityComponentSystem)
+                            .Register(entityComponentSystem)
+                            .Configure<Transform3d>(trans =>
+                            {
+                                trans.Position = new vec3(i * sz, -index * 2, j * sz);
+                                trans.Rotation = new vec3(i * 90, j * 90, 0);
+                                trans.Scale = new vec3((sz / 2) * .98f);
+                            });
                     }
                 });
                 while (!res.IsCompleted) Task.Delay(10);
@@ -166,11 +171,11 @@ public class AjivaApplication : DisposingLogger
                 break;
             case Key.F1:
                 var s1 = entityComponentSystem.Get<DebugLayer>();
-                s1.Render.Value = !s1.Render;
+                s1.Render.Value = !s1.Render.Value;
                 break;
             case Key.F2:
                 var s2 = entityComponentSystem.Get<SolidMeshRenderLayer>();
-                s2.Render.Value = !s2.Render;
+                s2.Render.Value = !s2.Render.Value;
                 break;
 
             case Key.B:
@@ -179,11 +184,13 @@ public class AjivaApplication : DisposingLogger
 
                     for (var i = 0; i < 100; i++)
                     {
-                        var cube = new Cube(entityComponentSystem).Configure<Transform3d>(trans =>
-                        {
-                            trans.Position = new vec3(r.Next(-posRange, posRange), r.Next(-posRange, posRange), r.Next(-posRange, posRange));
-                            trans.Rotation = new vec3(r.Next(0, 100), r.Next(0, 100), r.Next(0, 100));
-                        }).Register(entityComponentSystem);
+                        var cube = new Cube(entityComponentSystem)
+                            .Register(entityComponentSystem)
+                            .Configure<Transform3d>(trans =>
+                            {
+                                trans.Position = new vec3(r.Next(-posRange, posRange), r.Next(-posRange, posRange), r.Next(-posRange, posRange));
+                                trans.Rotation = new vec3(r.Next(0, 100), r.Next(0, 100), r.Next(0, 100));
+                            });
                     }
                     change.Dispose();
                     break;
