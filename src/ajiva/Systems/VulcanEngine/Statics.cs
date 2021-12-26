@@ -1,6 +1,6 @@
 ﻿using System.Diagnostics;
+using System.Text;
 using ajiva.Components.Media;
-using ajiva.Models;
 using ajiva.Systems.VulcanEngine.Systems;
 using SharpVk;
 using SharpVk.Multivendor;
@@ -12,12 +12,22 @@ public static class Statics
 {
     private static readonly DebugReportCallbackDelegate DebugReportDelegate = (flags, objectType, o, location, messageCode, layerPrefix, message, userData) =>
     {
+        if (location.ToString() == "337425955") return false;
         var stackframe = new StackFrame(2, true);
-        var stackframe2 = new StackFrame(3, true);
-        var stackframe3 = new StackFrame(4, true);
         ALog.Error($"[{flags}] ({objectType}) {layerPrefix}");
         ALog.Error(message);
-        ALog.Error($"File: {stackframe.GetFileName()}:{stackframe.GetFileLineNumber()} from {stackframe2.GetFileName()}:{stackframe2.GetFileLineNumber()} from {stackframe3.GetFileName()}:{stackframe3.GetFileLineNumber()}");
+        ALog.Error($"File: {stackframe.GetFileName()}:{stackframe.GetFileLineNumber()} " +BuildStackTraceError(3, 6));
+
+        string BuildStackTraceError(int begin, int count)
+        {
+            var stackTrace = new StackTrace(begin, true);
+            var stringBuilder = new StringBuilder();
+            foreach (var frame in stackTrace.GetFrames().Take(count))
+            {
+                stringBuilder.Append($"from {frame.GetFileName()}:{frame.GetFileLineNumber()} ");
+            }
+            return stringBuilder.ToString();
+        }
 
         return false;
     };
@@ -140,5 +150,16 @@ public static class Statics
     public static AImage CreateDepthImage(this PhysicalDevice device, ImageSystem imageSystem, Canvas canvas)
     {
         return imageSystem.CreateManagedImage(device.FindDepthFormat(), ImageAspectFlags.Depth, canvas);
+    }
+    
+    public static IndexType GetIndexType(uint indexBufferSizeOfT)
+    {
+        return indexBufferSizeOfT switch
+        {
+            sizeof(uint) => IndexType.Uint32,
+            sizeof(ushort) => IndexType.Uint16,
+            sizeof(byte) => IndexType.Uint8,
+            _ => throw new ArgumentOutOfRangeException(nameof(indexBufferSizeOfT), indexBufferSizeOfT, "Unknown Index Type")
+        };
     }
 }
