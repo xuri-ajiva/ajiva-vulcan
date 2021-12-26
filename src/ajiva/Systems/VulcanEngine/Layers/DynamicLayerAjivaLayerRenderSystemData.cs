@@ -8,6 +8,8 @@ namespace ajiva.Systems.VulcanEngine.Layers;
 
 public class RenderBuffer
 {
+    private bool inUse;
+
     public RenderBuffer(CommandBuffer[] commandBuffers, long version)
     {
         CommandBuffers = commandBuffers;
@@ -16,6 +18,18 @@ public class RenderBuffer
 
     public CommandBuffer[] CommandBuffers { get; set; }
     public long Version { get; set; }
+
+    public List<object> Captured { get; } = new();
+    public bool InUse
+    {
+        get => inUse;
+        set
+        {
+            ALog.Info($"Set InUse To: {value,6}, {this.GetHashCode():X8}");
+            
+            inUse = value;
+        }
+    }
 }
 public class DynamicLayerAjivaLayerRenderSystemData : DisposingLogger
 {
@@ -117,6 +131,9 @@ public class DynamicLayerAjivaLayerRenderSystemData : DisposingLogger
             var vTmp = AjivaLayerRenderSystem.GraphicsDataChanged.Version;
             if (renderBuffer.Version == vTmp)
                 return;
+
+            guard.RenderBuffer = renderBuffer;
+
             System.Diagnostics.Debug.Assert(renderBuffer.CommandBuffers.Length == RenderPass.FrameBuffers.Length, "swapBuffer.Length == RenderPass.FrameBuffers.Length");
             lock (AjivaLayerRenderSystem.SnapShotLock)
             {
