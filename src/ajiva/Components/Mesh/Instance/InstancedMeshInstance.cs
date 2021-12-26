@@ -7,7 +7,7 @@ public class InstancedMeshInstance : IInstancedMeshInstance
     public InstancedMeshInstance(IInstancedMesh instancedMesh)
     {
         InstancedMesh = instancedMesh;
-        InstanceId = INextId<IInstancedMeshInstance>.Next();
+        InstanceId = instancedMesh.AddInstance(this);
     }
 
     /// <inheritdoc />
@@ -17,15 +17,12 @@ public class InstancedMeshInstance : IInstancedMeshInstance
     public uint InstanceId { get; }
 
     /// <inheritdoc />
-    public void UpdateData(Action<ByRef<MeshInstanceData>> data) => InstancedMesh.UpdateData(InstanceId, data);
-
-    /// <inheritdoc />
-    public ByRef<MeshInstanceData> Data { get; }
+    public void UpdateData(ActionRef<MeshInstanceData> data) => InstancedMesh.UpdateData(InstanceId, data);
 
     /// <inheritdoc />
     public void Dispose()
     {
         GC.SuppressFinalize(this);
-        INextId<IInstancedMeshInstance>.Remove(InstanceId);
+        InstancedMesh.RemoveInstance(this);
     }
 }

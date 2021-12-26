@@ -1,20 +1,23 @@
-﻿using ajiva.Models.Buffer.ChangeAware;
+﻿using ajiva.Models.Buffer.Dynamic;
 using ajiva.Models.Instance;
 using ajiva.Systems.VulcanEngine.Interfaces;
+using ajiva.Utils.Changing;
 using SharpVk;
 
 namespace ajiva.Components.Mesh.Instance;
 
-public class InstanceMeshPool : IInstanceMeshPool, IUpdate
+public class InstanceMeshPool : DisposingLogger, IInstanceMeshPool, IUpdate
 {
-    private readonly Dictionary<uint, IInstancedMesh> instanceMeshes = new();
-    private readonly Dictionary<uint, AChangeAwareBackupBufferOfT<MeshInstanceData>> instanceMeshData = new();
+    public Dictionary<uint, IInstancedMesh> InstancedMeshes { get; }= new();
+    public Dictionary<uint, DynamicUniversalDedicatedBufferArray<MeshInstanceData>> InstanceMeshData { get; } = new();
     private readonly Dictionary<uint, uint> meshIdToInstancedMeshId = new();
     private readonly IDeviceSystem deviceSystem;
+    public IChangingObserver<IInstanceMeshPool> Changed { get; }
 
     public InstanceMeshPool(IDeviceSystem deviceSystem)
     {
         this.deviceSystem = deviceSystem;
+        Changed = new ChangingObserver<IInstanceMeshPool>(this);
     }
 
     /// <inheritdoc />
@@ -23,7 +26,7 @@ public class InstanceMeshPool : IInstanceMeshPool, IUpdate
         lock (_lock)
         {
             if (!meshIdToInstancedMeshId.ContainsKey(mesh.MeshId)) AddInstanced(mesh);
-            return instanceMeshes[mesh.MeshId];
+            return InstancedMeshes[mesh.MeshId];
         }
     }
 
@@ -32,27 +35,36 @@ public class InstanceMeshPool : IInstanceMeshPool, IUpdate
     {
         lock (_lock)
         {
-            var instanceDataBuffer = new AChangeAwareBackupBufferOfT<MeshInstanceData>(Const.Default.ModelBufferSize, deviceSystem, BufferUsageFlags.VertexBuffer);
+            var instanceDataBuffer = new DynamicUniversalDedicatedBufferArray<MeshInstanceData>(deviceSystem, 100, BufferUsageFlags.VertexBuffer);
+            instanceDataBuffer.BufferResized.OnChanged += BufferResizedOnOnChanged;
             var iInstanceMesh = new InstancedMesh(mesh);
-            instanceMeshData.Add(iInstanceMesh.InstancedId, instanceDataBuffer);
-            instanceMeshes.Add(iInstanceMesh.InstancedId, iInstanceMesh);
+            InstanceMeshData.Add(iInstanceMesh.InstancedId, instanceDataBuffer);
+            InstancedMeshes.Add(iInstanceMesh.InstancedId, iInstanceMesh);
             meshIdToInstancedMeshId.Add(mesh.MeshId, iInstanceMesh.InstancedId);
             iInstanceMesh.SetInstanceDataBuffer(instanceDataBuffer);
         }
     }
 
-    /// <inheritdoc />
-    public IInstancedMeshInstance CreateInstance(IInstancedMesh instancedMesh) => new InstancedMeshInstance(instancedMesh);
+    private void BufferResizedOnOnChanged(DynamicUniversalDedicatedBufferArray<MeshInstanceData> sender)
+    {
+        Changed.Changed();
+    }
 
     /// <inheritdoc />
-    public IInstancedMeshInstance CreateInstance(uint instancedMeshId) => new InstancedMeshInstance(instanceMeshes[instancedMeshId]);
+    public IInstancedMeshInstance CreateInstance(IInstancedMesh instancedMesh)
+    {
+        return new InstancedMeshInstance(instancedMesh);
+    }
+
+    /// <inheritdoc />
+    public IInstancedMeshInstance CreateInstance(uint instancedMeshId) => CreateInstance(InstancedMeshes[instancedMeshId]);
 
     /// <inheritdoc />
     public void DeleteInstance(IInstancedMeshInstance instance)
     {
         lock (_lock)
         {
-            instanceMeshData[instance.InstancedMesh.InstancedId][(int)instance.InstanceId] = new MeshInstanceData();
+            InstanceMeshData[instance.InstancedMesh.InstancedId].RemoveAt(instance.InstanceId);
             instance?.Dispose();
         }
     }
@@ -61,15 +73,15 @@ public class InstanceMeshPool : IInstanceMeshPool, IUpdate
     public void DrawInstanced(IInstancedMesh instancedMesh, CommandBuffer renderBuffer, uint vertexBufferBindId, uint instanceBufferBindId)
     {
         renderBuffer.BindVertexBuffers(vertexBufferBindId, instancedMesh.Mesh.VertexBuffer.Buffer, 0);
-        renderBuffer.BindVertexBuffers(instanceBufferBindId, instanceMeshData[instancedMesh.InstancedId].Uniform.Buffer, 0);
+        renderBuffer.BindVertexBuffers(instanceBufferBindId, InstanceMeshData[instancedMesh.InstancedId].Uniform.Current().Buffer, 0);
         renderBuffer.BindIndexBuffer(instancedMesh.Mesh.IndexBuffer.Buffer, 0, IndexType.Uint16);
-        renderBuffer.DrawIndexed((uint)instancedMesh.Mesh.IndexBuffer.Length, (uint)instanceMeshData[instancedMesh.InstancedId].Length, 0, 0, 0);
+        renderBuffer.DrawIndexed((uint)instancedMesh.Mesh.IndexBuffer.Length, (uint)InstanceMeshData[instancedMesh.InstancedId].Length, 0, 0, 0);
     }
 
     /// <inheritdoc />
     public void CommitInstanceDataChanges()
     {
-        foreach (var instanceData in instanceMeshData)
+        foreach (var instanceData in InstanceMeshData)
         {
             instanceData.Value.CommitChanges();
         }
@@ -84,6 +96,19 @@ public class InstanceMeshPool : IInstanceMeshPool, IUpdate
         {
             CommitInstanceDataChanges();
         }
+    }
+
+    /// <inheritdoc />
+    protected override void ReleaseUnmanagedResources(bool disposing)
+    {
+        base.ReleaseUnmanagedResources(disposing);
+        foreach (var (_, dynamicUniversalDedicatedBufferArray) in InstanceMeshData)
+        {
+            dynamicUniversalDedicatedBufferArray.Dispose();
+        }
+        InstancedMeshes.Clear();
+        InstanceMeshData.Clear();
+        meshIdToInstancedMeshId.Clear();
     }
 
     /// <inheritdoc />

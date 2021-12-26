@@ -1,11 +1,11 @@
-﻿using ajiva.Models.Buffer.ChangeAware;
+﻿using ajiva.Models.Buffer.Dynamic;
 using ajiva.Models.Instance;
 
 namespace ajiva.Components.Mesh.Instance;
 
 public class InstancedMesh : IInstancedMesh
 {
-    private AChangeAwareBackupBufferOfT<MeshInstanceData> instanceDataBuffer;
+    private DynamicUniversalDedicatedBufferArray<MeshInstanceData> instanceDataBuffer;
 
     public InstancedMesh(IMesh mesh)
     {
@@ -20,9 +20,21 @@ public class InstancedMesh : IInstancedMesh
     public uint InstancedId { get; }
 
     /// <inheritdoc />
-    public void UpdateData(uint instanceId, Action<ByRef<MeshInstanceData>> data) => data.Invoke(instanceDataBuffer.GetForChange((int)instanceId));
+    public void UpdateData(uint instanceId, ActionRef<MeshInstanceData> action) => instanceDataBuffer.Update((int)instanceId, action);
 
-    public void SetInstanceDataBuffer(AChangeAwareBackupBufferOfT<MeshInstanceData> instanceDataBuffer) => this.instanceDataBuffer = instanceDataBuffer;
+    /// <inheritdoc />
+    public uint AddInstance(IInstancedMeshInstance instancedMeshInstance)
+    {
+        return instanceDataBuffer.Add(new MeshInstanceData());
+    }
+
+    /// <inheritdoc />
+    public void RemoveInstance(IInstancedMeshInstance instancedMeshInstance)
+    {
+        instanceDataBuffer.RemoveAt(instancedMeshInstance.InstanceId);
+    }
+
+    public void SetInstanceDataBuffer(DynamicUniversalDedicatedBufferArray<MeshInstanceData> instanceDataBuffer) => this.instanceDataBuffer = instanceDataBuffer;
 
     /// <inheritdoc />
     public void Dispose()

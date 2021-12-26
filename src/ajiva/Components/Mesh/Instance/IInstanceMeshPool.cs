@@ -1,10 +1,12 @@
 ﻿using ajiva.Ecs;
+using ajiva.Utils.Changing;
 using SharpVk;
 
 namespace ajiva.Components.Mesh.Instance;
 
-public interface IInstanceMeshPool : IAjivaEcsObject
+public interface IInstanceMeshPool : IAjivaEcsObject, IDisposable
 {
+    public IChangingObserver<IInstanceMeshPool> Changed { get; }
     IInstancedMesh AsInstanced(IMesh mesh);
     void AddInstanced(IMesh mesh);
 
