@@ -33,8 +33,6 @@ public class SolidMeshRenderLayer : ComponentSystemBase<RenderInstanceMesh>, IIn
     public PipelineDescriptorInfos[] PipelineDescriptorInfos { get; set; }
 
     public Shader MainShader { get; set; }
-
-    public IEnumerable<IInstancedMesh> SnapShot { get; set; }
     public IAjivaLayer<UniformViewProj3d> AjivaLayer { get; set; }
 
     /// <inheritdoc />
@@ -57,28 +55,19 @@ public class SolidMeshRenderLayer : ComponentSystemBase<RenderInstanceMesh>, IIn
             renderGuard.Capture(instanceBuffer);
             renderGuard.Buffer.BindVertexBuffers(VERTEX_BUFFER_BIND_ID, vertexBuffer.Buffer, 0);
             renderGuard.Buffer.BindVertexBuffers(INSTANCE_BUFFER_BIND_ID, instanceBuffer.Buffer, 0);
-            renderGuard.Buffer.BindIndexBuffer(indexBuffer.Buffer, 0, Helper.GetIndexType(indexBuffer.SizeOfT));
+            renderGuard.Buffer.BindIndexBuffer(indexBuffer.Buffer, 0, Statics.GetIndexType(indexBuffer.SizeOfT));
             renderGuard.Buffer.DrawIndexed((uint)instancedMesh.Mesh.IndexBuffer.Length, (uint)dedicatedBufferArray.Length, 0, 0, 0);
         }
     }
 
     /// <inheritdoc />
-    public object SnapShotLock { get; } = new object();
+    public object SnapShotLock { get; } = new();
 
     /// <inheritdoc />
-    public void CreateSnapShot()
-    {
-        lock (ComponentEntityMap)
-        {
-            SnapShot = ComponentEntityMap.Keys.Select(x => x.Instance.InstancedMesh).DistinctBy(x => x.InstancedId).ToList();
-        }
-    }
+    public void CreateSnapShot() { }
 
     /// <inheritdoc />
-    public void ClearSnapShot()
-    {
-        SnapShot = null!;
-    }
+    public void ClearSnapShot() { }
 
     /// <inheritdoc />
     public GraphicsPipelineLayer CreateGraphicsPipelineLayer(RenderPassLayer renderPassLayer)
@@ -158,8 +147,22 @@ public class SolidMeshRenderLayer : ComponentSystemBase<RenderInstanceMesh>, IIn
             throw new ArgumentException("Entity needs and transform in order to be rendered as debug");
 
         var res = base.RegisterComponent(entity, component);
+        CreateInstance(res);
         GraphicsDataChanged.Changed();
         return res;
+    }
+
+    private void CreateInstance(RenderInstanceMesh res)
+    {
+        var instance = instanceMeshPool.CreateInstance(instanceMeshPool.AsInstanced(res.Mesh));
+        res.Instance = instance;
+    }
+
+    private void DeleteInstance(RenderInstanceMesh res)
+    {
+        if (res.Instance == null) return;
+        instanceMeshPool.DeleteInstance(res.Instance);
+        res.Instance = null;
     }
 
     /// <inheritdoc />
@@ -169,6 +172,7 @@ public class SolidMeshRenderLayer : ComponentSystemBase<RenderInstanceMesh>, IIn
             throw new ArgumentException("Entity needs and transform in order to be rendered as debug");
 
         var res = base.UnRegisterComponent(entity, component);
+        DeleteInstance(res);
         GraphicsDataChanged.Changed();
         return res;
     }
