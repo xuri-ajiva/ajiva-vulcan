@@ -20,9 +20,9 @@ using SharpVk;
 namespace ajiva.Systems.VulcanEngine.Layer3d;
 
 [Dependent(typeof(Ajiva3dLayerSystem))]
-public class SolidMeshRenderLayer : ComponentSystemBase<RenderInstanceMesh>, IInit, IAjivaLayerRenderSystem<UniformViewProj3d>
+public class SolidMeshRenderLayer : ComponentSystemBase<RenderInstanceMesh>, IInit, IAjivaLayerRenderSystem<UniformViewProj3d>, IUpdate
 {
-    private IInstanceMeshPool instanceMeshPool;
+    private InstanceMeshPool instanceMeshPool;
 
     /// <inheritdoc />
     public SolidMeshRenderLayer(IAjivaEcs ecs) : base(ecs)
@@ -45,9 +45,20 @@ public class SolidMeshRenderLayer : ComponentSystemBase<RenderInstanceMesh>, IIn
     {
         renderGuard.BindDescriptor();
 
-        foreach (var instancedMesh in SnapShot)
+        foreach (var (_, instancedMesh) in instanceMeshPool.InstancedMeshes)
         {
-            instanceMeshPool.DrawInstanced(instancedMesh, renderGuard.Buffer, VERTEX_BUFFER_BIND_ID, INSTANCE_BUFFER_BIND_ID);
+            var dedicatedBufferArray = instanceMeshPool.InstanceMeshData[instancedMesh.InstancedId];
+
+            var instanceBuffer = dedicatedBufferArray.Uniform.Current();
+            var vertexBuffer = instancedMesh.Mesh.VertexBuffer;
+            var indexBuffer = instancedMesh.Mesh.IndexBuffer;
+            renderGuard.Capture(vertexBuffer);
+            renderGuard.Capture(indexBuffer);
+            renderGuard.Capture(instanceBuffer);
+            renderGuard.Buffer.BindVertexBuffers(VERTEX_BUFFER_BIND_ID, vertexBuffer.Buffer, 0);
+            renderGuard.Buffer.BindVertexBuffers(INSTANCE_BUFFER_BIND_ID, instanceBuffer.Buffer, 0);
+            renderGuard.Buffer.BindIndexBuffer(indexBuffer.Buffer, 0, Helper.GetIndexType(indexBuffer.SizeOfT));
+            renderGuard.Buffer.DrawIndexed((uint)instancedMesh.Mesh.IndexBuffer.Length, (uint)dedicatedBufferArray.Length, 0, 0, 0);
         }
     }
 
@@ -105,7 +116,8 @@ public class SolidMeshRenderLayer : ComponentSystemBase<RenderInstanceMesh>, IIn
         var deviceSystem = Ecs.Get<DeviceSystem>();
 
         MainShader = Shader.CreateShaderFrom(Ecs.Get<AssetManager>(), "3d/SolidInstance", deviceSystem, "main");
-        instanceMeshPool = Ecs.Get<IInstanceMeshPool>();
+        instanceMeshPool = new InstanceMeshPool(deviceSystem);
+        instanceMeshPool.Changed.OnChanged += RebuildData;
 
         var textureSamplerImageViews = Ecs.Get<ITextureSystem>().TextureSamplerImageViews;
         PipelineDescriptorInfos = new[]
@@ -118,8 +130,26 @@ public class SolidMeshRenderLayer : ComponentSystemBase<RenderInstanceMesh>, IIn
         };
     }
 
+    private void RebuildData(IInstanceMeshPool sender)
+    {
+        GraphicsDataChanged.Changed();
+    }
+
     /// <inheritdoc />
-    public PeriodicUpdateInfo Info { get; } = new PeriodicUpdateInfo(TimeSpan.FromMilliseconds(15));
+    protected override void ReleaseUnmanagedResources(bool disposing)
+    {
+        base.ReleaseUnmanagedResources(disposing);
+        instanceMeshPool.Dispose();
+    }
+
+    /// <inheritdoc />
+    public void Update(UpdateInfo delta)
+    {
+        instanceMeshPool.Update(delta);
+    }
+
+    /// <inheritdoc />
+    public PeriodicUpdateInfo Info { get; } = new PeriodicUpdateInfo(TimeSpan.FromMilliseconds(10));
 
     /// <inheritdoc />
     public override RenderInstanceMesh RegisterComponent(IEntity entity, RenderInstanceMesh component)

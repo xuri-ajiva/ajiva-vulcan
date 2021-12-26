@@ -61,7 +61,7 @@ public class AjivaApplication : DisposingLogger
         var meshPool = new MeshPool(deviceSystem);
         var instanceMeshPool = new InstanceMeshPool(deviceSystem);
         entityComponentSystem.Add<MeshPool, IMeshPool>(meshPool);
-        entityComponentSystem.Add<InstanceMeshPool, IInstanceMeshPool>(instanceMeshPool);
+        //entityComponentSystem.Add<InstanceMeshPool, IInstanceMeshPool>(instanceMeshPool); // should be unique per instance user
 
         entityComponentSystem.Add<VulcanInstance, IVulcanInstance>(new VulcanInstance(vulcanInstance));
 
