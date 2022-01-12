@@ -90,11 +90,6 @@ public class AjivaLayerRenderer : DisposingLogger
         }
     }
 
-    public void CheckBuffersUpToDate()
-    {
-        foreach (var systemData in DynamicLayerSystemData.Where(x => !x.IsVersionUpToDate && !x.IsBackgroundTaskRunning)) systemData.FillNextBufferAsync();
-    }
-
     public void UpdateSubmitInfoChecked()
     {
         for (var systemIndex = 0; systemIndex < DynamicLayerSystemData.Count; systemIndex++)

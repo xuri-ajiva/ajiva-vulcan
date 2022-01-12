@@ -25,8 +25,8 @@ public class RenderBuffer
         get => inUse;
         set
         {
-            ALog.Info($"Set InUse To: {value,6}, {this.GetHashCode():X8}");
-            
+            ALog.Trace($"Set InUse To: {value,6}, {this.GetHashCode():X8}");
+
             inUse = value;
         }
     }
@@ -68,25 +68,45 @@ public class DynamicLayerAjivaLayerRenderSystemData : DisposingLogger
     public GraphicsPipelineLayer GraphicsPipeline { get; init; }
     public IAjivaLayerRenderSystem AjivaLayerRenderSystem { get; init; }
     public IAjivaLayer AjivaLayer { get; init; }
-
-    public Task? UpdateTask { get; private set; }
     public CancellationTokenSource TokenSource { get; set; } = new CancellationTokenSource();
 
-    public bool IsBackgroundTaskRunning => UpdateTask is not null;
     public bool IsVersionUpToDate => AjivaLayerRenderSystem.GraphicsDataChanged.Version == CurrentActiveVersion;
 
     public long CurrentActiveVersion { get; set; }
 
     public RenderBuffer? UpToDateBuffer { get; set; }
+    private readonly object lockForFillBufferQueue = new();
+    private readonly object lockForFillBuffer = new();
+    private int queueForFillBuffer = 0;
+    private const int queueMembersMax = 2;
 
     private void GraphicsDataChangedOnOnChanged(IAjivaLayerRenderSystem sender)
     {
         FillNextBufferAsync();
     }
 
-    public void FillNextBufferBlocking(CancellationToken cancellationToken)
+    public void FillNextBufferBlockingUnchecked(CancellationToken cancellationToken)
     {
         FillBuffer(GetNextBuffer(), new RenderLayerGuard(), cancellationToken);
+    }
+
+    public void FillNextBufferBlocking(CancellationToken cancellationToken)
+    {
+        lock (lockForFillBufferQueue)
+        {
+            if (queueForFillBuffer >= queueMembersMax)
+            {
+                //ALog.Debug($"Max Queue Amount for FillNextBuffer of {GetHashCode():X8} reached!");
+                return;
+            }
+            queueForFillBuffer++;
+        }
+        //waiting threads count max queueMembersMax
+        lock (lockForFillBuffer)
+        {
+            --queueForFillBuffer;
+            FillNextBufferBlockingUnchecked(cancellationToken);
+        }
     }
 
     private void AllocateNewBuffers()
@@ -98,6 +118,8 @@ public class DynamicLayerAjivaLayerRenderSystemData : DisposingLogger
             RenderBuffersLockup.Add(commandBuffer, renderBuffer);
         }
         AvailableBuffers.Enqueue(renderBuffer);
+        if (AllocatedBuffers.Count > 20)
+            ALog.Warn($"Alloc Buffer for {AjivaLayerRenderSystem}, Total Buffers: {AllocatedBuffers.Count}");
     }
 
     private RenderBuffer GetNextBuffer()
@@ -116,17 +138,11 @@ public class DynamicLayerAjivaLayerRenderSystemData : DisposingLogger
     {
         lock (this)
         {
-            if (UpdateTask is not null)
-            {
-                TokenSource.Cancel(true);
-                TokenSource = new CancellationTokenSource();
-            }
-
-            UpdateTask = Task.Run(() =>
+            TaskWatcher.Watch(() =>
             {
                 FillNextBufferBlocking(TokenSource.Token);
-                UpdateTask = null;
-            }, TokenSource.Token);
+                return Task.CompletedTask;
+            });
         }
     }
 
@@ -212,13 +228,13 @@ public class DynamicLayerAjivaLayerRenderSystemData : DisposingLogger
             foreach (var commandBuffer in commandBuffers)
             {
                 if (commandBuffer is null) continue;
-                
+
                 var lUp = RenderBuffersLockup[commandBuffer];
                 AllocatedBuffers.Remove(lUp);
                 if (AvailableBuffers.Contains(lUp))
                 {
                     ALog.Error("Buffer Available but should be deleted!");
-                }            
+                }
                 renderer.DeviceSystem.UseCommandPool(x =>
                 {
                     x.FreeCommandBuffers(commandBuffer);
@@ -258,9 +274,7 @@ public class DynamicLayerAjivaLayerRenderSystemData : DisposingLogger
         AjivaLayerRenderSystem.GraphicsDataChanged.OnChanged -= GraphicsDataChangedOnOnChanged;
 
         AvailableBuffers.Clear();
-
         TokenSource?.Cancel();
-        UpdateTask?.Dispose();
 
         renderer.DeviceSystem.UseCommandPool(x =>
         {
