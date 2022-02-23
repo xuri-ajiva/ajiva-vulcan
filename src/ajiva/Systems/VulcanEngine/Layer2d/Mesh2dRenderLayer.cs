@@ -1,10 +1,10 @@
-﻿using System.Runtime.CompilerServices;
+﻿using System.Runtime.InteropServices;
 using ajiva.Components;
-using ajiva.Components.Mesh;
+using ajiva.Components.Mesh.Instance;
 using ajiva.Components.RenderAble;
 using ajiva.Components.Transform;
 using ajiva.Ecs;
-using ajiva.Models.Buffer.ChangeAware;
+using ajiva.Models.Instance;
 using ajiva.Models.Layers.Layer2d;
 using ajiva.Models.Vertex;
 using ajiva.Systems.Assets;
@@ -13,79 +13,82 @@ using ajiva.Systems.VulcanEngine.Layer;
 using ajiva.Systems.VulcanEngine.Layer3d;
 using ajiva.Systems.VulcanEngine.Layers;
 using ajiva.Systems.VulcanEngine.Layers.Creation;
-using ajiva.Systems.VulcanEngine.Layers.Models;
 using ajiva.Systems.VulcanEngine.Systems;
-using ajiva.Utils.Changing;
+using SharpVk;
 
 namespace ajiva.Systems.VulcanEngine.Layer2d;
 
 [Dependent(typeof(Ajiva3dLayerSystem))]
-public class Mesh2dRenderLayer : ComponentSystemBase<RenderMesh2D>, IInit, IUpdate, IAjivaLayerRenderSystem<UniformLayer2d>
+public class Mesh2dRenderLayer : ComponentSystemBase<RenderInstanceMesh2D>, IInit, IUpdate, IAjivaLayerRenderSystem<UniformLayer2d>
 {
     private readonly object mainLock = new object();
-    private IMeshPool meshPool;
+    private InstanceMeshPool<Mesh2dInstanceData> instanceMeshPool;
+    private long dataVersion;
 
     /// <inheritdoc />
     public Mesh2dRenderLayer(IAjivaEcs ecs) : base(ecs)
     {
-        GraphicsDataChanged = new ChangingObserver<IAjivaLayerRenderSystem>(this);
     }
-
-    public IAChangeAwareBackupBufferOfT<SolidUniformModel2d> Models { get; set; }
 
     public PipelineDescriptorInfos[] PipelineDescriptorInfos { get; set; }
 
     public Shader MainShader { get; set; }
 
-    public List<RenderMesh2D> SnapShot { get; set; }
     public IAjivaLayer<UniformLayer2d> AjivaLayer { get; set; }
 
     /// <inheritdoc />
-    public IChangingObserver<IAjivaLayerRenderSystem> GraphicsDataChanged { get; }
+    public long DataVersion => dataVersion;
 
     /// <inheritdoc />
     public void DrawComponents(RenderLayerGuard renderGuard, CancellationToken cancellationToken)
     {
-        var readyMeshPool = meshPool.Use();
-        foreach (var render in SnapShot)
+        renderGuard.BindDescriptor();
+
+        foreach (var (_, instancedMesh) in instanceMeshPool.InstancedMeshes)
         {
-            if (cancellationToken.IsCancellationRequested) return;
-            if (!render.Render) continue;
-            renderGuard.BindDescriptor(render.Id * (uint)Unsafe.SizeOf<SolidUniformModel2d>());
-            readyMeshPool.DrawMesh(renderGuard.Buffer, render.MeshId);
+            var dedicatedBufferArray = instanceMeshPool.InstanceMeshData[instancedMesh.InstancedId];
+
+            var instanceBuffer = dedicatedBufferArray.Uniform.Current();
+            var vertexBuffer = instancedMesh.Mesh.VertexBuffer;
+            var indexBuffer = instancedMesh.Mesh.IndexBuffer;
+            renderGuard.Capture(vertexBuffer);
+            renderGuard.Capture(indexBuffer);
+            renderGuard.Capture(instanceBuffer);
+            renderGuard.Buffer.BindVertexBuffers(VERTEX_BUFFER_BIND_ID, vertexBuffer.Buffer, 0);
+            renderGuard.Buffer.BindVertexBuffers(INSTANCE_BUFFER_BIND_ID, instanceBuffer.Buffer, 0);
+            renderGuard.Buffer.BindIndexBuffer(indexBuffer.Buffer, 0, Statics.GetIndexType(indexBuffer.SizeOfT));
+            renderGuard.Buffer.DrawIndexed((uint)instancedMesh.Mesh.IndexBuffer.Length, (uint)dedicatedBufferArray.Length, 0, 0, 0);
         }
     }
 
     /// <inheritdoc />
-    public object SnapShotLock { get; } = new object();
-
-    /// <inheritdoc />
-    public void CreateSnapShot()
+    public void UpdateGraphicsPipelineLayer()
     {
-        lock (ComponentEntityMap)
+        var bind = new[]
         {
-            SnapShot = ComponentEntityMap.Keys.Where(x => x.Render).ToList();
-        }
+            Vertex2D.GetBindingDescription(VERTEX_BUFFER_BIND_ID),
+            new VertexInputBindingDescription(INSTANCE_BUFFER_BIND_ID, (uint)Marshal.SizeOf<Mesh2dInstanceData>(), VertexInputRate.Instance)
+        };
+
+        var attrib = new ViAdBuilder<Mesh2dInstanceData>(Vertex2D.GetAttributeDescriptions(VERTEX_BUFFER_BIND_ID), INSTANCE_BUFFER_BIND_ID)
+            .Add(nameof(Mesh2dInstanceData.Position), Format.R32G32SFloat)
+            .Add(nameof(Mesh2dInstanceData.Rotation), Format.R32G32SFloat)
+            .Add(nameof(Mesh2dInstanceData.Scale), Format.R32G32SFloat)
+            .Add(nameof(Mesh2dInstanceData.TextureIndex), Format.R32SInt)
+            .Add(nameof(Mesh2dInstanceData.Padding), Format.R32G32SFloat)
+            .ToArray();
+
+        RenderTarget.GraphicsPipelineLayer = GraphicsPipelineLayerCreator.Default(RenderTarget.PassLayer.Parent, RenderTarget.PassLayer,
+            Ecs.Get<DeviceSystem>(), true,
+            bind, attrib, MainShader, PipelineDescriptorInfos);
     }
 
     /// <inheritdoc />
-    public void ClearSnapShot()
-    {
-        SnapShot = null!;
-    }
+    public RenderTarget RenderTarget { get; set; }
 
-    /// <inheritdoc />
-    public GraphicsPipelineLayer CreateGraphicsPipelineLayer(RenderPassLayer renderPassLayer)
-    {
-        var res = GraphicsPipelineLayerCreator.Default(renderPassLayer.Parent, renderPassLayer, Ecs.Get<DeviceSystem>(), true, Vertex2D.GetBindingDescription(), Vertex2D.GetAttributeDescriptions(), MainShader, PipelineDescriptorInfos);
+    private const uint VERTEX_BUFFER_BIND_ID = 0;
+    private const uint INSTANCE_BUFFER_BIND_ID = 1;
 
-        foreach (var entity in ComponentEntityMap) entity.Key.ChangingObserver.Changed();
-
-        return res;
-    }
-
-    /// <inheritdoc />
-    public Reactive<bool> Render { get; } = new Reactive<bool>(false);
 
     /// <inheritdoc />
     public void Init()
@@ -93,14 +96,23 @@ public class Mesh2dRenderLayer : ComponentSystemBase<RenderMesh2D>, IInit, IUpda
         var deviceSystem = Ecs.Get<DeviceSystem>();
 
         MainShader = Shader.CreateShaderFrom(Ecs.Get<AssetManager>(), "2d", deviceSystem, "main");
-        Models = new AChangeAwareBackupBufferOfT<SolidUniformModel2d>(1000000, deviceSystem);
-        meshPool = Ecs.Get<IMeshPool>();
+        instanceMeshPool = new InstanceMeshPool<Mesh2dInstanceData>(deviceSystem);
+        instanceMeshPool.Changed.OnChanged += RebuildData;
 
-        PipelineDescriptorInfos = Layers.PipelineDescriptorInfos.CreateFrom(
-            AjivaLayer.LayerUniform.Uniform.Buffer!, (uint)AjivaLayer.LayerUniform.SizeOfT,
-            Models.Uniform.Buffer!, (uint)Models.SizeOfT,
-            Ecs.Get<ITextureSystem>().TextureSamplerImageViews
-        );
+        var textureSamplerImageViews = Ecs.Get<ITextureSystem>().TextureSamplerImageViews;
+        PipelineDescriptorInfos = new[]
+        {
+            new PipelineDescriptorInfos(DescriptorType.UniformBuffer, ShaderStageFlags.Vertex, 0, 1, BufferInfo: new[]
+            {
+                new DescriptorBufferInfo { Buffer = AjivaLayer.LayerUniform.Uniform.Buffer!, Offset = 0, Range = (uint)AjivaLayer.LayerUniform.SizeOfT }
+            }),
+            new(DescriptorType.CombinedImageSampler, ShaderStageFlags.Fragment, 2, (uint)textureSamplerImageViews.Length, ImageInfo: textureSamplerImageViews)
+        };
+    }
+
+    private void RebuildData(IInstanceMeshPool<Mesh2dInstanceData> sender)
+    {
+        Interlocked.Increment(ref dataVersion);
     }
 
     /// <inheritdoc />
@@ -108,7 +120,7 @@ public class Mesh2dRenderLayer : ComponentSystemBase<RenderMesh2D>, IInit, IUpda
     {
         lock (mainLock)
         {
-            Models.CommitChanges();
+            instanceMeshPool.CommitInstanceDataChanges();
         }
     }
 
@@ -116,28 +128,42 @@ public class Mesh2dRenderLayer : ComponentSystemBase<RenderMesh2D>, IInit, IUpda
     public PeriodicUpdateInfo Info { get; } = new PeriodicUpdateInfo(TimeSpan.FromMilliseconds(15));
 
     /// <inheritdoc />
-    public override RenderMesh2D RegisterComponent(IEntity entity, RenderMesh2D component)
+    public override RenderInstanceMesh2D RegisterComponent(IEntity entity, RenderInstanceMesh2D component)
     {
         if (!entity.TryGetComponent<Transform2d>(out var transform))
             throw new ArgumentException("Entity needs and transform in order to be rendered as debug");
 
-        component.Models = Models;
-        transform.ChangingObserver.OnChanged += component.OnTransformChange;
-        component.TransformChange(transform.ModelMat);
 
         var res = base.RegisterComponent(entity, component);
-        GraphicsDataChanged.Changed();
+        CreateInstance(res);
+        //transform.ChangingObserver.OnChanged += component.OnTransformChange;
+        component.TransformChange(transform.ModelMat);
+        Interlocked.Increment(ref dataVersion);
         return res;
     }
 
+    private void CreateInstance(RenderInstanceMesh2D res)
+    {
+        res.Instance = instanceMeshPool.CreateInstance(instanceMeshPool.AsInstanced(res.Mesh));
+    }
+
+    private void DeleteInstance(RenderInstanceMesh2D res)
+    {
+        if (res.Instance == null) return;
+        instanceMeshPool.DeleteInstance(res.Instance);
+        res.Instance = null;
+    }
+
     /// <inheritdoc />
-    public override RenderMesh2D UnRegisterComponent(IEntity entity, RenderMesh2D component)
+    public override RenderInstanceMesh2D UnRegisterComponent(IEntity entity, RenderInstanceMesh2D component)
     {
         if (!entity.TryGetComponent<Transform2d>(out var transform))
             throw new ArgumentException("Entity needs and transform in order to be rendered as debug");
 
-        transform.ChangingObserver.OnChanged -= component.OnTransformChange;
-
-        return base.UnRegisterComponent(entity, component);
+        //transform.ChangingObserver.OnChanged -= component.OnTransformChange;
+        var res = base.UnRegisterComponent(entity, component);
+        DeleteInstance(res);
+        Interlocked.Increment(ref dataVersion);
+        return res;
     }
 }

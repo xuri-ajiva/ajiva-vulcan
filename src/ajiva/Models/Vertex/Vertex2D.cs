@@ -25,44 +25,15 @@ public struct Vertex2D
     [Location(1)] public vec3 Colour;
     [Location(3)] public vec2 TextCoord;
 
-    public static VertexInputBindingDescription[] GetBindingDescription()
+    public static VertexInputBindingDescription GetBindingDescription(uint binding)
     {
-        return new[]
-        {
-            new VertexInputBindingDescription
-            {
-                Binding = 0,
-                Stride = (uint)Marshal.SizeOf<Vertex2D>(),
-                InputRate = VertexInputRate.Vertex
-            }
-        };
+        return new VertexInputBindingDescription(binding, (uint)Marshal.SizeOf<Vertex2D>(), VertexInputRate.Vertex);
     }
 
-    public static VertexInputAttributeDescription[] GetAttributeDescriptions()
+    public static IEnumerable<VertexInputAttributeDescription> GetAttributeDescriptions(uint binding)
     {
-        return new[]
-        {
-            new VertexInputAttributeDescription
-            {
-                Binding = 0,
-                Location = 0,
-                Format = Format.R32G32SFloat,
-                Offset = (uint)Marshal.OffsetOf<Vertex2D>(nameof(Position))
-            },
-            new VertexInputAttributeDescription
-            {
-                Binding = 0,
-                Location = 1,
-                Format = Format.R32G32B32SFloat,
-                Offset = (uint)Marshal.OffsetOf<Vertex2D>(nameof(Colour))
-            },
-            new()
-            {
-                Binding = 0,
-                Location = 2,
-                Format = Format.R32G32SFloat,
-                Offset = (uint)Marshal.OffsetOf<Vertex2D>(nameof(TextCoord))
-            }
-        };
+        yield return new VertexInputAttributeDescription(location: 0, binding: binding, format: Format.R32G32SFloat, offset: (uint)Marshal.OffsetOf<Vertex2D>(nameof(Position)));
+        yield return new VertexInputAttributeDescription(location: 1, binding: binding, format: Format.R32G32B32SFloat, offset: (uint)Marshal.OffsetOf<Vertex2D>(nameof(Colour)));
+        yield return new VertexInputAttributeDescription(location: 2, binding: binding, format: Format.R32G32SFloat, offset: (uint)Marshal.OffsetOf<Vertex2D>(nameof(TextCoord)));
     }
 }

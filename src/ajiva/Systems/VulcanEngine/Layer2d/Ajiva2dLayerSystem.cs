@@ -1,7 +1,7 @@
 ﻿using ajiva.Ecs;
-using ajiva.Models;
 using ajiva.Models.Buffer.ChangeAware;
 using ajiva.Models.Layers.Layer2d;
+using ajiva.Systems.VulcanEngine.Interfaces;
 using ajiva.Systems.VulcanEngine.Layer;
 using ajiva.Systems.VulcanEngine.Layers.Models;
 using ajiva.Systems.VulcanEngine.Systems;
@@ -25,6 +25,9 @@ public class Ajiva2dLayerSystem : SystemBase, IInit, IAjivaLayer<UniformLayer2d>
     private object MainLock { get; } = new object();
 
     /// <inheritdoc />
+    public Extent2D Extent { get; } = new Extent2D(800, 600);
+
+    /// <inheritdoc />
     public IChangingObserver<IAjivaLayer> LayerChanged { get; }
 
     /// <inheritdoc />
@@ -37,19 +40,26 @@ public class Ajiva2dLayerSystem : SystemBase, IInit, IAjivaLayer<UniformLayer2d>
     public List<IAjivaLayerRenderSystem<UniformLayer2d>> LayerRenderComponentSystems { get; } = new List<IAjivaLayerRenderSystem<UniformLayer2d>>();
 
     /// <inheritdoc />
-    public AjivaVulkanPipeline PipelineLayer { get; } = AjivaVulkanPipeline.Pipeline2d;
-
-    /// <inheritdoc />
-    public RenderPassLayer CreateRenderPassLayer(SwapChainLayer swapChainLayer, PositionAndMax layerIndex, PositionAndMax layerRenderComponentSystemsIndex)
+    public RenderTarget CreateRenderPassLayer(SwapChainLayer swapChainLayer, PositionAndMax layerIndex, PositionAndMax layerRenderComponentSystemsIndex)
     {
         var firstPass = layerIndex.First && layerRenderComponentSystemsIndex.First;
         var lastPass = layerIndex.Last && layerRenderComponentSystemsIndex.Last;
 
         var deviceSystem = Ecs.Get<DeviceSystem>();
+        var imageSystem = Ecs.Get<IImageSystem>();
+
+        var frameBufferFormat = deviceSystem.PhysicalDevice.FindSupportedFormat(
+            new[] { Format.R16G16B16A16UNorm, Format.R16G16B16UNorm, Format.R8G8B8UNorm, },
+            ImageTiling.Optimal,
+            FormatFeatureFlags.ColorAttachment | FormatFeatureFlags.SampledImage);
+        var frameBufferImage = imageSystem.CreateImageAndView(Extent.Width, Extent.Height,
+            frameBufferFormat, ImageTiling.Optimal, ImageUsageFlags.ColorAttachment | ImageUsageFlags.Sampled,
+            MemoryPropertyFlags.DeviceLocal, ImageAspectFlags.Color);
+
         var renderPass = deviceSystem.Device!.CreateRenderPass(new[]
             {
                 new AttachmentDescription(AttachmentDescriptionFlags.None,
-                    swapChainLayer.SwapChainFormat,
+                    frameBufferFormat,
                     SampleCountFlags.SampleCount1,
                     firstPass ? AttachmentLoadOp.Clear : AttachmentLoadOp.Load,
                     AttachmentStoreOp.Store,
@@ -100,11 +110,18 @@ public class Ajiva2dLayerSystem : SystemBase, IInit, IAjivaLayer<UniformLayer2d>
                 1);
         }
 
-        var frameBuffers = swapChainLayer.SwapChainImages.Select(x => MakeFrameBuffer(x.View!)).ToArray();
+        var frameBuffer = MakeFrameBuffer(frameBufferImage.View);
 
-        var renderPassLayer = new RenderPassLayer(swapChainLayer, renderPass, frameBuffers, firstPass ? new ClearValue[] { new ClearColorValue(.1f, .1f, .1f, .1f) } : Array.Empty<ClearValue>());
+        var renderPassLayer = new RenderPassLayer(swapChainLayer, renderPass);
         swapChainLayer.AddChild(renderPassLayer);
-        return renderPassLayer;
+        return new RenderTarget
+        {
+            ViewPortInfo = new FrameViewPortInfo(frameBuffer, frameBufferImage, Extent, 0..1),
+            PassLayer = renderPassLayer,
+            ClearValues = firstPass
+                ? new ClearValue[] { new ClearColorValue(.1f, .1f, .1f, .1f) }
+                : Array.Empty<ClearValue>()
+        };
     }
 
     /// <inheritdoc />
