@@ -5,17 +5,13 @@ namespace ajiva.Systems.VulcanEngine.Layers.Models;
 public class RenderPassLayer : DisposingLogger
 {
     /// <inheritdoc />
-    public RenderPassLayer(SwapChainLayer parent, RenderPass renderPass, Framebuffer[] frameBuffers, ClearValue[] clearValues)
+    public RenderPassLayer(SwapChainLayer parent, RenderPass renderPass)
     {
         RenderPass = renderPass;
-        FrameBuffers = frameBuffers;
-        ClearValues = clearValues;
         Parent = parent;
     }
 
-    public ClearValue[] ClearValues { get; }
     public RenderPass RenderPass { get; }
-    public Framebuffer[] FrameBuffers { get; }
 
     public List<GraphicsPipelineLayer> Children { get; } = new List<GraphicsPipelineLayer>();
     public SwapChainLayer Parent { get; }
@@ -25,7 +21,6 @@ public class RenderPassLayer : DisposingLogger
     {
         foreach (var child in Children) child.Dispose();
         RenderPass.Dispose();
-        foreach (var frameBuffer in FrameBuffers) frameBuffer.Dispose();
     }
 
     public void AddChild(GraphicsPipelineLayer graphicsPipelineLayer)

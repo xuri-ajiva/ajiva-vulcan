@@ -7,7 +7,7 @@ namespace ajiva.Systems.VulcanEngine.Interfaces;
 public interface IGraphicsSystem : ISystem
 {
     IOverTimeChangingObserver ChangingObserver { get; }
-    Dictionary<AjivaVulkanPipeline, IAjivaLayer> Layers { get; }
+    List<IAjivaLayer> Layers { get; }
     Format DepthFormat { get; set; }
 
     void RecreateCurrentGraphicsLayout();
