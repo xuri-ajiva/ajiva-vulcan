@@ -1,5 +1,4 @@
 ﻿using ajiva.Components.Mesh;
-using ajiva.Components.RenderAble;
 using ajiva.Components.Transform;
 using ajiva.Ecs;
 using ajiva.Systems.VulcanEngine.Debug;
@@ -10,14 +9,13 @@ public class DebugBox : DefaultEntity
 {
     public DebugBox()
     {
-        this.AddComponent(new Transform3d());
-        var debugComponent = new DebugComponent
+        var mesh = MeshPrefab.Cube;
+        var transform = this.AddComponent(new Transform3d());
+        this.AddComponent(new DebugComponent(mesh, transform)
         {
             DrawTransform = true,
             DrawWireframe = true,
             Render = true
-        };
-        debugComponent.SetMesh(MeshPrefab.Cube);
-        this.AddComponent(debugComponent);
+        });
     }
 }

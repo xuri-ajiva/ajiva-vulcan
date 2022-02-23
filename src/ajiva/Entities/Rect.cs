@@ -1,4 +1,5 @@
-﻿using ajiva.Components.Mesh;
+﻿using ajiva.Components.Media;
+using ajiva.Components.Mesh;
 using ajiva.Components.RenderAble;
 using ajiva.Components.Transform;
 using ajiva.Ecs;
@@ -9,13 +10,9 @@ public class Rect : DefaultEntity
 {
     public Rect()
     {
-        this.AddComponent(new Transform2d());
-        var renderMesh = new RenderMesh2D
-        {
-            Render = true
-        };
-        renderMesh.SetMesh(MeshPrefab.Rect);
-
-        this.AddComponent(renderMesh);
+        var mesh = MeshPrefab.Rect;
+        var transform = this.AddComponent(new Transform2d());
+        var textureComponent = this.AddComponent(new TextureComponent { TextureId = 1, });
+        this.AddComponent(new RenderInstanceMesh2D(mesh, transform, textureComponent));
     }
 }

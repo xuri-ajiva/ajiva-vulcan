@@ -7,12 +7,13 @@ using GlmSharp;
 
 namespace ajiva.Components.RenderAble;
 
-public class RenderInstanceMesh : DisposingLogger, IComponent
+public class RenderInstanceMesh2D : DisposingLogger, IComponent
 {
-    private readonly Transform3d transform;
-    public IInstancedMeshInstance<MeshInstanceData>? Instance { get; set; }
+    public IInstancedMeshInstance<Mesh2dInstanceData>? Instance { get; set; }
 
-    public RenderInstanceMesh(IMesh mesh, Transform3d transform, TextureComponent textureComponent)
+    private readonly Transform2d transform;
+
+    public RenderInstanceMesh2D(IMesh mesh, Transform2d transform, TextureComponent textureComponent)
     {
         this.transform = transform;
         transform.ChangingObserver.OnChanged += TransformChange;
@@ -28,7 +29,7 @@ public class RenderInstanceMesh : DisposingLogger, IComponent
         Instance?.UpdateData(Update);
     }
 
-    private void Update(ref MeshInstanceData value)
+    private void Update(ref Mesh2dInstanceData value)
     {
         value.Position = transform.Position;
         value.Rotation = glm.Radians(transform.Rotation);
