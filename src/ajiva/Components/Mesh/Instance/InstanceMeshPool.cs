@@ -1,5 +1,4 @@
 ﻿using ajiva.Models.Buffer.Dynamic;
-using ajiva.Models.Instance;
 using ajiva.Systems.VulcanEngine.Interfaces;
 using ajiva.Utils.Changing;
 using SharpVk;
@@ -26,7 +25,7 @@ public class InstanceMeshPool<T> : DisposingLogger, IInstanceMeshPool<T>, IUpdat
         lock (_lock)
         {
             if (!meshIdToInstancedMeshId.ContainsKey(mesh.MeshId)) AddInstanced(mesh);
-            return InstancedMeshes[mesh.MeshId];
+            return InstancedMeshes[meshIdToInstancedMeshId[mesh.MeshId]];
         }
     }
 
