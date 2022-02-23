@@ -7,21 +7,41 @@ layout(binding = 0) uniform UniformViewProj {
     vec2 mousePos;
     vec2 vec;
 } data;
-layout(binding = 1) uniform UniformModel {
-    mat4 model;
-} model;
 
-layout(location = 0) in vec2 inPosition;
+// Vertex attributes
+layout(location = 0) in vec2 inPos;
 layout(location = 1) in vec3 inColor;
-layout(location = 2) in vec2 inTexCoord;
+layout(location = 2) in vec2 inUV;
 
-layout(location = 0) out vec3 fragColor;
-layout(location = 1) out vec2 fragTexCoord;
+
+// Instanced attributes
+layout (location = 3) in vec2 instancePos;
+layout (location = 4) in vec2 instanceRot;
+layout (location = 5) in vec2 instanceScale;
+layout (location = 6) in int instanceTexIndex;
+layout (location = 7) in vec2 padding;
+
+layout(location = 0) out vec3 outColor;
+layout(location = 1) out vec3 outUV;
+
+mat2 rotationX(in float angle) {
+    return mat2(
+    cos(angle), -sin(angle),
+    sin(angle), cos(angle)
+    );
+}
+mat2 rotationY(in float angle) {
+    return mat2(
+    cos(angle), sin(angle),
+    -sin(angle), cos(angle)
+    );
+}
 
 void main() {
-    vec4 translated = model.model * vec4(inPosition, 1, 1);
-    vec4 pos = data.proj * data.view * (translated + vec4(data.mousePos, 1.0f, 1.0f));
-    gl_Position =  vec4(vec2(pos), 0, 1);
-    fragColor = inColor;
-    fragTexCoord = inTexCoord + data.mousePos;
+    vec2 rotPos = inPos * rotationX(instanceRot.x) * rotationY(instanceRot.y);
+    vec4 pos = vec4(rotPos * instanceScale + instancePos, 1.0, 1.0);
+    
+    gl_Position =  pos;
+    outColor = inColor;
+    outUV = vec3(inUV + data.mousePos, instanceTexIndex);
 }

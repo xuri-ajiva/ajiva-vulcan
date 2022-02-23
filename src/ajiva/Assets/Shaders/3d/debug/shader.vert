@@ -5,26 +5,46 @@ layout(binding = 0) uniform UniformViewProj {
     mat4 view;
     mat4 proj;
 } viewProj;
-layout(binding = 1) uniform UniformModel {
-    mat4 model;
-} model;
 
-/*
-layout(binding = 0) uniform UniformBufferObject {
-  mat4 model;
-  mat4 view;
-  mat4 proj;
-} ubo;
-       */
-layout(location = 0) in vec3 inPosition;
+// Vertex attributes
+layout(location = 0) in vec3 inPos;
 layout(location = 1) in vec3 inColor;
-layout(location = 2) in vec2 inTexCoord;
+layout(location = 2) in vec2 inUV;
 
-layout(location = 0) out vec3 fragColor;
-layout(location = 1) out vec2 fragTexCoord;
+
+// Instanced attributes
+layout (location = 3) in vec3 instancePos;
+layout (location = 4) in vec3 instanceRot;
+layout (location = 5) in vec3 instanceScale;
+layout (location = 6) in int instanceTexIndex;
+layout (location = 7) in vec2 padding;
+
+layout(location = 0) out vec3 outColor;
+layout(location = 1) out vec3 outUV;
+
+mat3 rotationX(in float angle) {
+    return mat3(1.0, 0, 0,
+    0, cos(angle), -sin(angle),
+    0, sin(angle), cos(angle));
+}
+
+mat3 rotationY(in float angle) {
+    return mat3(cos(angle), 0, sin(angle),
+    0, 1.0, 0,
+    -sin(angle), 0, cos(angle));
+}
+
+mat3 rotationZ(in float angle) {
+    return mat3(cos(angle), -sin(angle), 0,
+    sin(angle), cos(angle), 0,
+    0, 0, 1);
+}
 
 void main() {
-    gl_Position = viewProj.proj * viewProj.view * model.model * vec4(inPosition, 1.0);
-    fragColor = inColor;
-    fragTexCoord = inTexCoord;
+    outColor = inColor;
+    outUV = vec3(inUV, instanceTexIndex);
+    vec3 rotPos = inPos * rotationX(instanceRot.x) * rotationY(instanceRot.y) * rotationZ(instanceRot.z);
+    vec4 pos = vec4(rotPos * instanceScale + instancePos, 1.0);
+
+    gl_Position = viewProj.proj * viewProj.view * pos;
 }
