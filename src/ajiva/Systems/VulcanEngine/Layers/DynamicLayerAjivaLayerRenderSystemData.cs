@@ -1,3 +1,4 @@
+/*
 using System.Diagnostics.CodeAnalysis;
 using ajiva.Systems.VulcanEngine.Layer;
 using ajiva.Systems.VulcanEngine.Layers.Models;
@@ -6,84 +7,42 @@ using SharpVk;
 
 namespace ajiva.Systems.VulcanEngine.Layers;
 
-public class RenderBuffer
-{
-    private bool inUse;
 
-    public RenderBuffer(CommandBuffer[] commandBuffers, long version)
-    {
-        CommandBuffers = commandBuffers;
-        Version = version;
-    }
-
-    public CommandBuffer[] CommandBuffers { get; set; }
-    public long Version { get; set; }
-
-    public List<object> Captured { get; } = new();
-    public bool InUse
-    {
-        get => inUse;
-        set
-        {
-            ALog.Trace($"Set InUse To: {value,6}, {this.GetHashCode():X8}");
-
-            inUse = value;
-        }
-    }
-}
 public class DynamicLayerAjivaLayerRenderSystemData : DisposingLogger
 {
-    private readonly int id;
+    private const int QueueMembersMax = 2;
+    private readonly IAjivaLayerRenderSystem ajivaLayerRenderSystem;
+
+    private readonly List<RenderBuffer> allocatedBuffers = new List<RenderBuffer>();
+    private readonly Queue<RenderBuffer> availableBuffers = new Queue<RenderBuffer>();
+    private readonly IAjivaLayer ajivaLayer;
 
     public readonly object Lock = new object();
+    private readonly object lockForFillBuffer = new object();
+    private readonly object lockForFillBufferQueue = new object();
+    private readonly Dictionary<CommandBuffer, RenderBuffer> renderBuffersLockup = new Dictionary<CommandBuffer, RenderBuffer>();
     private readonly AjivaLayerRenderer renderer;
 
     private readonly object upToDateLock = new object();
+    private int queueForFillBuffer;
 
-    public DynamicLayerAjivaLayerRenderSystemData(
-        int id,
-        AjivaLayerRenderer renderer,
-        RenderPassLayer renderPass,
-        GraphicsPipelineLayer graphicsPipeline,
+    public DynamicLayerAjivaLayerRenderSystemData(AjivaLayerRenderer renderer,
         IAjivaLayer ajivaLayer,
-        IAjivaLayerRenderSystem ajivaLayerRenderSystem
-    )
+        IAjivaLayerRenderSystem ajivaLayerRenderSystem)
     {
-        this.id = id;
         this.renderer = renderer;
-        RenderPass = renderPass;
-        GraphicsPipeline = graphicsPipeline;
-        AjivaLayer = ajivaLayer;
-        AjivaLayerRenderSystem = ajivaLayerRenderSystem;
+        this.ajivaLayer = ajivaLayer;
+        this.ajivaLayerRenderSystem = ajivaLayerRenderSystem;
         for (var i = 0; i < Const.Default.BackupBuffers; i++) AllocateNewBuffers();
-
-        ajivaLayerRenderSystem.GraphicsDataChanged.OnChanged += GraphicsDataChangedOnOnChanged;
     }
 
-    private List<RenderBuffer> AllocatedBuffers { get; } = new List<RenderBuffer>();
-    public Queue<RenderBuffer> AvailableBuffers { get; } = new Queue<RenderBuffer>();
-    public Dictionary<CommandBuffer, RenderBuffer> RenderBuffersLockup { get; } = new Dictionary<CommandBuffer, RenderBuffer>();
+    public CancellationTokenSource TokenSource { get; } = new CancellationTokenSource();
 
-    public RenderPassLayer RenderPass { get; init; }
-    public GraphicsPipelineLayer GraphicsPipeline { get; init; }
-    public IAjivaLayerRenderSystem AjivaLayerRenderSystem { get; init; }
-    public IAjivaLayer AjivaLayer { get; init; }
-    public CancellationTokenSource TokenSource { get; set; } = new CancellationTokenSource();
+    public long CurrentActiveVersion { get; private set; }
 
-    public bool IsVersionUpToDate => AjivaLayerRenderSystem.GraphicsDataChanged.Version == CurrentActiveVersion;
+    public RenderBuffer? UpToDateBuffer { get; private set; }
 
-    public long CurrentActiveVersion { get; set; }
-
-    public RenderBuffer? UpToDateBuffer { get; set; }
-    private readonly object lockForFillBufferQueue = new();
-    private readonly object lockForFillBuffer = new();
-    private int queueForFillBuffer = 0;
-    private const int queueMembersMax = 2;
-
-    private void GraphicsDataChangedOnOnChanged(IAjivaLayerRenderSystem sender)
-    {
-        FillNextBufferAsync();
-    }
+#region BufferManagment
 
     public void FillNextBufferBlockingUnchecked(CancellationToken cancellationToken)
     {
@@ -94,11 +53,9 @@ public class DynamicLayerAjivaLayerRenderSystemData : DisposingLogger
     {
         lock (lockForFillBufferQueue)
         {
-            if (queueForFillBuffer >= queueMembersMax)
-            {
+            if (queueForFillBuffer >= QueueMembersMax)
                 //ALog.Debug($"Max Queue Amount for FillNextBuffer of {GetHashCode():X8} reached!");
                 return;
-            }
             queueForFillBuffer++;
         }
         //waiting threads count max queueMembersMax
@@ -111,23 +68,20 @@ public class DynamicLayerAjivaLayerRenderSystemData : DisposingLogger
 
     private void AllocateNewBuffers()
     {
-        var renderBuffer = new RenderBuffer(renderer.DeviceSystem.AllocateCommandBuffers(CommandBufferLevel.Primary, RenderPass.FrameBuffers.Length, CommandPoolSelector.Background), -1);
-        AllocatedBuffers.Add(renderBuffer);
-        foreach (var commandBuffer in renderBuffer.CommandBuffers)
-        {
-            RenderBuffersLockup.Add(commandBuffer, renderBuffer);
-        }
-        AvailableBuffers.Enqueue(renderBuffer);
-        if (AllocatedBuffers.Count > 20)
-            ALog.Warn($"Alloc Buffer for {AjivaLayerRenderSystem}, Total Buffers: {AllocatedBuffers.Count}");
+        var renderBuffer = new RenderBuffer(renderer.DeviceSystem.AllocateCommandBuffers(CommandBufferLevel.Primary, renderPass.FrameBuffers.Length, CommandPoolSelector.Background), -1);
+        allocatedBuffers.Add(renderBuffer);
+        foreach (var commandBuffer in renderBuffer.CommandBuffers) renderBuffersLockup.Add(commandBuffer, renderBuffer);
+        availableBuffers.Enqueue(renderBuffer);
+        if (allocatedBuffers.Count > 20)
+            ALog.Warn($"Alloc Buffer for {ajivaLayerRenderSystem}, Total Buffers: {allocatedBuffers.Count}");
     }
 
     private RenderBuffer GetNextBuffer()
     {
         lock (Lock)
         {
-            if (!AvailableBuffers.Any()) AllocateNewBuffers();
-            AvailableBuffers.TryDequeue(out var result);
+            if (!availableBuffers.Any()) AllocateNewBuffers();
+            availableBuffers.TryDequeue(out var result);
             System.Diagnostics.Debug.Assert(result is not null, nameof(result) + " != null");
             System.Diagnostics.Debug.Assert(result.Captured.Count == 0, "result.Captured.Count == 0");
             return result;
@@ -150,24 +104,24 @@ public class DynamicLayerAjivaLayerRenderSystemData : DisposingLogger
     {
         lock (renderBuffer)
         {
-            var vTmp = AjivaLayerRenderSystem.GraphicsDataChanged.Version;
+            var vTmp = ajivaLayerRenderSystem.DataVersion;
             if (renderBuffer.Version == vTmp)
                 return;
 
             guard.RenderBuffer = renderBuffer;
+            guard.RenderPassInfo = renderPass;
+            guard.Renderer = renderer;
+            guard.Pipeline = graphicsPipeline;
 
-            System.Diagnostics.Debug.Assert(renderBuffer.CommandBuffers.Length == RenderPass.FrameBuffers.Length, "swapBuffer.Length == RenderPass.FrameBuffers.Length");
-            lock (AjivaLayerRenderSystem.SnapShotLock)
+            System.Diagnostics.Debug.Assert(renderBuffer.CommandBuffers.Length == renderPass.FrameBuffers.Length, "swapBuffer.Length == RenderPass.FrameBuffers.Length");
+
+            for (var i = 0; i < renderPass.FrameBuffers.Length; i++)
             {
-                AjivaLayerRenderSystem.CreateSnapShot();
-                for (var i = 0; i < RenderPass.FrameBuffers.Length; i++)
-                {
-                    var framebuffer = RenderPass.FrameBuffers[i];
+                var framebuffer = renderPass.FrameBuffers[i];
 
-                    FillBuffer(renderBuffer.CommandBuffers[i], framebuffer, guard, cancellationToken);
-                    if (cancellationToken.IsCancellationRequested) return;
-                }
-                AjivaLayerRenderSystem.ClearSnapShot();
+                guard.Buffer = renderBuffer.CommandBuffers[i];
+                FillBuffer(framebuffer, guard, cancellationToken);
+                if (cancellationToken.IsCancellationRequested) return;
             }
 
             PushRenderBuffer(renderBuffer, vTmp);
@@ -181,10 +135,7 @@ public class DynamicLayerAjivaLayerRenderSystemData : DisposingLogger
             renderBuffer.Version = version;
             lock (upToDateLock)
             {
-                if (UpToDateBuffer is not null)
-                {
-                    Reset(UpToDateBuffer);
-                }
+                if (UpToDateBuffer is not null) Reset(UpToDateBuffer);
                 UpToDateBuffer = renderBuffer;
             }
             CurrentActiveVersion = version;
@@ -195,7 +146,7 @@ public class DynamicLayerAjivaLayerRenderSystemData : DisposingLogger
     {
         renderBuffer.Captured.Clear();
         renderBuffer.InUse = false;
-        AvailableBuffers.Enqueue(renderBuffer);
+        availableBuffers.Enqueue(renderBuffer);
     }
 
     public bool TryGetUpdatedBuffers([MaybeNullWhen(false)] out RenderBuffer renderBuffer)
@@ -213,10 +164,12 @@ public class DynamicLayerAjivaLayerRenderSystemData : DisposingLogger
     public void ReturnBuffer(CommandBuffer?[] commandBuffers)
     {
         if (commandBuffers.Any(x => x is null))
+        {
             FreeBuffers(commandBuffers);
+        }
         else
         {
-            var rBuffer = RenderBuffersLockup[commandBuffers.First()!];
+            var rBuffer = renderBuffersLockup[commandBuffers.First()!];
             Reset(rBuffer);
         }
     }
@@ -229,12 +182,9 @@ public class DynamicLayerAjivaLayerRenderSystemData : DisposingLogger
             {
                 if (commandBuffer is null) continue;
 
-                var lUp = RenderBuffersLockup[commandBuffer];
-                AllocatedBuffers.Remove(lUp);
-                if (AvailableBuffers.Contains(lUp))
-                {
-                    ALog.Error("Buffer Available but should be deleted!");
-                }
+                var lUp = renderBuffersLockup[commandBuffer];
+                allocatedBuffers.Remove(lUp);
+                if (availableBuffers.Contains(lUp)) ALog.Error("Buffer Available but should be deleted!");
                 renderer.DeviceSystem.UseCommandPool(x =>
                 {
                     x.FreeCommandBuffers(commandBuffer);
@@ -243,46 +193,51 @@ public class DynamicLayerAjivaLayerRenderSystemData : DisposingLogger
         }
     }
 
-    private void FillBuffer(CommandBuffer commandBuffer, Framebuffer framebuffer, RenderLayerGuard guard, CancellationToken cancellationToken)
+#endregion
+
+    private void FillBuffer(Framebuffer framebuffer, RenderLayerGuard guard, CancellationToken cancellationToken)
     {
         lock (renderer.DeviceSystem.GetCommandPoolLock(CommandPoolSelector.Background))
         {
-            commandBuffer.Reset();
-            commandBuffer.Begin(CommandBufferUsageFlags.SimultaneousUse);
-            commandBuffer.BeginRenderPass(RenderPass.RenderPass,
-                framebuffer,
-                renderer.Canvas.Rect,
-                RenderPass.ClearValues,
-                SubpassContents.Inline);
-            commandBuffer.SetViewport(0, new Viewport(0, 0, renderer.Canvas.Width, renderer.Canvas.Height, 0, 1));
-            commandBuffer.SetScissor(0, renderer.Canvas.Rect);
-            commandBuffer.BindPipeline(PipelineBindPoint.Graphics, GraphicsPipeline.Pipeline);
-            guard.Pipeline = GraphicsPipeline;
-            guard.Buffer = commandBuffer;
-            AjivaLayerRenderSystem.DrawComponents(guard, cancellationToken);
-            if (cancellationToken.IsCancellationRequested) return;
-            commandBuffer.EndRenderPass();
-            commandBuffer.End();
+            BeginRecordeRenderBuffer(guard.Buffer, new FrameViewPortInfo(framebuffer, ajivaLayer.Extent, 0..1), guard, cancellationToken);
+            ajivaLayerRenderSystem.DrawComponents(guard, cancellationToken);
+            EndRecordeRenderBuffer(guard.Buffer);
         }
     }
+
+
+
+    private static void EndRecordeRenderBuffer(CommandBuffer commandBuffer)
+    {
+        commandBuffer.EndRenderPass();
+        commandBuffer.End();
+    }
+
 
     /// <inheritdoc />
     protected override void ReleaseUnmanagedResources(bool disposing)
     {
         base.ReleaseUnmanagedResources(disposing);
 
-        AjivaLayerRenderSystem.GraphicsDataChanged.OnChanged -= GraphicsDataChangedOnOnChanged;
-
-        AvailableBuffers.Clear();
+        availableBuffers.Clear();
         TokenSource?.Cancel();
 
         renderer.DeviceSystem.UseCommandPool(x =>
         {
-            foreach (var allocatedBuffer in AllocatedBuffers) x.FreeCommandBuffers(allocatedBuffer.CommandBuffers);
+            foreach (var allocatedBuffer in allocatedBuffers) x.FreeCommandBuffers(allocatedBuffer.CommandBuffers);
         }, CommandPoolSelector.Background);
-        AllocatedBuffers.Clear();
+        allocatedBuffers.Clear();
 
-        GraphicsPipeline?.Dispose();
-        RenderPass.Dispose();
+        graphicsPipeline?.Dispose();
+        renderPass.Dispose();
+    }
+
+    public void CheckUpToDate()
+    {
+        if (CurrentActiveVersion != ajivaLayerRenderSystem.DataVersion)
+        {
+            FillNextBufferAsync();
+        }
     }
 }
+*/
