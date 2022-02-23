@@ -1,28 +1,30 @@
-﻿using System.Runtime.CompilerServices;
+﻿using System.Runtime.InteropServices;
 using ajiva.Components;
 using ajiva.Components.Mesh;
+using ajiva.Components.Mesh.Instance;
 using ajiva.Components.RenderAble;
 using ajiva.Components.Transform;
 using ajiva.Ecs;
-using ajiva.Models.Buffer.ChangeAware;
+using ajiva.Models.Instance;
 using ajiva.Models.Layers.Layer3d;
 using ajiva.Models.Vertex;
 using ajiva.Systems.Assets;
 using ajiva.Systems.VulcanEngine.Interfaces;
 using ajiva.Systems.VulcanEngine.Layer;
 using ajiva.Systems.VulcanEngine.Layers;
-using ajiva.Systems.VulcanEngine.Layers.Models;
 using ajiva.Systems.VulcanEngine.Systems;
 using ajiva.Utils.Changing;
 using GlmSharp;
+using SharpVk;
 
 namespace ajiva.Systems.VulcanEngine.Debug;
 
 [Dependent(typeof(WindowSystem))]
 public class DebugLayer : ComponentSystemBase<DebugComponent>, IInit, IUpdate, IAjivaLayerRenderSystem<UniformViewProj3d>
 {
+    private InstanceMeshPool<MeshInstanceData> instanceMeshPool;
     private readonly object mainLock = new object();
-    private IMeshPool meshPool;
+    private long dataVersion;
 
     /// <inheritdoc />
     /// <inheritdoc />
@@ -33,55 +35,64 @@ public class DebugLayer : ComponentSystemBase<DebugComponent>, IInit, IUpdate, I
 
     public PipelineDescriptorInfos[] PipelineDescriptorInfos { get; set; }
 
-    public IAChangeAwareBackupBufferOfT<DebugUniformModel> Models { get; set; }
-
     public Shader MainShader { get; set; }
-
-    public List<DebugComponent> SnapShot { get; set; }
 
     /// <inheritdoc />
     public IChangingObserver<IAjivaLayerRenderSystem> GraphicsDataChanged { get; }
 
     /// <inheritdoc />
+    public long DataVersion => dataVersion;
+
+    /// <inheritdoc />
     public void DrawComponents(RenderLayerGuard renderGuard, CancellationToken cancellationToken)
     {
-        var readyMeshPool = meshPool.Use();
+        renderGuard.BindDescriptor();
 
-        foreach (var render in SnapShot)
+        foreach (var (_, instancedMesh) in instanceMeshPool.InstancedMeshes)
         {
-            if (cancellationToken.IsCancellationRequested) return;
-            if (!render.Render) continue;
-            renderGuard.BindDescriptor(render.Id * (uint)Unsafe.SizeOf<DebugUniformModel>());
-            readyMeshPool.DrawMesh(renderGuard.Buffer, render.MeshId);
+            var dedicatedBufferArray = instanceMeshPool.InstanceMeshData[instancedMesh.InstancedId];
+
+            var instanceBuffer = dedicatedBufferArray.Uniform.Current();
+            var vertexBuffer = instancedMesh.Mesh.VertexBuffer;
+            var indexBuffer = instancedMesh.Mesh.IndexBuffer;
+            renderGuard.Capture(vertexBuffer);
+            renderGuard.Capture(indexBuffer);
+            renderGuard.Capture(instanceBuffer);
+            renderGuard.Buffer.BindVertexBuffers(VERTEX_BUFFER_BIND_ID, vertexBuffer.Buffer, 0);
+            renderGuard.Buffer.BindVertexBuffers(INSTANCE_BUFFER_BIND_ID, instanceBuffer.Buffer, 0);
+            renderGuard.Buffer.BindIndexBuffer(indexBuffer.Buffer, 0, Statics.GetIndexType(indexBuffer.SizeOfT));
+            renderGuard.Buffer.DrawIndexed((uint)instancedMesh.Mesh.IndexBuffer.Length, (uint)dedicatedBufferArray.Length, 0, 0, 0);
         }
     }
 
     /// <inheritdoc />
-    public object SnapShotLock { get; } = new object();
-
-    /// <inheritdoc />
-    public void CreateSnapShot()
+    public void UpdateGraphicsPipelineLayer()
     {
-        lock (ComponentEntityMap)
+        var bind = new[]
         {
-            SnapShot = ComponentEntityMap.Keys.Where(x => x.Render).ToList();
-        }
+            Vertex3D.GetBindingDescription(VERTEX_BUFFER_BIND_ID),
+            new VertexInputBindingDescription(INSTANCE_BUFFER_BIND_ID, (uint)Marshal.SizeOf<MeshInstanceData>(), VertexInputRate.Instance)
+        };
+
+        var attrib = new ViAdBuilder<MeshInstanceData>(Vertex3D.GetAttributeDescriptions(VERTEX_BUFFER_BIND_ID), INSTANCE_BUFFER_BIND_ID)
+            .Add(nameof(MeshInstanceData.Position), Format.R32G32B32SFloat)
+            .Add(nameof(MeshInstanceData.Rotation), Format.R32G32B32SFloat)
+            .Add(nameof(MeshInstanceData.Scale), Format.R32G32B32SFloat)
+            .Add(nameof(MeshInstanceData.TextureIndex), Format.R32SInt)
+            .Add(nameof(MeshInstanceData.Padding), Format.R32G32SFloat)
+            .ToArray();
+
+        RenderTarget.GraphicsPipelineLayer = CreateDebugPipe.Default(RenderTarget.PassLayer.Parent, RenderTarget.PassLayer,
+            Ecs.Get<DeviceSystem>(), true,
+            bind, attrib, MainShader, PipelineDescriptorInfos);
     }
 
     /// <inheritdoc />
-    public void ClearSnapShot()
-    {
-        SnapShot = null!;
-    }
+    public RenderTarget RenderTarget { get; set; }
+    
 
-    /// <inheritdoc />
-    public GraphicsPipelineLayer CreateGraphicsPipelineLayer(RenderPassLayer renderPassLayer)
-    {
-        return CreateDebugPipe.Default(renderPassLayer.Parent, renderPassLayer, Ecs.Get<DeviceSystem>(), true, Vertex3D.GetBindingDescription(0),Vertex3D.GetAttributeDescriptions(0).ToArray(), MainShader, PipelineDescriptorInfos);
-    }
-
-    /// <inheritdoc />
-    public Reactive<bool> Render { get; } = new Reactive<bool>(true);
+    private const uint VERTEX_BUFFER_BIND_ID = 0;
+    private const uint INSTANCE_BUFFER_BIND_ID = 1;
 
     /// <inheritdoc />
     public IAjivaLayer<UniformViewProj3d> AjivaLayer { get; set; }
@@ -92,14 +103,23 @@ public class DebugLayer : ComponentSystemBase<DebugComponent>, IInit, IUpdate, I
         var deviceSystem = Ecs.Get<DeviceSystem>();
 
         MainShader = Shader.CreateShaderFrom(Ecs.Get<AssetManager>(), "3d/debug", deviceSystem, "main");
-        Models = new AChangeAwareBackupBufferOfT<DebugUniformModel>(Const.Default.ModelBufferSize, deviceSystem);
-        meshPool = Ecs.Get<IMeshPool>();
+        instanceMeshPool = new InstanceMeshPool<MeshInstanceData>(deviceSystem);
+        instanceMeshPool.Changed.OnChanged += RebuildData;
 
-        PipelineDescriptorInfos = Layers.PipelineDescriptorInfos.CreateFrom(
-            AjivaLayer.LayerUniform.Uniform.Buffer!, (uint)AjivaLayer.LayerUniform.SizeOfT,
-            Models.Uniform.Buffer!, (uint)Models.SizeOfT,
-            Ecs.Get<ITextureSystem>().TextureSamplerImageViews
-        );
+        var textureSamplerImageViews = Ecs.Get<ITextureSystem>().TextureSamplerImageViews;
+        PipelineDescriptorInfos = new[]
+        {
+            new PipelineDescriptorInfos(DescriptorType.UniformBuffer, ShaderStageFlags.Vertex, 0, 1, BufferInfo: new[]
+            {
+                new DescriptorBufferInfo { Buffer = AjivaLayer.LayerUniform.Uniform.Buffer!, Offset = 0, Range = (uint)AjivaLayer.LayerUniform.SizeOfT }
+            }),
+            new(DescriptorType.CombinedImageSampler, ShaderStageFlags.Fragment, 2, (uint)textureSamplerImageViews.Length, ImageInfo: textureSamplerImageViews)
+        };
+    }
+
+    private void RebuildData(IInstanceMeshPool<MeshInstanceData> sender)
+    {
+        Interlocked.Increment(ref dataVersion);
     }
 
     /// <inheritdoc />
@@ -107,7 +127,7 @@ public class DebugLayer : ComponentSystemBase<DebugComponent>, IInit, IUpdate, I
     {
         lock (mainLock)
         {
-            Models.CommitChanges();
+            instanceMeshPool.CommitInstanceDataChanges();
         }
     }
 
@@ -120,12 +140,12 @@ public class DebugLayer : ComponentSystemBase<DebugComponent>, IInit, IUpdate, I
         if (!entity.TryGetComponent<Transform3d>(out var transform))
             throw new ArgumentException("Entity needs and transform in order to be rendered as debug");
 
-        component.Models = Models;
         transform.ChangingObserver.OnChanged += component.OnTransformChange;
         component.TransformChange(transform.ModelMat);
 
         var res = base.RegisterComponent(entity, component);
-        GraphicsDataChanged.Changed();
+        CreateInstance(res);
+        Interlocked.Increment(ref dataVersion);
         return res;
     }
 
@@ -138,45 +158,54 @@ public class DebugLayer : ComponentSystemBase<DebugComponent>, IInit, IUpdate, I
         transform.ChangingObserver.OnChanged -= component.OnTransformChange;
 
         var res = base.UnRegisterComponent(entity, component);
-        GraphicsDataChanged.Changed();
+        DeleteInstance(res);
+        Interlocked.Increment(ref dataVersion);
         return res;
     }
-}
-public struct DebugUniformModel : IComp<DebugUniformModel>
-{
-    public mat4 Model;
 
-    /// <inheritdoc />
-    public bool CompareTo(DebugUniformModel other)
+    private void CreateInstance(DebugComponent res)
     {
-        return other.Model == Model;
+        res.Instance = instanceMeshPool.CreateInstance(instanceMeshPool.AsInstanced(res.Mesh));
+    }
+
+    private void DeleteInstance(DebugComponent res)
+    {
+        if (res.Instance == null) return;
+        instanceMeshPool.DeleteInstance(res.Instance);
+        res.Instance = null;
     }
 }
 public class DebugComponent : RenderMeshIdUnique<DebugComponent>
 {
-    public DebugComponent()
+    private readonly Transform3d transform;
+    public IInstancedMeshInstance<MeshInstanceData>? Instance { get; set; }
+
+    public DebugComponent(IMesh mesh, Transform3d transform)
     {
+        this.transform = transform;
+        transform.ChangingObserver.OnChanged += TransformChange;
+        Mesh = mesh;
         OnTransformChange = TransformChange;
+    }
+
+    public IMesh Mesh { get; }
+
+    public void TransformChange(mat4 value)
+    {
+        Instance?.UpdateData(Update);
+    }
+
+    private void Update(ref MeshInstanceData value)
+    {
+        value.Position = transform.Position;
+        value.Rotation = glm.Radians(transform.Rotation);
+        value.Scale = transform.Scale;
+        value.Padding = vec2.Ones;
     }
 
     public IChangingObserverOnlyValue<mat4>.OnChangedDelegate OnTransformChange { get; }
 
-    public IAChangeAwareBackupBufferOfT<DebugUniformModel>? Models { get; set; }
-
     public bool DrawTransform { get; set; }
     public bool DrawWireframe { get; set; }
     public bool NoDepthTest { get; set; }
-
-    public void TransformChange(mat4 value)
-    {
-        if (Models is null)
-        {
-            ALog.Warn("RenderMeshUpdate Failed!");
-            return;
-        }
-
-        var change = Models.GetForChange((int)Id);
-
-        change.Value.Model = value;
-    }
 }
