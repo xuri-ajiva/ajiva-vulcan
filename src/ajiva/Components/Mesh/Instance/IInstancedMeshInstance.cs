@@ -1,11 +1,9 @@
-﻿using ajiva.Models.Instance;
+﻿namespace ajiva.Components.Mesh.Instance;
 
-namespace ajiva.Components.Mesh.Instance;
-
-public interface IInstancedMeshInstance : IDisposable
+public interface IInstancedMeshInstance<T> : IDisposable where T : unmanaged
 {
-    public IInstancedMesh InstancedMesh { get; }
+    public IInstancedMesh<T> InstancedMesh { get; }
     public uint InstanceId { get; }
     
-    public void UpdateData(ActionRef<MeshInstanceData> action);
+    public void UpdateData(ActionRef<T> action);
 }

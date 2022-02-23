@@ -1,16 +1,15 @@
 ﻿using ajiva.Models.Buffer.Dynamic;
-using ajiva.Models.Instance;
 
 namespace ajiva.Components.Mesh.Instance;
 
-public class InstancedMesh : IInstancedMesh
+public class InstancedMesh<T> : IInstancedMesh<T> where T : unmanaged
 {
-    private DynamicUniversalDedicatedBufferArray<MeshInstanceData> instanceDataBuffer;
+    private DynamicUniversalDedicatedBufferArray<T> instanceDataBuffer;
 
     public InstancedMesh(IMesh mesh)
     {
         Mesh = mesh;
-        InstancedId = INextId<IInstancedMesh>.Next();
+        InstancedId = INextId<IInstancedMesh<T>>.Next();
     }
 
     /// <inheritdoc />
@@ -20,26 +19,26 @@ public class InstancedMesh : IInstancedMesh
     public uint InstancedId { get; }
 
     /// <inheritdoc />
-    public void UpdateData(uint instanceId, ActionRef<MeshInstanceData> action) => instanceDataBuffer.Update((int)instanceId, action);
+    public void UpdateData(uint instanceId, ActionRef<T> action) => instanceDataBuffer.Update((int)instanceId, action);
 
     /// <inheritdoc />
-    public uint AddInstance(IInstancedMeshInstance instancedMeshInstance)
+    public uint AddInstance(IInstancedMeshInstance<T> instancedMeshInstance)
     {
-        return instanceDataBuffer.Add(new MeshInstanceData());
+        return instanceDataBuffer.Add(new T());
     }
 
     /// <inheritdoc />
-    public void RemoveInstance(IInstancedMeshInstance instancedMeshInstance)
+    public void RemoveInstance(IInstancedMeshInstance<T> instancedMeshInstance)
     {
         instanceDataBuffer.RemoveAt(instancedMeshInstance.InstanceId);
     }
 
-    public void SetInstanceDataBuffer(DynamicUniversalDedicatedBufferArray<MeshInstanceData> instanceDataBuffer) => this.instanceDataBuffer = instanceDataBuffer;
+    public void SetInstanceDataBuffer(DynamicUniversalDedicatedBufferArray<T> pInstanceDataBuffer) => instanceDataBuffer = pInstanceDataBuffer;
 
     /// <inheritdoc />
     public void Dispose()
     {
         GC.SuppressFinalize(this);
-        INextId<IInstancedMesh>.Remove(InstancedId);
+        INextId<IInstancedMesh<T>>.Remove(InstancedId);
     }
 }

@@ -1,23 +1,21 @@
-﻿using ajiva.Models.Instance;
+﻿namespace ajiva.Components.Mesh.Instance;
 
-namespace ajiva.Components.Mesh.Instance;
-
-public class InstancedMeshInstance : IInstancedMeshInstance
+public class InstancedMeshInstance<T> : IInstancedMeshInstance<T> where T : unmanaged
 {
-    public InstancedMeshInstance(IInstancedMesh instancedMesh)
+    public InstancedMeshInstance(IInstancedMesh<T> instancedMesh)
     {
         InstancedMesh = instancedMesh;
         InstanceId = instancedMesh.AddInstance(this);
     }
 
     /// <inheritdoc />
-    public IInstancedMesh InstancedMesh { get; }
+    public IInstancedMesh<T> InstancedMesh { get; }
 
     /// <inheritdoc />
     public uint InstanceId { get; }
 
     /// <inheritdoc />
-    public void UpdateData(ActionRef<MeshInstanceData> data) => InstancedMesh.UpdateData(InstanceId, data);
+    public void UpdateData(ActionRef<T> data) => InstancedMesh.UpdateData(InstanceId, data);
 
     /// <inheritdoc />
     public void Dispose()
