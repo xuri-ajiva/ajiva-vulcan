@@ -48,7 +48,7 @@ public class DynamicUniversalDedicatedBufferArray<T> : DisposingLogger where T :
 
     private void BufferResizedOnChanged(ResizableDedicatedBuffer sender)
     {
-        ALog.Info($"Buffer Resized: {sender.Current().Buffer.RawHandle.ToUInt64():X8}");
+        ALog.Debug($"Buffer Resized: {sender.Current().Buffer.RawHandle.ToUInt64():X8}");
     }
 
     public ResizableDedicatedBuffer Uniform { get; set; }

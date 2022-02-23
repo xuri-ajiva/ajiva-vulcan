@@ -10,13 +10,21 @@ namespace ajiva.Systems.VulcanEngine;
 
 public static class Statics
 {
+    private static HashSet<string> Ignore = new HashSet<string>()
+    {
+        "UNASSIGNED-CoreValidation-DrawState-InvalidImageLayout",
+        "VUID-VkPresentInfoKHR-pImageIndices-01296"
+    };
     private static readonly DebugReportCallbackDelegate DebugReportDelegate = (flags, objectType, o, location, messageCode, layerPrefix, message, userData) =>
     {
-        if (location.ToString() == "337425955") return false;
+        var p0 = message.IndexOf('[') + 2;
+        var p1 = message.IndexOf(']') - 1;
+        var ident = message.Substring(p0, p1 - p0);
+        if (Ignore.Contains(ident)) return false;
         var stackframe = new StackFrame(2, true);
-        ALog.Error($"[{flags}] ({objectType}) {layerPrefix}");
+        ALog.Error($"[{flags}] ({objectType}) {layerPrefix} #{ident}");
         ALog.Error(message);
-        ALog.Error($"File: {stackframe.GetFileName()}:{stackframe.GetFileLineNumber()} " +BuildStackTraceError(3, 6));
+        ALog.Error($"File: {stackframe.GetFileName()}:{stackframe.GetFileLineNumber()} " + BuildStackTraceError(3, 6));
 
         string BuildStackTraceError(int begin, int count)
         {
@@ -58,7 +66,7 @@ public static class Statics
 
     public static Format FindDepthFormat(this PhysicalDevice physicalDevice)
     {
-        return FindSupportedFormat(physicalDevice, new[]
+        return physicalDevice.FindSupportedFormat(new[]
             {
                 Format.D32SFloat, Format.D32SFloatS8UInt, Format.D24UNormS8UInt
             },
@@ -68,7 +76,7 @@ public static class Statics
         );
     }
 
-    private static Format FindSupportedFormat(PhysicalDevice physicalDevice, IEnumerable<Format> candidates, ImageTiling tiling, FormatFeatureFlags features)
+    public static Format FindSupportedFormat(this PhysicalDevice physicalDevice, IEnumerable<Format> candidates, ImageTiling tiling, FormatFeatureFlags features)
     {
         foreach (var format in candidates)
         {
@@ -151,7 +159,7 @@ public static class Statics
     {
         return imageSystem.CreateManagedImage(device.FindDepthFormat(), ImageAspectFlags.Depth, canvas);
     }
-    
+
     public static IndexType GetIndexType(uint indexBufferSizeOfT)
     {
         return indexBufferSizeOfT switch

@@ -144,7 +144,6 @@ public class Ajiva2dLayerSystem : SystemBase, IInit, IAjivaLayer<UniformLayer2d>
         };
     }
 
-
     private void BuildLayerUniform(Canvas canvas)
     {
         BuildLayerUniform(canvas.WidthF, canvas.HeightF);

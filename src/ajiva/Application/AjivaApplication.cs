@@ -169,15 +169,6 @@ public class AjivaApplication : DisposingLogger
             case Key.Q:
                 Task.Run(() => entityComponentSystem.Get<IGraphicsSystem>().UpdateGraphicsData());
                 break;
-            case Key.F1:
-                var s1 = entityComponentSystem.Get<DebugLayer>();
-                s1.Render.Value = !s1.Render.Value;
-                break;
-            case Key.F2:
-                var s2 = entityComponentSystem.Get<SolidMeshRenderLayer>();
-                s2.Render.Value = !s2.Render.Value;
-                break;
-
             case Key.B:
                 {
                     using var change = entityComponentSystem.Get<GraphicsSystem>().ChangingObserver.BeginBigChange();

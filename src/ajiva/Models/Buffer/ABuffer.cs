@@ -36,7 +36,7 @@ public class ABuffer : DisposingLogger, IEquatable<ABuffer>
     /// <inheritdoc />
     protected override void ReleaseUnmanagedResources(bool disposing)
     {
-        ALog.Info($"Buffer Deleted: {Buffer.RawHandle}, Disposing: {disposing}");
+        ALog.Trace($"Buffer Deleted: {Buffer.RawHandle}, Disposing: {disposing}");
         Buffer?.Dispose();
         Memory?.Free();
     }
