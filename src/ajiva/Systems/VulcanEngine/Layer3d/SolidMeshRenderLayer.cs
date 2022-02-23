@@ -12,9 +12,7 @@ using ajiva.Systems.VulcanEngine.Interfaces;
 using ajiva.Systems.VulcanEngine.Layer;
 using ajiva.Systems.VulcanEngine.Layers;
 using ajiva.Systems.VulcanEngine.Layers.Creation;
-using ajiva.Systems.VulcanEngine.Layers.Models;
 using ajiva.Systems.VulcanEngine.Systems;
-using ajiva.Utils.Changing;
 using SharpVk;
 
 namespace ajiva.Systems.VulcanEngine.Layer3d;
@@ -22,12 +20,12 @@ namespace ajiva.Systems.VulcanEngine.Layer3d;
 [Dependent(typeof(Ajiva3dLayerSystem))]
 public class SolidMeshRenderLayer : ComponentSystemBase<RenderInstanceMesh>, IInit, IAjivaLayerRenderSystem<UniformViewProj3d>, IUpdate
 {
-    private InstanceMeshPool instanceMeshPool;
+    private InstanceMeshPool<MeshInstanceData> instanceMeshPool;
+    private long dataVersion;
 
     /// <inheritdoc />
     public SolidMeshRenderLayer(IAjivaEcs ecs) : base(ecs)
     {
-        GraphicsDataChanged = new ChangingObserver<IAjivaLayerRenderSystem>(this);
     }
 
     public PipelineDescriptorInfos[] PipelineDescriptorInfos { get; set; }
@@ -36,7 +34,7 @@ public class SolidMeshRenderLayer : ComponentSystemBase<RenderInstanceMesh>, IIn
     public IAjivaLayer<UniformViewProj3d> AjivaLayer { get; set; }
 
     /// <inheritdoc />
-    public IChangingObserver<IAjivaLayerRenderSystem> GraphicsDataChanged { get; }
+    public long DataVersion => dataVersion;
 
     /// <inheritdoc />
     public void DrawComponents(RenderLayerGuard renderGuard, CancellationToken cancellationToken)
@@ -61,16 +59,7 @@ public class SolidMeshRenderLayer : ComponentSystemBase<RenderInstanceMesh>, IIn
     }
 
     /// <inheritdoc />
-    public object SnapShotLock { get; } = new();
-
-    /// <inheritdoc />
-    public void CreateSnapShot() { }
-
-    /// <inheritdoc />
-    public void ClearSnapShot() { }
-
-    /// <inheritdoc />
-    public GraphicsPipelineLayer CreateGraphicsPipelineLayer(RenderPassLayer renderPassLayer)
+    public void UpdateGraphicsPipelineLayer()
     {
         var bind = new[]
         {
@@ -86,18 +75,16 @@ public class SolidMeshRenderLayer : ComponentSystemBase<RenderInstanceMesh>, IIn
             .Add(nameof(MeshInstanceData.Padding), Format.R32G32SFloat)
             .ToArray();
 
-        var res = GraphicsPipelineLayerCreator.Default(renderPassLayer.Parent, renderPassLayer,
+        RenderTarget.GraphicsPipelineLayer = GraphicsPipelineLayerCreator.Default(RenderTarget.PassLayer.Parent, RenderTarget.PassLayer,
             Ecs.Get<DeviceSystem>(), true,
             bind, attrib, MainShader, PipelineDescriptorInfos);
-
-        return res;
     }
+
+    /// <inheritdoc />
+    public RenderTarget RenderTarget { get; set; }
 
     private const uint VERTEX_BUFFER_BIND_ID = 0;
     private const uint INSTANCE_BUFFER_BIND_ID = 1;
-
-    /// <inheritdoc />
-    public Reactive<bool> Render { get; } = new Reactive<bool>(true);
 
     /// <inheritdoc />
     public void Init()
@@ -105,7 +92,7 @@ public class SolidMeshRenderLayer : ComponentSystemBase<RenderInstanceMesh>, IIn
         var deviceSystem = Ecs.Get<DeviceSystem>();
 
         MainShader = Shader.CreateShaderFrom(Ecs.Get<AssetManager>(), "3d/SolidInstance", deviceSystem, "main");
-        instanceMeshPool = new InstanceMeshPool(deviceSystem);
+        instanceMeshPool = new InstanceMeshPool<MeshInstanceData>(deviceSystem);
         instanceMeshPool.Changed.OnChanged += RebuildData;
 
         var textureSamplerImageViews = Ecs.Get<ITextureSystem>().TextureSamplerImageViews;
@@ -119,9 +106,9 @@ public class SolidMeshRenderLayer : ComponentSystemBase<RenderInstanceMesh>, IIn
         };
     }
 
-    private void RebuildData(IInstanceMeshPool sender)
+    private void RebuildData(IInstanceMeshPool<MeshInstanceData> sender)
     {
-        GraphicsDataChanged.Changed();
+        Interlocked.Increment(ref dataVersion);
     }
 
     /// <inheritdoc />
@@ -148,14 +135,13 @@ public class SolidMeshRenderLayer : ComponentSystemBase<RenderInstanceMesh>, IIn
 
         var res = base.RegisterComponent(entity, component);
         CreateInstance(res);
-        GraphicsDataChanged.Changed();
+        Interlocked.Increment(ref dataVersion);
         return res;
     }
 
     private void CreateInstance(RenderInstanceMesh res)
     {
-        var instance = instanceMeshPool.CreateInstance(instanceMeshPool.AsInstanced(res.Mesh));
-        res.Instance = instance;
+        res.Instance = instanceMeshPool.CreateInstance(instanceMeshPool.AsInstanced(res.Mesh));
     }
 
     private void DeleteInstance(RenderInstanceMesh res)
@@ -172,8 +158,8 @@ public class SolidMeshRenderLayer : ComponentSystemBase<RenderInstanceMesh>, IIn
             throw new ArgumentException("Entity needs and transform in order to be rendered as debug");
 
         var res = base.UnRegisterComponent(entity, component);
-        DeleteInstance(res);
-        GraphicsDataChanged.Changed();
+        DeleteInstance(res);        
+        Interlocked.Increment(ref dataVersion);
         return res;
     }
 }
