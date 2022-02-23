@@ -178,24 +178,3 @@ public class AjivaLayerRenderer : DisposingLogger
         }
     }
 }
-public class RenderLayerGuard
-{
-    public CommandBuffer Buffer { get; set; }
-    public GraphicsPipelineLayer Pipeline { get; set; }
-    public RenderBuffer RenderBuffer { get; set; }
-
-    public void BindDescriptor(uint dynamicOffset)
-    {
-        Buffer.BindDescriptorSets(PipelineBindPoint.Graphics, Pipeline.PipelineLayout, 0, Pipeline.DescriptorSet, dynamicOffset);
-    }
-
-    public void BindDescriptor()
-    {
-        Buffer.BindDescriptorSets(PipelineBindPoint.Graphics, Pipeline.PipelineLayout, 0, Pipeline.DescriptorSet, ArrayProxy<uint>.Null);
-    }
-
-    public void Capture(object obj)
-    {
-        RenderBuffer?.Captured.Add(obj);
-    }
-}
