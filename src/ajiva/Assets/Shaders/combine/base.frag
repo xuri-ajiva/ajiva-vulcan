@@ -10,12 +10,10 @@ layout(location = 1) in flat int index;
 layout(location = 0) out vec4 outColor;
 
 void main() {
-    //outColor = vec4(fragTexCoord, index/10, 1.0f);
     vec4 color = texture(texSampler[index], fragTexCoord);
-    if (color.w < .5) {
-        //outColor = vec4(fragTexCoord, index/10, 1.0f);
+    if (color.w < .1) {
         discard;
     } else {
-        outColor = vec4 (color.rgb, 1.0f);
+        outColor = color;
     }
 }
