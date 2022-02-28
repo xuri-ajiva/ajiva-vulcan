@@ -1,4 +1,5 @@
 ﻿using ajiva.Components.Transform;
+using ajiva.Components.Transform.Ui;
 using ajiva.Ecs;
 using ajiva.Systems.VulcanEngine.Interfaces;
 
@@ -12,7 +13,7 @@ public class TransformComponentSystem : ComponentSystemBase<Transform3d>, ITrans
     {
     }
 }
-public class Transform2dComponentSystem : ComponentSystemBase<Transform2d>, ITransform2dComponentSystem
+public class Transform2dComponentSystem : ComponentSystemBase<UiTransform>, ITransform2dComponentSystem
 {
     public Transform2dComponentSystem(IAjivaEcs ecs) : base(ecs)
     {
