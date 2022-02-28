@@ -1,40 +1,46 @@
 ﻿using ajiva.Components.Media;
 using ajiva.Components.Mesh;
 using ajiva.Components.Mesh.Instance;
-using ajiva.Components.Transform;
+using ajiva.Components.Transform.Ui;
 using ajiva.Models.Instance;
-using GlmSharp;
+using SharpVk;
 
 namespace ajiva.Components.RenderAble;
 
 public class RenderInstanceMesh2D : DisposingLogger, IComponent
 {
-    public IInstancedMeshInstance<Mesh2dInstanceData>? Instance { get; set; }
+    public IInstancedMeshInstance<UiInstanceData>? Instance { get; set; }
 
-    private readonly Transform2d transform;
+    private readonly UiTransform transform;
+    private readonly TextureComponent? textureComponent;
+    private Extent2D extent;
 
-    public RenderInstanceMesh2D(IMesh mesh, Transform2d transform, TextureComponent textureComponent)
+    public RenderInstanceMesh2D(IMesh mesh, UiTransform transform, TextureComponent textureComponent)
     {
         this.transform = transform;
-        transform.ChangingObserver.OnChanged += TransformChange;
+        transform.ChangingObserver.OnChanged += sender => UpdateData();
         Mesh = mesh;
-        TextureComponent = textureComponent;
+        this.textureComponent = textureComponent;
     }
 
     public IMesh Mesh { get; }
-    public TextureComponent? TextureComponent { get; }
-
-    public void TransformChange(mat4 value)
+    public Extent2D Extent
     {
-        Instance?.UpdateData(Update);
+        get => extent;
+        set
+        {
+            extent = value;
+            UpdateData();
+        }
     }
 
-    private void Update(ref Mesh2dInstanceData value)
+    private void UpdateData() => Instance?.UpdateData(Update);
+
+    private void Update(ref UiInstanceData value)
     {
-        value.Position = transform.Position;
-        value.Rotation = glm.Radians(transform.Rotation);
-        value.Scale = transform.Scale;
-        value.TextureIndex = TextureComponent?.TextureId ?? 0;
-        value.Padding = vec2.Ones;
+        value.PosCombine = transform.GetRenderPoints(extent);
+        value.Rotation = transform.Rotation;
+        value.TextureIndex = textureComponent?.TextureId ?? 0;
+        value.DrawType = UiDrawType.TexturedRectangle;
     }
 }

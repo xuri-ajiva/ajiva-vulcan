@@ -1,7 +1,7 @@
 ﻿using ajiva.Components.Mesh;
-using ajiva.Components.Mesh.Instance;
 using ajiva.Components.RenderAble;
 using ajiva.Components.Transform;
+using ajiva.Components.Transform.Ui;
 using ajiva.Ecs;
 using ajiva.Entities;
 using ajiva.Generators.Texture;
@@ -59,7 +59,6 @@ public class AjivaApplication : DisposingLogger
         var deviceSystem = entityComponentSystem.Add<DeviceSystem, IDeviceSystem>();
 
         var meshPool = new MeshPool(deviceSystem);
-        var instanceMeshPool = new InstanceMeshPool(deviceSystem);
         entityComponentSystem.Add<MeshPool, IMeshPool>(meshPool);
         //entityComponentSystem.Add<InstanceMeshPool, IInstanceMeshPool>(instanceMeshPool); // should be unique per instance user
 
@@ -108,9 +107,10 @@ public class AjivaApplication : DisposingLogger
         {
             x.SetMesh(MeshPrefab.Rect);
             x.Render = true;
-        }).Configure<Transform2d>(x =>
+        }).Configure<UiTransform>(x =>
         {
-            x.Scale = new vec2(.05f);
+            x.VerticalAnchor = new UiAnchor(UiAlignment.Right, UiValueUnit.Pixel(20), UiValueUnit.Pixel(500));
+            x.HorizontalAnchor = new UiAnchor(UiAlignment.Bottom, UiValueUnit.Pixel(20), UiValueUnit.Pixel(500));
         }).Register(entityComponentSystem);
 
         for (var i = 0; i < 10; i++)
@@ -188,10 +188,10 @@ public class AjivaApplication : DisposingLogger
                 }
 
             case Key.R:
-                var rect = new Rect().Configure<Transform2d>(x =>
+                /*var rect = new Rect().Configure<UiTransform>(x =>
                 {
                     x.Scale = new vec2(.05f);
-                }).Register(entityComponentSystem);
+                }).Register(entityComponentSystem);*/
                 break;
 
             case Key.P:

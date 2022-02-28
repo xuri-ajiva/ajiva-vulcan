@@ -2,7 +2,7 @@
 using ajiva.Components;
 using ajiva.Components.Mesh.Instance;
 using ajiva.Components.RenderAble;
-using ajiva.Components.Transform;
+using ajiva.Components.Transform.Ui;
 using ajiva.Ecs;
 using ajiva.Models.Instance;
 using ajiva.Models.Layers.Layer2d;
@@ -22,8 +22,9 @@ namespace ajiva.Systems.VulcanEngine.Layer2d;
 public class Mesh2dRenderLayer : ComponentSystemBase<RenderInstanceMesh2D>, IInit, IUpdate, IAjivaLayerRenderSystem<UniformLayer2d>
 {
     private readonly object mainLock = new object();
-    private InstanceMeshPool<Mesh2dInstanceData> instanceMeshPool;
+    private InstanceMeshPool<UiInstanceData> instanceMeshPool;
     private long dataVersion;
+    private WindowSystem windowSystem;
 
     /// <inheritdoc />
     public Mesh2dRenderLayer(IAjivaEcs ecs) : base(ecs)
@@ -54,10 +55,11 @@ public class Mesh2dRenderLayer : ComponentSystemBase<RenderInstanceMesh2D>, IIni
             renderGuard.Capture(vertexBuffer);
             renderGuard.Capture(indexBuffer);
             renderGuard.Capture(instanceBuffer);
-            renderGuard.Buffer.BindVertexBuffers(VERTEX_BUFFER_BIND_ID, vertexBuffer.Buffer, 0);
+            //renderGuard.Buffer.BindVertexBuffers(VERTEX_BUFFER_BIND_ID, vertexBuffer.Buffer, 0);
             renderGuard.Buffer.BindVertexBuffers(INSTANCE_BUFFER_BIND_ID, instanceBuffer.Buffer, 0);
-            renderGuard.Buffer.BindIndexBuffer(indexBuffer.Buffer, 0, Statics.GetIndexType(indexBuffer.SizeOfT));
-            renderGuard.Buffer.DrawIndexed((uint)instancedMesh.Mesh.IndexBuffer.Length, (uint)dedicatedBufferArray.Length, 0, 0, 0);
+            //renderGuard.Buffer.BindIndexBuffer(indexBuffer.Buffer, 0, Statics.GetIndexType(indexBuffer.SizeOfT));
+            //renderGuard.Buffer.DrawIndexed(6, (uint)dedicatedBufferArray.Length, 0, 0, 0);
+            renderGuard.Buffer.Draw(6, (uint)dedicatedBufferArray.Length, 0, 0);
         }
     }
 
@@ -66,16 +68,14 @@ public class Mesh2dRenderLayer : ComponentSystemBase<RenderInstanceMesh2D>, IIni
     {
         var bind = new[]
         {
-            Vertex2D.GetBindingDescription(VERTEX_BUFFER_BIND_ID),
-            new VertexInputBindingDescription(INSTANCE_BUFFER_BIND_ID, (uint)Marshal.SizeOf<Mesh2dInstanceData>(), VertexInputRate.Instance)
+            new VertexInputBindingDescription(INSTANCE_BUFFER_BIND_ID, (uint)Marshal.SizeOf<UiInstanceData>(), VertexInputRate.Instance)
         };
 
-        var attrib = new ViAdBuilder<Mesh2dInstanceData>(Vertex2D.GetAttributeDescriptions(VERTEX_BUFFER_BIND_ID), INSTANCE_BUFFER_BIND_ID)
-            .Add(nameof(Mesh2dInstanceData.Position), Format.R32G32SFloat)
-            .Add(nameof(Mesh2dInstanceData.Rotation), Format.R32G32SFloat)
-            .Add(nameof(Mesh2dInstanceData.Scale), Format.R32G32SFloat)
-            .Add(nameof(Mesh2dInstanceData.TextureIndex), Format.R32SInt)
-            .Add(nameof(Mesh2dInstanceData.Padding), Format.R32G32SFloat)
+        var attrib = new ViAdBuilder<UiInstanceData>(INSTANCE_BUFFER_BIND_ID)
+            .Add(nameof(UiInstanceData.PosCombine), Format.R32G32B32A32SFloat)
+            .Add(nameof(UiInstanceData.Rotation), Format.R32G32SFloat)
+            .Add(nameof(UiInstanceData.TextureIndex), Format.R32UInt)
+            .Add(nameof(UiInstanceData.DrawType), Format.R32UInt)
             .ToArray();
 
         RenderTarget.GraphicsPipelineLayer = GraphicsPipelineLayerCreator.Default(RenderTarget.PassLayer.Parent, RenderTarget.PassLayer,
@@ -94,9 +94,10 @@ public class Mesh2dRenderLayer : ComponentSystemBase<RenderInstanceMesh2D>, IIni
     public void Init()
     {
         var deviceSystem = Ecs.Get<DeviceSystem>();
+        windowSystem = Ecs.Get<WindowSystem>();
 
         MainShader = Shader.CreateShaderFrom(Ecs.Get<AssetManager>(), "2d", deviceSystem, "main");
-        instanceMeshPool = new InstanceMeshPool<Mesh2dInstanceData>(deviceSystem);
+        instanceMeshPool = new InstanceMeshPool<UiInstanceData>(deviceSystem);
         instanceMeshPool.Changed.OnChanged += RebuildData;
 
         var textureSamplerImageViews = Ecs.Get<ITextureSystem>().TextureSamplerImageViews;
@@ -110,7 +111,7 @@ public class Mesh2dRenderLayer : ComponentSystemBase<RenderInstanceMesh2D>, IIni
         };
     }
 
-    private void RebuildData(IInstanceMeshPool<Mesh2dInstanceData> sender)
+    private void RebuildData(IInstanceMeshPool<UiInstanceData> sender)
     {
         Interlocked.Increment(ref dataVersion);
     }
@@ -130,14 +131,12 @@ public class Mesh2dRenderLayer : ComponentSystemBase<RenderInstanceMesh2D>, IIni
     /// <inheritdoc />
     public override RenderInstanceMesh2D RegisterComponent(IEntity entity, RenderInstanceMesh2D component)
     {
-        if (!entity.TryGetComponent<Transform2d>(out var transform))
+        if (!entity.TryGetComponent<UiTransform>(out var transform))
             throw new ArgumentException("Entity needs and transform in order to be rendered as debug");
-
 
         var res = base.RegisterComponent(entity, component);
         CreateInstance(res);
-        //transform.ChangingObserver.OnChanged += component.OnTransformChange;
-        component.TransformChange(transform.ModelMat);
+        component.Extent = windowSystem.Canvas.Extent;
         Interlocked.Increment(ref dataVersion);
         return res;
     }
@@ -157,10 +156,9 @@ public class Mesh2dRenderLayer : ComponentSystemBase<RenderInstanceMesh2D>, IIni
     /// <inheritdoc />
     public override RenderInstanceMesh2D UnRegisterComponent(IEntity entity, RenderInstanceMesh2D component)
     {
-        if (!entity.TryGetComponent<Transform2d>(out var transform))
+        if (!entity.TryGetComponent<UiTransform>(out var transform))
             throw new ArgumentException("Entity needs and transform in order to be rendered as debug");
 
-        //transform.ChangingObserver.OnChanged -= component.OnTransformChange;
         var res = base.UnRegisterComponent(entity, component);
         DeleteInstance(res);
         Interlocked.Increment(ref dataVersion);

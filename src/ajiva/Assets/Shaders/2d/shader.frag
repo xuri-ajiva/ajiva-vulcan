@@ -7,6 +7,7 @@ layout(binding = 2) uniform sampler2D texSampler[TEXTURE_SAMPLER_COUNT];
 
 layout (location = 0) in vec3 inColor;
 layout (location = 1) in vec3 inUV;
+layout (location = 2) in vec2 inPos;
 
 layout(location = 0) out vec4 outColor;
 
@@ -14,5 +15,5 @@ void main() {
     //outColor = vec4 (/*fragColor.x +*/ fragTexCoord.x, /*fragColor.y + */fragTexCoord.y, 1.0, 1.0f);
     //outColor = vec4(fragTexCoord, 0.0, 1.0);
 
-    outColor = vec4 (texture(texSampler[int(inUV.z)], inUV.xy).xyz + inColor, 1.0f);
+    outColor = texture(texSampler[int(inUV.z)], inUV.xy);
 }
