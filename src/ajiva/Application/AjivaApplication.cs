@@ -109,8 +109,8 @@ public class AjivaApplication : DisposingLogger
             x.Render = true;
         }).Configure<UiTransform>(x =>
         {
-            x.VerticalAnchor = new UiAnchor(UiAlignment.Right, UiValueUnit.Pixel(20), UiValueUnit.Pixel(500));
-            x.HorizontalAnchor = new UiAnchor(UiAlignment.Bottom, UiValueUnit.Pixel(20), UiValueUnit.Pixel(500));
+            x.VerticalAnchor = new UiAnchor(UiAlignment.CenterVertical, UiValueUnit.Pixel(20), UiValueUnit.Pixel(100));
+            x.HorizontalAnchor = new UiAnchor(UiAlignment.Right, UiValueUnit.Pixel(20), UiValueUnit.Pixel(100));
         }).Register(entityComponentSystem);
 
         for (var i = 0; i < 10; i++)

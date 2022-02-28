@@ -64,12 +64,13 @@ public class UiTransform : DisposingLogger, IComponent
 
         if (uiAnchor.Alignment == UiAlignment.None) return (0, 0);
 
+        if ((uiAnchor.Alignment & UiAlignment.Center) == UiAlignment.Center)
+            return (RenderCenter - computeFixedValueSpan / 2, computeFixedValueSpan);
+        
         if ((uiAnchor.Alignment & UiAlignment.Min) == UiAlignment.Min)
             return (RenderMin + computeFixedValueMargin, computeFixedValueSpan);
         if ((uiAnchor.Alignment & UiAlignment.Max) == UiAlignment.Max)
             return (RenderMax - (computeFixedValueMargin + computeFixedValueSpan), computeFixedValueSpan);
-        if ((uiAnchor.Alignment & UiAlignment.Center) == UiAlignment.Center)
-            return (RenderCenter - computeFixedValueSpan / 2, computeFixedValueSpan);
 
         throw new ArgumentOutOfRangeException(nameof(uiAnchor.Alignment), uiAnchor.Alignment, "");
     }
@@ -79,7 +80,7 @@ public class UiTransform : DisposingLogger, IComponent
         var (value, uiUnit) = uiValue;
         return uiUnit switch
         {
-            UiUnit.Pixel => value * (RenderMax / totalSpan),
+            UiUnit.Pixel => (value / totalSpan) * RenderSize,
             UiUnit.Percent => (value / 100f) * RenderSize,
             _ => throw new ArgumentOutOfRangeException(nameof(uiValue), "The " + nameof(UiUnit) + " value is out of Range")
         };
