@@ -74,10 +74,12 @@ public class DeviceSystem : SystemBase, IInit, IDeviceSystem
                     }
                 }).ToArray(),
             null,
-            KhrExtensions.Swapchain, DeviceCreateFlags.None, new PhysicalDeviceFeatures
+            KhrExtensions.Swapchain, DeviceCreateFlags.None, new PhysicalDeviceFeatures  
             {
+                //TODO Enable Features Used in any other part // remainder
                 SamplerAnisotropy = true,
-                FillModeNonSolid = true
+                FillModeNonSolid = true,
+                SampleRateShading = true,
             });
 
         GraphicsQueue = Device.GetQueue(queueFamilies.GraphicsFamily!.Value, 0);

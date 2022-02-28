@@ -94,10 +94,7 @@ public class CombinePipeline : DisposingLogger
             });
 
         var frameBuffers = swapChainLayer.SwapChainImages.Select(x => deviceSystem.Device.CreateFramebuffer(renderPass,
-            new[]
-            {
-                x.View
-            },
+            new[] { x.View },
             swapChainLayer.Canvas.Width,
             swapChainLayer.Canvas.Height,
             1)).ToArray();

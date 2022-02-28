@@ -25,7 +25,7 @@ public class Ajiva2dLayerSystem : SystemBase, IInit, IAjivaLayer<UniformLayer2d>
     private object MainLock { get; } = new object();
 
     /// <inheritdoc />
-    public Extent2D Extent { get; } = new Extent2D(800, 600);
+    public Extent2D Extent { get; } = new Extent2D(2560, 1440);
 
     /// <inheritdoc />
     public IChangingObserver<IAjivaLayer> LayerChanged { get; }
@@ -42,9 +42,6 @@ public class Ajiva2dLayerSystem : SystemBase, IInit, IAjivaLayer<UniformLayer2d>
     /// <inheritdoc />
     public RenderTarget CreateRenderPassLayer(SwapChainLayer swapChainLayer, PositionAndMax layerIndex, PositionAndMax layerRenderComponentSystemsIndex)
     {
-        var firstPass = layerIndex.First && layerRenderComponentSystemsIndex.First;
-        var lastPass = layerIndex.Last && layerRenderComponentSystemsIndex.Last;
-
         var deviceSystem = Ecs.Get<DeviceSystem>();
         var imageSystem = Ecs.Get<IImageSystem>();
 
@@ -61,20 +58,17 @@ public class Ajiva2dLayerSystem : SystemBase, IInit, IAjivaLayer<UniformLayer2d>
                 new AttachmentDescription(AttachmentDescriptionFlags.None,
                     frameBufferFormat,
                     SampleCountFlags.SampleCount1,
-                    firstPass ? AttachmentLoadOp.Clear : AttachmentLoadOp.Load,
+                     AttachmentLoadOp.Clear,
                     AttachmentStoreOp.Store,
                     AttachmentLoadOp.DontCare,
                     AttachmentStoreOp.DontCare,
-                    firstPass ? ImageLayout.Undefined : ImageLayout.General,
-                    lastPass ? ImageLayout.PresentSource : ImageLayout.General)
+                    ImageLayout.ColorAttachmentOptimal,
+                    ImageLayout.ColorAttachmentOptimal)
             },
             new SubpassDescription
             {
                 PipelineBindPoint = PipelineBindPoint.Graphics,
-                ColorAttachments = new[]
-                {
-                    new AttachmentReference(0, ImageLayout.ColorAttachmentOptimal)
-                }
+                ColorAttachments = new[] { new AttachmentReference(0, ImageLayout.ColorAttachmentOptimal) }
             },
             new[]
             {
@@ -97,30 +91,16 @@ public class Ajiva2dLayerSystem : SystemBase, IInit, IAjivaLayer<UniformLayer2d>
                     DestinationAccessMask = AccessFlags.MemoryRead
                 }
             });
-
-        Framebuffer MakeFrameBuffer(ImageView imageView)
-        {
-            return deviceSystem.Device.CreateFramebuffer(renderPass,
-                new[]
-                {
-                    imageView
-                },
-                swapChainLayer.Canvas.Width,
-                swapChainLayer.Canvas.Height,
-                1);
-        }
-
-        var frameBuffer = MakeFrameBuffer(frameBufferImage.View);
-
+        
+        var frameBuffer = deviceSystem.Device.CreateFramebuffer(renderPass, new[] { frameBufferImage.View }, Extent.Width, Extent.Height, 1);
+        
         var renderPassLayer = new RenderPassLayer(swapChainLayer, renderPass);
         swapChainLayer.AddChild(renderPassLayer);
         return new RenderTarget
         {
             ViewPortInfo = new FrameViewPortInfo(frameBuffer, frameBufferImage, Extent, 0..1),
             PassLayer = renderPassLayer,
-            ClearValues = firstPass
-                ? new ClearValue[] { new ClearColorValue(.1f, .1f, .1f, .1f) }
-                : Array.Empty<ClearValue>()
+            ClearValues = new ClearValue[] { new ClearColorValue(.1f, .1f, .1f, .1f) }
         };
     }
 
