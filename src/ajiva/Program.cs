@@ -25,6 +25,7 @@ public static class Program
         }
         //CompileShaders();
 
+        ALog.MinimumLogLevel = ALogLevel.Debug;
         ALog.Log(ALogLevel.Info, $"ProcessId: {Environment.ProcessId}");
         ALog.Log(ALogLevel.Info, $"Version: {Environment.Version}");
         ALog.Log(ALogLevel.Info, $"Is64BitProcess: {Environment.Is64BitProcess}");
