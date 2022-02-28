@@ -73,7 +73,7 @@ public class GraphicsSystem : SystemBase, IInit, IUpdate, IGraphicsSystem
         }
     }
 
-    private void WindowResized()
+    private void WindowResized(object sender, Extent2D oldSize, Extent2D newSize)
     {
         RecreateCurrentGraphicsLayout();
     }

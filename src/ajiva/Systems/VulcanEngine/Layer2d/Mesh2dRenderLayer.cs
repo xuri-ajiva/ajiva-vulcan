@@ -95,6 +95,7 @@ public class Mesh2dRenderLayer : ComponentSystemBase<RenderInstanceMesh2D>, IIni
     {
         var deviceSystem = Ecs.Get<DeviceSystem>();
         windowSystem = Ecs.Get<WindowSystem>();
+        windowSystem.OnResize += UiResizeHandler;
 
         MainShader = Shader.CreateShaderFrom(Ecs.Get<AssetManager>(), "2d", deviceSystem, "main");
         instanceMeshPool = new InstanceMeshPool<UiInstanceData>(deviceSystem);
@@ -111,6 +112,14 @@ public class Mesh2dRenderLayer : ComponentSystemBase<RenderInstanceMesh2D>, IIni
         };
     }
 
+    private void UiResizeHandler(object sender, Extent2D oldSize, Extent2D newSize)
+    {
+        foreach (var keyValuePair in ComponentEntityMap)
+        {
+            keyValuePair.Key.Extent = newSize;
+        }
+        Interlocked.Increment(ref dataVersion);
+    }
     private void RebuildData(IInstanceMeshPool<UiInstanceData> sender)
     {
         Interlocked.Increment(ref dataVersion);

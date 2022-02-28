@@ -260,11 +260,11 @@ public class Ajiva3dLayerSystem : SystemBase, IInit, IUpdate, IAjivaLayer<Unifor
         }
     }
 
-    private void OnWindowResize()
+    private void OnWindowResize(object sender, Extent2D oldSize, Extent2D newSize)
     {
         lock (MainLock)
         {
-            mainCamara?.UpdatePerspective(mainCamara.Fov, window.Canvas.WidthF, window.Canvas.HeightF);
+            mainCamara?.UpdatePerspective(mainCamara.Fov, newSize.Width, newSize.Height);
         }
     }
 
