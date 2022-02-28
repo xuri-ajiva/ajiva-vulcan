@@ -26,11 +26,11 @@ public class CombinePipeline : DisposingLogger
         var res = new DescriptorImageInfo[dynamicLayerSystemData.Count];
         for (int i = 0; i < res.Length; i++)
         {
-            res[i] = new DescriptorImageInfo(
-                ATexture.CreateTextureSampler(deviceSystem),
-                dynamicLayerSystemData[i].RenderTarget.ViewPortInfo.FrameBufferImage.View,
-                ImageLayout.General
-            );
+            res[i] = new DescriptorImageInfo {
+                Sampler = ATexture.CreateTextureSampler(deviceSystem),
+                ImageView = dynamicLayerSystemData[i].RenderTarget.ViewPortInfo.FrameBufferImage.View,
+                ImageLayout = ImageLayout.General
+            };
         }
         return res;
     }
