@@ -15,5 +15,5 @@ void main() {
     //outColor = vec4 (/*fragColor.x +*/ fragTexCoord.x, /*fragColor.y + */fragTexCoord.y, 1.0, 1.0f);
     //outColor = vec4(fragTexCoord, 0.0, 1.0);
 
-    outColor = texture(texSampler[int(inUV.z)], inUV.xy);
+    outColor = texture(texSampler[int(inUV.z)], inUV.xy) * 2;
 }
