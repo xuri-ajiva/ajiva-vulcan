@@ -49,7 +49,7 @@ internal class AssetPacker
             Serializer.Serialize(ms, assetPack);
             var serializedAsset = ms.ToArray();
 
-            var assetHash = new SHA1CryptoServiceProvider().ComputeHash(serializedAsset);
+            var assetHash = SHA1.Create().ComputeHash(serializedAsset);
             if (File.Exists(assetOutput))
             {
                 if (overide)
@@ -111,7 +111,7 @@ internal class AssetPacker
 
         var compiler = new Process
         {
-            StartInfo = new ProcessStartInfo(ShaderCompiler, $"{frag.Name} {vert.Name} -V " + Macros)
+            StartInfo = new ProcessStartInfo(ShaderCompiler, $"{frag.Name} {vert.Name} -t -C -V " + Macros)
             {
                 RedirectStandardError = true,
                 RedirectStandardOutput = true,
