@@ -42,23 +42,11 @@ public static class GraphicsPipelineLayerCreator
                 {
                     Viewports = new[]
                     {
-                        new Viewport
-                        {
-                            X = swapChainLayer.Canvas.Xf,
-                            Y = swapChainLayer.Canvas.Yf,
-                            Width = swapChainLayer.Canvas.WidthF,
-                            Height = swapChainLayer.Canvas.HeightF,
-                            MaxDepth = 1,
-                            MinDepth = 0
-                        }
+                        new Viewport(x: 0, y: 0, width: 500, height: 500, maxDepth: 1, minDepth: 0)
                     },
                     Scissors = new[]
                     {
-                        new Rect2D
-                        {
-                            Offset = swapChainLayer.Canvas.Offset,
-                            Extent = swapChainLayer.Canvas.Extent
-                        }
+                        new Rect2D(offset: Offset2D.Zero, extent: new Extent2D(500, 500))
                     }
                 },
                 RasterizationState = new PipelineRasterizationStateCreateInfo
@@ -129,7 +117,7 @@ public static class GraphicsPipelineLayerCreator
             }
         }).Single();
 
-        var descriptorPool = deviceSystem.Device.CreateDescriptorPool(10000,
+        var descriptorPool = deviceSystem.Device.CreateDescriptorPool(10000, //TODO magic const, Why?
             descriptorInfos.Select(descriptor => new DescriptorPoolSize
             {
                 Type = descriptor.DescriptorType,

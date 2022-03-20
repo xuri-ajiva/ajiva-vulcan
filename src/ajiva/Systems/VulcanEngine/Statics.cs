@@ -1,6 +1,6 @@
 ﻿using System.Diagnostics;
+using System.Text;
 using ajiva.Components.Media;
-using ajiva.Models;
 using ajiva.Systems.VulcanEngine.Systems;
 using SharpVk;
 using SharpVk.Multivendor;
@@ -10,14 +10,32 @@ namespace ajiva.Systems.VulcanEngine;
 
 public static class Statics
 {
+    private static HashSet<string> Ignore = new HashSet<string>()
+    {
+        "UNASSIGNED-CoreValidation-DrawState-InvalidImageLayout",
+        "VUID-VkPresentInfoKHR-pImageIndices-01296"
+    };
     private static readonly DebugReportCallbackDelegate DebugReportDelegate = (flags, objectType, o, location, messageCode, layerPrefix, message, userData) =>
     {
+        var p0 = message.IndexOf('[') + 2;
+        var p1 = message.IndexOf(']') - 1;
+        var ident = message.Substring(p0, p1 - p0);
+        if (Ignore.Contains(ident)) return false;
         var stackframe = new StackFrame(2, true);
-        var stackframe2 = new StackFrame(3, true);
-        var stackframe3 = new StackFrame(4, true);
-        ALog.Error($"[{flags}] ({objectType}) {layerPrefix}");
+        ALog.Error($"[{flags}] ({objectType}) {layerPrefix} #{ident}");
         ALog.Error(message);
-        ALog.Error($"File: {stackframe.GetFileName()}:{stackframe.GetFileLineNumber()} from {stackframe2.GetFileName()}:{stackframe2.GetFileLineNumber()} from {stackframe3.GetFileName()}:{stackframe3.GetFileLineNumber()}");
+        ALog.Error($"File: {stackframe.GetFileName()}:{stackframe.GetFileLineNumber()} " + BuildStackTraceError(3, 6));
+
+        string BuildStackTraceError(int begin, int count)
+        {
+            var stackTrace = new StackTrace(begin, true);
+            var stringBuilder = new StringBuilder();
+            foreach (var frame in stackTrace.GetFrames().Take(count))
+            {
+                stringBuilder.Append($"from {frame.GetFileName()}:{frame.GetFileLineNumber()} ");
+            }
+            return stringBuilder.ToString();
+        }
 
         return false;
     };
@@ -48,7 +66,7 @@ public static class Statics
 
     public static Format FindDepthFormat(this PhysicalDevice physicalDevice)
     {
-        return FindSupportedFormat(physicalDevice, new[]
+        return physicalDevice.FindSupportedFormat(new[]
             {
                 Format.D32SFloat, Format.D32SFloatS8UInt, Format.D24UNormS8UInt
             },
@@ -58,7 +76,7 @@ public static class Statics
         );
     }
 
-    private static Format FindSupportedFormat(PhysicalDevice physicalDevice, IEnumerable<Format> candidates, ImageTiling tiling, FormatFeatureFlags features)
+    public static Format FindSupportedFormat(this PhysicalDevice physicalDevice, IEnumerable<Format> candidates, ImageTiling tiling, FormatFeatureFlags features)
     {
         foreach (var format in candidates)
         {
@@ -140,5 +158,16 @@ public static class Statics
     public static AImage CreateDepthImage(this PhysicalDevice device, ImageSystem imageSystem, Canvas canvas)
     {
         return imageSystem.CreateManagedImage(device.FindDepthFormat(), ImageAspectFlags.Depth, canvas);
+    }
+
+    public static IndexType GetIndexType(uint indexBufferSizeOfT)
+    {
+        return indexBufferSizeOfT switch
+        {
+            sizeof(uint) => IndexType.Uint32,
+            sizeof(ushort) => IndexType.Uint16,
+            sizeof(byte) => IndexType.Uint8,
+            _ => throw new ArgumentOutOfRangeException(nameof(indexBufferSizeOfT), indexBufferSizeOfT, "Unknown Index Type")
+        };
     }
 }

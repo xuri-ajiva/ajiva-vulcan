@@ -1,10 +1,13 @@
 ﻿using ajiva.Application;
 using ajiva.Ecs;
-using ajiva.Models;
 using ajiva.Systems.VulcanEngine.Interfaces;
 using ajiva.Systems.VulcanEngine.Layer;
 using GlmSharp;
+using SharpVk;
 using SharpVk.Glfw;
+using SharpVk.Glfw.extras;
+using Glfw3 = SharpVk.Glfw.Glfw3;
+using Key = SharpVk.Glfw.Key;
 
 namespace ajiva.Systems.VulcanEngine.Systems;
 
@@ -23,6 +26,7 @@ public class WindowSystem : SystemBase, IUpdate, IInit, IWindowSystem
     private DateTime lastResize = DateTime.MinValue;
     private vec2 previousMousePosition = vec2.Zero;
     private WindowHandle window;
+    private Extent2D priviesSize;
 
     private readonly WindowConfig windowConfig;
 
@@ -40,6 +44,8 @@ public class WindowSystem : SystemBase, IUpdate, IInit, IWindowSystem
         Canvas = new Canvas(new SurfaceHandle());
 
         windowConfig = Ecs.Get<Config>().Window;
+
+        OnResize += (sender, size, newSize) => ALog.Info($"Resized from [w: {size.Width}, h: {size.Height}] to [w: {newSize.Width}, h: {newSize.Height}]");
     }
 
     public Canvas Canvas { get; }
@@ -63,7 +69,7 @@ public class WindowSystem : SystemBase, IUpdate, IInit, IWindowSystem
     public PeriodicUpdateInfo Info { get; } = new PeriodicUpdateInfo(TimeSpan.FromMilliseconds(5));
 
     public event KeyEventHandler? OnKeyEvent;
-    public event Action? OnResize;
+    public event WindowResizedDelegate OnResize;
     public event EventHandler<AjivaMouseMotionCallbackEventArgs>? OnMouseMove;
 
     private void WindowStartup()
@@ -87,7 +93,8 @@ public class WindowSystem : SystemBase, IUpdate, IInit, IWindowSystem
             if (lastResize != DateTime.MinValue)
                 if (lastResize.AddSeconds(5) > DateTime.Now)
                 {
-                    OnResize?.Invoke();
+                    OnResize?.Invoke(this, priviesSize, Canvas.Extent);
+                    priviesSize = Canvas.Extent;
                     lastResize = DateTime.MinValue;
                 }
 
@@ -100,7 +107,7 @@ public class WindowSystem : SystemBase, IUpdate, IInit, IWindowSystem
                 {
                     ALog.Error(e);
                 }
-            Glfw3.PollEvents();
+            SharpVk.Glfw.extras.Glfw3.WaitEventsTimeout(1);
 
             if (windowReady) continue;
             Glfw3.DestroyWindow(window);
@@ -164,6 +171,14 @@ public class WindowSystem : SystemBase, IUpdate, IInit, IWindowSystem
                 UpdateCursor();
                 //LogHelper.WriteLine($"activeLayer: {activeLayer}");
                 break;
+            case Key.F11:
+                if (inputAction == InputAction.Press)
+                    SharpVk.Glfw.extras.Glfw3.Public.SetWindowAttrib_0(windowHandle.RawHandle, (int)State.Decorated,
+                        SharpVk.Glfw.extras.Glfw3.Public.GetWindowAttrib_0(windowHandle.RawHandle, (int)State.Decorated) == (int)State.False
+                            ? (int)State.True
+                            : (int)State.False);
+                //SharpVk.Glfw.extras.Glfw3.Public.SetWindowSize_0(windowHandle.RawHandle, primaryMonitorVideoMode.Width, primaryMonitorVideoMode.Height);
+                break;
         }
 
         OnKeyEvent?.Invoke(this, key, scancode, inputAction, modifiers);
@@ -190,6 +205,8 @@ public class WindowSystem : SystemBase, IUpdate, IInit, IWindowSystem
         Glfw3.PollEvents();
     }
 }
+
+public delegate void WindowResizedDelegate(object sender, Extent2D oldSize, Extent2D newSize);
 
 public delegate void KeyEventHandler(object? sender, Key key, int scancode, InputAction inputAction, Modifier modifiers);
 

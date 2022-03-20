@@ -44,9 +44,12 @@ public class Ajiva3dLayerSystem : SystemBase, IInit, IUpdate, IAjivaLayer<Unifor
 
     private object MainLock { get; } = new object();
 
+    /// <inheritdoc />
+    public Extent2D Extent { get; } = new Extent2D(2560, 1440);
+
     public ClearValue[] ClearValues { get; } =
     {
-        new ClearColorValue(.1f, .1f, .1f, .1f),
+        new ClearColorValue(.1f, .1f, .1f, 0),
         new ClearDepthStencilValue(1.0f, 0)
     };
 
@@ -59,22 +62,27 @@ public class Ajiva3dLayerSystem : SystemBase, IInit, IUpdate, IAjivaLayer<Unifor
     List<IAjivaLayerRenderSystem> IAjivaLayer.LayerRenderComponentSystems => new List<IAjivaLayerRenderSystem>(LayerRenderComponentSystems);
 
     /// <inheritdoc />
-    public AjivaVulkanPipeline PipelineLayer { get; } = AjivaVulkanPipeline.Pipeline3d;
-
-    /// <inheritdoc />
     public List<IAjivaLayerRenderSystem<UniformViewProj3d>> LayerRenderComponentSystems { get; } = new List<IAjivaLayerRenderSystem<UniformViewProj3d>>();
 
     /// <inheritdoc />
-    public RenderPassLayer CreateRenderPassLayer(SwapChainLayer swapChainLayer, PositionAndMax layerIndex, PositionAndMax layerRenderComponentSystemsIndex)
+    public RenderTarget CreateRenderPassLayer(SwapChainLayer swapChainLayer, PositionAndMax layerIndex, PositionAndMax layerRenderComponentSystemsIndex)
     {
         var deviceSystem = Ecs.Get<DeviceSystem>();
 
+        var imageSystem = Ecs.Get<IImageSystem>();
         if (depthImage is null)
         {
-            var imageSystem = Ecs.Get<IImageSystem>();
             depthFormat = deviceSystem.PhysicalDevice!.FindDepthFormat();
-            depthImage = imageSystem.CreateManagedImage(depthFormat, ImageAspectFlags.Depth, swapChainLayer.Canvas);
+            depthImage = imageSystem.CreateManagedImage(depthFormat, ImageAspectFlags.Depth, Extent);
         }
+
+        var frameBufferFormat = deviceSystem.PhysicalDevice.FindSupportedFormat(
+            new[] { Format.R16G16B16A16UNorm, Format.R16G16B16UNorm, Format.R8G8B8UNorm, },
+            ImageTiling.Optimal,
+            FormatFeatureFlags.ColorAttachment | FormatFeatureFlags.SampledImage);
+        var frameBufferImage = imageSystem.CreateImageAndView(Extent.Width, Extent.Height,
+            frameBufferFormat, ImageTiling.Optimal, ImageUsageFlags.ColorAttachment | ImageUsageFlags.Sampled,
+            MemoryPropertyFlags.DeviceLocal, ImageAspectFlags.Color);
 
         var firstPass = layerIndex.First && layerRenderComponentSystemsIndex.First;
         var lastPass = layerIndex.Last && layerRenderComponentSystemsIndex.Last;
@@ -82,14 +90,14 @@ public class Ajiva3dLayerSystem : SystemBase, IInit, IUpdate, IAjivaLayer<Unifor
         var renderPass = deviceSystem.Device!.CreateRenderPass(new[]
             {
                 new AttachmentDescription(AttachmentDescriptionFlags.None,
-                    swapChainLayer.SwapChainFormat,
+                    frameBufferFormat,
                     SampleCountFlags.SampleCount1,
-                    firstPass ? AttachmentLoadOp.Clear : AttachmentLoadOp.Load,
+                    AttachmentLoadOp.Clear,
                     AttachmentStoreOp.Store,
                     AttachmentLoadOp.DontCare,
                     AttachmentStoreOp.DontCare,
-                    firstPass ? ImageLayout.Undefined : ImageLayout.General,
-                    lastPass ? ImageLayout.PresentSource : ImageLayout.General),
+                    ImageLayout.ColorAttachmentOptimal,
+                    ImageLayout.ColorAttachmentOptimal),
                 new AttachmentDescription(AttachmentDescriptionFlags.None,
                     depthFormat,
                     SampleCountFlags.SampleCount1,
@@ -135,16 +143,23 @@ public class Ajiva3dLayerSystem : SystemBase, IInit, IUpdate, IAjivaLayer<Unifor
         {
             return deviceSystem.Device.CreateFramebuffer(renderPass,
                 new[] { imageView, depthImage.View },
-                swapChainLayer.Canvas.Width,
-                swapChainLayer.Canvas.Height,
+                Extent.Width,
+                Extent.Height,
                 1);
         }
+        //var frameBuffers = swapChainLayer.SwapChainImages.Select(x => MakeFrameBuffer(x.View)).ToArray();
 
-        var frameBuffers = swapChainLayer.SwapChainImages.Select(x => MakeFrameBuffer(x.View!)).ToArray();
-
-        var renderPassLayer = new RenderPassLayer(swapChainLayer, renderPass, frameBuffers, layerRenderComponentSystemsIndex.First ? ClearValues : Array.Empty<ClearValue>());
+        var frameBuffer = MakeFrameBuffer(frameBufferImage.View);
+        var renderPassLayer = new RenderPassLayer(swapChainLayer, renderPass);
         swapChainLayer.AddChild(renderPassLayer);
-        return renderPassLayer;
+        return new RenderTarget
+        {
+            ViewPortInfo = new FrameViewPortInfo(frameBuffer, frameBufferImage, Extent, 0..1),
+            PassLayer = renderPassLayer,
+            ClearValues = firstPass
+                ? ClearValues
+                : new ClearValue[] { new ClearColorValue(.1f, .1f, .1f, 0) }
+        };
     }
 
     /// <inheritdoc />
@@ -245,11 +260,11 @@ public class Ajiva3dLayerSystem : SystemBase, IInit, IUpdate, IAjivaLayer<Unifor
         }
     }
 
-    private void OnWindowResize()
+    private void OnWindowResize(object sender, Extent2D oldSize, Extent2D newSize)
     {
         lock (MainLock)
         {
-            mainCamara?.UpdatePerspective(mainCamara.Fov, window.Canvas.WidthF, window.Canvas.HeightF);
+            mainCamara?.UpdatePerspective(mainCamara.Fov, newSize.Width, newSize.Height);
         }
     }
 

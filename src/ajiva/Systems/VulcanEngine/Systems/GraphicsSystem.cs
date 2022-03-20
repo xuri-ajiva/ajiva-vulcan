@@ -26,7 +26,7 @@ public class GraphicsSystem : SystemBase, IInit, IUpdate, IGraphicsSystem
 
     public IOverTimeChangingObserver ChangingObserver { get; } = new OverTimeChangingObserver(100);
 
-    public Dictionary<AjivaVulkanPipeline, IAjivaLayer> Layers { get; } = new Dictionary<AjivaVulkanPipeline, IAjivaLayer>();
+    public List<IAjivaLayer> Layers { get; } = new List<IAjivaLayer>();
 
     public Format DepthFormat { get; set; }
 
@@ -45,8 +45,6 @@ public class GraphicsSystem : SystemBase, IInit, IUpdate, IGraphicsSystem
             RecreateCurrentGraphicsLayout();
             reInitAjivaLayerRendererNeeded = false;
         }
-
-        ajivaLayerRenderer!.UpdateSubmitInfoChecked();
 
         if (ChangingObserver.UpdateCycle(delta.Iteration)) UpdateGraphicsData();
         lock (CurrentGraphicsLayoutSwapLock)
@@ -75,7 +73,7 @@ public class GraphicsSystem : SystemBase, IInit, IUpdate, IGraphicsSystem
         }
     }
 
-    private void WindowResized()
+    private void WindowResized(object sender, Extent2D oldSize, Extent2D newSize)
     {
         RecreateCurrentGraphicsLayout();
     }
@@ -108,21 +106,20 @@ public class GraphicsSystem : SystemBase, IInit, IUpdate, IGraphicsSystem
 
     protected void ReCreateRenderUnion()
     {
-        ajivaLayerRenderer ??= new AjivaLayerRenderer(deviceSystem, windowSystem.Canvas);
+        ajivaLayerRenderer ??= new AjivaLayerRenderer(deviceSystem, windowSystem.Canvas, new CommandBufferPool(deviceSystem), Ecs);
 
-        ajivaLayerRenderer.Init(Layers.Values.ToList());
+        ajivaLayerRenderer.Init(Layers);
     }
 
     public void UpdateGraphicsData()
     {
         ChangingObserver.Updated();
-        ajivaLayerRenderer?.ForceFillBuffers();
     }
 
     public void AddUpdateLayer(IAjivaLayer layer)
     {
         layer.LayerChanged.OnChanged += LayerChangedOnOnChanged;
-        Layers.Add(layer.PipelineLayer, layer);
+        Layers.Add(layer);
     }
 
     private void LayerChangedOnOnChanged(IAjivaLayer sender)

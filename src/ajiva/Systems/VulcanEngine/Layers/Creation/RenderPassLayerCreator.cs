@@ -1,12 +1,9 @@
-﻿using ajiva.Components.Media;
-using ajiva.Systems.VulcanEngine.Layers.Models;
-using ajiva.Systems.VulcanEngine.Systems;
-using SharpVk;
+﻿namespace ajiva.Systems.VulcanEngine.Layers.Creation;
 
-namespace ajiva.Systems.VulcanEngine.Layers.Creation;
-
+/*
 public static class RenderPassLayerCreator
 {
+    /*
     public static RenderPassLayer DefaultChecked(SwapChainLayer swapChainLayer, DeviceSystem deviceSystem, AImage depthImage, Format depthFormat, ClearValue[] clearValues)
     {
         if (deviceSystem.Device is null || deviceSystem.PhysicalDevice is null) throw new NotInitializedException(nameof(deviceSystem), deviceSystem);
@@ -143,3 +140,4 @@ public static class RenderPassLayerCreator
         return renderPassLayer;
     }
 }
+*/

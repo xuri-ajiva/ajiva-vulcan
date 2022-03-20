@@ -1,7 +1,6 @@
 ﻿using System.Collections.Concurrent;
 using System.Runtime.CompilerServices;
 using ajiva.Ecs;
-using ajiva.Models;
 using ajiva.Systems.VulcanEngine.Interfaces;
 using SharpVk;
 using SharpVk.Khronos;
@@ -75,10 +74,12 @@ public class DeviceSystem : SystemBase, IInit, IDeviceSystem
                     }
                 }).ToArray(),
             null,
-            KhrExtensions.Swapchain, DeviceCreateFlags.None, new PhysicalDeviceFeatures
+            KhrExtensions.Swapchain, DeviceCreateFlags.None, new PhysicalDeviceFeatures  
             {
+                //TODO Enable Features Used in any other part // remainder
                 SamplerAnisotropy = true,
-                FillModeNonSolid = true
+                FillModeNonSolid = true,
+                SampleRateShading = true,
             });
 
         GraphicsQueue = Device.GetQueue(queueFamilies.GraphicsFamily!.Value, 0);
@@ -228,8 +229,8 @@ public class DeviceSystem : SystemBase, IInit, IDeviceSystem
         EnsureCommandPoolsExists();
 
         GetQueueByType(queueType, poolSelector, out var queue, out var fence, out var queueQueue, out var commandBuffer, out var poolLock);
-        lock (poolLock)
         lock (queue)
+        lock (poolLock)
         {
             ExecuteOnQueueWithFence(action, queue, fence, poolLock, commandBuffer, queueType);
         }

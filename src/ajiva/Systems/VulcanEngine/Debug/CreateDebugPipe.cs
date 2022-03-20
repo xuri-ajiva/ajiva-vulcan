@@ -8,7 +8,7 @@ namespace ajiva.Systems.VulcanEngine.Debug;
 
 public class CreateDebugPipe
 {
-    public static GraphicsPipelineLayer Default(SwapChainLayer swapChainLayer, RenderPassLayer renderPassLayer, DeviceSystem deviceSystem, bool useDepthImage, VertexInputBindingDescription bindingDescription, VertexInputAttributeDescription[] attributeDescriptions, Shader mainShader, PipelineDescriptorInfos[] descriptorInfos)
+    public static GraphicsPipelineLayer Default(SwapChainLayer swapChainLayer, RenderPassLayer renderPassLayer, DeviceSystem deviceSystem, bool useDepthImage, VertexInputBindingDescription[] bindingDescriptions, VertexInputAttributeDescription[] attributeDescriptions, Shader mainShader, PipelineDescriptorInfos[] descriptorInfos)
     {
         var descriptorSetLayout = deviceSystem.Device.CreateDescriptorSetLayout(
             descriptorInfos.Select(descriptor => new DescriptorSetLayoutBinding
@@ -30,10 +30,7 @@ public class CreateDebugPipe
                 Subpass = 0,
                 VertexInputState = new PipelineVertexInputStateCreateInfo
                 {
-                    VertexBindingDescriptions = new[]
-                    {
-                        bindingDescription
-                    },
+                    VertexBindingDescriptions = bindingDescriptions,
                     VertexAttributeDescriptions = attributeDescriptions
                 },
                 InputAssemblyState = new PipelineInputAssemblyStateCreateInfo
@@ -121,7 +118,14 @@ public class CreateDebugPipe
                         Back = new StencilOpState(),
                         Flags = new PipelineDepthStencilStateCreateFlags()
                     }
-                    : null
+                    : null,
+                DynamicState = new PipelineDynamicStateCreateInfo
+                {
+                    DynamicStates = new[]
+                    {
+                        DynamicState.Viewport, DynamicState.Scissor,
+                    }
+                }
             }
         }).Single();
 

@@ -12,11 +12,3 @@ public struct MeshInstanceData
     public uint TextureIndex;
     public vec2 Padding;
 }
-/*
- *     public vec4 Model1;
-    public vec4 Model2;
-    public vec4 Model3;
-    public vec4 TextureSamplerId;
- */
-
-

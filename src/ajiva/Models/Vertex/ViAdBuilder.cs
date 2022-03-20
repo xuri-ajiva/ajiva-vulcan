@@ -7,12 +7,19 @@ public class ViAdBuilder<T>
 {
     private readonly List<VertexInputAttributeDescription> input;
     private uint bindId;
-    private uint lastLocation;
+    private int lastLocation;
 
     public ViAdBuilder(IEnumerable<VertexInputAttributeDescription> input, uint bindId)
     {
         this.input = new List<VertexInputAttributeDescription>(input);
-        lastLocation = this.input.Last().Location;
+        lastLocation = (int)this.input.Last().Location;
+        this.bindId = bindId;
+    }
+
+    public ViAdBuilder(uint bindId)
+    {
+        this.input = new List<VertexInputAttributeDescription>();
+        lastLocation = -1;
         this.bindId = bindId;
     }
 
@@ -22,7 +29,7 @@ public class ViAdBuilder<T>
         return this;
     }
 
-    public VertexInputAttributeDescription For(string fieldName, Format format) => new VertexInputAttributeDescription(++lastLocation, bindId, format, (uint)Marshal.OffsetOf<T>(fieldName));
+    public VertexInputAttributeDescription For(string fieldName, Format format) => new VertexInputAttributeDescription((uint)++lastLocation, bindId, format, (uint)Marshal.OffsetOf<T>(fieldName));
 
     public VertexInputAttributeDescription[] ToArray() => input.ToArray();
 }

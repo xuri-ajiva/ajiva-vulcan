@@ -1,7 +1,7 @@
 ﻿using ajiva.Components.Mesh;
-using ajiva.Components.Mesh.Instance;
 using ajiva.Components.RenderAble;
 using ajiva.Components.Transform;
+using ajiva.Components.Transform.Ui;
 using ajiva.Ecs;
 using ajiva.Entities;
 using ajiva.Generators.Texture;
@@ -59,9 +59,8 @@ public class AjivaApplication : DisposingLogger
         var deviceSystem = entityComponentSystem.Add<DeviceSystem, IDeviceSystem>();
 
         var meshPool = new MeshPool(deviceSystem);
-        var instanceMeshPool = new InstanceMeshPool(deviceSystem);
         entityComponentSystem.Add<MeshPool, IMeshPool>(meshPool);
-        entityComponentSystem.Add<InstanceMeshPool, IInstanceMeshPool>(instanceMeshPool);
+        //entityComponentSystem.Add<InstanceMeshPool, IInstanceMeshPool>(instanceMeshPool); // should be unique per instance user
 
         entityComponentSystem.Add<VulcanInstance, IVulcanInstance>(new VulcanInstance(vulcanInstance));
 
@@ -108,18 +107,22 @@ public class AjivaApplication : DisposingLogger
         {
             x.SetMesh(MeshPrefab.Rect);
             x.Render = true;
-        }).Configure<Transform2d>(x =>
+        }).Configure<UiTransform>(x =>
         {
-            x.Scale = new vec2(.05f);
+            x.VerticalAnchor = new UiAnchor(UiAlignment.CenterVertical, UiValueUnit.Pixel(20), UiValueUnit.Pixel(100));
+            x.HorizontalAnchor = new UiAnchor(UiAlignment.Right, UiValueUnit.Pixel(20), UiValueUnit.Pixel(100));
         }).Register(entityComponentSystem);
 
         for (var i = 0; i < 10; i++)
         {
-            var cube = new Cube(entityComponentSystem).Configure<Transform3d>(trans =>
-            {
-                trans.Position = new vec3(r.Next(-posRange, posRange), r.Next(-posRange, posRange), r.Next(-posRange, posRange));
-                trans.Rotation = new vec3(r.Next(0, 100), r.Next(0, 100), r.Next(0, 100));
-            }).Register(entityComponentSystem);
+            //BUG: If we configure before register the data is not uploaded properly
+            var cube = new Cube(entityComponentSystem)
+                .Register(entityComponentSystem)
+                .Configure<Transform3d>(trans =>
+                {
+                    trans.Position = new vec3(r.Next(-posRange, posRange), r.Next(-posRange, posRange), r.Next(-posRange, posRange));
+                    trans.Rotation = new vec3(r.Next(0, 100), r.Next(0, 100), r.Next(0, 100));
+                });
         }
     }
 
@@ -144,12 +147,14 @@ public class AjivaApplication : DisposingLogger
                 {
                     for (var j = 0; j < rep; j++)
                     {
-                        var cube = new Cube(entityComponentSystem).Configure<Transform3d>(trans =>
-                        {
-                            trans.Position = new vec3(i * sz, -index * 2, j * sz);
-                            trans.Rotation = new vec3(i * 90, j * 90, 0);
-                            trans.Scale = new vec3((sz / 2)*.98f);
-                        }).Register(entityComponentSystem);
+                        var cube = new Cube(entityComponentSystem)
+                            .Register(entityComponentSystem)
+                            .Configure<Transform3d>(trans =>
+                            {
+                                trans.Position = new vec3(i * sz, -index * 2, j * sz);
+                                trans.Rotation = new vec3(i * 90, j * 90, 0);
+                                trans.Scale = new vec3((sz / 2) * .98f);
+                            });
                     }
                 });
                 while (!res.IsCompleted) Task.Delay(10);
@@ -164,36 +169,29 @@ public class AjivaApplication : DisposingLogger
             case Key.Q:
                 Task.Run(() => entityComponentSystem.Get<IGraphicsSystem>().UpdateGraphicsData());
                 break;
-            case Key.F1:
-                var s1 = entityComponentSystem.Get<DebugLayer>();
-                s1.Render.Value = !s1.Render;
-                break;
-            case Key.F2:
-                var s2 = entityComponentSystem.Get<SolidMeshRenderLayer>();
-                s2.Render.Value = !s2.Render;
-                break;
-
             case Key.B:
                 {
                     using var change = entityComponentSystem.Get<GraphicsSystem>().ChangingObserver.BeginBigChange();
 
                     for (var i = 0; i < 100; i++)
                     {
-                        var cube = new Cube(entityComponentSystem).Configure<Transform3d>(trans =>
-                        {
-                            trans.Position = new vec3(r.Next(-posRange, posRange), r.Next(-posRange, posRange), r.Next(-posRange, posRange));
-                            trans.Rotation = new vec3(r.Next(0, 100), r.Next(0, 100), r.Next(0, 100));
-                        }).Register(entityComponentSystem);
+                        var cube = new Cube(entityComponentSystem)
+                            .Register(entityComponentSystem)
+                            .Configure<Transform3d>(trans =>
+                            {
+                                trans.Position = new vec3(r.Next(-posRange, posRange), r.Next(-posRange, posRange), r.Next(-posRange, posRange));
+                                trans.Rotation = new vec3(r.Next(0, 100), r.Next(0, 100), r.Next(0, 100));
+                            });
                     }
                     change.Dispose();
                     break;
                 }
 
             case Key.R:
-                var rect = new Rect().Configure<Transform2d>(x =>
+                /*var rect = new Rect().Configure<UiTransform>(x =>
                 {
                     x.Scale = new vec2(.05f);
-                }).Register(entityComponentSystem);
+                }).Register(entityComponentSystem);*/
                 break;
 
             case Key.P:

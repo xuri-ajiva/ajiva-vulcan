@@ -49,7 +49,7 @@ internal class AssetPacker
             Serializer.Serialize(ms, assetPack);
             var serializedAsset = ms.ToArray();
 
-            var assetHash = new SHA1CryptoServiceProvider().ComputeHash(serializedAsset);
+            var assetHash = SHA1.Create().ComputeHash(serializedAsset);
             if (File.Exists(assetOutput))
             {
                 if (overide)
@@ -111,7 +111,7 @@ internal class AssetPacker
 
         var compiler = new Process
         {
-            StartInfo = new ProcessStartInfo(ShaderCompiler, $"{frag.Name} {vert.Name} -V " + Macros)
+            StartInfo = new ProcessStartInfo(ShaderCompiler, $"{frag.Name} {vert.Name} -t -C -V " + Macros)
             {
                 RedirectStandardError = true,
                 RedirectStandardOutput = true,
@@ -134,13 +134,17 @@ internal class AssetPacker
 
         var errors = await compiler.StandardError.ReadToEndAsync();
         var output = await compiler.StandardOutput.ReadToEndAsync();
-        ALog.Info($"[COMPILE/INFO]: Shaders for: {shaderDirectory.Name}");
-        if (!string.IsNullOrEmpty(output))
-            ALog.Info($"[COMPILE/RESULT/INFO]\n{output.TrimEnd('\n')}");
-        if (!string.IsNullOrEmpty(errors))
-            ALog.Error($"[COMPILE/RESULT/ERROR]\n{errors.TrimEnd('\n')}");
-        ALog.Info($"[COMPILE/RESULT/EXIT] Compiler Process has exited with code {compiler.ExitCode}");
-        if (compiler.ExitCode != 0) Environment.Exit((int)(compiler.ExitCode + Const.ExitCode.ShaderCompile));
+
+        lock (_lock)
+        {
+            ALog.Info($"[COMPILE/INFO]: Shaders for: {shaderDirectory.Name}");
+            if (!string.IsNullOrEmpty(output))
+                ALog.Info($"[COMPILE/RESULT/INFO]\n{output.TrimEnd('\n')}");
+            if (!string.IsNullOrEmpty(errors))
+                ALog.Error($"[COMPILE/RESULT/ERROR]\n{errors.TrimEnd('\n')}");
+            ALog.Info($"[COMPILE/RESULT/EXIT] Compiler Process has exited with code {compiler.ExitCode}");
+            if (compiler.ExitCode != 0) Environment.Exit((int)(compiler.ExitCode + Const.ExitCode.ShaderCompile));
+        }
 
         //region pack
         files = shaderDirectory.GetFiles(); //refresh files
@@ -149,4 +153,6 @@ internal class AssetPacker
         assetPack.Add(AssetType.Shader, relPathName, files.First(x => x.Name == Const.Default.VertexShaderName));
         assetPack.Add(AssetType.Shader, relPathName, files.First(x => x.Name == Const.Default.FragmentShaderName));
     }
+
+    private static object _lock = new();
 }

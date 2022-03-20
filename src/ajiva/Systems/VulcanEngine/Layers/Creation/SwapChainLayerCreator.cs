@@ -1,5 +1,4 @@
 ﻿using ajiva.Components.Media;
-using ajiva.Models;
 using ajiva.Systems.VulcanEngine.Layers.Models;
 using ajiva.Systems.VulcanEngine.Systems;
 using SharpVk;
@@ -22,7 +21,8 @@ public static class SwapChainLayerCreator
         var surfaceFormat = swapChainSupport.Formats.ChooseSwapSurfaceFormat();
 
         var imageCount = swapChainSupport.Capabilities.MinImageCount + 1;
-        if (swapChainSupport.Capabilities.MaxImageCount > 0 && imageCount > swapChainSupport.Capabilities.MaxImageCount) imageCount = swapChainSupport.Capabilities.MaxImageCount;
+        if (swapChainSupport.Capabilities.MaxImageCount > 0 && imageCount > swapChainSupport.Capabilities.MaxImageCount) 
+            imageCount = swapChainSupport.Capabilities.MaxImageCount;
 
         var queueFamilies = deviceSystem.PhysicalDevice!.FindQueueFamilies(canvas);
 

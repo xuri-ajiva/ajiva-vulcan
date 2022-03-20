@@ -1,18 +1,20 @@
 ﻿using ajiva.Ecs;
+using ajiva.Utils.Changing;
 using SharpVk;
 
 namespace ajiva.Components.Mesh.Instance;
 
-public interface IInstanceMeshPool : IAjivaEcsObject
+public interface IInstanceMeshPool<T> : IAjivaEcsObject, IDisposable where T : unmanaged
 {
-    IInstancedMesh AsInstanced(IMesh mesh);
+    public IChangingObserver<IInstanceMeshPool<T>> Changed { get; }
+    IInstancedMesh<T> AsInstanced(IMesh mesh);
     void AddInstanced(IMesh mesh);
 
-    IInstancedMeshInstance CreateInstance(IInstancedMesh instancedMesh);
-    IInstancedMeshInstance CreateInstance(uint instancedMeshId);
+    IInstancedMeshInstance<T> CreateInstance(IInstancedMesh<T> instancedMesh);
+    IInstancedMeshInstance<T> CreateInstance(uint instancedMeshId);
 
-    void DeleteInstance(IInstancedMeshInstance instance);
+    void DeleteInstance(IInstancedMeshInstance<T> instance);
 
-    void DrawInstanced(IInstancedMesh instancedMesh, CommandBuffer renderBuffer, uint vertexBufferBindId, uint instanceBufferBindId);
+    void DrawInstanced(IInstancedMesh<T> instancedMesh, CommandBuffer renderBuffer, uint vertexBufferBindId, uint instanceBufferBindId);
     void CommitInstanceDataChanges();
 }

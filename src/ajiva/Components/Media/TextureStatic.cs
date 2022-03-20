@@ -1,7 +1,6 @@
 using System.Drawing;
 using System.Drawing.Imaging;
 using ajiva.Ecs;
-using ajiva.Models;
 using ajiva.Models.Buffer;
 using ajiva.Systems.Assets;
 using ajiva.Systems.Assets.Contracts;
@@ -71,7 +70,7 @@ public partial class ATexture
         return aImage;
     }
 
-    private static Sampler CreateTextureSampler(DeviceSystem deviceSystem)
+    public static Sampler CreateTextureSampler(DeviceSystem deviceSystem)
     {
         var properties = deviceSystem.PhysicalDevice!.GetProperties();
 

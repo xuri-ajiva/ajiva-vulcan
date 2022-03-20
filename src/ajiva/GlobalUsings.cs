@@ -11,3 +11,4 @@ global using ajiva.Ecs.System;
 global using ajiva.Ecs.Utils;
 global using ajiva.Utils;
 global using Ajiva.Wrapper.Logger;
+global using ajiva.Models;

@@ -1,6 +1,7 @@
 ﻿using ajiva.Models.Buffer.ChangeAware;
 using ajiva.Systems.VulcanEngine.Layers.Models;
 using ajiva.Utils.Changing;
+using SharpVk;
 
 namespace ajiva.Systems.VulcanEngine.Layer;
 
@@ -20,10 +21,10 @@ public static class AjivaLayerExtensions
 }
 public interface IAjivaLayer
 {
+    public Extent2D Extent { get; }
     public IChangingObserver<IAjivaLayer> LayerChanged { get; }
     List<IAjivaLayerRenderSystem> LayerRenderComponentSystems { get; }
-    AjivaVulkanPipeline PipelineLayer { get; }
-    RenderPassLayer CreateRenderPassLayer(SwapChainLayer swapChainLayer, PositionAndMax layerIndex, PositionAndMax layerRenderComponentSystemsIndex);
+    RenderTarget CreateRenderPassLayer(SwapChainLayer swapChainLayer, PositionAndMax layerIndex, PositionAndMax layerRenderComponentSystemsIndex);
 }
 public struct PositionAndMax
 {

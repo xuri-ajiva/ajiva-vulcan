@@ -7,21 +7,47 @@ layout(binding = 0) uniform UniformViewProj {
     vec2 mousePos;
     vec2 vec;
 } data;
-layout(binding = 1) uniform UniformModel {
-    mat4 model;
-} model;
 
-layout(location = 0) in vec2 inPosition;
-layout(location = 1) in vec3 inColor;
-layout(location = 2) in vec2 inTexCoord;
+// Vertext attributes
+layout (location = 0) in vec2 inPos;
+layout (location = 1) in vec3 inColor;
+layout (location = 2) in vec2 inUV;
 
-layout(location = 0) out vec3 fragColor;
-layout(location = 1) out vec2 fragTexCoord;
+// Instanced attributes
+layout (location = 3) in vec2 instanceOffset;
+layout (location = 4) in vec2 instanceScale;
+layout (location = 5) in vec2 instanceRot;
+layout (location = 6) in uint instanceTexIndex;
+layout (location = 7) in uint instanceDrawType;
+
+// output attributes
+layout(location = 0) out vec3 outColor;
+layout(location = 1) out vec3 outUV;
+layout(location = 2) out vec2 outPos;
+
+mat2 rotationX(in float angle) {
+    return mat2(
+    cos(angle), -sin(angle),
+    sin(angle), cos(angle)
+    );
+}
+mat2 rotationY(in float angle) {
+    return mat2(
+    cos(angle), sin(angle),
+    -sin(angle), cos(angle)
+    );
+}
 
 void main() {
-    vec4 translated = model.model * vec4(inPosition, 1, 1);
-    vec4 pos = data.proj * data.view * (translated + vec4(data.mousePos, 1.0f, 1.0f));
-    gl_Position =  vec4(vec2(pos), 0, 1);
-    fragColor = inColor;
-    fragTexCoord = inTexCoord + data.mousePos;
+    outPos = inPos;
+    
+    //inPos += data.mousePos;
+    vec2 scaledPos = inPos * instanceScale;
+    vec2 translatedPos = scaledPos + instanceOffset;
+    vec2 rotPos = translatedPos * rotationX(instanceRot.x) * rotationY(instanceRot.y);
+    vec4 pos = vec4(rotPos, 1.0, 1.0);
+
+    gl_Position =  pos;
+    //outColor = vec3(1, 0, 1);
+    outUV = vec3(inUV, instanceTexIndex);
 }
