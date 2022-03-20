@@ -1,11 +1,13 @@
 ﻿using ajiva.Application;
 using ajiva.Ecs;
-using ajiva.Models;
 using ajiva.Systems.VulcanEngine.Interfaces;
 using ajiva.Systems.VulcanEngine.Layer;
 using GlmSharp;
 using SharpVk;
 using SharpVk.Glfw;
+using SharpVk.Glfw.extras;
+using Glfw3 = SharpVk.Glfw.Glfw3;
+using Key = SharpVk.Glfw.Key;
 
 namespace ajiva.Systems.VulcanEngine.Systems;
 
@@ -168,6 +170,14 @@ public class WindowSystem : SystemBase, IUpdate, IInit, IWindowSystem
                 };
                 UpdateCursor();
                 //LogHelper.WriteLine($"activeLayer: {activeLayer}");
+                break;
+            case Key.F11:
+                if (inputAction == InputAction.Press)
+                    SharpVk.Glfw.extras.Glfw3.Public.SetWindowAttrib_0(windowHandle.RawHandle, (int)State.Decorated,
+                        SharpVk.Glfw.extras.Glfw3.Public.GetWindowAttrib_0(windowHandle.RawHandle, (int)State.Decorated) == (int)State.False
+                            ? (int)State.True
+                            : (int)State.False);
+                //SharpVk.Glfw.extras.Glfw3.Public.SetWindowSize_0(windowHandle.RawHandle, primaryMonitorVideoMode.Width, primaryMonitorVideoMode.Height);
                 break;
         }
 
