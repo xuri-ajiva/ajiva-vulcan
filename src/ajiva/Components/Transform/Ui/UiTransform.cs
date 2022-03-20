@@ -1,4 +1,5 @@
-﻿using ajiva.Utils.Changing;
+﻿using System.Diagnostics;
+using ajiva.Utils.Changing;
 using GlmSharp;
 using SharpVk;
 
@@ -6,6 +7,8 @@ namespace ajiva.Components.Transform.Ui;
 
 public class UiTransform : DisposingLogger, IComponent
 {
+    public record struct RenderOffsetScale(vec2 Offset, vec2 Scale);
+
     private const float RenderMin = -1;
     private const float RenderMax = 1;
     private const float RenderCenter = 0;
@@ -24,22 +27,27 @@ public class UiTransform : DisposingLogger, IComponent
         Rotation = rotation ?? new vec2(0, 0);
     }
 
-    public vec4 GetRenderPoints(Extent2D extent)
+    public RenderOffsetScale GetRenderOffsetScale(Extent2D extent)
     {
         var (posX, spanX) = ComputePos(horizontalAnchor, extent);
         var (posY, spanY) = ComputePos(verticalAnchor, extent);
 
-        var ret = new vec4(posX, posY, posX + spanX, posY + spanY);
-        Validate(ret);
-        return ret;
+        var res = new RenderOffsetScale(new vec2(posX, posY), new vec2(spanX, spanY));
+        Validate(res);
+        return res;
     }
 
-    private static void Validate(vec4 posVec)
+    [Conditional("DEBUG")]
+    private static void Validate(RenderOffsetScale posVec)
+    {
+        Validate(posVec.Offset);
+        Validate(posVec.Offset + posVec.Scale);
+    }
+
+    private static void Validate(vec2 posVec)
     {
         Validate(posVec.x);
         Validate(posVec.y);
-        Validate(posVec.z);
-        Validate(posVec.w);
     }
 
     private static void Validate(float value)
@@ -66,7 +74,7 @@ public class UiTransform : DisposingLogger, IComponent
 
         if ((uiAnchor.Alignment & UiAlignment.Center) == UiAlignment.Center)
             return (RenderCenter - computeFixedValueSpan / 2, computeFixedValueSpan);
-        
+
         if ((uiAnchor.Alignment & UiAlignment.Min) == UiAlignment.Min)
             return (RenderMin + computeFixedValueMargin, computeFixedValueSpan);
         if ((uiAnchor.Alignment & UiAlignment.Max) == UiAlignment.Max)

@@ -32,8 +32,8 @@ public struct Vertex2D
 
     public static IEnumerable<VertexInputAttributeDescription> GetAttributeDescriptions(uint binding)
     {
-        yield return new VertexInputAttributeDescription(location: 0, binding: binding, format: Format.R32G32SFloat, offset: (uint)Marshal.OffsetOf<Vertex2D>(nameof(Position)));
-        yield return new VertexInputAttributeDescription(location: 1, binding: binding, format: Format.R32G32B32SFloat, offset: (uint)Marshal.OffsetOf<Vertex2D>(nameof(Colour)));
-        yield return new VertexInputAttributeDescription(location: 2, binding: binding, format: Format.R32G32SFloat, offset: (uint)Marshal.OffsetOf<Vertex2D>(nameof(TextCoord)));
+        yield return new VertexInputAttributeDescription(0, binding, Format.R32G32SFloat, (uint)Marshal.OffsetOf<Vertex2D>(nameof(Position)));
+        yield return new VertexInputAttributeDescription(1, binding, Format.R32G32B32SFloat, (uint)Marshal.OffsetOf<Vertex2D>(nameof(Colour)));
+        yield return new VertexInputAttributeDescription(2, binding, Format.R32G32SFloat, (uint)Marshal.OffsetOf<Vertex2D>(nameof(TextCoord)));
     }
 }

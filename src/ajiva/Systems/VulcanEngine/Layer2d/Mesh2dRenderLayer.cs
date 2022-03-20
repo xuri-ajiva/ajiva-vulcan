@@ -55,11 +55,10 @@ public class Mesh2dRenderLayer : ComponentSystemBase<RenderInstanceMesh2D>, IIni
             renderGuard.Capture(vertexBuffer);
             renderGuard.Capture(indexBuffer);
             renderGuard.Capture(instanceBuffer);
-            //renderGuard.Buffer.BindVertexBuffers(VERTEX_BUFFER_BIND_ID, vertexBuffer.Buffer, 0);
+            renderGuard.Buffer.BindVertexBuffers(VERTEX_BUFFER_BIND_ID, vertexBuffer.Buffer, 0);
             renderGuard.Buffer.BindVertexBuffers(INSTANCE_BUFFER_BIND_ID, instanceBuffer.Buffer, 0);
-            //renderGuard.Buffer.BindIndexBuffer(indexBuffer.Buffer, 0, Statics.GetIndexType(indexBuffer.SizeOfT));
-            //renderGuard.Buffer.DrawIndexed(6, (uint)dedicatedBufferArray.Length, 0, 0, 0);
-            renderGuard.Buffer.Draw(6, (uint)dedicatedBufferArray.Length, 0, 0);
+            renderGuard.Buffer.BindIndexBuffer(indexBuffer.Buffer, 0, Statics.GetIndexType(indexBuffer.SizeOfT));
+            renderGuard.Buffer.DrawIndexed(6, (uint)dedicatedBufferArray.Length, 0, 0, 0);
         }
     }
 
@@ -68,11 +67,14 @@ public class Mesh2dRenderLayer : ComponentSystemBase<RenderInstanceMesh2D>, IIni
     {
         var bind = new[]
         {
+            Vertex2D.GetBindingDescription(VERTEX_BUFFER_BIND_ID),
             new VertexInputBindingDescription(INSTANCE_BUFFER_BIND_ID, (uint)Marshal.SizeOf<UiInstanceData>(), VertexInputRate.Instance)
         };
 
-        var attrib = new ViAdBuilder<UiInstanceData>(INSTANCE_BUFFER_BIND_ID)
-            .Add(nameof(UiInstanceData.PosCombine), Format.R32G32B32A32SFloat)
+        var attrib = new ViAdBuilder<UiInstanceData>(
+                Vertex2D.GetAttributeDescriptions(VERTEX_BUFFER_BIND_ID), INSTANCE_BUFFER_BIND_ID)
+            .Add(nameof(UiInstanceData.Offset), Format.R32G32SFloat)
+            .Add(nameof(UiInstanceData.Scale), Format.R32G32SFloat)
             .Add(nameof(UiInstanceData.Rotation), Format.R32G32SFloat)
             .Add(nameof(UiInstanceData.TextureIndex), Format.R32UInt)
             .Add(nameof(UiInstanceData.DrawType), Format.R32UInt)
@@ -88,7 +90,6 @@ public class Mesh2dRenderLayer : ComponentSystemBase<RenderInstanceMesh2D>, IIni
 
     private const uint VERTEX_BUFFER_BIND_ID = 0;
     private const uint INSTANCE_BUFFER_BIND_ID = 1;
-
 
     /// <inheritdoc />
     public void Init()
@@ -120,6 +121,7 @@ public class Mesh2dRenderLayer : ComponentSystemBase<RenderInstanceMesh2D>, IIni
         }
         Interlocked.Increment(ref dataVersion);
     }
+
     private void RebuildData(IInstanceMeshPool<UiInstanceData> sender)
     {
         Interlocked.Increment(ref dataVersion);

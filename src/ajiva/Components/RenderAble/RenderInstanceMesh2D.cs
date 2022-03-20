@@ -38,7 +38,7 @@ public class RenderInstanceMesh2D : DisposingLogger, IComponent
 
     private void Update(ref UiInstanceData value)
     {
-        value.PosCombine = transform.GetRenderPoints(extent);
+        (value.Offset, value.Scale) = transform.GetRenderOffsetScale(extent);
         value.Rotation = transform.Rotation;
         value.TextureIndex = textureComponent?.TextureId ?? 0;
         value.DrawType = UiDrawType.TexturedRectangle;

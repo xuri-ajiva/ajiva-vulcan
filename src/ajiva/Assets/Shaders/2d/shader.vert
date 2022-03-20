@@ -8,14 +8,19 @@ layout(binding = 0) uniform UniformViewProj {
     vec2 vec;
 } data;
 
+// Vertext attributes
+layout (location = 0) in vec2 inPos;
+layout (location = 1) in vec3 inColor;
+layout (location = 2) in vec2 inUV;
 
 // Instanced attributes
-layout (location = 0) in vec4 instancePosCombine;
-layout (location = 1) in vec2 instanceRot;
-layout (location = 2) in uint instanceTexIndex;
-layout (location = 3) in uint instanceDrawType;
+layout (location = 3) in vec2 instanceOffset;
+layout (location = 4) in vec2 instanceScale;
+layout (location = 5) in vec2 instanceRot;
+layout (location = 6) in uint instanceTexIndex;
+layout (location = 7) in uint instanceDrawType;
 
-
+// output attributes
 layout(location = 0) out vec3 outColor;
 layout(location = 1) out vec3 outUV;
 layout(location = 2) out vec2 outPos;
@@ -34,37 +39,15 @@ mat2 rotationY(in float angle) {
 }
 
 void main() {
-    vec2 inPos;
-    vec2 inUV;
-    if (gl_VertexIndex == 0){
-        inPos = instancePosCombine.xy;
-        inUV = vec2(0,0);
-    } else if (gl_VertexIndex == 1){
-        inPos = instancePosCombine.zy;
-        inUV = vec2(1,0);
-    } else if (gl_VertexIndex == 2){
-        inPos = instancePosCombine.zw;
-        inUV = vec2(1,1);
-    } else if (gl_VertexIndex == 3){
-        inPos = instancePosCombine.xy;
-        inUV = vec2(0,0);
-    } else if (gl_VertexIndex == 4){
-        inPos = instancePosCombine.xw;
-        inUV = vec2(0,1);
-    } else if (gl_VertexIndex == 5){
-        inPos = instancePosCombine.zw;
-        inUV = vec2(1,1);
-    } else {
-        inPos = vec2(0,0);
-        inUV = vec2(.5,.5);
-    }
-    
     outPos = inPos;
+    
     //inPos += data.mousePos;
-    vec2 rotPos = inPos * rotationX(instanceRot.x) * rotationY(instanceRot.y);
+    vec2 scaledPos = inPos * instanceScale;
+    vec2 translatedPos = scaledPos + instanceOffset;
+    vec2 rotPos = translatedPos * rotationX(instanceRot.x) * rotationY(instanceRot.y);
     vec4 pos = vec4(rotPos, 1.0, 1.0);
 
     gl_Position =  pos;
-    outColor = vec3(1,0,1);
+    //outColor = vec3(1, 0, 1);
     outUV = vec3(inUV, instanceTexIndex);
 }
