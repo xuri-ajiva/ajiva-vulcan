@@ -105,7 +105,7 @@ public class WindowSystem : SystemBase, IUpdate, IInit, IWindowSystem
                 {
                     ALog.Error(e);
                 }
-            Glfw3.PollEvents();
+            SharpVk.Glfw.extras.Glfw3.WaitEventsTimeout(1);
 
             if (windowReady) continue;
             Glfw3.DestroyWindow(window);
