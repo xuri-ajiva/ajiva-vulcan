@@ -5,7 +5,7 @@ using Ajiva.Wrapper.Logger;
 
 namespace ajiva.Ecs.Entity;
 
-public abstract class AEntity : DisposingLogger, IEntity, IFluentEntity<AEntity>
+public abstract class AEntity : DisposingLogger, IEntity, IFluentEntity<AEntity>, IFluentEntity
 {
     public AEntity()
     {
@@ -21,7 +21,7 @@ public abstract class AEntity : DisposingLogger, IEntity, IFluentEntity<AEntity>
     /// <inheritdoc />
     public uint Id { get; init; }
 
-    public Dictionary<Type, IComponent> Components { get; } = new Dictionary<Type, IComponent>();
+    public IDictionary<Type, IComponent> Components { get; } = new Dictionary<Type, IComponent>();
 
     public bool TryGetComponent<T>([MaybeNullWhen(false)] out T value) where T : IComponent
     {
@@ -80,37 +80,16 @@ public abstract class AEntity : DisposingLogger, IEntity, IFluentEntity<AEntity>
         }
         throw new KeyNotFoundException();
     }
+    
 
     /// <inheritdoc />
-    public AEntity Register(IAjivaEcs ecs)
+    public IFluentEntity Configure<TComponent>(Action<TComponent> configuration) where TComponent : IComponent
     {
-        foreach (var (type, component) in Components)
-        {
-            ecs.RegisterComponent(this, type, component);
-        }
-        ecs.RegisterEntity(this);
-        return this;
-    }
-
-    /// <inheritdoc />
-    public AEntity Configure<TV>(Action<TV> configuration) where TV : IComponent
-    {
-        if (TryGetComponent<TV>(out var value))
+        if (TryGetComponent<TComponent>(out var value))
         {
             configuration.Invoke(value);
         }
 
-        return this;
-    }
-
-    /// <inheritdoc />
-    public AEntity Unregister(IAjivaEcs ecs)
-    {
-        foreach (var (type, component) in Components)
-        {
-            ecs.UnRegisterComponent(this, type, component);
-        }
-        ecs.TryUnRegisterEntity(this);
         return this;
     }
 }
