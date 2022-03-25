@@ -22,3 +22,16 @@ public enum UiAlignment : byte
     AxisMask = 0b11000000,
     AlignmentMask = 0b00111111,
 }
+public enum UiAlignmentOrigin : byte
+{
+    None = 0,
+    Min = 1 << 0,
+    Max = 1 << 1,
+    Center = Min | Max,
+}
+public enum UiAxis : byte
+{
+    None = 0,
+    Horizontal = 1 << 6,
+    Vertical = 1 << 7,
+}

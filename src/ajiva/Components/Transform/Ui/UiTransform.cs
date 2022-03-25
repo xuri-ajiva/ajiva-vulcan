@@ -1,111 +1,107 @@
 ﻿using System.Diagnostics;
 using ajiva.Utils.Changing;
 using GlmSharp;
-using SharpVk;
 
 namespace ajiva.Components.Transform.Ui;
 
-public class UiTransform : DisposingLogger, IComponent
+public class UiTransform : DisposingLogger, IComponent, IUiTransform
 {
-    public record struct RenderOffsetScale(vec2 Offset, vec2 Scale);
-
-    private const float RenderMin = -1;
-    private const float RenderMax = 1;
-    private const float RenderCenter = 0;
-    private const float RenderSize = 2;
-
     private UiAnchor verticalAnchor;
     private UiAnchor horizontalAnchor;
     private vec2 rotation;
+    private bool isDirty;
+    private Rect2Di displaySize;
+    private Rect2Df renderSize;
+    private IUiTransform? parent;
 
-    public UiTransform(UiAnchor verticalAnchor, UiAnchor horizontalAnchor, vec2? rotation = null)
+    public UiTransform(IUiTransform? parent, UiAnchor verticalAnchor, UiAnchor horizontalAnchor, vec2? rotation = null)
     {
         ChangingObserver = new ChangingObserver(0);
 
+        Parent = parent;
         VerticalAnchor = verticalAnchor;
         HorizontalAnchor = horizontalAnchor;
         Rotation = rotation ?? new vec2(0, 0);
     }
 
-    public RenderOffsetScale GetRenderOffsetScale(Extent2D extent)
+    private static (float pos, float span) ComputePos(UiAnchor uiAnchor, Rect2Di display, Rect2Df render)
     {
-        var (posX, spanX) = ComputePos(horizontalAnchor, extent);
-        var (posY, spanY) = ComputePos(verticalAnchor, extent);
+        var displayAxis = (UiAxis)(uiAnchor.Alignment & UiAlignment.AxisMask);
+        var displayOrigin = (UiAlignmentOrigin)(uiAnchor.Alignment & UiAlignment.AlignmentMask);
 
-        var res = new RenderOffsetScale(new vec2(posX, posY), new vec2(spanX, spanY));
-        Validate(res);
-        return res;
-    }
-
-    [Conditional("DEBUG")]
-    private static void Validate(RenderOffsetScale posVec)
-    {
-        Validate(posVec.Offset);
-        Validate(posVec.Offset + posVec.Scale);
-    }
-
-    private static void Validate(vec2 posVec)
-    {
-        Validate(posVec.x);
-        Validate(posVec.y);
-    }
-
-    private static void Validate(float value)
-    {
-        if (value is > RenderMax or < RenderMin)
+        switch (displayAxis)
         {
-            ALog.Debug("Ui Component might be out of Visible Range");
+            case UiAxis.Horizontal:
+                var computeFixedValueSpanX = ComputeFixedValue(uiAnchor.Span, display.SizeX, render.SizeX);
+                var computeFixedValueMarginX = ComputeFixedValue(uiAnchor.Margin, display.SizeX, render.SizeX);
+                return displayOrigin switch
+                {
+                    UiAlignmentOrigin.Center => (render.CenterX - computeFixedValueSpanX / 2, computeFixedValueSpanX),
+                    UiAlignmentOrigin.Min => (render.MinX + computeFixedValueMarginX, computeFixedValueSpanX),
+                    UiAlignmentOrigin.Max => (render.MaxX - (computeFixedValueMarginX + computeFixedValueSpanX), computeFixedValueSpanX),
+                    UiAlignmentOrigin.None => (0, 0),
+                    _ => throw new ArgumentOutOfRangeException(nameof(uiAnchor.Alignment), displayOrigin, "Not a valid Origin")
+                };
+            case UiAxis.Vertical:
+                var computeFixedValueSpanY = ComputeFixedValue(uiAnchor.Span, display.SizeY, render.SizeY);
+                var computeFixedValueMarginY = ComputeFixedValue(uiAnchor.Margin, display.SizeY, render.SizeY);
+                return displayOrigin switch
+                {
+                    UiAlignmentOrigin.Center => (render.CenterY - computeFixedValueSpanY / 2, computeFixedValueSpanY),
+                    UiAlignmentOrigin.Min => (render.MinY + computeFixedValueMarginY, computeFixedValueSpanY),
+                    UiAlignmentOrigin.Max => (render.MaxY - (computeFixedValueMarginY + computeFixedValueSpanY), computeFixedValueSpanY),
+                    UiAlignmentOrigin.None => (0, 0),
+                    _ => throw new ArgumentOutOfRangeException(nameof(uiAnchor.Alignment), displayOrigin, "Not a valid Origin")
+                };
+
+            case UiAxis.None: return (0, 0);
+            default: throw new ArgumentOutOfRangeException(nameof(uiAnchor.Alignment), displayAxis, "Not a valid Axis");
         }
     }
 
-    private static (float pos, float span) ComputePos(UiAnchor uiAnchor, Extent2D extent2D)
-    {
-        float totalSpan = (uiAnchor.Alignment & UiAlignment.AxisMask) switch
-        {
-            UiAlignment.Horizontal => extent2D.Width,
-            UiAlignment.Vertical => extent2D.Height,
-            _ => throw new ArgumentOutOfRangeException(nameof(uiAnchor.Alignment), uiAnchor.Alignment & UiAlignment.AxisMask, "Not a valid Axis")
-        };
-
-        var computeFixedValueSpan = ComputeFixedValue(uiAnchor.Span, totalSpan);
-        var computeFixedValueMargin = ComputeFixedValue(uiAnchor.Margin, totalSpan);
-
-        if (uiAnchor.Alignment == UiAlignment.None) return (0, 0);
-
-        if ((uiAnchor.Alignment & UiAlignment.Center) == UiAlignment.Center)
-            return (RenderCenter - computeFixedValueSpan / 2, computeFixedValueSpan);
-
-        if ((uiAnchor.Alignment & UiAlignment.Min) == UiAlignment.Min)
-            return (RenderMin + computeFixedValueMargin, computeFixedValueSpan);
-        if ((uiAnchor.Alignment & UiAlignment.Max) == UiAlignment.Max)
-            return (RenderMax - (computeFixedValueMargin + computeFixedValueSpan), computeFixedValueSpan);
-
-        throw new ArgumentOutOfRangeException(nameof(uiAnchor.Alignment), uiAnchor.Alignment, "");
-    }
-
-    private static float ComputeFixedValue(UiValueUnit uiValue, float totalSpan)
+    private static float ComputeFixedValue(UiValueUnit uiValue, int displaySpan, float renderSpan)
     {
         var (value, uiUnit) = uiValue;
         return uiUnit switch
         {
-            UiUnit.Pixel => (value / totalSpan) * RenderSize,
-            UiUnit.Percent => (value / 100f) * RenderSize,
+            UiUnit.Pixel => (value / displaySpan) * renderSpan,
+            UiUnit.Percent => (value / 100f) * renderSpan,
             _ => throw new ArgumentOutOfRangeException(nameof(uiValue), "The " + nameof(UiUnit) + " value is out of Range")
         };
     }
 
+#region Props
+
     public IChangingObserver ChangingObserver { get; }
+
+    /// <inheritdoc />
+    public IUiTransform? Parent
+    {
+        get => parent;
+        set
+        {
+            if (parent == value) return;
+            parent = value;
+            isDirty = true;
+            ChangingObserver.Changed();
+        }
+    }
+
     public UiAnchor VerticalAnchor
     {
         get => verticalAnchor;
         set
         {
+            if (verticalAnchor == value) return;
+
             if ((value.Alignment & UiAlignment.AlignmentMask) == UiAlignment.None)
             {
                 ALog.Warn("Alignment Type Not set for Vertical Anchor Fixing...");
                 value.Alignment |= UiAlignment.Vertical;
             }
-            ChangingObserver.RaiseAndSetIfChanged(ref verticalAnchor, value);
+            verticalAnchor = value;
+            isDirty = true;
+            ChangingObserver.Changed();
         }
     }
     public UiAnchor HorizontalAnchor
@@ -113,17 +109,148 @@ public class UiTransform : DisposingLogger, IComponent
         get => horizontalAnchor;
         set
         {
+            if (horizontalAnchor == value) return;
+
             if ((value.Alignment & UiAlignment.AlignmentMask) == UiAlignment.None)
             {
                 ALog.Warn("Alignment Type Not set for Horizontal Anchor Fixing...");
                 value.Alignment |= UiAlignment.Horizontal;
             }
-            ChangingObserver.RaiseAndSetIfChanged(ref horizontalAnchor, value);
+            horizontalAnchor = value;
+            isDirty = true;
+            ChangingObserver.Changed();
         }
     }
     public vec2 Rotation
     {
-        get => rotation;
+        get
+        {
+            if (Parent is not null)
+                return rotation + Parent.Rotation;
+            return rotation;
+        }
         set => ChangingObserver.RaiseAndSetIfChanged(ref rotation, value);
     }
+
+    /// <inheritdoc />
+    public Rect2Di DisplaySize
+    {
+        get
+        {
+            if (isDirty) RecalculateSizes();
+            return displaySize;
+        }
+    }
+
+    /// <inheritdoc />
+    public Rect2Df RenderSize
+    {
+        get
+        {
+            if (isDirty) RecalculateSizes();
+            return renderSize;
+        }
+    }
+
+#endregion
+
+    public void RecalculateSizes()
+    {
+        isDirty = false;
+        CalculateDisplaySize();
+        renderSize = CalculateRenderSize();
+        displaySize = CalculateDisplaySize();
+        foreach (var uiTransform in children)
+        {
+            uiTransform.RecalculateSizes();
+        }
+    }
+
+    /// <inheritdoc />
+    public void AddChild(IUiTransform child)
+    {
+        if (child is null)
+            throw new ArgumentNullException(nameof(child));
+        child.Parent = this;
+        children.Add(child);
+    }
+
+    /// <inheritdoc />
+    public void RemoveChild(IUiTransform child)
+    {
+        if (child is null)
+            throw new ArgumentNullException(nameof(child));
+        child.Parent = null;
+        children.Remove(child);
+    }
+
+    private readonly List<IUiTransform> children = new List<IUiTransform>();
+
+    private Rect2Df CalculateRenderSize()
+    {
+        if (Parent is null) return new Rect2Df(0, 0, 0, 0);
+
+        var (posX, spanX) = ComputePos(horizontalAnchor, Parent.DisplaySize, Parent.RenderSize);
+        var (posY, spanY) = ComputePos(verticalAnchor, Parent.DisplaySize, Parent.RenderSize);
+
+        return new Rect2Df(posX, posY, posX + spanX, posY + spanY);
+    }
+
+    private Rect2Di CalculateDisplaySize()
+    {
+        if (Parent is null) return new Rect2Di(0, 0, 0, 0);
+
+        //unlerp the render size (value - min) / (max - min)
+
+        var minX = (int)(Parent.DisplaySize.SizeX * ((RenderSize.MinX - Parent.RenderSize.MinX) / Parent.RenderSize.SizeX));
+        var minY = (int)(Parent.DisplaySize.SizeY * ((RenderSize.MinY - Parent.RenderSize.MinY) / Parent.RenderSize.SizeY));
+
+        var maxX = (int)(Parent.DisplaySize.SizeX * ((RenderSize.MaxX - Parent.RenderSize.MinX) / Parent.RenderSize.SizeX));
+        var maxY = (int)(Parent.DisplaySize.SizeY * ((RenderSize.MaxY - Parent.RenderSize.MinY) / Parent.RenderSize.SizeY));
+
+        var r= new Rect2Di(minX, minY, maxX - minX, maxY - minY);
+        ALog.Debug(GetHashCode().ToString("X8") +": "+ r);
+        return r;
+    }
+
+    [Obsolete("Use RenderSize instead")]
+    public RenderOffsetScale CalculateRenderOffsetScale()
+    {
+        if (Parent is null) return new RenderOffsetScale(new vec2(0, 0), new vec2(1, 1));
+
+        var (posX, spanX) = ComputePos(horizontalAnchor, Parent.DisplaySize, Parent.RenderSize);
+        var (posY, spanY) = ComputePos(verticalAnchor, Parent.DisplaySize, Parent.RenderSize);
+
+        var ret = new RenderOffsetScale(new vec2(posX, posY), new vec2(spanX, spanY));
+        Validate(ret, RenderSize);
+        return ret;
+    }
+
+#region Validate
+
+    [Conditional("DEBUG")]
+    private static void Validate(RenderOffsetScale posVec, Rect2Df renderSize)
+    {
+        var (offset, scale) = posVec;
+        Validate(offset, renderSize);
+        Validate(offset + scale, renderSize);
+    }
+
+    private static void Validate(vec2 posVec, Rect2Df renderSize)
+    {
+        Validate(posVec.x, renderSize.MinX, renderSize.MaxX);
+        Validate(posVec.y, renderSize.MinY, renderSize.MaxY);
+    }
+
+    private static void Validate(float pos, float min, float max)
+    {
+        if (pos < min)
+            ALog.Debug("Ui Component might be out of Visible Range");
+        //throw new ArgumentOutOfRangeException(nameof(posVecY), posVecY, "The " + nameof(posVecY) + " value is out of Range");
+        if (pos > max)
+            ALog.Debug("Ui Component might be out of Visible Range");
+        //throw new ArgumentOutOfRangeException(nameof(posVecY), posVecY, "The " + nameof(posVecY) + " value is out of Range");
+    }
+
+#endregion
 }
