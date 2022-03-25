@@ -115,10 +115,6 @@ public class Mesh2dRenderLayer : ComponentSystemBase<RenderInstanceMesh2D>, IIni
 
     private void UiResizeHandler(object sender, Extent2D oldSize, Extent2D newSize)
     {
-        foreach (var keyValuePair in ComponentEntityMap)
-        {
-            keyValuePair.Key.Extent = newSize;
-        }
         Interlocked.Increment(ref dataVersion);
     }
 
@@ -147,7 +143,7 @@ public class Mesh2dRenderLayer : ComponentSystemBase<RenderInstanceMesh2D>, IIni
 
         var res = base.RegisterComponent(entity, component);
         CreateInstance(res);
-        component.Extent = windowSystem.Canvas.Extent;
+        component.UpdateData();
         Interlocked.Increment(ref dataVersion);
         return res;
     }

@@ -3,7 +3,6 @@ using ajiva.Components.Mesh;
 using ajiva.Components.Mesh.Instance;
 using ajiva.Components.Transform.Ui;
 using ajiva.Models.Instance;
-using SharpVk;
 
 namespace ajiva.Components.RenderAble;
 
@@ -13,7 +12,6 @@ public class RenderInstanceMesh2D : DisposingLogger, IComponent
 
     private readonly UiTransform transform;
     private readonly TextureComponent? textureComponent;
-    private Extent2D extent;
 
     public RenderInstanceMesh2D(IMesh mesh, UiTransform transform, TextureComponent textureComponent)
     {
@@ -24,21 +22,14 @@ public class RenderInstanceMesh2D : DisposingLogger, IComponent
     }
 
     public IMesh Mesh { get; }
-    public Extent2D Extent
-    {
-        get => extent;
-        set
-        {
-            extent = value;
-            UpdateData();
-        }
-    }
 
-    private void UpdateData() => Instance?.UpdateData(Update);
+    public void UpdateData() => Instance?.UpdateData(Update);
 
     private void Update(ref UiInstanceData value)
     {
-        (value.Offset, value.Scale) = transform.GetRenderOffsetScale(extent);
+        value.Offset = transform.RenderSize.Min;
+        value.Scale = transform.RenderSize.Max - transform.RenderSize.Min;
+        //(value.Offset, value.Scale) = transform.CalculateRenderOffsetScale(extent);
         value.Rotation = transform.Rotation;
         value.TextureIndex = textureComponent?.TextureId ?? 0;
         value.DrawType = UiDrawType.TexturedRectangle;
