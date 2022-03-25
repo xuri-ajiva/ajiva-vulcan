@@ -4,14 +4,14 @@ using ajiva.Components.RenderAble;
 using ajiva.Components.Transform.Ui;
 using ajiva.Ecs;
 
-namespace ajiva.Entities;
+namespace ajiva.Entities.Ui;
 
 public class Rect : DefaultEntity
 {
     public Rect()
     {
         var mesh = MeshPrefab.Rect;
-        var transform = this.AddComponent(new UiTransform(
+        var transform = this.AddComponent(new UiTransform(null,
             UiAnchor.Pixel(10, 20, UiAlignment.Top),
             UiAnchor.Pixel(10, 20, UiAlignment.Left)
         ));
