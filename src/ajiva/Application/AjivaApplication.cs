@@ -4,6 +4,7 @@ using ajiva.Components.Transform;
 using ajiva.Components.Transform.Ui;
 using ajiva.Ecs;
 using ajiva.Entities;
+using ajiva.Entities.Ui;
 using ajiva.Generators.Texture;
 using ajiva.Systems;
 using ajiva.Systems.Assets;
@@ -34,6 +35,7 @@ public class AjivaApplication : DisposingLogger
     private readonly Random r = new Random();
 
     private Instance vulcanInstance;
+    private Rect spinner;
 
     public AjivaApplication(CancellationTokenSource tokenSource)
     {
@@ -102,16 +104,34 @@ public class AjivaApplication : DisposingLogger
 
         meshPool.AddMesh(MeshPrefab.Cube);
         meshPool.AddMesh(MeshPrefab.Rect);
+        var leftScreen = new Panel(new UiTransform(null,
+            new UiAnchor(UiAlignment.CenterVertical, 0, 1.0f),
+            new UiAnchor(UiAlignment.Left, .1f, 0.4f)
+        )).Register(entityComponentSystem);
 
-        var rect = new Rect().Configure<RenderMesh3D>(x =>
+        var rect = new Rect().Configure<Rect, RenderMesh3D>(x =>
         {
             x.SetMesh(MeshPrefab.Rect);
             x.Render = true;
-        }).Configure<UiTransform>(x =>
+        }).Configure<Rect, UiTransform>(x =>
         {
             x.VerticalAnchor = new UiAnchor(UiAlignment.CenterVertical, UiValueUnit.Pixel(20), UiValueUnit.Pixel(100));
             x.HorizontalAnchor = new UiAnchor(UiAlignment.Right, UiValueUnit.Pixel(20), UiValueUnit.Pixel(100));
         }).Register(entityComponentSystem);
+
+        spinner = new Rect().Configure<Rect, RenderMesh3D>(x =>
+            {
+                x.SetMesh(MeshPrefab.Rect);
+                x.Render = true;
+            })
+            .Configure<Rect, UiTransform>(x =>
+            {
+                x.VerticalAnchor = new UiAnchor(UiAlignment.CenterVertical, 20, .1f);
+                x.HorizontalAnchor = new UiAnchor(UiAlignment.CenterHorizontal, 20, .1f);
+            })
+            .Register(entityComponentSystem);
+
+        leftScreen.AddChild(rect.Get<UiTransform>());
 
         for (var i = 0; i < 10; i++)
         {
@@ -192,6 +212,7 @@ public class AjivaApplication : DisposingLogger
                 {
                     x.Scale = new vec2(.05f);
                 }).Register(entityComponentSystem);*/
+                spinner.Get<UiTransform>().Rotation += new vec2(0, .1f);
                 break;
 
             case Key.P:
