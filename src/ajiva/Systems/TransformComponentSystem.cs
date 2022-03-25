@@ -13,9 +13,42 @@ public class TransformComponentSystem : ComponentSystemBase<Transform3d>, ITrans
     {
     }
 }
-public class Transform2dComponentSystem : ComponentSystemBase<UiTransform>, ITransform2dComponentSystem
+public class Transform2dComponentSystem : ComponentSystemBase<UiTransform>, ITransform2dComponentSystem, IInit
 {
+    public UIRootTransform RootTransform { get; set; }
+
     public Transform2dComponentSystem(IAjivaEcs ecs) : base(ecs)
     {
+    }
+
+    /// <inheritdoc />
+    public void Init()
+    {
+        var windowSystem = Ecs.Get<IWindowSystem>();
+        RootTransform = new UIRootTransform(windowSystem.Canvas.WidthI, windowSystem.Canvas.HeightI, -1.0f, 1.0f);
+        windowSystem.OnResize += (sender, oldExtent, newSize) =>
+        {
+            RootTransform.DisplaySize = new Rect2Di(0, 0, (int)newSize.Width, (int)newSize.Height);
+        };
+    }
+
+    /// <inheritdoc />
+    public override UiTransform RegisterComponent(IEntity entity, UiTransform component)
+    {
+        if (component.Parent is null)
+        {
+            RootTransform.AddChild(component);
+        }
+        return base.RegisterComponent(entity, component);
+    }
+
+    /// <inheritdoc />
+    public override UiTransform UnRegisterComponent(IEntity entity, UiTransform component)
+    {
+        if (component.Parent == RootTransform)
+        {
+            RootTransform.RemoveChild(component);
+        }
+        return base.UnRegisterComponent(entity, component);
     }
 }
