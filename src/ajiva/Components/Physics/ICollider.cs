@@ -11,4 +11,5 @@ public interface ICollider : IComponent
 
     MeshPool Pool { get; set; }
     bool IsStatic { get; set; }
+    void ResolveCollision(ICollider itemCollider);
 }

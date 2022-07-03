@@ -1,12 +1,12 @@
-﻿using ajiva.Components.Transform.Kd;
+﻿using ajiva.Components.Transform.SpatialAcceleration;
 
 namespace ajiva.Components.Physics;
 
 public interface IBoundingBox : IComponent
 {
-    KdVec MinPos { get; }
-    KdVec MaxPos { get; }
+    StaticOctalSpace Space { get; }
     ICollider Collider { get; }
-    KdTransform Center { get; }
     void ComputeBoxBackground();
+    void SetTree(StaticOctalTreeContainer<IBoundingBox> octalTree);
+    void RemoveTree();
 }
