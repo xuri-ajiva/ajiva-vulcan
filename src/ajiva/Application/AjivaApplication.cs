@@ -1,4 +1,5 @@
 ﻿using ajiva.Components.Mesh;
+using ajiva.Components.Physics;
 using ajiva.Components.RenderAble;
 using ajiva.Components.Transform;
 using ajiva.Components.Transform.Ui;
@@ -109,7 +110,7 @@ public class AjivaApplication : DisposingLogger
             new UiAnchor(UiAlignment.Left, .1f, 0.4f)
         )).Register(entityComponentSystem);
 
-        var rect = new Rect().Configure<Rect, RenderMesh3D>(x =>
+        /*var rect = new Rect().Configure<Rect, RenderMesh3D>(x =>
         {
             x.SetMesh(MeshPrefab.Rect);
             x.Render = true;
@@ -117,7 +118,7 @@ public class AjivaApplication : DisposingLogger
         {
             x.VerticalAnchor = new UiAnchor(UiAlignment.CenterVertical, UiValueUnit.Pixel(20), UiValueUnit.Pixel(100));
             x.HorizontalAnchor = new UiAnchor(UiAlignment.Right, UiValueUnit.Pixel(20), UiValueUnit.Pixel(100));
-        }).Register(entityComponentSystem);
+        }).Register(entityComponentSystem);*/
 
         spinner = new Rect().Configure<Rect, RenderMesh3D>(x =>
             {
@@ -126,12 +127,12 @@ public class AjivaApplication : DisposingLogger
             })
             .Configure<Rect, UiTransform>(x =>
             {
-                x.VerticalAnchor = new UiAnchor(UiAlignment.CenterVertical, 20, .1f);
-                x.HorizontalAnchor = new UiAnchor(UiAlignment.CenterHorizontal, 20, .1f);
+                x.VerticalAnchor = new UiAnchor(UiAlignment.CenterVertical, 20, 10);
+                x.HorizontalAnchor = new UiAnchor(UiAlignment.CenterHorizontal, 20, 10);
             })
             .Register(entityComponentSystem);
 
-        leftScreen.AddChild(rect.Get<UiTransform>());
+        //leftScreen.AddChild(rect.Get<UiTransform>());
 
         for (var i = 0; i < 10; i++)
         {
@@ -171,9 +172,10 @@ public class AjivaApplication : DisposingLogger
                             .Register(entityComponentSystem)
                             .Configure<Transform3d>(trans =>
                             {
-                                trans.Position = new vec3(i * sz, -index * 2, j * sz);
+                                //trans.Position = new vec3(i * sz, (-index * 2) * Math.Min(rep / (float)i, 10) , j * sz);
+                                trans.Position = new vec3(i * sz, (-index * 2), j * sz);
                                 trans.Rotation = new vec3(i * 90, j * 90, 0);
-                                trans.Scale = new vec3((sz / 2) * .98f);
+                                trans.Scale = new vec3(sz / 2.1f);
                             });
                     }
                 });
@@ -235,6 +237,22 @@ public class AjivaApplication : DisposingLogger
                 {
                     trans.Position = sys.MainCamara.Transform.Position + sys.MainCamara.FrontNormalized * 25;
                     trans.Rotation = sys.MainCamara.Transform.Rotation;
+                    trans.Scale = new vec3(3);
+                }).Configure<ICollider>(x =>
+                {
+                    x.IsStatic = true;
+                }).Register(entityComponentSystem);
+
+                break;
+            case Key.G:
+                var sys2 = entityComponentSystem.Get<Ajiva3dLayerSystem>();
+                var cubex2 = new Cube(entityComponentSystem).Configure<Transform3d>(trans =>
+                {
+                    trans.Position = sys2.MainCamara.Transform.Position;
+                    trans.Scale = new vec3(10);
+                }).Configure<ICollider>(x =>
+                {
+                    x.IsStatic = true;
                 }).Register(entityComponentSystem);
 
                 break;
