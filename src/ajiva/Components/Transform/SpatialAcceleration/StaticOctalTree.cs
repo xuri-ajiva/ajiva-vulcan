@@ -275,6 +275,7 @@ public readonly struct StaticOctalSpace
 
     public vec3 Position => _position;
     public vec3 Size => _size;
+    public vec3 Center => _position + _size / 2;
     public static StaticOctalSpace Empty { get; } = new StaticOctalSpace(vec3.Zero, vec3.Zero);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]

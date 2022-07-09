@@ -77,6 +77,7 @@ public class AjivaApplication : DisposingLogger
         entityComponentSystem.Add<ImageSystem, IImageSystem>();
         entityComponentSystem.Add<TransformComponentSystem, ITransformComponentSystem>();
         entityComponentSystem.Add<Transform2dComponentSystem, ITransform2dComponentSystem>();
+        entityComponentSystem.Add<PhysicsSystem, PhysicsSystem>();
         entityComponentSystem.Add<AssetManager, IAssetManager>();
 
         var graphicsSystem = entityComponentSystem.Add<GraphicsSystem, IGraphicsSystem>();
