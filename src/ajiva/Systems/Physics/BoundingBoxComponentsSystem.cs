@@ -10,18 +10,22 @@ namespace ajiva.Systems.Physics;
 public class BoundingBoxComponentsSystem : ComponentSystemBase<IBoundingBox>, IUpdate
 {
     StaticOctalTreeContainer<IBoundingBox> _octalTree;
+    private readonly PhysicsSystem _physicsSystem;
+    private bool phisicsUpdated;
 
     /// <inheritdoc />
     public BoundingBoxComponentsSystem(IAjivaEcs ecs) : base(ecs)
     {
         var pos = new vec3(float.MinValue / MathF.PI);
         _octalTree = new StaticOctalTreeContainer<IBoundingBox>(new StaticOctalSpace(pos, pos * -MathF.E), 255);
+        _physicsSystem = ecs.Get<PhysicsSystem>();
     }
 
     /// <inheritdoc />
     public void Update(UpdateInfo delta)
     {
-        DoPhysicFrame();
+        if (phisicsUpdated)
+            DoPhysicFrame();
     }
 
     /// <inheritdoc />
@@ -34,7 +38,17 @@ public class BoundingBoxComponentsSystem : ComponentSystemBase<IBoundingBox>, IU
         {
             foreach (var octalItem in _octalTree.Search(dynamicItem.Space))
             {
-                DoCollision(dynamicItem, octalItem);
+                if (ComponentEntityMap.TryGetValue(dynamicItem.Item, out var b1))
+                {
+                    if (ComponentEntityMap.TryGetValue(octalItem.Item, out var b2))
+                    {
+                        if (b1 != b2)
+                        {
+                            _physicsSystem.ResolveCollision(b1, b2);
+                        }
+                    }
+                }
+                //_physicsSystem.ResolveCollision(ComponentEntityMap[dynamicItem.Item], ComponentEntityMap[octalItem.Item]);
             }
         }
         //ALog.Debug("End DoPhysicFrame");
@@ -89,5 +103,11 @@ public class BoundingBoxComponentsSystem : ComponentSystemBase<IBoundingBox>, IU
     {
         component.RemoveTree();
         return base.UnRegisterComponent(entity, component);
+    }
+
+    public void TogglePhysicUpdate()
+    {
+        phisicsUpdated = !phisicsUpdated;
+        _physicsSystem.SetEnabled(phisicsUpdated);
     }
 }
