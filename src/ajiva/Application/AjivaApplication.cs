@@ -28,7 +28,7 @@ namespace ajiva.Application;
 public class AjivaApplication : DisposingLogger
 {
     private const int size = 100;
-    private const int posRange = 10;
+    private const int posRange = 20;
     private const float scale = 0.7f;
 
     private readonly IAjivaEcs entityComponentSystem;
@@ -135,6 +135,54 @@ public class AjivaApplication : DisposingLogger
 
         //leftScreen.AddChild(rect.Get<UiTransform>());
 
+        //static floor at -100 z
+
+        //tile floor
+        const int tileCount = 10;
+        const int floorSize = 200;
+        const int floorCenter = floorSize / 2;
+        const int tileSize = floorSize / tileCount;
+
+        for (int i = 0; i < tileCount; i++)
+        {
+            for (int j = 0; j < tileCount; j++)
+            {
+                var i1 = i;
+                var j1 = j;
+                var floor = new Cube(entityComponentSystem).Configure<Transform3d>(trans =>
+                    {
+                        trans.Position = new vec3(i1 * tileSize - floorCenter, -150, j1 * tileSize - floorCenter);
+                        trans.Scale = new vec3(tileSize, 100, tileSize);
+                    })
+                    .Configure<ICollider>(x => { x.IsStatic = true; })
+                    .Configure<PhysicsComponent>(x =>
+                    {
+                        x.IsStatic = true;
+                        x.Force = vec3.Zero;
+                        x.Velocity = vec3.Zero;
+                    })
+                    .Register(entityComponentSystem);
+            }
+        }
+
+        for (int i = 0; i < 100; i++) //100 floors for more updates
+        {
+            var floor = new Cube(entityComponentSystem).Configure<Transform3d>(trans =>
+                {
+                    trans.Position = new vec3( tileSize - floorCenter, -150,  tileSize - floorCenter);
+                    trans.Scale = new vec3(floorSize, 100, floorSize);
+                })
+                .Configure<ICollider>(x => { x.IsStatic = true; })
+                .Configure<PhysicsComponent>(x =>
+                {
+                    x.IsStatic = true;
+                    x.Force = vec3.Zero;
+                    x.Velocity = vec3.Zero;
+                })
+                .Register(entityComponentSystem);
+        }
+        
+        
         for (var i = 0; i < 10; i++)
         {
             //BUG: If we configure before register the data is not uploaded properly
@@ -196,7 +244,7 @@ public class AjivaApplication : DisposingLogger
                 {
                     using var change = entityComponentSystem.Get<GraphicsSystem>().ChangingObserver.BeginBigChange();
 
-                    for (var i = 0; i < 100; i++)
+                    for (var i = 0; i < 1000; i++)
                     {
                         var cube = new Cube(entityComponentSystem)
                             .Register(entityComponentSystem)
@@ -222,7 +270,7 @@ public class AjivaApplication : DisposingLogger
                 var bbs = entityComponentSystem.Get<BoundingBoxComponentsSystem>();
                 wp.EnqueueWork((info, param) =>
                 {
-                    bbs.DoPhysicFrame();
+                    bbs.TogglePhysicUpdate();
                     return WorkResult.Succeeded;
                 }, exception => ALog.Error(exception), "DoPhysicFrame");
 
@@ -235,26 +283,26 @@ public class AjivaApplication : DisposingLogger
             case Key.F:
                 var sys = entityComponentSystem.Get<Ajiva3dLayerSystem>();
                 var cubex = new Cube(entityComponentSystem).Configure<Transform3d>(trans =>
-                {
-                    trans.Position = sys.MainCamara.Transform.Position + sys.MainCamara.FrontNormalized * 25;
-                    trans.Rotation = sys.MainCamara.Transform.Rotation;
-                    trans.Scale = new vec3(3);
-                }).Configure<ICollider>(x =>
-                {
-                    x.IsStatic = true;
-                }).Register(entityComponentSystem);
+                    {
+                        trans.Position = sys.MainCamara.Transform.Position + sys.MainCamara.FrontNormalized * 25;
+                        trans.Rotation = sys.MainCamara.Transform.Rotation;
+                        trans.Scale = new vec3(3);
+                    })
+                    .Configure<ICollider>(x => { x.IsStatic = true; })
+                    .Configure<PhysicsComponent>(x => { x.IsStatic = true; })
+                    .Register(entityComponentSystem);
 
                 break;
             case Key.G:
                 var sys2 = entityComponentSystem.Get<Ajiva3dLayerSystem>();
                 var cubex2 = new Cube(entityComponentSystem).Configure<Transform3d>(trans =>
-                {
-                    trans.Position = sys2.MainCamara.Transform.Position;
-                    trans.Scale = new vec3(10);
-                }).Configure<ICollider>(x =>
-                {
-                    x.IsStatic = true;
-                }).Register(entityComponentSystem);
+                    {
+                        trans.Position = sys2.MainCamara.Transform.Position;
+                        trans.Scale = new vec3(10);
+                    })
+                    .Configure<ICollider>(x => { x.IsStatic = true; })
+                    .Configure<PhysicsComponent>(x => { x.IsStatic = true; })
+                    .Register(entityComponentSystem);
 
                 break;
         }
