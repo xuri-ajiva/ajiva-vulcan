@@ -1,29 +1,39 @@
 ﻿using System.Runtime.CompilerServices;
+using ajiva.Entities;
+using ajiva.Systems.Physics;
 using GlmSharp;
 
 namespace ajiva.Components.Transform.SpatialAcceleration;
 
-public class StaticOctalTree<T, TItem> where TItem : StaticOctalItem<T>
+public class StaticOctalTree<T, TItem> : IRespectable where TItem : StaticOctalItem<T>
 {
     private const int AREAS_PER_LEAF = 8;
-    private readonly int _maxDepth;
-    private readonly int _depth;
+    private int _maxDepth;
+    private int _depth;
 
     private StaticOctalSpace _area;
 
     private StaticOctalSpace[] _children;
-    private StaticOctalTree<T, TItem>?[] _childrenTrees;
-    private readonly LinkedList<TItem> _items;
+    private StaticOctalTree<T, TItem>?[]? _childrenTrees;
+    private LinkedList<TItem>? _items;
 
-    public StaticOctalTree(StaticOctalSpace area, int depth, int maxDepth)
+    private bool hasRest = false;
+
+    public void Setup(StaticOctalSpace area, int depth, int maxDepth)
     {
         _depth = depth;
         _maxDepth = maxDepth;
-        _childrenTrees = new StaticOctalTree<T, TItem>[8];
-        _items = new();
-
+        if (_childrenTrees is not null && _childrenTrees.Any(x => x is not null))
+        {
+            ALog.Error("already setup");
+        }
+        _childrenTrees ??= new StaticOctalTree<T, TItem>[AREAS_PER_LEAF]; //ArrayPool<StaticOctalTree<T, TItem>>.Shared.Rent(AREAS_PER_LEAF);
+        _items ??= new LinkedList<TItem>();
         Resize(area);
+        hasRest = false;
     }
+
+    private DebugBox? _visual;
 
     // Force area change on Tree, invalidates this and all child layers
     public void Resize(StaticOctalSpace area)
@@ -53,14 +63,49 @@ public class StaticOctalTree<T, TItem> where TItem : StaticOctalItem<T>
         };
     }
 
+    private void CreateVisual()
+    {
+        if (_visual is null)
+        {
+            _visual = new DebugBox();
+            _visual.Register(BoundingBoxComponentsSystem.SEcs);
+        }
+        else
+        {
+            return;
+        }
+
+        var scale = _area.Size / 2.0f;
+        var position = _area.Position + scale;
+
+        _visual.Configure<Transform3d>(trans =>
+        {
+            trans.RefPosition((ref vec3 vec) =>
+            {
+                vec.x = position[0];
+                vec.y = position[1];
+                vec.z = position[2];
+            });
+
+            trans.RefScale((ref vec3 vec) =>
+            {
+                vec.x = scale.x;
+                vec.y = scale.y;
+                vec.z = scale.z;
+            });
+        });
+    }
+
     public void Clear()
     {
         _items.Clear();
 
         for (var i = 0; i < AREAS_PER_LEAF; i++)
         {
-            _childrenTrees[i]?.Clear();
+            var item = _childrenTrees[i];
             _childrenTrees[i] = null;
+            item?.Clear();
+            ObjectPool<StaticOctalTree<T, TItem>>.Instance.Return(item);
         }
     }
 
@@ -75,10 +120,19 @@ public class StaticOctalTree<T, TItem> where TItem : StaticOctalItem<T>
             if (_depth + 1 >= _maxDepth) continue;
 
             // No, so does child exist?
-            _childrenTrees[i] ??= new StaticOctalTree<T, TItem>(_children[i], _depth + 1, _maxDepth);
 
-            // Yes, so add item to it
-            return _childrenTrees[i]!.Insert(item);
+            lock (_childrenTrees)
+            {
+                if (_childrenTrees[i] is null)
+                {
+                    var childrenTree = ObjectPool<StaticOctalTree<T, TItem>>.Instance.Rent();
+                    childrenTree.Setup(_children[i], _depth + 1, _maxDepth);
+                    _childrenTrees[i] = childrenTree;
+                }
+
+                // Yes, so add item to it
+                return _childrenTrees[i].Insert(item);
+            }
         }
 
         //ALog.Info($"[Depth: {_depth}]: Inserting item {item.Space} into tree {_area}");
@@ -92,6 +146,8 @@ public class StaticOctalTree<T, TItem> where TItem : StaticOctalItem<T>
     // Returns the objects in the given search area, by adding to supplied list
     public void Search(StaticOctalSpace searchArea, List<TItem> items)
     {
+        CreateVisual();
+
         // First, check for items belonging to this area, add them to the list
         // if there is overlap
         lock (_items)
@@ -116,14 +172,14 @@ public class StaticOctalTree<T, TItem> where TItem : StaticOctalItem<T>
             // add all of its children, no need to check boundaries
             if (searchArea.Contains(_children[i]))
             {
-                _childrenTrees[i]!.Items(items);
+                _childrenTrees[i]?.Items(items);
             }
 
             // If child overlaps with area, check if it intersects
             // with area, if so, recursively add all of its children
             else if (searchArea.Intersects(_children[i]))
             {
-                _childrenTrees[i]!.Search(searchArea, items);
+                _childrenTrees[i]?.Search(searchArea, items);
             }
         }
     }
@@ -152,10 +208,37 @@ public class StaticOctalTree<T, TItem> where TItem : StaticOctalItem<T>
             if (_depth + 1 >= _maxDepth) continue;
 
             // No, so does child exist?
-            if (_childrenTrees[i] is null) continue;
+            var staticOctalTree = _childrenTrees[i];
+            if (staticOctalTree is null) continue;
 
             // Yes, so remove item to it
-            return _childrenTrees[i]!.Remove(item);
+            var removed = staticOctalTree.Remove(item);
+
+            // If the child is empty, remove it
+            lock (_childrenTrees)
+            {
+                if (!staticOctalTree.IsEmpty()) continue;
+                _childrenTrees[i] = null;
+            }
+
+            staticOctalTree._visual?.Configure<Transform3d>(trans =>
+            {
+                trans.RefPosition((ref vec3 vec) =>
+                {
+                    vec.x = 0;
+                    vec.y = 0;
+                    vec.z = 0;
+                });
+
+                trans.RefScale((ref vec3 vec) =>
+                {
+                    vec.x = 0;
+                    vec.y = 0;
+                    vec.z = 0;
+                });
+            });
+
+            //ObjectPool<StaticOctalTree<T, TItem>>.Instance.Return(staticOctalTree);
         }
 
         // It didnt fit, so item must belong to this quad
@@ -168,6 +251,35 @@ public class StaticOctalTree<T, TItem> where TItem : StaticOctalItem<T>
             return find;
         }
     }
+
+    public bool IsEmpty()
+    {
+        // If this tree has items, it is not empty
+        if (_items.Count > 0) return false;
+
+        // If this tree has no items, but has children, it is not empty
+        for (var i = 0; i < AREAS_PER_LEAF; i++)
+        {
+            if (_childrenTrees[i] is not null)
+                return false;
+        }
+
+        // If this tree has no items, and no children, it is empty
+        return true;
+    }
+
+    ~StaticOctalTree()
+    {
+        //ArrayPool<StaticOctalTree<T, TItem>>.Shared.Return(_childrenTrees, true);
+        Clear();
+    }
+
+    /// <inheritdoc />
+    public void Reset()
+    {
+        Clear();
+        hasRest = true;
+    }
 }
 public class StaticOctalTreeContainer<T>
 {
@@ -176,7 +288,8 @@ public class StaticOctalTreeContainer<T>
 
     public StaticOctalTreeContainer(StaticOctalSpace area, int maxDepth)
     {
-        _tree = new StaticOctalTree<T, StaticOctalItem<T>>(area, 0, maxDepth);
+        _tree = new StaticOctalTree<T, StaticOctalItem<T>>();
+        _tree.Setup(area, 0, maxDepth);
         ALog.Info($"Created tree {area} depth {0} Center {(area.Position + area.Size / 2)}");
     }
 
