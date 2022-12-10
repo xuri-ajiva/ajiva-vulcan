@@ -120,6 +120,7 @@ public class BoundingBox : DisposingLogger, IBoundingBox
 
     private void UpdateDynamicDataVisual()
     {
+        return;
         if (_visual is null)
         {
             _visual = new DebugBox();

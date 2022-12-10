@@ -2,12 +2,13 @@
 using ajiva.Components.Transform;
 using ajiva.Components.Transform.SpatialAcceleration;
 using ajiva.Ecs;
+using ajiva.Systems.VulcanEngine.Debug;
 using GlmSharp;
 
 namespace ajiva.Systems.Physics;
 
-[Dependent(typeof(CollisionsComponentSystem))]
-public class BoundingBoxComponentsSystem : ComponentSystemBase<IBoundingBox>, IUpdate
+[Dependent(typeof(CollisionsComponentSystem), typeof(DebugLayer))]
+public class BoundingBoxComponentsSystem : ComponentSystemBase<IBoundingBox>, IUpdate, IInit
 {
     StaticOctalTreeContainer<IBoundingBox> _octalTree;
     private readonly PhysicsSystem _physicsSystem;
@@ -16,10 +17,18 @@ public class BoundingBoxComponentsSystem : ComponentSystemBase<IBoundingBox>, IU
     /// <inheritdoc />
     public BoundingBoxComponentsSystem(IAjivaEcs ecs) : base(ecs)
     {
-        var pos = new vec3(float.MinValue / MathF.PI);
-        _octalTree = new StaticOctalTreeContainer<IBoundingBox>(new StaticOctalSpace(pos, pos * -MathF.E), 255);
+        SEcs = ecs;
         _physicsSystem = ecs.Get<PhysicsSystem>();
     }
+
+    /// <inheritdoc />
+    public void Init()
+    {
+        var pos = new vec3(float.MinValue / MathF.PI);
+        _octalTree = new StaticOctalTreeContainer<IBoundingBox>(new StaticOctalSpace(pos, pos * -MathF.E), 255);
+    }
+
+    public static IAjivaEcs SEcs { get; set; }
 
     /// <inheritdoc />
     public void Update(UpdateInfo delta)

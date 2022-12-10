@@ -89,20 +89,23 @@ public class AjivaApplication : DisposingLogger
         var debugLayer = entityComponentSystem.Add<DebugLayer, DebugLayer>();
         var rectRender = entityComponentSystem.Add<Mesh2dRenderLayer, Mesh2dRenderLayer>();
 
-        var collisionsComponentSystem = entityComponentSystem.Add<CollisionsComponentSystem, CollisionsComponentSystem>();
-        var boundingBoxComponentsSystem = entityComponentSystem.Add<BoundingBoxComponentsSystem, BoundingBoxComponentsSystem>();
-
         graphicsSystem.AddUpdateLayer(ajiva3dLayerSystem);
         graphicsSystem.AddUpdateLayer(ajiva2dLayerSystem);
 
         ajiva3dLayerSystem.AddLayer(solidMeshRenderLayer);
         ajiva3dLayerSystem.AddLayer(debugLayer);
         ajiva2dLayerSystem.AddLayer(rectRender);
+        
+        var collisionsComponentSystem = entityComponentSystem.Add<CollisionsComponentSystem, CollisionsComponentSystem>();
+        var boundingBoxComponentsSystem = entityComponentSystem.Add<BoundingBoxComponentsSystem, BoundingBoxComponentsSystem>();
 
         var meshPref = MeshPrefab.Cube;
         var r = new Random();
 
         entityComponentSystem.Init();
+        ajiva3dLayerSystem.Update(new UpdateInfo());
+        ajiva3dLayerSystem.MainCamara.Get<Transform3d>()
+            .Position = new vec3(0, 0, -100);
 
         meshPool.AddMesh(MeshPrefab.Cube);
         meshPool.AddMesh(MeshPrefab.Rect);
@@ -135,54 +138,6 @@ public class AjivaApplication : DisposingLogger
 
         //leftScreen.AddChild(rect.Get<UiTransform>());
 
-        //static floor at -100 z
-
-        //tile floor
-        const int tileCount = 10;
-        const int floorSize = 200;
-        const int floorCenter = floorSize / 2;
-        const int tileSize = floorSize / tileCount;
-
-        for (int i = 0; i < tileCount; i++)
-        {
-            for (int j = 0; j < tileCount; j++)
-            {
-                var i1 = i;
-                var j1 = j;
-                var floor = new Cube(entityComponentSystem).Configure<Transform3d>(trans =>
-                    {
-                        trans.Position = new vec3(i1 * tileSize - floorCenter, -150, j1 * tileSize - floorCenter);
-                        trans.Scale = new vec3(tileSize, 100, tileSize);
-                    })
-                    .Configure<ICollider>(x => { x.IsStatic = true; })
-                    .Configure<PhysicsComponent>(x =>
-                    {
-                        x.IsStatic = true;
-                        x.Force = vec3.Zero;
-                        x.Velocity = vec3.Zero;
-                    })
-                    .Register(entityComponentSystem);
-            }
-        }
-
-        for (int i = 0; i < 100; i++) //100 floors for more updates
-        {
-            var floor = new Cube(entityComponentSystem).Configure<Transform3d>(trans =>
-                {
-                    trans.Position = new vec3( tileSize - floorCenter, -150,  tileSize - floorCenter);
-                    trans.Scale = new vec3(floorSize, 100, floorSize);
-                })
-                .Configure<ICollider>(x => { x.IsStatic = true; })
-                .Configure<PhysicsComponent>(x =>
-                {
-                    x.IsStatic = true;
-                    x.Force = vec3.Zero;
-                    x.Velocity = vec3.Zero;
-                })
-                .Register(entityComponentSystem);
-        }
-        
-        
         for (var i = 0; i < 10; i++)
         {
             //BUG: If we configure before register the data is not uploaded properly
