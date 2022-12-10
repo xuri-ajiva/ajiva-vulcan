@@ -24,4 +24,20 @@ public class CollisionsComponent : ChangingComponentBase, ICollider
 
     /// <inheritdoc />
     public bool IsStatic { get; set; }
+
+    /// <inheritdoc />
+    public void ResolveCollision(ICollider itemCollider)
+    {
+        if (itemCollider is CollisionsComponent item)
+        {
+            if (item.MeshId == MeshId)
+            {
+                return;
+            }
+
+            var mesh = Pool.GetMesh(MeshId);
+            var itemMesh = Pool.GetMesh(item.MeshId);
+            
+        }
+    }
 }

@@ -1,4 +1,5 @@
 ﻿using ajiva.Components.Mesh;
+using ajiva.Components.Physics;
 using ajiva.Components.RenderAble;
 using ajiva.Components.Transform;
 using ajiva.Components.Transform.Ui;
@@ -27,7 +28,7 @@ namespace ajiva.Application;
 public class AjivaApplication : DisposingLogger
 {
     private const int size = 100;
-    private const int posRange = 10;
+    private const int posRange = 20;
     private const float scale = 0.7f;
 
     private readonly IAjivaEcs entityComponentSystem;
@@ -76,6 +77,7 @@ public class AjivaApplication : DisposingLogger
         entityComponentSystem.Add<ImageSystem, IImageSystem>();
         entityComponentSystem.Add<TransformComponentSystem, ITransformComponentSystem>();
         entityComponentSystem.Add<Transform2dComponentSystem, ITransform2dComponentSystem>();
+        entityComponentSystem.Add<PhysicsSystem, PhysicsSystem>();
         entityComponentSystem.Add<AssetManager, IAssetManager>();
 
         var graphicsSystem = entityComponentSystem.Add<GraphicsSystem, IGraphicsSystem>();
@@ -87,20 +89,23 @@ public class AjivaApplication : DisposingLogger
         var debugLayer = entityComponentSystem.Add<DebugLayer, DebugLayer>();
         var rectRender = entityComponentSystem.Add<Mesh2dRenderLayer, Mesh2dRenderLayer>();
 
-        var collisionsComponentSystem = entityComponentSystem.Add<CollisionsComponentSystem, CollisionsComponentSystem>();
-        var boundingBoxComponentsSystem = entityComponentSystem.Add<BoundingBoxComponentsSystem, BoundingBoxComponentsSystem>();
-
         graphicsSystem.AddUpdateLayer(ajiva3dLayerSystem);
         graphicsSystem.AddUpdateLayer(ajiva2dLayerSystem);
 
         ajiva3dLayerSystem.AddLayer(solidMeshRenderLayer);
         ajiva3dLayerSystem.AddLayer(debugLayer);
         ajiva2dLayerSystem.AddLayer(rectRender);
+        
+        var collisionsComponentSystem = entityComponentSystem.Add<CollisionsComponentSystem, CollisionsComponentSystem>();
+        var boundingBoxComponentsSystem = entityComponentSystem.Add<BoundingBoxComponentsSystem, BoundingBoxComponentsSystem>();
 
         var meshPref = MeshPrefab.Cube;
         var r = new Random();
 
         entityComponentSystem.Init();
+        ajiva3dLayerSystem.Update(new UpdateInfo());
+        ajiva3dLayerSystem.MainCamara.Get<Transform3d>()
+            .Position = new vec3(0, 0, -100);
 
         meshPool.AddMesh(MeshPrefab.Cube);
         meshPool.AddMesh(MeshPrefab.Rect);
@@ -109,7 +114,7 @@ public class AjivaApplication : DisposingLogger
             new UiAnchor(UiAlignment.Left, .1f, 0.4f)
         )).Register(entityComponentSystem);
 
-        var rect = new Rect().Configure<Rect, RenderMesh3D>(x =>
+        /*var rect = new Rect().Configure<Rect, RenderMesh3D>(x =>
         {
             x.SetMesh(MeshPrefab.Rect);
             x.Render = true;
@@ -117,7 +122,7 @@ public class AjivaApplication : DisposingLogger
         {
             x.VerticalAnchor = new UiAnchor(UiAlignment.CenterVertical, UiValueUnit.Pixel(20), UiValueUnit.Pixel(100));
             x.HorizontalAnchor = new UiAnchor(UiAlignment.Right, UiValueUnit.Pixel(20), UiValueUnit.Pixel(100));
-        }).Register(entityComponentSystem);
+        }).Register(entityComponentSystem);*/
 
         spinner = new Rect().Configure<Rect, RenderMesh3D>(x =>
             {
@@ -126,12 +131,12 @@ public class AjivaApplication : DisposingLogger
             })
             .Configure<Rect, UiTransform>(x =>
             {
-                x.VerticalAnchor = new UiAnchor(UiAlignment.CenterVertical, 20, .1f);
-                x.HorizontalAnchor = new UiAnchor(UiAlignment.CenterHorizontal, 20, .1f);
+                x.VerticalAnchor = new UiAnchor(UiAlignment.CenterVertical, 20, 10);
+                x.HorizontalAnchor = new UiAnchor(UiAlignment.CenterHorizontal, 20, 10);
             })
             .Register(entityComponentSystem);
 
-        leftScreen.AddChild(rect.Get<UiTransform>());
+        //leftScreen.AddChild(rect.Get<UiTransform>());
 
         for (var i = 0; i < 10; i++)
         {
@@ -171,9 +176,10 @@ public class AjivaApplication : DisposingLogger
                             .Register(entityComponentSystem)
                             .Configure<Transform3d>(trans =>
                             {
-                                trans.Position = new vec3(i * sz, -index * 2, j * sz);
+                                //trans.Position = new vec3(i * sz, (-index * 2) * Math.Min(rep / (float)i, 10) , j * sz);
+                                trans.Position = new vec3(i * sz, (-index * 2), j * sz);
                                 trans.Rotation = new vec3(i * 90, j * 90, 0);
-                                trans.Scale = new vec3((sz / 2) * .98f);
+                                trans.Scale = new vec3(sz / 2.1f);
                             });
                     }
                 });
@@ -193,7 +199,7 @@ public class AjivaApplication : DisposingLogger
                 {
                     using var change = entityComponentSystem.Get<GraphicsSystem>().ChangingObserver.BeginBigChange();
 
-                    for (var i = 0; i < 100; i++)
+                    for (var i = 0; i < 1000; i++)
                     {
                         var cube = new Cube(entityComponentSystem)
                             .Register(entityComponentSystem)
@@ -219,7 +225,7 @@ public class AjivaApplication : DisposingLogger
                 var bbs = entityComponentSystem.Get<BoundingBoxComponentsSystem>();
                 wp.EnqueueWork((info, param) =>
                 {
-                    bbs.DoPhysicFrame();
+                    bbs.TogglePhysicUpdate();
                     return WorkResult.Succeeded;
                 }, exception => ALog.Error(exception), "DoPhysicFrame");
 
@@ -232,10 +238,26 @@ public class AjivaApplication : DisposingLogger
             case Key.F:
                 var sys = entityComponentSystem.Get<Ajiva3dLayerSystem>();
                 var cubex = new Cube(entityComponentSystem).Configure<Transform3d>(trans =>
-                {
-                    trans.Position = sys.MainCamara.Transform.Position + sys.MainCamara.FrontNormalized * 25;
-                    trans.Rotation = sys.MainCamara.Transform.Rotation;
-                }).Register(entityComponentSystem);
+                    {
+                        trans.Position = sys.MainCamara.Transform.Position + sys.MainCamara.FrontNormalized * 25;
+                        trans.Rotation = sys.MainCamara.Transform.Rotation;
+                        trans.Scale = new vec3(3);
+                    })
+                    .Configure<ICollider>(x => { x.IsStatic = true; })
+                    .Configure<PhysicsComponent>(x => { x.IsStatic = true; })
+                    .Register(entityComponentSystem);
+
+                break;
+            case Key.G:
+                var sys2 = entityComponentSystem.Get<Ajiva3dLayerSystem>();
+                var cubex2 = new Cube(entityComponentSystem).Configure<Transform3d>(trans =>
+                    {
+                        trans.Position = sys2.MainCamara.Transform.Position;
+                        trans.Scale = new vec3(10);
+                    })
+                    .Configure<ICollider>(x => { x.IsStatic = true; })
+                    .Configure<PhysicsComponent>(x => { x.IsStatic = true; })
+                    .Register(entityComponentSystem);
 
                 break;
         }
