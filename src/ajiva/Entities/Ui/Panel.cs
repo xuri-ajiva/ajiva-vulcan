@@ -1,20 +1,19 @@
 ﻿using ajiva.Components.Transform.Ui;
-using ajiva.Ecs;
+using ajiva.Ecs.Entity.Helper;
 
 namespace ajiva.Entities.Ui;
 
-public class Panel : DefaultEntity
-{
-    private readonly UiTransform uiTransform;
+[EntityComponent(typeof(UiTransform))]
 
+public partial class Panel 
+{
     public Panel(UiTransform uiTransform)
     {
-        this.uiTransform = uiTransform;
-        this.AddComponent(uiTransform);
+        UiTransform = uiTransform;
     }
 
     public void AddChild(IUiTransform child)
     {
-        uiTransform.AddChild(child);
+        UiTransform.AddChild(child);
     }
 }

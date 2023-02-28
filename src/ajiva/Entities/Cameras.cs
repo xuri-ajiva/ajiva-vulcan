@@ -1,19 +1,26 @@
 ﻿using ajiva.Components.Transform;
 using ajiva.Ecs;
+using ajiva.Ecs.Entity.Helper;
 using GlmSharp;
 
 namespace ajiva.Entities;
 
-public static class Cameras
+public static partial class Cameras
 {
-    public abstract class Camera : TransformFormEntity<Transform3d, vec3, mat4>
+    [EntityComponent(typeof(Transform3d))]
+    public partial class Camera 
     {
         public readonly __Keys Keys = new __Keys();
         public float Fov;
         public float Height;
         public float Width;
 
-        public abstract vec3 FrontNormalized { get; }
+        public Camera()
+        {
+            this.Transform3d = new Transform3d();
+        }
+
+        public virtual vec3 FrontNormalized { get; }
         public mat4 Projection { get; protected set; }
         public mat4 View { get; private protected set; }
         public mat4 ProjView => Projection * View;
@@ -24,13 +31,13 @@ public static class Cameras
             return Keys.left || Keys.right || Keys.up || Keys.down;
         }
 
-        public abstract void UpdateMatrices();
-        public abstract void UpdatePosition(in float delta);
-        public abstract void OnMouseMoved(float xRel, float yRel);
+        public virtual void UpdateMatrices(){}
+        public virtual void UpdatePosition(in float delta){}
+        public virtual void OnMouseMoved(float xRel, float yRel){}
 
         public virtual void Translate(vec3 v)
-        {
-            if (this.TryGetComponent<Transform3d>(out var transfrom)) transfrom.Position += v;
+        { 
+            this.Transform3d.Position += v;
             View += mat4.Translate(v * -1.0F);
         }
 
@@ -50,6 +57,9 @@ public static class Cameras
             public bool right;
             public bool up;
         }
+
+        public Transform3d Transform => this.Transform3d;
+
     }
     public sealed class FpsCamera : Camera, IUpdate
     {
@@ -64,6 +74,8 @@ public static class Cameras
                 glm.Cos(glm.Radians(Transform.Rotation.x)) * glm.Cos(glm.Radians(Transform.Rotation.y))
             ).Normalized;
 
+        //private Transform3d Transform => base.Transform;
+        
         /// <inheritdoc />
         public override vec3 FrontNormalized => CamFront;
 
@@ -134,7 +146,7 @@ public static class Cameras
             UpdateMatrices();
         }
 
-        public FpsCamera(IAjivaEcs ecs)
+        public FpsCamera(IAjivaEcs ecs) : base()
         {
             //this.AddComponent(new RenderMesh3D());
             ecs.RegisterUpdate(this);

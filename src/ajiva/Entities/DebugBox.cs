@@ -1,21 +1,20 @@
 ﻿using ajiva.Components.Mesh;
 using ajiva.Components.Transform;
-using ajiva.Ecs;
+using ajiva.Ecs.Entity.Helper;
 using ajiva.Systems.VulcanEngine.Debug;
 
 namespace ajiva.Entities;
 
-public class DebugBox : DefaultEntity
+[EntityComponent(typeof(Transform3d), typeof(DebugComponent))]
+public partial class DebugBox
 {
     public DebugBox()
     {
-        var mesh = MeshPrefab.Cube;
-        var transform = this.AddComponent(new Transform3d());
-        this.AddComponent(new DebugComponent(mesh, transform)
-        {
+        Transform3d = new Transform3d();
+        DebugComponent = new DebugComponent(MeshPrefab.Cube, Transform3d) {
             DrawTransform = true,
             DrawWireframe = true,
             Render = true
-        });
+        };
     }
 }

@@ -51,6 +51,16 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GlmSharpTest", "..\libs\Glm
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ajiva.Test", "ajiva.Test\ajiva.Test.csproj", "{C6FFDF04-C2C1-41F8-90F4-E64F846B5A98}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ajiva.application", "ajiva.application\ajiva.application.csproj", "{5D2E12B3-813E-463E-8CF4-9659E1449BC2}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ajiva.generator", "ajiva.generator\ajiva.generator.csproj", "{9F6F5836-48EF-4B16-B07C-F9B2982DA5A4}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "AttributesSourceGeneratorHelper", "AttributesSourceGeneratorHelper", "{C9F8E33F-1919-4D8C-BADB-2A7826552879}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AttributesSourceGeneratorHelper", "..\libs\AttributesSourceGeneratorHelper\AttributesSourceGeneratorHelper.csproj", "{21EE104B-1859-4B6E-8002-B876B93935BE}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ajiva.generator.test", "ajiva.generator.test\ajiva.generator.test.csproj", "{5A250D76-B0F3-4097-9C1B-6411A0FACF94}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -141,6 +151,22 @@ Global
 		{C6FFDF04-C2C1-41F8-90F4-E64F846B5A98}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{C6FFDF04-C2C1-41F8-90F4-E64F846B5A98}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{C6FFDF04-C2C1-41F8-90F4-E64F846B5A98}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5D2E12B3-813E-463E-8CF4-9659E1449BC2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5D2E12B3-813E-463E-8CF4-9659E1449BC2}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5D2E12B3-813E-463E-8CF4-9659E1449BC2}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5D2E12B3-813E-463E-8CF4-9659E1449BC2}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9F6F5836-48EF-4B16-B07C-F9B2982DA5A4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9F6F5836-48EF-4B16-B07C-F9B2982DA5A4}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9F6F5836-48EF-4B16-B07C-F9B2982DA5A4}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9F6F5836-48EF-4B16-B07C-F9B2982DA5A4}.Release|Any CPU.Build.0 = Release|Any CPU
+		{21EE104B-1859-4B6E-8002-B876B93935BE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{21EE104B-1859-4B6E-8002-B876B93935BE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{21EE104B-1859-4B6E-8002-B876B93935BE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{21EE104B-1859-4B6E-8002-B876B93935BE}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5A250D76-B0F3-4097-9C1B-6411A0FACF94}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5A250D76-B0F3-4097-9C1B-6411A0FACF94}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5A250D76-B0F3-4097-9C1B-6411A0FACF94}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5A250D76-B0F3-4097-9C1B-6411A0FACF94}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{E9ECE606-AE9A-4F11-BB88-3ED89236C478} = {113BF263-982F-4D50-AFE7-087351C3AD19}
@@ -164,5 +190,7 @@ Global
 		{E8DC311E-9E7B-44C9-9364-8A745FB7A5C0} = {9A005094-1825-4877-8712-3922BE1CDB83}
 		{B3D61E66-23B3-44E3-8B13-0674634C6944} = {9A005094-1825-4877-8712-3922BE1CDB83}
 		{9760B071-A070-4992-A4F0-780FF31E2FE6} = {9A005094-1825-4877-8712-3922BE1CDB83}
+		{C9F8E33F-1919-4D8C-BADB-2A7826552879} = {113BF263-982F-4D50-AFE7-087351C3AD19}
+		{21EE104B-1859-4B6E-8002-B876B93935BE} = {C9F8E33F-1919-4D8C-BADB-2A7826552879}
 	EndGlobalSection
 EndGlobal

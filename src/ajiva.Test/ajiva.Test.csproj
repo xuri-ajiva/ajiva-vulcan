@@ -21,7 +21,7 @@
     </ItemGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\ajiva\ajiva.csproj" />
+        <ProjectReference Include="..\ajiva\ajiva.csproj" />
     </ItemGroup>
 
 </Project>
