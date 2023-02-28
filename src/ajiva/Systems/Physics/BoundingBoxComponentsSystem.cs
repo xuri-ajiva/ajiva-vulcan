@@ -8,9 +8,9 @@ using GlmSharp;
 namespace ajiva.Systems.Physics;
 
 [Dependent(typeof(CollisionsComponentSystem), typeof(DebugLayer))]
-public class BoundingBoxComponentsSystem : ComponentSystemBase<IBoundingBox>, IUpdate, IInit
+public class BoundingBoxComponentsSystem : ComponentSystemBase<BoundingBox>, IUpdate, IInit
 {
-    StaticOctalTreeContainer<IBoundingBox> _octalTree;
+    StaticOctalTreeContainer<BoundingBox> _octalTree;
     private readonly PhysicsSystem _physicsSystem;
     private bool phisicsUpdated;
 
@@ -19,13 +19,14 @@ public class BoundingBoxComponentsSystem : ComponentSystemBase<IBoundingBox>, IU
     {
         SEcs = ecs;
         _physicsSystem = ecs.Get<PhysicsSystem>();
+        Init();
     }
 
     /// <inheritdoc />
     public void Init()
     {
         var pos = new vec3(float.MinValue / MathF.PI);
-        _octalTree = new StaticOctalTreeContainer<IBoundingBox>(new StaticOctalSpace(pos, pos * -MathF.E), 255);
+        _octalTree = new StaticOctalTreeContainer<BoundingBox>(new StaticOctalSpace(pos, pos * -MathF.E), 255);
     }
 
     public static IAjivaEcs SEcs { get; set; }
@@ -68,7 +69,7 @@ public class BoundingBoxComponentsSystem : ComponentSystemBase<IBoundingBox>, IU
             DoCollision(box1, box2, e1, e2);*/
     }
 
-    private void DoCollision(StaticOctalItem<IBoundingBox> dynamicItem, StaticOctalItem<IBoundingBox> otherItem)
+    private void DoCollision(StaticOctalItem<BoundingBox> dynamicItem, StaticOctalItem<BoundingBox> otherItem)
     {
         if (dynamicItem.Item.Collider.IsStatic)
         {
@@ -100,7 +101,7 @@ public class BoundingBoxComponentsSystem : ComponentSystemBase<IBoundingBox>, IU
     }
 
     /// <inheritdoc />
-    public override IBoundingBox RegisterComponent(IEntity entity, IBoundingBox component)
+    public override BoundingBox RegisterComponent(IEntity entity, BoundingBox component)
     {
         component.SetTree(_octalTree);
         component.ComputeBoxBackground();
@@ -108,7 +109,7 @@ public class BoundingBoxComponentsSystem : ComponentSystemBase<IBoundingBox>, IU
     }
 
     /// <inheritdoc />
-    public override IBoundingBox UnRegisterComponent(IEntity entity, IBoundingBox component)
+    public override BoundingBox UnRegisterComponent(IEntity entity, BoundingBox component)
     {
         component.RemoveTree();
         return base.UnRegisterComponent(entity, component);

@@ -1,20 +1,12 @@
 ﻿using ajiva.Components.Mesh;
 using ajiva.Components.Physics;
-using ajiva.Components.RenderAble;
 using ajiva.Components.Transform;
 using ajiva.Components.Transform.Ui;
 using ajiva.Ecs;
 using ajiva.Entities;
 using ajiva.Entities.Ui;
-using ajiva.Generators.Texture;
-using ajiva.Systems;
-using ajiva.Systems.Assets;
 using ajiva.Systems.Physics;
-using ajiva.Systems.VulcanEngine;
-using ajiva.Systems.VulcanEngine.Debug;
 using ajiva.Systems.VulcanEngine.Interfaces;
-using ajiva.Systems.VulcanEngine.Layer;
-using ajiva.Systems.VulcanEngine.Layer2d;
 using ajiva.Systems.VulcanEngine.Layer3d;
 using ajiva.Systems.VulcanEngine.Systems;
 using ajiva.Worker;
@@ -55,6 +47,10 @@ public class AjivaApplication : DisposingLogger
     }
 
     public void Init()
+    {
+        throw new NotImplementedException();
+    }
+    /*public void Init()
     {
         entityComponentSystem.Add<Config, Config>(Config.Default);
 
@@ -122,7 +118,7 @@ public class AjivaApplication : DisposingLogger
         {
             x.VerticalAnchor = new UiAnchor(UiAlignment.CenterVertical, UiValueUnit.Pixel(20), UiValueUnit.Pixel(100));
             x.HorizontalAnchor = new UiAnchor(UiAlignment.Right, UiValueUnit.Pixel(20), UiValueUnit.Pixel(100));
-        }).Register(entityComponentSystem);*/
+        }).Register(entityComponentSystem);#1#
 
         spinner = new Rect().Configure<Rect, RenderMesh3D>(x =>
             {
@@ -149,7 +145,7 @@ public class AjivaApplication : DisposingLogger
                     trans.Rotation = new vec3(r.Next(0, 100), r.Next(0, 100), r.Next(0, 100));
                 });
         }
-    }
+    }*/
 
     private void WindowOnOnKeyEvent(object? sender, Key key, int scancode, InputAction inputaction, Modifier modifiers)
     {
@@ -187,7 +183,7 @@ public class AjivaApplication : DisposingLogger
 
                 change.Dispose();
                 return WorkResult.Succeeded;
-            }, ALog.Error, $"Creation of {rep * rep} Cubes");
+            }, o=>ALog.Error(o), $"Creation of {rep * rep} Cubes");
         }
 
         switch (key)

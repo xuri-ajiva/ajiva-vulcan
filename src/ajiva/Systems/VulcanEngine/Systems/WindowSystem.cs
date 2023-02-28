@@ -31,9 +31,11 @@ public class WindowSystem : SystemBase, IUpdate, IInit, IWindowSystem
     private readonly WindowConfig windowConfig;
 
     private bool windowReady;
+    private IVulcanInstance _instance;
 
-    public WindowSystem(IAjivaEcs ecs) : base(ecs)
+    public WindowSystem(IAjivaEcs ecs, Config config, IVulcanInstance instance) : base(ecs)
     {
+        _instance = instance;
         keyDelegate = KeyCallback;
         cursorPosDelegate = MouseCallback;
         sizeDelegate = SizeCallback;
@@ -43,9 +45,11 @@ public class WindowSystem : SystemBase, IUpdate, IInit, IWindowSystem
         windowThread.SetApartmentState(ApartmentState.STA);
         Canvas = new Canvas(new SurfaceHandle());
 
-        windowConfig = Ecs.Get<Config>().Window;
+        windowConfig = config.Window;
 
         OnResize += (sender, size, newSize) => ALog.Info($"Resized from [w: {size.Width}, h: {size.Height}] to [w: {newSize.Width}, h: {newSize.Height}]");
+
+        Init();
     }
 
     public Canvas Canvas { get; }
@@ -76,7 +80,6 @@ public class WindowSystem : SystemBase, IUpdate, IInit, IWindowSystem
     {
         Glfw3.WindowHint(WindowAttribute.ClientApi, 0);
         window = Glfw3.CreateWindow(Canvas.WidthI, Canvas.HeightI, "First test", MonitorHandle.Zero, WindowHandle.Zero);
-
         SharpVk.Glfw.extras.Glfw3.Public.SetWindowSizeLimits_0(window.RawHandle, Canvas.WidthI / 2, Canvas.HeightI / 2, Glfw3Enum.GLFW_DONT_CARE, Glfw3Enum.GLFW_DONT_CARE);
         Glfw3.SetKeyCallback(window, keyDelegate);
         Glfw3.SetCursorPosCallback(window, cursorPosDelegate);
@@ -120,7 +123,7 @@ public class WindowSystem : SystemBase, IUpdate, IInit, IWindowSystem
     public void EnsureSurfaceExists()
     {
         if (!Canvas.HasSurface)
-            Canvas.SurfaceHandle.Surface = Ecs.Get<IVulcanInstance>().CreateGlfw3Surface(window);
+            Canvas.SurfaceHandle.Surface = _instance.CreateGlfw3Surface(window);
     }
 
     public void InitWindow()
@@ -162,8 +165,7 @@ public class WindowSystem : SystemBase, IUpdate, IInit, IWindowSystem
                 Environment.Exit(0);
                 break;
             case Key.Tab when inputAction == InputAction.Press:
-                activeLayer = activeLayer switch
-                {
+                activeLayer = activeLayer switch {
                     AjivaEngineLayer.Layer3d => AjivaEngineLayer.Layer2d,
                     AjivaEngineLayer.Layer2d => AjivaEngineLayer.Layer3d,
                     _ => throw new ArgumentOutOfRangeException()

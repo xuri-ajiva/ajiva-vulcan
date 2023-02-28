@@ -26,9 +26,10 @@ public class SolidMeshRenderLayer : ComponentSystemBase<RenderInstanceMesh>, IIn
     /// <inheritdoc />
     public SolidMeshRenderLayer(IAjivaEcs ecs) : base(ecs)
     {
+        Init();
     }
 
-    public PipelineDescriptorInfos[] PipelineDescriptorInfos { get; set; }
+    public PipelineDescriptorInfos[]? PipelineDescriptorInfos { get; set; }
 
     public Shader MainShader { get; set; }
     public IAjivaLayer<UniformViewProj3d> AjivaLayer { get; set; }
@@ -61,8 +62,7 @@ public class SolidMeshRenderLayer : ComponentSystemBase<RenderInstanceMesh>, IIn
     /// <inheritdoc />
     public void UpdateGraphicsPipelineLayer()
     {
-        var bind = new[]
-        {
+        var bind = new[] {
             Vertex3D.GetBindingDescription(VERTEX_BUFFER_BIND_ID),
             new VertexInputBindingDescription(INSTANCE_BUFFER_BIND_ID, (uint)Marshal.SizeOf<MeshInstanceData>(), VertexInputRate.Instance)
         };
@@ -75,9 +75,23 @@ public class SolidMeshRenderLayer : ComponentSystemBase<RenderInstanceMesh>, IIn
             .Add(nameof(MeshInstanceData.Padding), Format.R32G32SFloat)
             .ToArray();
 
+        if (PipelineDescriptorInfos == null)
+            CreatePipelineDescriptorInfos();
+
         RenderTarget.GraphicsPipelineLayer = GraphicsPipelineLayerCreator.Default(RenderTarget.PassLayer.Parent, RenderTarget.PassLayer,
             Ecs.Get<DeviceSystem>(), true,
             bind, attrib, MainShader, PipelineDescriptorInfos);
+    }
+
+    private void CreatePipelineDescriptorInfos()
+    {
+        var textureSamplerImageViews = Ecs.Get<ITextureSystem>().TextureSamplerImageViews;
+        PipelineDescriptorInfos = new[] {
+            new PipelineDescriptorInfos(DescriptorType.UniformBuffer, ShaderStageFlags.Vertex, 0, 1, BufferInfo: new[] {
+                new DescriptorBufferInfo { Buffer = AjivaLayer.LayerUniform.Uniform.Buffer!, Offset = 0, Range = (uint)AjivaLayer.LayerUniform.SizeOfT }
+            }),
+            new(DescriptorType.CombinedImageSampler, ShaderStageFlags.Fragment, 2, (uint)textureSamplerImageViews.Length, ImageInfo: textureSamplerImageViews)
+        };
     }
 
     /// <inheritdoc />
@@ -94,16 +108,6 @@ public class SolidMeshRenderLayer : ComponentSystemBase<RenderInstanceMesh>, IIn
         MainShader = Shader.CreateShaderFrom(Ecs.Get<AssetManager>(), "3d/SolidInstance", deviceSystem, "main");
         instanceMeshPool = new InstanceMeshPool<MeshInstanceData>(deviceSystem);
         instanceMeshPool.Changed.OnChanged += RebuildData;
-
-        var textureSamplerImageViews = Ecs.Get<ITextureSystem>().TextureSamplerImageViews;
-        PipelineDescriptorInfos = new[]
-        {
-            new PipelineDescriptorInfos(DescriptorType.UniformBuffer, ShaderStageFlags.Vertex, 0, 1, BufferInfo: new[]
-            {
-                new DescriptorBufferInfo { Buffer = AjivaLayer.LayerUniform.Uniform.Buffer!, Offset = 0, Range = (uint)AjivaLayer.LayerUniform.SizeOfT }
-            }),
-            new(DescriptorType.CombinedImageSampler, ShaderStageFlags.Fragment, 2, (uint)textureSamplerImageViews.Length, ImageInfo: textureSamplerImageViews)
-        };
     }
 
     private void RebuildData(IInstanceMeshPool<MeshInstanceData> sender)
@@ -158,7 +162,7 @@ public class SolidMeshRenderLayer : ComponentSystemBase<RenderInstanceMesh>, IIn
             throw new ArgumentException("Entity needs and transform in order to be rendered as debug");
 
         var res = base.UnRegisterComponent(entity, component);
-        DeleteInstance(res);        
+        DeleteInstance(res);
         Interlocked.Increment(ref dataVersion);
         return res;
     }

@@ -10,11 +10,14 @@ namespace ajiva.Systems.VulcanEngine.Systems;
 [Dependent(typeof(WindowSystem))]
 public class DeviceSystem : SystemBase, IInit, IDeviceSystem
 {
+    private readonly IVulcanInstance _instance;
     private QueueFamilyIndices queueFamilies;
 
     /// <inheritdoc />
-    public DeviceSystem(IAjivaEcs ecs) : base(ecs)
+    public DeviceSystem(IAjivaEcs ecs, IVulcanInstance instance) : base(ecs)
     {
+        _instance = instance;
+        Init();
     }
 
     public PhysicalDevice? PhysicalDevice { get; private set; }
@@ -49,7 +52,7 @@ public class DeviceSystem : SystemBase, IInit, IDeviceSystem
     /// <inheritdoc />
     public void Init()
     {
-        PickPhysicalDevice(Ecs.Get<IVulcanInstance>());
+        PickPhysicalDevice(_instance);
         CreateLogicalDevice();
     }
 
@@ -65,17 +68,14 @@ public class DeviceSystem : SystemBase, IInit, IDeviceSystem
         queueFamilies = PhysicalDevice!.FindQueueFamilies(Ecs.Get<WindowSystem>().Canvas);
 
         Device = PhysicalDevice!.CreateDevice(queueFamilies.Indices
-                .Select(index => new DeviceQueueCreateInfo
-                {
+                .Select(index => new DeviceQueueCreateInfo {
                     QueueFamilyIndex = index,
-                    QueuePriorities = new[]
-                    {
+                    QueuePriorities = new[] {
                         1f
                     }
                 }).ToArray(),
             null,
-            KhrExtensions.Swapchain, DeviceCreateFlags.None, new PhysicalDeviceFeatures  
-            {
+            KhrExtensions.Swapchain, DeviceCreateFlags.None, new PhysicalDeviceFeatures {
                 //TODO Enable Features Used in any other part // remainder
                 SamplerAnisotropy = true,
                 FillModeNonSolid = true,
@@ -93,7 +93,10 @@ public class DeviceSystem : SystemBase, IInit, IDeviceSystem
 
     public void WaitIdle()
     {
-        Device?.WaitIdle();
+        lock (Device)
+        {
+            Device?.WaitIdle();
+        }
     }
 
 #region BufferAndMemory
@@ -179,8 +182,7 @@ public class DeviceSystem : SystemBase, IInit, IDeviceSystem
     [MethodImpl(MethodImplOptions.AggressiveOptimization | MethodImplOptions.AggressiveInlining)]
     private CommandPool GetCommandPool(CommandPoolSelector selector)
     {
-        return selector switch
-        {
+        return selector switch {
             CommandPoolSelector.Foreground => ForegroundCommandPool!,
             CommandPoolSelector.Background => BackgroundCommandPool!,
             CommandPoolSelector.Transit => TransientCommandPool!,
@@ -191,8 +193,7 @@ public class DeviceSystem : SystemBase, IInit, IDeviceSystem
     [MethodImpl(MethodImplOptions.AggressiveOptimization | MethodImplOptions.AggressiveInlining)]
     private CommandBuffer GetSingleCommandBuffer(CommandPoolSelector selector)
     {
-        return selector switch
-        {
+        return selector switch {
             CommandPoolSelector.Foreground => ForegroundSingleCommandBuffer!,
             CommandPoolSelector.Background => BackgroundSingleCommandBuffer!,
             CommandPoolSelector.Transit => TransientSingleCommandBuffer!,
@@ -203,8 +204,7 @@ public class DeviceSystem : SystemBase, IInit, IDeviceSystem
     [MethodImpl(MethodImplOptions.AggressiveOptimization | MethodImplOptions.AggressiveInlining)]
     public object GetCommandPoolLock(CommandPoolSelector selector)
     {
-        return selector switch
-        {
+        return selector switch {
             CommandPoolSelector.Foreground => ForegroundCommandPoolLock,
             CommandPoolSelector.Background => BackgroundCommandPoolLock,
             CommandPoolSelector.Transit => TransientCommandPoolLock,

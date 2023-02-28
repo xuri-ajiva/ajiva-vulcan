@@ -19,6 +19,7 @@ public class TextureSystem : ComponentSystemBase<TextureComponent>, IInit, IText
         INextId<ATexture>.MaxId = (uint)config.TEXTURE_SAMPLER_COUNT;
         TextureSamplerImageViews = new DescriptorImageInfo[config.TEXTURE_SAMPLER_COUNT];
         Textures = new List<ATexture>();
+        Init();
     }
 
     public ATexture? Default { get; private set; }

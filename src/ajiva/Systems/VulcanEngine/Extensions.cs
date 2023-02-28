@@ -1,5 +1,4 @@
 ﻿using System.Runtime.CompilerServices;
-using ajiva.Models;
 using SharpVk;
 using SharpVk.Khronos;
 
@@ -70,7 +69,7 @@ public static class Extensions
             {
                 if (queueFamilies[index].QueueFlags.HasFlag(QueueFlags.Graphics)) indices.GraphicsFamily = index;
 
-                if (device.GetSurfaceSupport(index, canvas.SurfaceHandle)) indices.PresentFamily = index;
+                if (device.GetSurfaceSupport(index, canvas.SurfaceHandle.Surface)) indices.PresentFamily = index;
 
                 if (queueFamilies[index].QueueFlags.HasFlag(QueueFlags.Transfer) && !queueFamilies[index].QueueFlags.HasFlag(QueueFlags.Graphics)) indices.TransferFamily = index;
             }

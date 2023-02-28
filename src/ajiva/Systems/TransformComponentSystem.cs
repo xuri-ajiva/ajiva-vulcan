@@ -15,16 +15,18 @@ public class TransformComponentSystem : ComponentSystemBase<Transform3d>, ITrans
 }
 public class Transform2dComponentSystem : ComponentSystemBase<UiTransform>, ITransform2dComponentSystem, IInit
 {
+    private readonly IWindowSystem windowSystem;
     public UIRootTransform RootTransform { get; set; }
 
-    public Transform2dComponentSystem(IAjivaEcs ecs) : base(ecs)
+    public Transform2dComponentSystem(IAjivaEcs ecs,IWindowSystem windowSystem) : base(ecs)
     {
+        this.windowSystem = windowSystem;
+        Init();
     }
 
     /// <inheritdoc />
     public void Init()
     {
-        var windowSystem = Ecs.Get<IWindowSystem>();
         RootTransform = new UIRootTransform(windowSystem.Canvas.WidthI, windowSystem.Canvas.HeightI, -1.0f, 1.0f);
         windowSystem.OnResize += (sender, oldExtent, newSize) =>
         {

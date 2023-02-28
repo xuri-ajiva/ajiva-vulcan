@@ -10,7 +10,7 @@ public interface IVulcanInstance : IAjivaEcsObject
     PhysicalDevice[] EnumeratePhysicalDevices();
     Surface CreateGlfw3Surface(WindowHandle window);
 }
-class VulcanInstance : IVulcanInstance
+public class VulcanInstance : IVulcanInstance
 {
     private readonly Instance instance;
 

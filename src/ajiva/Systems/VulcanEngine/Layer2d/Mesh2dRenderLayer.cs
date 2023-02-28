@@ -25,10 +25,17 @@ public class Mesh2dRenderLayer : ComponentSystemBase<RenderInstanceMesh2D>, IIni
     private InstanceMeshPool<UiInstanceData> instanceMeshPool;
     private long dataVersion;
     private WindowSystem windowSystem;
+    private DeviceSystem deviceSystem;
+    private AssetManager assetManager;
 
     /// <inheritdoc />
-    public Mesh2dRenderLayer(IAjivaEcs ecs) : base(ecs)
+    public Mesh2dRenderLayer(IAjivaEcs ecs, WindowSystem windowSystem, DeviceSystem deviceSystem, AssetManager assetManager) : base(ecs)
     {
+        this.windowSystem = windowSystem;
+        this.deviceSystem = deviceSystem;
+        this.assetManager = assetManager;
+
+        Init();
     }
 
     public PipelineDescriptorInfos[] PipelineDescriptorInfos { get; set; }
@@ -65,8 +72,7 @@ public class Mesh2dRenderLayer : ComponentSystemBase<RenderInstanceMesh2D>, IIni
     /// <inheritdoc />
     public void UpdateGraphicsPipelineLayer()
     {
-        var bind = new[]
-        {
+        var bind = new[] {
             Vertex2D.GetBindingDescription(VERTEX_BUFFER_BIND_ID),
             new VertexInputBindingDescription(INSTANCE_BUFFER_BIND_ID, (uint)Marshal.SizeOf<UiInstanceData>(), VertexInputRate.Instance)
         };
@@ -80,9 +86,24 @@ public class Mesh2dRenderLayer : ComponentSystemBase<RenderInstanceMesh2D>, IIni
             .Add(nameof(UiInstanceData.DrawType), Format.R32UInt)
             .ToArray();
 
+        if (PipelineDescriptorInfos is null)
+            CreatePipelineDescriptorInfos();
+
         RenderTarget.GraphicsPipelineLayer = GraphicsPipelineLayerCreator.Default(RenderTarget.PassLayer.Parent, RenderTarget.PassLayer,
             Ecs.Get<DeviceSystem>(), true,
             bind, attrib, MainShader, PipelineDescriptorInfos);
+    }
+
+    private void CreatePipelineDescriptorInfos()
+    {
+        var textureSamplerImageViews = Ecs.Get<ITextureSystem>().TextureSamplerImageViews;
+
+        PipelineDescriptorInfos = new[] {
+            new PipelineDescriptorInfos(DescriptorType.UniformBuffer, ShaderStageFlags.Vertex, 0, 1, BufferInfo: new[] {
+                new DescriptorBufferInfo { Buffer = AjivaLayer.LayerUniform.Uniform.Buffer!, Offset = 0, Range = (uint)AjivaLayer.LayerUniform.SizeOfT }
+            }),
+            new(DescriptorType.CombinedImageSampler, ShaderStageFlags.Fragment, 2, (uint)textureSamplerImageViews.Length, ImageInfo: textureSamplerImageViews)
+        };
     }
 
     /// <inheritdoc />
@@ -94,23 +115,11 @@ public class Mesh2dRenderLayer : ComponentSystemBase<RenderInstanceMesh2D>, IIni
     /// <inheritdoc />
     public void Init()
     {
-        var deviceSystem = Ecs.Get<DeviceSystem>();
-        windowSystem = Ecs.Get<WindowSystem>();
         windowSystem.OnResize += UiResizeHandler;
 
-        MainShader = Shader.CreateShaderFrom(Ecs.Get<AssetManager>(), "2d", deviceSystem, "main");
+        MainShader = Shader.CreateShaderFrom(assetManager, "2d", deviceSystem, "main");
         instanceMeshPool = new InstanceMeshPool<UiInstanceData>(deviceSystem);
         instanceMeshPool.Changed.OnChanged += RebuildData;
-
-        var textureSamplerImageViews = Ecs.Get<ITextureSystem>().TextureSamplerImageViews;
-        PipelineDescriptorInfos = new[]
-        {
-            new PipelineDescriptorInfos(DescriptorType.UniformBuffer, ShaderStageFlags.Vertex, 0, 1, BufferInfo: new[]
-            {
-                new DescriptorBufferInfo { Buffer = AjivaLayer.LayerUniform.Uniform.Buffer!, Offset = 0, Range = (uint)AjivaLayer.LayerUniform.SizeOfT }
-            }),
-            new(DescriptorType.CombinedImageSampler, ShaderStageFlags.Fragment, 2, (uint)textureSamplerImageViews.Length, ImageInfo: textureSamplerImageViews)
-        };
     }
 
     private void UiResizeHandler(object sender, Extent2D oldSize, Extent2D newSize)

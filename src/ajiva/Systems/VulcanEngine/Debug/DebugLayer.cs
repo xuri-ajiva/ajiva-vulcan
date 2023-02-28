@@ -31,9 +31,10 @@ public class DebugLayer : ComponentSystemBase<DebugComponent>, IInit, IUpdate, I
     public DebugLayer(IAjivaEcs ecs) : base(ecs)
     {
         GraphicsDataChanged = new ChangingObserver<IAjivaLayerRenderSystem>(this);
+        Init();
     }
 
-    public PipelineDescriptorInfos[] PipelineDescriptorInfos { get; set; }
+    public PipelineDescriptorInfos[]? PipelineDescriptorInfos { get; set; }
 
     public Shader MainShader { get; set; }
 
@@ -81,10 +82,25 @@ public class DebugLayer : ComponentSystemBase<DebugComponent>, IInit, IUpdate, I
             .Add(nameof(MeshInstanceData.TextureIndex), Format.R32SInt)
             .Add(nameof(MeshInstanceData.Padding), Format.R32G32SFloat)
             .ToArray();
-
+        if(PipelineDescriptorInfos is null)
+            CreatePipelineDescriptorInfos();
+        
         RenderTarget.GraphicsPipelineLayer = CreateDebugPipe.Default(RenderTarget.PassLayer.Parent, RenderTarget.PassLayer,
             Ecs.Get<DeviceSystem>(), true,
             bind, attrib, MainShader, PipelineDescriptorInfos);
+    }
+
+    private void CreatePipelineDescriptorInfos()
+    {
+        var textureSamplerImageViews = Ecs.Get<ITextureSystem>().TextureSamplerImageViews;
+        PipelineDescriptorInfos = new[]
+        {
+            new PipelineDescriptorInfos(DescriptorType.UniformBuffer, ShaderStageFlags.Vertex, 0, 1, BufferInfo: new[]
+            {
+                new DescriptorBufferInfo { Buffer = AjivaLayer.LayerUniform.Uniform.Buffer!, Offset = 0, Range = (uint)AjivaLayer.LayerUniform.SizeOfT }
+            }),
+            new(DescriptorType.CombinedImageSampler, ShaderStageFlags.Fragment, 2, (uint)textureSamplerImageViews.Length, ImageInfo: textureSamplerImageViews)
+        };
     }
 
     /// <inheritdoc />
@@ -105,16 +121,6 @@ public class DebugLayer : ComponentSystemBase<DebugComponent>, IInit, IUpdate, I
         MainShader = Shader.CreateShaderFrom(Ecs.Get<AssetManager>(), "3d/debug", deviceSystem, "main");
         instanceMeshPool = new InstanceMeshPool<MeshInstanceData>(deviceSystem);
         instanceMeshPool.Changed.OnChanged += RebuildData;
-
-        var textureSamplerImageViews = Ecs.Get<ITextureSystem>().TextureSamplerImageViews;
-        PipelineDescriptorInfos = new[]
-        {
-            new PipelineDescriptorInfos(DescriptorType.UniformBuffer, ShaderStageFlags.Vertex, 0, 1, BufferInfo: new[]
-            {
-                new DescriptorBufferInfo { Buffer = AjivaLayer.LayerUniform.Uniform.Buffer!, Offset = 0, Range = (uint)AjivaLayer.LayerUniform.SizeOfT }
-            }),
-            new(DescriptorType.CombinedImageSampler, ShaderStageFlags.Fragment, 2, (uint)textureSamplerImageViews.Length, ImageInfo: textureSamplerImageViews)
-        };
     }
 
     private void RebuildData(IInstanceMeshPool<MeshInstanceData> sender)

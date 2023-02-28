@@ -22,6 +22,7 @@ public class GraphicsSystem : SystemBase, IInit, IUpdate, IGraphicsSystem
     /// <inheritdoc />
     public GraphicsSystem(IAjivaEcs ecs) : base(ecs)
     {
+        Init();
     }
 
     public IOverTimeChangingObserver ChangingObserver { get; } = new OverTimeChangingObserver(100);

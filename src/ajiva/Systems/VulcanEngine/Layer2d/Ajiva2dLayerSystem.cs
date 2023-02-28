@@ -20,6 +20,7 @@ public class Ajiva2dLayerSystem : SystemBase, IInit, IAjivaLayer<UniformLayer2d>
     public Ajiva2dLayerSystem(IAjivaEcs ecs) : base(ecs)
     {
         LayerChanged = new ChangingObserver<IAjivaLayer>(this);
+        Init();
     }
 
     private object MainLock { get; } = new object();
@@ -48,7 +49,7 @@ public class Ajiva2dLayerSystem : SystemBase, IInit, IAjivaLayer<UniformLayer2d>
         var frameBufferFormat = deviceSystem.PhysicalDevice.FindSupportedFormat(
             new[] { Format.R16G16B16A16UNorm, Format.R16G16B16UNorm, Format.R8G8B8UNorm, },
             ImageTiling.Optimal,
-            FormatFeatureFlags.ColorAttachment | FormatFeatureFlags.SampledImage);
+            FormatFeatureFlags.ColorAttachment | FormatFeatureFlags.SampledImage | FormatFeatureFlags.SampledImageFilterLinear);
         var frameBufferImage = imageSystem.CreateImageAndView(Extent.Width, Extent.Height,
             frameBufferFormat, ImageTiling.Optimal, ImageUsageFlags.ColorAttachment | ImageUsageFlags.Sampled,
             MemoryPropertyFlags.DeviceLocal, ImageAspectFlags.Color);

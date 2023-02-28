@@ -25,11 +25,17 @@ public class Ajiva3dLayerSystem : SystemBase, IInit, IUpdate, IAjivaLayer<Unifor
     private AImage? depthImage;
     private Cameras.Camera? mainCamara;
     private WindowSystem window;
+    private readonly IImageSystem imageSystem;
+    private readonly DeviceSystem deviceSystem;
 
     /// <inheritdoc />
-    public Ajiva3dLayerSystem(IAjivaEcs ecs) : base(ecs)
+    public Ajiva3dLayerSystem(IAjivaEcs ecs, WindowSystem window,IImageSystem imageSystem, DeviceSystem deviceSystem) : base(ecs)
     {
+        this.window = window;
+        this.imageSystem = imageSystem;
+        this.deviceSystem = deviceSystem;
         LayerChanged = new ChangingObserver<IAjivaLayer>(this);
+        Init();
     }
 
     public Cameras.Camera MainCamara
@@ -37,7 +43,7 @@ public class Ajiva3dLayerSystem : SystemBase, IInit, IUpdate, IAjivaLayer<Unifor
         get => mainCamara!;
         set
         {
-            mainCamara?.Dispose();
+            //TODO mainCamara?.Dispose();
             mainCamara = value;
         }
     }
@@ -67,9 +73,6 @@ public class Ajiva3dLayerSystem : SystemBase, IInit, IUpdate, IAjivaLayer<Unifor
     /// <inheritdoc />
     public RenderTarget CreateRenderPassLayer(SwapChainLayer swapChainLayer, PositionAndMax layerIndex, PositionAndMax layerRenderComponentSystemsIndex)
     {
-        var deviceSystem = Ecs.Get<DeviceSystem>();
-
-        var imageSystem = Ecs.Get<IImageSystem>();
         if (depthImage is null)
         {
             depthFormat = deviceSystem.PhysicalDevice!.FindDepthFormat();
@@ -165,15 +168,11 @@ public class Ajiva3dLayerSystem : SystemBase, IInit, IUpdate, IAjivaLayer<Unifor
     /// <inheritdoc />
     public void Init()
     {
-        window = Ecs.Get<WindowSystem>();
-
         window.OnResize += OnWindowResize;
 
         window.OnKeyEvent += OnWindowKeyEvent;
 
         window.OnMouseMove += OnWindowMouseMove;
-
-        var deviceSystem = Ecs.Get<DeviceSystem>();
 
         LayerUniform = new AChangeAwareBackupBufferOfT<UniformViewProj3d>(1, deviceSystem);
     }
@@ -197,7 +196,7 @@ public class Ajiva3dLayerSystem : SystemBase, IInit, IUpdate, IAjivaLayer<Unifor
         MainCamara = new Cameras.FpsCamera(Ecs);
         MainCamara.Register(Ecs);
         MainCamara.UpdatePerspective(90, window.Canvas.Width, window.Canvas.Height);
-        MainCamara.MovementSpeed = .01f;
+        MainCamara.MovementSpeed = .5f;
     }
 
     /// <inheritdoc />
@@ -277,7 +276,7 @@ public class Ajiva3dLayerSystem : SystemBase, IInit, IUpdate, IAjivaLayer<Unifor
             foreach (var renderSystem in LayerRenderComponentSystems) renderSystem.Dispose();
             LayerUniform.Dispose();
             Ecs.Get<DeviceSystem>().WaitIdle();
-            mainCamara?.Dispose();
+            //TODO mainCamara?.Dispose();
         }
         base.ReleaseUnmanagedResources(disposing);
     }

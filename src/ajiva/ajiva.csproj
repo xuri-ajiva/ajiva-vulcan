@@ -22,7 +22,13 @@
         <ProjectReference Include="..\..\libs\SharpVk\src\SharpVk\SharpVk.csproj" />
         <ProjectReference Include="..\ajiva.Ecs\ajiva.Ecs.csproj" />
     </ItemGroup>
+    
     <PropertyGroup>
         <PathMap>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)'))=./</PathMap>
     </PropertyGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\ajiva.generator\ajiva.generator.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
+    </ItemGroup>
+
 </Project>

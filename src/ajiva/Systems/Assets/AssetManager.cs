@@ -7,9 +7,13 @@ namespace ajiva.Systems.Assets;
 
 public class AssetManager : SystemBase, IInit, IAssetManager
 {
+    string assetPath;
+
     /// <inheritdoc />
-    public AssetManager(IAjivaEcs ecs) : base(ecs)
+    public AssetManager(IAjivaEcs ecs, Config config) : base(ecs)
     {
+        assetPath = config.AssetPath;
+        Init();
     }
 
     public AssetPack AssetPack { get; set; }
@@ -17,7 +21,7 @@ public class AssetManager : SystemBase, IInit, IAssetManager
     /// <inheritdoc />
     public void Init()
     {
-        AssetPack = Serializer.Deserialize<AssetPack>(new ReadOnlyMemory<byte>(File.ReadAllBytes(Ecs.Get<Config>().AssetPath)));
+        AssetPack = Serializer.Deserialize<AssetPack>(new ReadOnlyMemory<byte>(File.ReadAllBytes(assetPath)));
     }
 
     public byte[] GetAsset(AssetType assetType, string name)

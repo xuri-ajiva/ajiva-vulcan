@@ -12,18 +12,20 @@ namespace ajiva.Components.Physics;
 
 public class BoundingBox : DisposingLogger, IBoundingBox
 {
-    private StaticOctalItem<IBoundingBox>? _octalItem;
+    private readonly IWorkerPool _workerPool;
+    private StaticOctalItem<BoundingBox>? _octalItem;
     private readonly IModelMatTransform _transform;
 
     private uint _version;
 
     private DebugBox? _visual;
 
-    public BoundingBox(IAjivaEcs ecs, IEntity entity)
+    public BoundingBox(IAjivaEcs ecs, IEntity entity, IWorkerPool workerPool)
     {
+        _workerPool = workerPool;
         Ecs = ecs;
-        Collider = entity.Get<ICollider>();
-        _transform = entity.GetAny<IModelMatTransform>();
+        Collider = entity.Get<CollisionsComponent>() as ICollider;
+        _transform = entity.Get<Transform3d>();//entity.GetAny<IModelMatTransform>();
         Collider.ChangingObserver.OnChanged += ColliderChanged;
         _transform.ChangingObserver.OnChanged += TransformChanged;
     }
@@ -43,18 +45,17 @@ public class BoundingBox : DisposingLogger, IBoundingBox
 
     public void ComputeBoxBackground()
     {
-        var vp = Ecs.Get<WorkerPool>();
         lock (this)
         {
             var vCpy = ++_version;
-            vp.EnqueueWork((info, _) => vCpy < _version ? WorkResult.Failed : ComputeBox(), ALog.Error, nameof(ComputeBox));
+            _workerPool.EnqueueWork((info, _) => vCpy < _version ? WorkResult.Failed : ComputeBox(), o => ALog.Error(o), nameof(ComputeBox));
         }
     }
 
-    private StaticOctalTreeContainer<IBoundingBox>? _octalTree;
+    private StaticOctalTreeContainer<BoundingBox>? _octalTree;
 
     /// <inheritdoc />
-    public void SetTree(StaticOctalTreeContainer<IBoundingBox> octalTree)
+    public void SetTree(StaticOctalTreeContainer<BoundingBox> octalTree)
     {
         this._octalTree = octalTree;
     }
@@ -121,7 +122,7 @@ public class BoundingBox : DisposingLogger, IBoundingBox
     private void UpdateDynamicDataVisual()
     {
         return;
-        if (_visual is null)
+       /* if (_visual is null)
         {
             _visual = new DebugBox();
             _visual.Register(Ecs);
@@ -145,7 +146,7 @@ public class BoundingBox : DisposingLogger, IBoundingBox
                 vec.y = scale.y;
                 vec.z = scale.z;
             });
-        });
+        }); */
     }
 
     /// <inheritdoc />

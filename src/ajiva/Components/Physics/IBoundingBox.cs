@@ -7,6 +7,6 @@ public interface IBoundingBox : IComponent
     StaticOctalSpace Space { get; }
     ICollider Collider { get; }
     void ComputeBoxBackground();
-    void SetTree(StaticOctalTreeContainer<IBoundingBox> octalTree);
+    void SetTree(StaticOctalTreeContainer<BoundingBox> octalTree);
     void RemoveTree();
 }

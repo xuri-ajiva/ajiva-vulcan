@@ -13,6 +13,7 @@ public class BoxTextureGenerator : SystemBase, IInit
     /// <inheritdoc />
     public BoxTextureGenerator(IAjivaEcs ecs) : base(ecs)
     {
+        Init();
     }
 
     public ATexture MissingTexture { get; private set; }
