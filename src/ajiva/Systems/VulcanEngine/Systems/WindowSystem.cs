@@ -31,10 +31,10 @@ public class WindowSystem : SystemBase, IUpdate, IWindowSystem
     private readonly WindowConfig windowConfig;
 
     private bool windowReady;
-    private IVulcanInstance _instance;
+    private readonly Instance _instance;
     private IAjivaEcs _ecs;
 
-    public WindowSystem(Config config, IVulcanInstance instance, IAjivaEcs ecs) 
+    public WindowSystem(Config config,Instance instance, IAjivaEcs ecs) 
     {
         _instance = instance;
         _ecs = ecs;

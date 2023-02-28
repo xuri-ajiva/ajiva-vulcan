@@ -12,14 +12,16 @@ public class CombinePipeline : DisposingLogger
     private readonly AjivaLayerRenderer layerRenderer;
     private readonly IAjivaEcs ecs;
     private readonly ITextureSystem _textureSystem;
+    private readonly AssetManager _assetManager;
 
     private FullRenderTarget? fullRenderTarget;
 
-    public CombinePipeline(AjivaLayerRenderer layerRenderer, IAjivaEcs ecs, ITextureSystem textureSystem)
+    public CombinePipeline(AjivaLayerRenderer layerRenderer, IAjivaEcs ecs, ITextureSystem textureSystem, AssetManager assetManager)
     {
         this.layerRenderer = layerRenderer;
         this.ecs = ecs;
         _textureSystem = textureSystem;
+        _assetManager = assetManager;
     }
 
     private static DescriptorImageInfo[] CreateDescriptorImageInfo(IReadOnlyList<BasicLayerRenderProvider> dynamicLayerSystemData, ITextureSystem textureSystem)
@@ -103,7 +105,7 @@ public class CombinePipeline : DisposingLogger
 
         var descriptorImageInfos = CreateDescriptorImageInfo(dynamicLayerSystemData, _textureSystem);
 
-        var mainShader = Shader.CreateShaderFrom(ecs.Get<AssetManager>(), "combine", layerRenderer.DeviceSystem, "main");
+        var mainShader = Shader.CreateShaderFrom(_assetManager, "combine", layerRenderer.DeviceSystem, "main");
         System.Diagnostics.Debug.Assert(layerRenderer.DeviceSystem.Device != null, "deviceSystem.Device != null");
         var descriptorSetLayout = layerRenderer.DeviceSystem.Device.CreateDescriptorSetLayout(
             new DescriptorSetLayoutBinding

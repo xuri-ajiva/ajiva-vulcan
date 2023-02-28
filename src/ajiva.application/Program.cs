@@ -12,7 +12,6 @@ using ajiva.Ecs;
 using ajiva.Ecs.Component;
 using ajiva.Ecs.ComponentSytem;
 using ajiva.Ecs.Entity;
-using ajiva.Ecs.System;
 using ajiva.Ecs.Utils;
 using ajiva.Entities;
 using ajiva.Entities.Ui;
@@ -43,10 +42,6 @@ if (args.Length > 0)
 {
     PackAssets();
 }
-else
-{
-}
-//CompileShaders();
 
 ALog.MinimumLogLevel = ALogLevel.Debug;
 ALog.Log(ALogLevel.Info, $"ProcessId: {Environment.ProcessId}");
@@ -63,41 +58,22 @@ var builder = new ContainerBuilder();
 builder.AddSingle<ContainerProxy, IAjivaEcs>();
 builder.AddSingleSelf(new PeriodicUpdateRunner());
 
-//    entityComponentSystem.Add<Config, Config>(Config.Default);
 builder.Register<Config>(c => Config.Default).AsSelf().SingleInstance();
 
 var (vulcanInstance, debugReportCallback) = Statics.CreateInstance(Glfw3.GetRequiredInstanceExtensions());
 builder.AddSingleSelf(vulcanInstance);
 
-//var deviceSystem = entityComponentSystem.Add<DeviceSystem, IDeviceSystem>();
 builder.AddSystem<DeviceSystem, IDeviceSystem>();
 
-/*var meshPool = new MeshPool(deviceSystem);
-entityComponentSystem.Add<MeshPool, IMeshPool>(meshPool);*/
-//entityComponentSystem.Add<InstanceMeshPool, IInstanceMeshPool>(instanceMeshPool); // should be unique per instance user
 builder.AddSingle<MeshPool, IMeshPool>();
 
-//entityComponentSystem.Add<VulcanInstance, IVulcanInstance>(new VulcanInstance(vulcanInstance));
-builder.AddSingle<VulcanInstance, IVulcanInstance>();
-
-//entityComponentSystem.Add<WorkerPool, IWorkerPool>(new WorkerPool(Environment.ProcessorCount / 2, "AjivaWorkerPool", entityComponentSystem) { Enabled = true });
 builder.AddSingle<WorkerPool, IWorkerPool>(new WorkerPool(Environment.ProcessorCount / 2, "AjivaWorkerPool") {
     Enabled = true
 });
 
-//var window = entityComponentSystem.Add<WindowSystem, IWindowSystem>();
 builder.AddSystem<WindowSystem, IWindowSystem>();
-//entityComponentSystem.Add<BoxTextureGenerator, BoxTextureGenerator>();
 builder.AddSingleSelf<BoxTextureGenerator>();
 
-//var layerSystem = entityComponentSystem.CreateSystemOrComponentSystem<LayerSystem>();
-
-//entityComponentSystem.Add<TextureSystem, ITextureSystem>();
-//entityComponentSystem.Add<ImageSystem, IImageSystem>();
-//entityComponentSystem.Add<TransformComponentSystem, ITransformComponentSystem>();
-//entityComponentSystem.Add<Transform2dComponentSystem, ITransform2dComponentSystem>();
-//entityComponentSystem.Add<PhysicsSystem, PhysicsSystem>();
-//entityComponentSystem.Add<AssetManager, IAssetManager>();
 builder.AddComponentSystem<TextureSystem, ITextureSystem, TextureComponent>();
 builder.AddComponentSystem<ImageSystem, IImageSystem, AImage>();
 builder.AddComponentSystem<PhysicsSystem, PhysicsSystem, PhysicsComponent>();
@@ -117,22 +93,14 @@ builder
     //.As<IComponentSystem<ITransform<vec2, mat3>>>()
     .AsSelf().SingleInstance();
 
-//var graphicsSystem = entityComponentSystem.Add<GraphicsSystem, IGraphicsSystem>();
 builder.AddSystem<GraphicsSystem, IGraphicsSystem>();
 
-//var ajiva3dLayerSystem = entityComponentSystem.Add<Ajiva3dLayerSystem, Ajiva3dLayerSystem>();
-//var ajiva2dLayerSystem = entityComponentSystem.Add<Ajiva2dLayerSystem, Ajiva2dLayerSystem>();
-//var solidMeshRenderLayer = entityComponentSystem.Add<SolidMeshRenderLayer, SolidMeshRenderLayer>();
-//var debugLayer = entityComponentSystem.Add<DebugLayer, DebugLayer>();
-//var rectRender = entityComponentSystem.Add<Mesh2dRenderLayer, Mesh2dRenderLayer>();
 builder.AddSystem<Ajiva3dLayerSystem>();
 builder.AddSystem<Ajiva2dLayerSystem>();
 builder.AddComponentSystem<SolidMeshRenderLayer, IAjivaLayerRenderSystem<UniformViewProj3d>, RenderInstanceMesh>();
 builder.AddComponentSystem<DebugLayer, IAjivaLayerRenderSystem<UniformViewProj3d>, DebugComponent>();
 builder.AddComponentSystem<Mesh2dRenderLayer, IAjivaLayerRenderSystem<UniformLayer2d>, RenderInstanceMesh2D>();
 
-// var collisionsComponentSystem = entityComponentSystem.Add<CollisionsComponentSystem, CollisionsComponentSystem>();
-// var boundingBoxComponentsSystem = entityComponentSystem.Add<BoundingBoxComponentsSystem, BoundingBoxComponentsSystem>();
 builder.AddComponentSystem<CollisionsComponentSystem, CollisionsComponentSystem, CollisionsComponent>();
 builder.AddComponentSystem<BoundingBoxComponentsSystem, BoundingBoxComponentsSystem, BoundingBox>()
     ; // .As<IComponentSystem<BoundingBox>>();  //todo
@@ -161,15 +129,12 @@ ajiva3dLayerSystem.AddLayer(solidMeshRenderLayer);
 ajiva3dLayerSystem.AddLayer(debugLayer);
 ajiva2dLayerSystem.AddLayer(rectRender);
 
-var collisionsComponentSystem = container.Resolve<CollisionsComponentSystem>();
-var boundingBoxComponentsSystem = container.Resolve<BoundingBoxComponentsSystem>();
+//var collisionsComponentSystem = container.Resolve<CollisionsComponentSystem>();
+//var boundingBoxComponentsSystem = container.Resolve<BoundingBoxComponentsSystem>();
 
 var window = container.Resolve<IWindowSystem>();
 
 var meshPref = MeshPrefab.Cube;
-var r = new Random();
-
-//entityComponentSystem.Init();
 
 ajiva3dLayerSystem.Update(new UpdateInfo());
 ajiva3dLayerSystem.MainCamara.Get<Transform3d>()
@@ -215,8 +180,8 @@ for (var i = 0; i < 10; i++)
     var cube = proxy.CreateAndRegisterEntity<Cube>()
         .Configure<Transform3d>(trans =>
         {
-            trans.Position = new vec3(r.Next(-posRange, posRange), r.Next(-posRange, posRange), r.Next(-posRange, posRange));
-            trans.Rotation = new vec3(r.Next(0, 100), r.Next(0, 100), r.Next(0, 100));
+            trans.Position = new vec3(Random.Shared.Next(-posRange, posRange), Random.Shared.Next(-posRange, posRange), Random.Shared.Next(-posRange, posRange));
+            trans.Rotation = new vec3(Random.Shared.Next(0, 100), Random.Shared.Next(0, 100), Random.Shared.Next(0, 100));
         });
 }
 
@@ -327,8 +292,8 @@ void WindowOnOnKeyEvent(object? sender, Key key, int scancode, InputAction input
                     var cube = proxy.CreateAndRegisterEntity<Cube>()
                         .Configure<Transform3d>(trans =>
                         {
-                            trans.Position = new vec3(r.Next(-posRange, posRange), r.Next(-posRange, posRange), r.Next(-posRange, posRange));
-                            trans.Rotation = new vec3(r.Next(0, 100), r.Next(0, 100), r.Next(0, 100));
+                            trans.Position = new vec3(Random.Shared.Next(-posRange, posRange), Random.Shared.Next(-posRange, posRange), Random.Shared.Next(-posRange, posRange));
+                            trans.Rotation = new vec3(Random.Shared.Next(0, 100), Random.Shared.Next(0, 100), Random.Shared.Next(0, 100));
                         });
                 }
                 change.Dispose();
@@ -385,104 +350,8 @@ void WindowOnOnKeyEvent(object? sender, Key key, int scancode, InputAction input
     }
 }
 
-internal static class Ext
-{
-    public static IRegistrationBuilder<T, ConcreteReflectionActivatorData, SingleRegistrationStyle> AddComponentSystem<T, TAs, TComponent>(this ContainerBuilder builder)
-        where T : IComponentSystem<TComponent>, TAs where TComponent : IComponent
-    {
-        return builder.RegisterType<T>()
-            .As<IComponentSystem<TComponent>>()
-            .As<TAs>()
-            .AsSelf()
-            .SingleInstance();
-    }
-
-    public static ContainerBuilder AddSingleSelf<T>(this ContainerBuilder builder) where T : notnull
-    {
-        builder.RegisterType<T>().AsSelf().SingleInstance();
-        return builder;
-    }
-
-    public static ContainerBuilder AddSingle<T, TAs>(this ContainerBuilder builder) where T : TAs where TAs : notnull
-    {
-        builder.RegisterType<T>().AsSelf().As<TAs>().SingleInstance();
-        return builder;
-    }
-
-    public static ContainerBuilder AddSingle<T, TAs>(this ContainerBuilder builder, T value) where T : class, TAs where TAs : notnull
-    {
-        builder.RegisterInstance(value).As<TAs>().AsSelf().SingleInstance();
-        return builder;
-    }
-
-    public static ContainerBuilder AddSingleSelf<T>(this ContainerBuilder builder, T value) where T : class
-    {
-        builder.RegisterInstance(value).AsSelf().SingleInstance();
-        return builder;
-    }
-
-    public static ContainerBuilder AddSystem<T, TAs>(this ContainerBuilder builder) where T : ISystem, TAs where TAs : notnull
-    {
-        builder.RegisterType<T>().As<TAs>().AsSelf().SingleInstance();
-        return builder;
-    }
-
-    public static ContainerBuilder AddSystem<T>(this ContainerBuilder builder) where T : ISystem
-    {
-        builder.RegisterType<T>().AsSelf().SingleInstance();
-        return builder;
-    }
-
-    public static T Register<T>(this T entity, IContainer container) where T : class, IEntity
-    {
-        foreach (var component in entity.GetComponents())
-        {
-            if (component is not null)
-            {
-                container.RegisterComponent(entity, component.GetType(), component);
-            }
-        }
-        container.Resolve<ContainerProxy>().RegisterEntity(entity);
-        //ecs.RegisterEntity(entity);
-        return entity;
-    }
-
-    public static T RegisterComponent<T>(this IContainer container, IEntity entity, Type type, T component) where T : class, IComponent
-    {
-        var target = typeof(IComponentSystem<>).MakeGenericType(type);
-        ((IComponentSystem)container.Resolve(target)).RegisterComponent(entity, component);
-        //container.Resolve<IComponentSystem<T>>().RegisterComponent(entity, component);
-        return component;
-    }
-
-    public static T ResolveUnregistered<T>(this IComponentContext context, params Parameter[] parameters) where T : notnull
-    {
-        var scope = context.Resolve<ILifetimeScope>();
-        using var innerScope = scope.BeginLifetimeScope(b => b.RegisterType(typeof(T)).ExternallyOwned());
-
-        innerScope.ComponentRegistry.TryGetRegistration(new TypedService(typeof(T)), out var reg);
-
-        return parameters is not null && parameters.Length > 0
-            ? innerScope.Resolve<T>(parameters)
-            : innerScope.Resolve<T>();
-    }
-}
-
 public class ContainerProxy : DisposingLogger, IAjivaEcs
 {
-    /// <inheritdoc />
-    public T Add<T, TAs>(T? value = default) where T : class, IAjivaEcsObject where TAs : IAjivaEcsObject
-    {
-        throw new NotImplementedException();
-    }
-
-    /// <inheritdoc />
-    public void Add(Type type, IAjivaEcsObject value)
-    {
-        throw new NotImplementedException();
-    }
-
-    /// <inheritdoc />
     public TAs Get<T, TAs>() where T : class, IAjivaEcsObject where TAs : IAjivaEcsObject
     {
         //ALog.Warn($"Obsolete Resolve<{typeof(T).Name},{typeof(TAs).Name}>", 3);
@@ -490,36 +359,6 @@ public class ContainerProxy : DisposingLogger, IAjivaEcs
         if (t is TAs tAs)
             return tAs;
         return Container.Resolve<TAs>();
-    }
-
-    /// <inheritdoc />
-    public TAs Get<TAs>(Type type) where TAs : IAjivaEcsObject
-    {
-        throw new NotImplementedException();
-    }
-
-    /// <inheritdoc />
-    public TAs GetAny<TAs>(Type type) where TAs : IAjivaEcsObject
-    {
-        throw new NotImplementedException();
-    }
-
-    /// <inheritdoc />
-    public void AddResolver<T>() where T : class, IAjivaEcsResolver, new()
-    {
-        throw new NotImplementedException();
-    }
-
-    /// <inheritdoc />
-    public T Create<T>() where T : class
-    {
-        throw new NotImplementedException();
-    }
-
-    /// <inheritdoc />
-    public object Inject(Type type)
-    {
-        throw new NotImplementedException();
     }
 
     /// <inheritdoc />
@@ -537,10 +376,6 @@ public class ContainerProxy : DisposingLogger, IAjivaEcs
     }
 
     public ConcurrentDictionary<Guid, IEntity> Entities { get; } = new();
-
-    public void UnregisterEntity(IEntity entity)
-    {
-    }
 
     /// <inheritdoc />
     public bool TryUnRegisterEntity<T>(T entity) where T : IEntity

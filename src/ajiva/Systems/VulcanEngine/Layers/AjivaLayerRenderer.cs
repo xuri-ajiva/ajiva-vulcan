@@ -1,4 +1,5 @@
 ﻿using ajiva.Ecs;
+using ajiva.Systems.Assets;
 using ajiva.Systems.VulcanEngine.Interfaces;
 using ajiva.Systems.VulcanEngine.Layer;
 using ajiva.Systems.VulcanEngine.Layers.Creation;
@@ -22,16 +23,18 @@ public class AjivaLayerRenderer : DisposingLogger
     public SwapChainLayer swapChainLayer;
     public CombinePipeline CombinePipeline;
     public CommandBufferPool CommandBufferPool;
+    private readonly ITextureSystem _textureSystem;
 
-    public AjivaLayerRenderer(DeviceSystem deviceSystem, Canvas canvas, CommandBufferPool commandBufferPool, IAjivaEcs ecs)
+    public AjivaLayerRenderer(DeviceSystem deviceSystem, Canvas canvas, CommandBufferPool commandBufferPool, ITextureSystem textureSystem, IAjivaEcs ecs, AssetManager assetManager)
     {
         DeviceSystem = deviceSystem;
         Canvas = canvas;
         CommandBufferPool = commandBufferPool;
+        _textureSystem = textureSystem;
         imageAvailable = deviceSystem.Device!.CreateSemaphore()!;
         renderFinished = deviceSystem.Device!.CreateSemaphore()!;
         fence = deviceSystem.Device.CreateFence();
-        CombinePipeline = new CombinePipeline(this, ecs, ecs.Get<ITextureSystem>());
+        CombinePipeline = new CombinePipeline(this, ecs, textureSystem, assetManager);
     }
 
     public List<BasicLayerRenderProvider> DynamicLayerSystemData { get; } = new List<BasicLayerRenderProvider>();
@@ -116,19 +119,15 @@ public class AjivaLayerRenderer : DisposingLogger
 
         commandBuffers[^1] = CombinePipeline.Combine(DynamicLayerSystemData, nextImage);
 
-        return new SubmitInfo
-        {
+        return new SubmitInfo {
             CommandBuffers = commandBuffers,
-            SignalSemaphores = new[]
-            {
+            SignalSemaphores = new[] {
                 renderFinished
             },
-            WaitDestinationStageMask = new[]
-            {
+            WaitDestinationStageMask = new[] {
                 PipelineStageFlags.ColorAttachmentOutput
             },
-            WaitSemaphores = new[]
-            {
+            WaitSemaphores = new[] {
                 imageAvailable
             }
         };

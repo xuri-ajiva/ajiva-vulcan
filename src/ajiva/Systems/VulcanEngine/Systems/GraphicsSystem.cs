@@ -1,4 +1,5 @@
 ﻿using ajiva.Ecs;
+using ajiva.Systems.Assets;
 using ajiva.Systems.VulcanEngine.Interfaces;
 using ajiva.Systems.VulcanEngine.Layer;
 using ajiva.Systems.VulcanEngine.Layers;
@@ -12,6 +13,7 @@ public class GraphicsSystem : SystemBase, IUpdate, IGraphicsSystem
 {
     private readonly DeviceSystem _deviceSystem;
     private readonly WindowSystem _windowSystem;
+    private readonly TextureSystem _textureSystem;
     private static readonly object CurrentGraphicsLayoutSwapLock = new object();
 
     private AjivaLayerRenderer? ajivaLayerRenderer;
@@ -19,13 +21,16 @@ public class GraphicsSystem : SystemBase, IUpdate, IGraphicsSystem
 
     private bool reInitAjivaLayerRendererNeeded = true;
     private readonly IAjivaEcs _ecs;
+    private readonly AssetManager _assetManager;
 
     /// <inheritdoc />
-    public GraphicsSystem(DeviceSystem deviceSystem, WindowSystem windowSystem, IAjivaEcs ecs)
+    public GraphicsSystem(DeviceSystem deviceSystem, WindowSystem windowSystem, TextureSystem textureSystem, IAjivaEcs ecs, AssetManager assetManager)
     {
         _deviceSystem = deviceSystem;
         _windowSystem = windowSystem;
+        _textureSystem = textureSystem;
         _ecs = ecs;
+        _assetManager = assetManager;
 
         DepthFormat = (deviceSystem.PhysicalDevice ?? throw new InvalidOperationException()).FindDepthFormat();
         windowSystem.OnResize += WindowResized;
@@ -99,7 +104,7 @@ public class GraphicsSystem : SystemBase, IUpdate, IGraphicsSystem
 
     protected void ReCreateRenderUnion()
     {
-        ajivaLayerRenderer ??= new AjivaLayerRenderer(_deviceSystem, _windowSystem.Canvas, new CommandBufferPool(_deviceSystem), _ecs);
+        ajivaLayerRenderer ??= new AjivaLayerRenderer(_deviceSystem, _windowSystem.Canvas, new CommandBufferPool(_deviceSystem), _textureSystem, _ecs, _assetManager);
 
         ajivaLayerRenderer.Init(Layers);
     }

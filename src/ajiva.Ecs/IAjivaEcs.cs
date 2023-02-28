@@ -4,7 +4,7 @@ using System.Diagnostics.CodeAnalysis;
 
 namespace ajiva.Ecs;
 
-public interface IAjivaEcs : IDisposingLogger, IAjivaEcsObjectContainer<IAjivaEcsObject>, IAjivaEcsObject
+public interface IAjivaEcs : IDisposingLogger, IAjivaEcsObject
 {
 #region Entity
 

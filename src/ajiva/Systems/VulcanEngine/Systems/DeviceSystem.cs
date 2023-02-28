@@ -9,16 +9,14 @@ namespace ajiva.Systems.VulcanEngine.Systems;
 [Dependent(typeof(WindowSystem))]
 public class DeviceSystem : SystemBase, IDeviceSystem
 {
-    private readonly IVulcanInstance _instance;
     private readonly WindowSystem _windowSystem;
     private QueueFamilyIndices queueFamilies;
 
     /// <inheritdoc />
-    public DeviceSystem(IVulcanInstance instance, WindowSystem windowSystem)
+    public DeviceSystem(Instance instance, WindowSystem windowSystem)
     {
-        _instance = instance;
         _windowSystem = windowSystem;
-        PickPhysicalDevice(_instance);
+        PickPhysicalDevice(instance);
         CreateLogicalDevice();
     }
 
@@ -51,7 +49,7 @@ public class DeviceSystem : SystemBase, IDeviceSystem
 
     private List<IDisposable> Disposables { get; set; } = new List<IDisposable>();
 
-    private void PickPhysicalDevice(IVulcanInstance instance)
+    private void PickPhysicalDevice(Instance instance)
     {
         var availableDevices = instance.EnumeratePhysicalDevices();
 
