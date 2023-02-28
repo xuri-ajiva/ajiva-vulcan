@@ -83,7 +83,7 @@ public class DynamicUniversalDedicatedBufferArray<T> : DisposingLogger where T :
                 Array.Copy(_items, newItems, _items.Length);
             }
             _items = newItems;
-            deviceSystem.Device.WaitIdle();
+            deviceSystem.WaitIdle();
             Staging.Resize((uint)(newLength * SizeOfT));
             Uniform.Resize((uint)(newLength * SizeOfT));
             Used.Length = newLength;
