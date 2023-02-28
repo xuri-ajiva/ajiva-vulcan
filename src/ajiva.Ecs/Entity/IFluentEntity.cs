@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace ajiva.Ecs.Entity;
 
-public static class FluentEntity
+public static class FluentEntity //todo remove
 {
     public static T Register<T>(this T entity, IAjivaEcs ecs) where T : class, IFluentEntity
     {

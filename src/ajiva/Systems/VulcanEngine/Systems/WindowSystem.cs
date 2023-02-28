@@ -11,7 +11,7 @@ using Key = SharpVk.Glfw.Key;
 
 namespace ajiva.Systems.VulcanEngine.Systems;
 
-public class WindowSystem : SystemBase, IUpdate, IInit, IWindowSystem
+public class WindowSystem : SystemBase, IUpdate, IWindowSystem
 {
     private readonly CursorPosDelegate cursorPosDelegate;
 
@@ -32,10 +32,12 @@ public class WindowSystem : SystemBase, IUpdate, IInit, IWindowSystem
 
     private bool windowReady;
     private IVulcanInstance _instance;
+    private IAjivaEcs _ecs;
 
-    public WindowSystem(IAjivaEcs ecs, Config config, IVulcanInstance instance) : base(ecs)
+    public WindowSystem(Config config, IVulcanInstance instance, IAjivaEcs ecs) 
     {
         _instance = instance;
+        _ecs = ecs;
         keyDelegate = KeyCallback;
         cursorPosDelegate = MouseCallback;
         sizeDelegate = SizeCallback;
@@ -47,26 +49,20 @@ public class WindowSystem : SystemBase, IUpdate, IInit, IWindowSystem
 
         windowConfig = config.Window;
 
-        OnResize += (sender, size, newSize) => ALog.Info($"Resized from [w: {size.Width}, h: {size.Height}] to [w: {newSize.Width}, h: {newSize.Height}]");
+        OnResize += (_, size, newSize) => ALog.Info($"Resized from [w: {size.Width}, h: {size.Height}] to [w: {newSize.Width}, h: {newSize.Height}]");
 
-        Init();
-    }
-
-    public Canvas Canvas { get; }
-
-    /// <inheritdoc />
-    public void Init()
-    {
         InitWindow();
         EnsureSurfaceExists();
     }
+
+    public Canvas Canvas { get; }
 
     /// <inheritdoc />
     public void Update(UpdateInfo delta)
     {
         PollEvents();
         if (!windowReady)
-            Ecs.IssueClose();
+            _ecs.IssueClose();
     }
 
     /// <inheritdoc />

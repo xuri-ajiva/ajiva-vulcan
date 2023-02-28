@@ -3,7 +3,6 @@ using ajiva.Components;
 using ajiva.Components.Mesh.Instance;
 using ajiva.Components.RenderAble;
 using ajiva.Components.Transform.Ui;
-using ajiva.Ecs;
 using ajiva.Models.Instance;
 using ajiva.Models.Layers.Layer2d;
 using ajiva.Models.Vertex;
@@ -19,23 +18,29 @@ using SharpVk;
 namespace ajiva.Systems.VulcanEngine.Layer2d;
 
 [Dependent(typeof(Ajiva3dLayerSystem))]
-public class Mesh2dRenderLayer : ComponentSystemBase<RenderInstanceMesh2D>, IInit, IUpdate, IAjivaLayerRenderSystem<UniformLayer2d>
+public class Mesh2dRenderLayer : ComponentSystemBase<RenderInstanceMesh2D>, IUpdate, IAjivaLayerRenderSystem<UniformLayer2d>
 {
-    private readonly object mainLock = new object();
-    private InstanceMeshPool<UiInstanceData> instanceMeshPool;
-    private long dataVersion;
-    private WindowSystem windowSystem;
-    private DeviceSystem deviceSystem;
-    private AssetManager assetManager;
+    private readonly object _mainLock = new object();
+    private InstanceMeshPool<UiInstanceData> _instanceMeshPool;
+    private long _dataVersion;
+    private readonly WindowSystem _windowSystem;
+    private readonly DeviceSystem _deviceSystem;
+    private readonly AssetManager _assetManager;
+    private readonly ITextureSystem _textureSystem;
 
     /// <inheritdoc />
-    public Mesh2dRenderLayer(IAjivaEcs ecs, WindowSystem windowSystem, DeviceSystem deviceSystem, AssetManager assetManager) : base(ecs)
+    public Mesh2dRenderLayer(WindowSystem windowSystem, DeviceSystem deviceSystem, AssetManager assetManager, ITextureSystem textureSystem)
     {
-        this.windowSystem = windowSystem;
-        this.deviceSystem = deviceSystem;
-        this.assetManager = assetManager;
+        _windowSystem = windowSystem;
+        _deviceSystem = deviceSystem;
+        _assetManager = assetManager;
+        _textureSystem = textureSystem;
 
-        Init();
+        _windowSystem.OnResize += UiResizeHandler;
+
+        MainShader = Shader.CreateShaderFrom(_assetManager, "2d", _deviceSystem, "main");
+        _instanceMeshPool = new InstanceMeshPool<UiInstanceData>(_deviceSystem);
+        _instanceMeshPool.Changed.OnChanged += RebuildData;
     }
 
     public PipelineDescriptorInfos[] PipelineDescriptorInfos { get; set; }
@@ -45,16 +50,16 @@ public class Mesh2dRenderLayer : ComponentSystemBase<RenderInstanceMesh2D>, IIni
     public IAjivaLayer<UniformLayer2d> AjivaLayer { get; set; }
 
     /// <inheritdoc />
-    public long DataVersion => dataVersion;
+    public long DataVersion => _dataVersion;
 
     /// <inheritdoc />
     public void DrawComponents(RenderLayerGuard renderGuard, CancellationToken cancellationToken)
     {
         renderGuard.BindDescriptor();
 
-        foreach (var (_, instancedMesh) in instanceMeshPool.InstancedMeshes)
+        foreach (var (_, instancedMesh) in _instanceMeshPool.InstancedMeshes)
         {
-            var dedicatedBufferArray = instanceMeshPool.InstanceMeshData[instancedMesh.InstancedId];
+            var dedicatedBufferArray = _instanceMeshPool.InstanceMeshData[instancedMesh.InstancedId];
 
             var instanceBuffer = dedicatedBufferArray.Uniform.Current();
             var vertexBuffer = instancedMesh.Mesh.VertexBuffer;
@@ -90,13 +95,13 @@ public class Mesh2dRenderLayer : ComponentSystemBase<RenderInstanceMesh2D>, IIni
             CreatePipelineDescriptorInfos();
 
         RenderTarget.GraphicsPipelineLayer = GraphicsPipelineLayerCreator.Default(RenderTarget.PassLayer.Parent, RenderTarget.PassLayer,
-            Ecs.Get<DeviceSystem>(), true,
+            _deviceSystem, true,
             bind, attrib, MainShader, PipelineDescriptorInfos);
     }
 
     private void CreatePipelineDescriptorInfos()
     {
-        var textureSamplerImageViews = Ecs.Get<ITextureSystem>().TextureSamplerImageViews;
+        var textureSamplerImageViews = _textureSystem.TextureSamplerImageViews;
 
         PipelineDescriptorInfos = new[] {
             new PipelineDescriptorInfos(DescriptorType.UniformBuffer, ShaderStageFlags.Vertex, 0, 1, BufferInfo: new[] {
@@ -112,32 +117,22 @@ public class Mesh2dRenderLayer : ComponentSystemBase<RenderInstanceMesh2D>, IIni
     private const uint VERTEX_BUFFER_BIND_ID = 0;
     private const uint INSTANCE_BUFFER_BIND_ID = 1;
 
-    /// <inheritdoc />
-    public void Init()
-    {
-        windowSystem.OnResize += UiResizeHandler;
-
-        MainShader = Shader.CreateShaderFrom(assetManager, "2d", deviceSystem, "main");
-        instanceMeshPool = new InstanceMeshPool<UiInstanceData>(deviceSystem);
-        instanceMeshPool.Changed.OnChanged += RebuildData;
-    }
-
     private void UiResizeHandler(object sender, Extent2D oldSize, Extent2D newSize)
     {
-        Interlocked.Increment(ref dataVersion);
+        Interlocked.Increment(ref _dataVersion);
     }
 
     private void RebuildData(IInstanceMeshPool<UiInstanceData> sender)
     {
-        Interlocked.Increment(ref dataVersion);
+        Interlocked.Increment(ref _dataVersion);
     }
 
     /// <inheritdoc />
     public void Update(UpdateInfo delta)
     {
-        lock (mainLock)
+        lock (_mainLock)
         {
-            instanceMeshPool.CommitInstanceDataChanges();
+            _instanceMeshPool.CommitInstanceDataChanges();
         }
     }
 
@@ -153,19 +148,19 @@ public class Mesh2dRenderLayer : ComponentSystemBase<RenderInstanceMesh2D>, IIni
         var res = base.RegisterComponent(entity, component);
         CreateInstance(res);
         component.UpdateData();
-        Interlocked.Increment(ref dataVersion);
+        Interlocked.Increment(ref _dataVersion);
         return res;
     }
 
     private void CreateInstance(RenderInstanceMesh2D res)
     {
-        res.Instance = instanceMeshPool.CreateInstance(instanceMeshPool.AsInstanced(res.Mesh));
+        res.Instance = _instanceMeshPool.CreateInstance(_instanceMeshPool.AsInstanced(res.Mesh));
     }
 
     private void DeleteInstance(RenderInstanceMesh2D res)
     {
         if (res.Instance == null) return;
-        instanceMeshPool.DeleteInstance(res.Instance);
+        _instanceMeshPool.DeleteInstance(res.Instance);
         res.Instance = null;
     }
 
@@ -177,7 +172,7 @@ public class Mesh2dRenderLayer : ComponentSystemBase<RenderInstanceMesh2D>, IIni
 
         var res = base.UnRegisterComponent(entity, component);
         DeleteInstance(res);
-        Interlocked.Increment(ref dataVersion);
+        Interlocked.Increment(ref _dataVersion);
         return res;
     }
 }

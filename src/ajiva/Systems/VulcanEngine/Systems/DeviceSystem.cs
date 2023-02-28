@@ -1,6 +1,5 @@
 ﻿using System.Collections.Concurrent;
 using System.Runtime.CompilerServices;
-using ajiva.Ecs;
 using ajiva.Systems.VulcanEngine.Interfaces;
 using SharpVk;
 using SharpVk.Khronos;
@@ -8,16 +7,19 @@ using SharpVk.Khronos;
 namespace ajiva.Systems.VulcanEngine.Systems;
 
 [Dependent(typeof(WindowSystem))]
-public class DeviceSystem : SystemBase, IInit, IDeviceSystem
+public class DeviceSystem : SystemBase, IDeviceSystem
 {
     private readonly IVulcanInstance _instance;
+    private readonly WindowSystem _windowSystem;
     private QueueFamilyIndices queueFamilies;
 
     /// <inheritdoc />
-    public DeviceSystem(IAjivaEcs ecs, IVulcanInstance instance) : base(ecs)
+    public DeviceSystem(IVulcanInstance instance, WindowSystem windowSystem)
     {
         _instance = instance;
-        Init();
+        _windowSystem = windowSystem;
+        PickPhysicalDevice(_instance);
+        CreateLogicalDevice();
     }
 
     public PhysicalDevice? PhysicalDevice { get; private set; }
@@ -49,23 +51,16 @@ public class DeviceSystem : SystemBase, IInit, IDeviceSystem
 
     private List<IDisposable> Disposables { get; set; } = new List<IDisposable>();
 
-    /// <inheritdoc />
-    public void Init()
-    {
-        PickPhysicalDevice(_instance);
-        CreateLogicalDevice();
-    }
-
     private void PickPhysicalDevice(IVulcanInstance instance)
     {
         var availableDevices = instance.EnumeratePhysicalDevices();
 
-        PhysicalDevice = availableDevices.First(x => x.IsSuitableDevice(Ecs.Get<WindowSystem>().Canvas));
+        PhysicalDevice = availableDevices.First(x => x.IsSuitableDevice(_windowSystem.Canvas));
     }
 
     private void CreateLogicalDevice()
     {
-        queueFamilies = PhysicalDevice!.FindQueueFamilies(Ecs.Get<WindowSystem>().Canvas);
+        queueFamilies = PhysicalDevice!.FindQueueFamilies(_windowSystem.Canvas);
 
         Device = PhysicalDevice!.CreateDevice(queueFamilies.Indices
                 .Select(index => new DeviceQueueCreateInfo {
@@ -93,7 +88,7 @@ public class DeviceSystem : SystemBase, IInit, IDeviceSystem
 
     public void WaitIdle()
     {
-        lock (Device)
+        lock (Device) // TODO: is needed, but where are more places to lock the device?
         {
             Device?.WaitIdle();
         }

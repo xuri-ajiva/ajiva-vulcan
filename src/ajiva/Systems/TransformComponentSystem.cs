@@ -1,34 +1,22 @@
 ﻿using ajiva.Components.Transform;
 using ajiva.Components.Transform.Ui;
-using ajiva.Ecs;
 using ajiva.Systems.VulcanEngine.Interfaces;
 
 namespace ajiva.Systems;
 
 public class TransformComponentSystem : ComponentSystemBase<Transform3d>, ITransformComponentSystem
 {
-    private Random r = new Random();
-
-    public TransformComponentSystem(IAjivaEcs ecs) : base(ecs)
-    {
-    }
 }
-public class Transform2dComponentSystem : ComponentSystemBase<UiTransform>, ITransform2dComponentSystem, IInit
+public class Transform2dComponentSystem : ComponentSystemBase<UiTransform>, ITransform2dComponentSystem
 {
     private readonly IWindowSystem windowSystem;
     public UIRootTransform RootTransform { get; set; }
 
-    public Transform2dComponentSystem(IAjivaEcs ecs,IWindowSystem windowSystem) : base(ecs)
+    public Transform2dComponentSystem(IWindowSystem windowSystem)
     {
         this.windowSystem = windowSystem;
-        Init();
-    }
-
-    /// <inheritdoc />
-    public void Init()
-    {
-        RootTransform = new UIRootTransform(windowSystem.Canvas.WidthI, windowSystem.Canvas.HeightI, -1.0f, 1.0f);
-        windowSystem.OnResize += (sender, oldExtent, newSize) =>
+        RootTransform = new UIRootTransform(this.windowSystem.Canvas.WidthI, this.windowSystem.Canvas.HeightI, -1.0f, 1.0f);
+        this.windowSystem.OnResize += (sender, oldExtent, newSize) =>
         {
             RootTransform.DisplaySize = new Rect2Di(0, 0, (int)newSize.Width, (int)newSize.Height);
         };

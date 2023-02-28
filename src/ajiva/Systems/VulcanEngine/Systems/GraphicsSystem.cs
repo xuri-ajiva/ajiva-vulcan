@@ -8,21 +8,27 @@ using SharpVk;
 namespace ajiva.Systems.VulcanEngine.Systems;
 
 [Dependent(typeof(TextureSystem))]
-public class GraphicsSystem : SystemBase, IInit, IUpdate, IGraphicsSystem
+public class GraphicsSystem : SystemBase, IUpdate, IGraphicsSystem
 {
+    private readonly DeviceSystem _deviceSystem;
+    private readonly WindowSystem _windowSystem;
     private static readonly object CurrentGraphicsLayoutSwapLock = new object();
 
     private AjivaLayerRenderer? ajivaLayerRenderer;
 
-    private DeviceSystem deviceSystem;
 
     private bool reInitAjivaLayerRendererNeeded = true;
-    private WindowSystem windowSystem;
+    private readonly IAjivaEcs _ecs;
 
     /// <inheritdoc />
-    public GraphicsSystem(IAjivaEcs ecs) : base(ecs)
+    public GraphicsSystem(DeviceSystem deviceSystem, WindowSystem windowSystem, IAjivaEcs ecs)
     {
-        Init();
+        _deviceSystem = deviceSystem;
+        _windowSystem = windowSystem;
+        _ecs = ecs;
+
+        DepthFormat = (deviceSystem.PhysicalDevice ?? throw new InvalidOperationException()).FindDepthFormat();
+        windowSystem.OnResize += WindowResized;
     }
 
     public IOverTimeChangingObserver ChangingObserver { get; } = new OverTimeChangingObserver(100);
@@ -30,13 +36,6 @@ public class GraphicsSystem : SystemBase, IInit, IUpdate, IGraphicsSystem
     public List<IAjivaLayer> Layers { get; } = new List<IAjivaLayer>();
 
     public Format DepthFormat { get; set; }
-
-    /// <inheritdoc />
-    public void Init()
-    {
-        ResolveDeps();
-        windowSystem.OnResize += WindowResized;
-    }
 
     /// <inheritdoc />
     public void Update(UpdateInfo delta)
@@ -68,7 +67,7 @@ public class GraphicsSystem : SystemBase, IInit, IUpdate, IGraphicsSystem
     {
         lock (CurrentGraphicsLayoutSwapLock)
         {
-            deviceSystem.WaitIdle();
+            _deviceSystem.WaitIdle();
 
             ReCreateRenderUnion();
         }
@@ -81,12 +80,12 @@ public class GraphicsSystem : SystemBase, IInit, IUpdate, IGraphicsSystem
 
     public void DrawFrame()
     {
-        var render = deviceSystem.GraphicsQueue!;
-        var presentation = deviceSystem.PresentQueue!;
+        var render = _deviceSystem.GraphicsQueue!;
+        var presentation = _deviceSystem.PresentQueue!;
 
-        deviceSystem.ExecuteSingleTimeCommands(QueueType.GraphicsQueue, CommandPoolSelector.Foreground);
-        deviceSystem.ExecuteSingleTimeCommands(QueueType.GraphicsQueue, CommandPoolSelector.Background);
-        deviceSystem.ExecuteSingleTimeCommands(QueueType.TransferQueue, CommandPoolSelector.Transit);
+        _deviceSystem.ExecuteSingleTimeCommands(QueueType.GraphicsQueue, CommandPoolSelector.Foreground);
+        _deviceSystem.ExecuteSingleTimeCommands(QueueType.GraphicsQueue, CommandPoolSelector.Background);
+        _deviceSystem.ExecuteSingleTimeCommands(QueueType.TransferQueue, CommandPoolSelector.Transit);
 
         lock (presentation)
         {
@@ -96,18 +95,11 @@ public class GraphicsSystem : SystemBase, IInit, IUpdate, IGraphicsSystem
             }
         }
     }
-
-    public void ResolveDeps()
-    {
-        deviceSystem = Ecs.Get<DeviceSystem>();
-        windowSystem = Ecs.Get<WindowSystem>();
-
-        DepthFormat = (deviceSystem.PhysicalDevice ?? throw new InvalidOperationException()).FindDepthFormat();
-    }
+    
 
     protected void ReCreateRenderUnion()
     {
-        ajivaLayerRenderer ??= new AjivaLayerRenderer(deviceSystem, windowSystem.Canvas, new CommandBufferPool(deviceSystem), Ecs);
+        ajivaLayerRenderer ??= new AjivaLayerRenderer(_deviceSystem, _windowSystem.Canvas, new CommandBufferPool(_deviceSystem), _ecs);
 
         ajivaLayerRenderer.Init(Layers);
     }

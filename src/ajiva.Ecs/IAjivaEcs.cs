@@ -4,7 +4,7 @@ using System.Diagnostics.CodeAnalysis;
 
 namespace ajiva.Ecs;
 
-public interface IAjivaEcs : IDisposingLogger, IInit, IAjivaEcsObjectContainer<IAjivaEcsObject>, IAjivaEcsObject
+public interface IAjivaEcs : IDisposingLogger, IAjivaEcsObjectContainer<IAjivaEcsObject>, IAjivaEcsObject
 {
 #region Entity
 
@@ -18,18 +18,9 @@ public interface IAjivaEcs : IDisposingLogger, IInit, IAjivaEcsObjectContainer<I
 
     T RegisterComponent<T>(IEntity entity, Type type, T component) where T : class, IComponent;
     T UnRegisterComponent<T>(IEntity entity, Type type, T component) where T : class, IComponent;
-    /*
-    bool TryAttachComponentToEntity<T, TAs>(IEntity entity, T component) where TAs : IComponent where T : class, TAs;
-    bool TryDetachComponentFromEntity<T>(IEntity entity, [MaybeNullWhen(false)] out T component) where T : class, IComponent;
-    */
 
 #endregion
 
-#region Create
-
-    T Create<T>(Func<Type, object?> missing) where T : class;
-
-#endregion
 
 #region Live
 
@@ -41,9 +32,9 @@ public interface IAjivaEcs : IDisposingLogger, IInit, IAjivaEcsObjectContainer<I
 #endregion
     void IssueClose();
     void RegisterUpdate(IUpdate update);
-    void RegisterInit(IInit init);
     void StartUpdates();
     void WaitForExit();
 
 #endregion
+    T CreateAndRegisterEntity<T>() where T : class, IEntity;
 }

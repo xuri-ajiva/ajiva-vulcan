@@ -1,7 +1,5 @@
 ﻿using System.Runtime.CompilerServices;
-using ajiva.Ecs;
 using ajiva.Entities;
-using ajiva.Systems.Physics;
 using GlmSharp;
 
 namespace ajiva.Components.Transform.SpatialAcceleration;
@@ -29,7 +27,7 @@ public class StaticOctalTree<T, TItem> : IRespectable where TItem : StaticOctalI
             ALog.Error("already setup");
         }
         _childrenTrees ??= new StaticOctalTree<T, TItem>[AREAS_PER_LEAF]; //ArrayPool<StaticOctalTree<T, TItem>>.Shared.Rent(AREAS_PER_LEAF);
-        _items ??= new LinkedList<TItem>();
+        _items ??= new LinkedList<TItem>(); //todo move to first use
         Resize(area);
         hasRest = false;
     }
@@ -66,10 +64,11 @@ public class StaticOctalTree<T, TItem> : IRespectable where TItem : StaticOctalI
 
     private void CreateVisual()
     {
+        return;
         if (_visual is null)
         {
-            _visual = new DebugBox();
-            _visual.Register(BoundingBoxComponentsSystem.SEcs);
+            /*_visual = new DebugBox(); //todo get some static debug rendere 
+            _visual.Register(BoundingBoxComponentsSystem.SEcs);*/
         }
         else
         {

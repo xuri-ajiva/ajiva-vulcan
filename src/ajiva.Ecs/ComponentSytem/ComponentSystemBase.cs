@@ -6,12 +6,6 @@ namespace ajiva.Ecs.ComponentSytem;
 
 public abstract class ComponentSystemBase<T> : DisposingLogger, IComponentSystem<T> where T : IComponent
 {
-    public ComponentSystemBase(IAjivaEcs ecs)
-    {
-        Ecs = ecs;
-    }
-
-    protected IAjivaEcs Ecs { get; }
     public Type ComponentType { get; } = typeof(T);
 
     /// <inheritdoc />

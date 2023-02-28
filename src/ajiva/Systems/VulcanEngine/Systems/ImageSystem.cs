@@ -1,6 +1,4 @@
 ﻿using ajiva.Components.Media;
-using ajiva.Ecs;
-using ajiva.Models;
 using ajiva.Systems.VulcanEngine.Interfaces;
 using SharpVk;
 using SharpVk.NVidia;
@@ -9,11 +7,14 @@ using Buffer = SharpVk.Buffer;
 namespace ajiva.Systems.VulcanEngine.Systems;
 
 [Dependent(typeof(DeviceSystem))]
-public class ImageSystem : ComponentSystemBase<AImage>, IInit, IImageSystem
+public class ImageSystem : ComponentSystemBase<AImage>, IImageSystem
 {
+    private readonly IDeviceSystem _deviceSystem;
+
     /// <inheritdoc />
-    public ImageSystem(IAjivaEcs ecs) : base(ecs)
+    public ImageSystem(IDeviceSystem deviceSystem)
     {
+        _deviceSystem = deviceSystem;
     }
 
     /// <inheritdoc />
@@ -24,8 +25,7 @@ public class ImageSystem : ComponentSystemBase<AImage>, IInit, IImageSystem
     public AImage CreateImageAndView(uint width, uint height, Format format, ImageTiling tiling, ImageUsageFlags usage, MemoryPropertyFlags properties, ImageAspectFlags aspectFlags)
     {
         var aImage = new AImage(true);
-        var deviceSystem = Ecs.Get<DeviceSystem>();
-        var device = deviceSystem.Device!;
+        var device = _deviceSystem.Device!;
 
         aImage.Image = device.CreateImage(ImageType.Image2d, format, new Extent3D(width, height, 1), 1, 1, SampleCountFlags.SampleCount1, tiling, usage, SharingMode.Exclusive, ArrayProxy<uint>.Null, ImageLayout.Undefined);
 
@@ -34,7 +34,7 @@ public class ImageSystem : ComponentSystemBase<AImage>, IInit, IImageSystem
             Image = aImage.Image
         });
 
-        aImage.Memory = device.AllocateMemory(memRequirements.MemoryRequirements.Size, deviceSystem.FindMemoryType(memRequirements.MemoryRequirements.MemoryTypeBits, properties), new DedicatedAllocationMemoryAllocateInfo
+        aImage.Memory = device.AllocateMemory(memRequirements.MemoryRequirements.Size, _deviceSystem.FindMemoryType(memRequirements.MemoryRequirements.MemoryTypeBits, properties), new DedicatedAllocationMemoryAllocateInfo
         {
             Image = aImage.Image
         });
@@ -47,7 +47,7 @@ public class ImageSystem : ComponentSystemBase<AImage>, IInit, IImageSystem
         });
 
         aImage.CreateView(device, format, aspectFlags);
-        deviceSystem.WatchObject(aImage);
+        _deviceSystem.WatchObject(aImage);
 
         return aImage;
     }
@@ -72,7 +72,7 @@ public class ImageSystem : ComponentSystemBase<AImage>, IInit, IImageSystem
 
     public void CopyBufferToImage(Buffer buffer, Image image, uint width, uint height)
     {
-        Ecs.Get<DeviceSystem>().ExecuteSingleTimeCommand(QueueType.TransferQueue, CommandPoolSelector.Transit, command =>
+        _deviceSystem.ExecuteSingleTimeCommand(QueueType.TransferQueue, CommandPoolSelector.Transit, command =>
         {
             command.CopyBufferToImage(buffer, image, ImageLayout.TransferDestinationOptimal, new BufferImageCopy
             {
@@ -151,7 +151,7 @@ public class ImageSystem : ComponentSystemBase<AImage>, IInit, IImageSystem
                 throw new ArgumentException("unsupported layout transition!");
         }
 
-        Ecs.Get<DeviceSystem>().ExecuteSingleTimeCommand(QueueType.GraphicsQueue, CommandPoolSelector.Foreground, command => command.PipelineBarrier(sourceStage, destinationStage, ArrayProxy<MemoryBarrier>.Null, ArrayProxy<BufferMemoryBarrier>.Null, barrier));
+        _deviceSystem.ExecuteSingleTimeCommand(QueueType.GraphicsQueue, CommandPoolSelector.Foreground, command => command.PipelineBarrier(sourceStage, destinationStage, ArrayProxy<MemoryBarrier>.Null, ArrayProxy<BufferMemoryBarrier>.Null, barrier));
     }
     
 #endregion

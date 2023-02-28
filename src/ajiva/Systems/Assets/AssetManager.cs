@@ -1,28 +1,21 @@
 ﻿using ajiva.Application;
-using ajiva.Ecs;
 using ajiva.Systems.Assets.Contracts;
 using ProtoBuf;
 
 namespace ajiva.Systems.Assets;
 
-public class AssetManager : SystemBase, IInit, IAssetManager
+public class AssetManager : SystemBase, IAssetManager
 {
     string assetPath;
 
     /// <inheritdoc />
-    public AssetManager(IAjivaEcs ecs, Config config) : base(ecs)
+    public AssetManager(Config config)
     {
         assetPath = config.AssetPath;
-        Init();
+        AssetPack = Serializer.Deserialize<AssetPack>(new ReadOnlyMemory<byte>(File.ReadAllBytes(assetPath)));
     }
 
     public AssetPack AssetPack { get; set; }
-
-    /// <inheritdoc />
-    public void Init()
-    {
-        AssetPack = Serializer.Deserialize<AssetPack>(new ReadOnlyMemory<byte>(File.ReadAllBytes(assetPath)));
-    }
 
     public byte[] GetAsset(AssetType assetType, string name)
     {

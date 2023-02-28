@@ -1,6 +1,5 @@
 ﻿using ajiva.Components.Transform;
 using ajiva.Components.Transform.SpatialAcceleration;
-using ajiva.Ecs;
 using ajiva.Entities;
 using ajiva.Models.Buffer;
 using ajiva.Models.Vertex;
@@ -20,10 +19,9 @@ public class BoundingBox : DisposingLogger, IBoundingBox
 
     private DebugBox? _visual;
 
-    public BoundingBox(IAjivaEcs ecs, IEntity entity, IWorkerPool workerPool)
+    public BoundingBox(IEntity entity, IWorkerPool workerPool)
     {
         _workerPool = workerPool;
-        Ecs = ecs;
         Collider = entity.Get<CollisionsComponent>() as ICollider;
         _transform = entity.Get<Transform3d>();//entity.GetAny<IModelMatTransform>();
         Collider.ChangingObserver.OnChanged += ColliderChanged;
@@ -36,7 +34,6 @@ public class BoundingBox : DisposingLogger, IBoundingBox
     /// <inheritdoc />
     public ICollider Collider { get; }
 
-    public IAjivaEcs Ecs { get; }
 
     private void TransformChanged(mat4 value)
     {

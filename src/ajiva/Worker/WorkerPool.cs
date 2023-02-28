@@ -1,5 +1,4 @@
 ﻿using System.Collections.Concurrent;
-using ajiva.Ecs;
 
 namespace ajiva.Worker;
 
@@ -11,7 +10,7 @@ public class WorkerPool : SystemBase, IWorkerPool
 
     private readonly Worker[] workers;
 
-    public WorkerPool(int workerCount, string name, IAjivaEcs ecs) : base(ecs)
+    public WorkerPool(int workerCount, string name)
     {
         Name = name;
         workers = new Worker[workerCount];

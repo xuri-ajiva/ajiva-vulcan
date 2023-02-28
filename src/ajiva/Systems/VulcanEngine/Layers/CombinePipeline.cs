@@ -1,9 +1,8 @@
 ﻿using ajiva.Components;
-using ajiva.Components.Media;
 using ajiva.Ecs;
 using ajiva.Systems.Assets;
+using ajiva.Systems.VulcanEngine.Interfaces;
 using ajiva.Systems.VulcanEngine.Layers.Models;
-using ajiva.Systems.VulcanEngine.Systems;
 using SharpVk;
 
 namespace ajiva.Systems.VulcanEngine.Layers;
@@ -12,22 +11,24 @@ public class CombinePipeline : DisposingLogger
 {
     private readonly AjivaLayerRenderer layerRenderer;
     private readonly IAjivaEcs ecs;
+    private readonly ITextureSystem _textureSystem;
 
     private FullRenderTarget? fullRenderTarget;
 
-    public CombinePipeline(AjivaLayerRenderer layerRenderer, IAjivaEcs ecs)
+    public CombinePipeline(AjivaLayerRenderer layerRenderer, IAjivaEcs ecs, ITextureSystem textureSystem)
     {
         this.layerRenderer = layerRenderer;
         this.ecs = ecs;
+        _textureSystem = textureSystem;
     }
 
-    private static DescriptorImageInfo[] CreateDescriptorImageInfo(IReadOnlyList<BasicLayerRenderProvider> dynamicLayerSystemData, DeviceSystem deviceSystem)
+    private static DescriptorImageInfo[] CreateDescriptorImageInfo(IReadOnlyList<BasicLayerRenderProvider> dynamicLayerSystemData, ITextureSystem textureSystem)
     {
         var res = new DescriptorImageInfo[dynamicLayerSystemData.Count];
         for (int i = 0; i < res.Length; i++)
         {
             res[i] = new DescriptorImageInfo {
-                Sampler = ATexture.CreateTextureSampler(deviceSystem),
+                Sampler = textureSystem.CreateTextureSampler(),
                 ImageView = dynamicLayerSystemData[i].RenderTarget.ViewPortInfo.FrameBufferImage.View,
                 ImageLayout = ImageLayout.General
             };
@@ -100,7 +101,7 @@ public class CombinePipeline : DisposingLogger
             1)).ToArray();
         var renderPassLayer = new RenderPassLayer(swapChainLayer, renderPass);
 
-        var descriptorImageInfos = CreateDescriptorImageInfo(dynamicLayerSystemData, deviceSystem);
+        var descriptorImageInfos = CreateDescriptorImageInfo(dynamicLayerSystemData, _textureSystem);
 
         var mainShader = Shader.CreateShaderFrom(ecs.Get<AssetManager>(), "combine", layerRenderer.DeviceSystem, "main");
         System.Diagnostics.Debug.Assert(layerRenderer.DeviceSystem.Device != null, "deviceSystem.Device != null");

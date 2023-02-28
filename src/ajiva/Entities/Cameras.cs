@@ -1,5 +1,4 @@
 ﻿using ajiva.Components.Transform;
-using ajiva.Ecs;
 using ajiva.Ecs.Entity.Helper;
 using GlmSharp;
 
@@ -146,10 +145,10 @@ public static partial class Cameras
             UpdateMatrices();
         }
 
-        public FpsCamera(IAjivaEcs ecs) : base()
+        public FpsCamera(PeriodicUpdateRunner runner) : base()
         {
             //this.AddComponent(new RenderMesh3D());
-            ecs.RegisterUpdate(this);
+            runner.RegisterUpdate(this);
             OnMouseMoved(0.0f, 0.0f);
         }
     }

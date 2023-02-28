@@ -1,5 +1,6 @@
 ﻿// See https://aka.ms/new-console-template for more information
 using System.Collections.Concurrent;
+using ajiva;
 using ajiva.Application;
 using ajiva.Components.Media;
 using ajiva.Components.Mesh;
@@ -20,6 +21,7 @@ using ajiva.Models.Layers.Layer2d;
 using ajiva.Models.Layers.Layer3d;
 using ajiva.Systems;
 using ajiva.Systems.Assets;
+using ajiva.Systems.Assets.Contracts;
 using ajiva.Systems.Physics;
 using ajiva.Systems.VulcanEngine;
 using ajiva.Systems.VulcanEngine.Debug;
@@ -37,12 +39,25 @@ using Autofac.Core;
 using GlmSharp;
 using SharpVk.Glfw;
 
-Console.WriteLine("Hello, World!");
+if (args.Length > 0)
+{
+    PackAssets();
+}
+else
+{
+}
+//CompileShaders();
+
+ALog.MinimumLogLevel = ALogLevel.Debug;
+ALog.Log(ALogLevel.Info, $"ProcessId: {Environment.ProcessId}");
+ALog.Log(ALogLevel.Info, $"Version: {Environment.Version}");
+ALog.Log(ALogLevel.Info, $"Is64BitProcess: {Environment.Is64BitProcess}");
+ALog.Log(ALogLevel.Info, $"Is64BitOperatingSystem: {Environment.Is64BitOperatingSystem}");
+ALog.Log(ALogLevel.Info, $"OSVersion: {Environment.OSVersion}");
 
 ALog.MinimumLogLevel = ALogLevel.Debug;
 Glfw3.Init();
 var builder = new ContainerBuilder();
-
 //builder.RegisterSource<MySource>();
 
 builder.AddSingle<ContainerProxy, IAjivaEcs>();
@@ -66,7 +81,9 @@ builder.AddSingle<MeshPool, IMeshPool>();
 builder.AddSingle<VulcanInstance, IVulcanInstance>();
 
 //entityComponentSystem.Add<WorkerPool, IWorkerPool>(new WorkerPool(Environment.ProcessorCount / 2, "AjivaWorkerPool", entityComponentSystem) { Enabled = true });
-builder.AddSingle<WorkerPool, IWorkerPool>(new WorkerPool(Environment.ProcessorCount / 2, "AjivaWorkerPool", default) { Enabled = true });
+builder.AddSingle<WorkerPool, IWorkerPool>(new WorkerPool(Environment.ProcessorCount / 2, "AjivaWorkerPool") {
+    Enabled = true
+});
 
 //var window = entityComponentSystem.Add<WindowSystem, IWindowSystem>();
 builder.AddSystem<WindowSystem, IWindowSystem>();
@@ -85,6 +102,7 @@ builder.AddComponentSystem<TextureSystem, ITextureSystem, TextureComponent>();
 builder.AddComponentSystem<ImageSystem, IImageSystem, AImage>();
 builder.AddComponentSystem<PhysicsSystem, PhysicsSystem, PhysicsComponent>();
 builder.AddSystem<AssetManager, IAssetManager>();
+builder.AddSingleSelf<TextureCreator>();
 
 builder
     .RegisterType<TransformComponentSystem>()
@@ -117,13 +135,14 @@ builder.AddComponentSystem<Mesh2dRenderLayer, IAjivaLayerRenderSystem<UniformLay
 // var boundingBoxComponentsSystem = entityComponentSystem.Add<BoundingBoxComponentsSystem, BoundingBoxComponentsSystem>();
 builder.AddComponentSystem<CollisionsComponentSystem, CollisionsComponentSystem, CollisionsComponent>();
 builder.AddComponentSystem<BoundingBoxComponentsSystem, BoundingBoxComponentsSystem, BoundingBox>()
-   ;// .As<IComponentSystem<BoundingBox>>();  //todo
+    ; // .As<IComponentSystem<BoundingBox>>();  //todo
 
 var container = builder.Build();
 var proxy = container.Resolve<ContainerProxy>();
 proxy.Container = container;
 //Transform3d tst = container.Resolve<Transform3d>();
 
+//var t = container.ResolveUnregistered<Transform3d>(new TypedParameter(typeof(vec3), new vec3(1, 2, 3)));
 
 var config = container.Resolve<Config>();
 
@@ -176,7 +195,7 @@ var leftScreen = new Panel(new UiTransform(null,
 
 var spinner = new Rect().Configure<RenderInstanceMesh2D>(x =>
     {
-       //mesh set in ctor
+        //mesh set in ctor
         /*x.SetMesh(MeshPrefab.Rect);
         x.Render = true;*/
     })
@@ -193,8 +212,7 @@ const int posRange = 20;
 for (var i = 0; i < 10; i++)
 {
     //BUG: If we configure before register the data is not uploaded properly
-    var cube = new Cube(proxy)
-        .Register(container)
+    var cube = proxy.CreateAndRegisterEntity<Cube>()
         .Configure<Transform3d>(trans =>
         {
             trans.Position = new vec3(r.Next(-posRange, posRange), r.Next(-posRange, posRange), r.Next(-posRange, posRange));
@@ -235,6 +253,17 @@ GC.Collect();
 GC.WaitForPendingFinalizers();
 GC.Collect();
 
+async void PackAssets()
+{
+    await AssetPacker.Pack(Const.Default.AssetsFile,
+        new AssetSpecification(Const.Default.AssetsPath,
+            new Dictionary<AssetType, string> {
+                [AssetType.Shader] = "Shaders",
+                [AssetType.Texture] = "Textures",
+                [AssetType.Model] = "Models"
+            }), true);
+}
+
 void LogStatus(Dictionary<IUpdate, PeriodicUpdateRunner.UpdateData> updateDatas)
 {
     ALog.Info($"PendingWorkItemCount: {ThreadPool.PendingWorkItemCount}, EntitiesCount: {proxy.Entities.Count}");
@@ -261,13 +290,13 @@ void WindowOnOnKeyEvent(object? sender, Key key, int scancode, InputAction input
         {
             using var change = container.Resolve<IGraphicsSystem>().ChangingObserver.BeginBigChange();
 
-            var res = Parallel.For(0, rep, new ParallelOptions
-                { MaxDegreeOfParallelism = Environment.ProcessorCount / 2 }, i =>
+            var res = Parallel.For(0, rep, new ParallelOptions {
+                MaxDegreeOfParallelism = Environment.ProcessorCount / 2
+            }, i =>
             {
                 for (var j = 0; j < rep; j++)
                 {
-                    var cube = new Cube(proxy)
-                        .Register(container)
+                    var cube = proxy.CreateAndRegisterEntity<Cube>()
                         .Configure<Transform3d>(trans =>
                         {
                             //trans.Position = new vec3(i * sz, (-index * 2) * Math.Min(rep / (float)i, 10) , j * sz);
@@ -295,8 +324,7 @@ void WindowOnOnKeyEvent(object? sender, Key key, int scancode, InputAction input
 
                 for (var i = 0; i < 1000; i++)
                 {
-                    var cube = new Cube(proxy)
-                        .Register(container)
+                    var cube = proxy.CreateAndRegisterEntity<Cube>()
                         .Configure<Transform3d>(trans =>
                         {
                             trans.Position = new vec3(r.Next(-posRange, posRange), r.Next(-posRange, posRange), r.Next(-posRange, posRange));
@@ -331,27 +359,27 @@ void WindowOnOnKeyEvent(object? sender, Key key, int scancode, InputAction input
             break;
         case Key.F:
             var sys = container.Resolve<Ajiva3dLayerSystem>();
-            var cubex = new Cube(proxy).Configure<Transform3d>(trans =>
+            var cubex = proxy.CreateAndRegisterEntity<Cube>()
+                .Configure<Transform3d>(trans =>
                 {
                     trans.Position = sys.MainCamara.Transform.Position + sys.MainCamara.FrontNormalized * 25;
                     trans.Rotation = sys.MainCamara.Transform.Rotation;
                     trans.Scale = new vec3(3);
                 })
                 .Configure<ICollider>(x => { x.IsStatic = true; })
-                .Configure<PhysicsComponent>(x => { x.IsStatic = true; })
-                .Register(container);
+                .Configure<PhysicsComponent>(x => { x.IsStatic = true; });
 
             break;
         case Key.G:
             var sys2 = container.Resolve<Ajiva3dLayerSystem>();
-            var cubex2 = new Cube(proxy).Configure<Transform3d>(trans =>
+            var cubex2 = proxy.CreateAndRegisterEntity<Cube>()
+                .Configure<Transform3d>(trans =>
                 {
                     trans.Position = sys2.MainCamara.Transform.Position;
                     trans.Scale = new vec3(10);
                 })
                 .Configure<ICollider>(x => { x.IsStatic = true; })
-                .Configure<PhysicsComponent>(x => { x.IsStatic = true; })
-                .Register(container);
+                .Configure<PhysicsComponent>(x => { x.IsStatic = true; });
 
             break;
     }
@@ -426,16 +454,22 @@ internal static class Ext
         //container.Resolve<IComponentSystem<T>>().RegisterComponent(entity, component);
         return component;
     }
+
+    public static T ResolveUnregistered<T>(this IComponentContext context, params Parameter[] parameters) where T : notnull
+    {
+        var scope = context.Resolve<ILifetimeScope>();
+        using var innerScope = scope.BeginLifetimeScope(b => b.RegisterType(typeof(T)).ExternallyOwned());
+
+        innerScope.ComponentRegistry.TryGetRegistration(new TypedService(typeof(T)), out var reg);
+
+        return parameters is not null && parameters.Length > 0
+            ? innerScope.Resolve<T>(parameters)
+            : innerScope.Resolve<T>();
+    }
 }
 
 public class ContainerProxy : DisposingLogger, IAjivaEcs
 {
-    /// <inheritdoc />
-    public void Init()
-    {
-        Console.WriteLine("Init");
-    }
-
     /// <inheritdoc />
     public T Add<T, TAs>(T? value = default) where T : class, IAjivaEcsObject where TAs : IAjivaEcsObject
     {
@@ -508,7 +542,6 @@ public class ContainerProxy : DisposingLogger, IAjivaEcs
     {
     }
 
-
     /// <inheritdoc />
     public bool TryUnRegisterEntity<T>(T entity) where T : IEntity
     {
@@ -523,13 +556,6 @@ public class ContainerProxy : DisposingLogger, IAjivaEcs
 
     /// <inheritdoc />
     public T UnRegisterComponent<T>(IEntity entity, Type type, T component) where T : class, IComponent
-    {
-        throw new NotImplementedException();
-    }
-
-
-    /// <inheritdoc />
-    public T Create<T>(Func<Type, object?> missing) where T : class
     {
         throw new NotImplementedException();
     }
@@ -558,12 +584,6 @@ public class ContainerProxy : DisposingLogger, IAjivaEcs
     }
 
     /// <inheritdoc />
-    public void RegisterInit(IInit init)
-    {
-        throw new NotImplementedException();
-    }
-
-    /// <inheritdoc />
     public void StartUpdates()
     {
         throw new NotImplementedException();
@@ -574,11 +594,18 @@ public class ContainerProxy : DisposingLogger, IAjivaEcs
     {
         throw new NotImplementedException();
     }
+
+    public T CreateAndRegisterEntity<T>() where T : class, IEntity
+    {
+        var entity = Container.ResolveUnregistered<T>();
+        entity.Register(Container);
+        return entity;
+    }
 }
 public class MySource : IRegistrationSource
 {
     /// <inheritdoc />
-    public IEnumerable<IComponentRegistration> 
+    public IEnumerable<IComponentRegistration>
         RegistrationsFor(Service service, Func<Service, IEnumerable<ServiceRegistration>> registrationAccessor)
     {
         var swt = service as IServiceWithType;
@@ -593,18 +620,14 @@ public class MySource : IRegistrationSource
         }).CreateRegistration();
 
         yield return rb;
-        
+
         // if swt is IComponent then just create a new instance
         if (typeof(IComponent).IsAssignableFrom(swt.ServiceType))
         {
-            var rb2 = RegistrationBuilder.ForDelegate(swt.ServiceType, (c, p) =>
-            {
-                return Activator.CreateInstance(swt.ServiceType);
-            }).CreateRegistration();
+            var rb2 = RegistrationBuilder.ForDelegate(swt.ServiceType, (c, p) => { return Activator.CreateInstance(swt.ServiceType); }).CreateRegistration();
 
             yield return rb2;
         }
-        
     }
 
     /// <inheritdoc />

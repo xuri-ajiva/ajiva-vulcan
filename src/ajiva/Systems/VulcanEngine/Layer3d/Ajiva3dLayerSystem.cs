@@ -18,19 +18,22 @@ using SharpVk.Glfw;
 namespace ajiva.Systems.VulcanEngine.Layer3d;
 
 [Dependent(typeof(WindowSystem), typeof(GraphicsSystem), typeof(TransformComponentSystem))]
-public class Ajiva3dLayerSystem : SystemBase, IInit, IUpdate, IAjivaLayer<UniformViewProj3d>
+public class Ajiva3dLayerSystem : SystemBase, IUpdate, IAjivaLayer<UniformViewProj3d>
 {
     private Format depthFormat;
 
     private AImage? depthImage;
     private Cameras.Camera? mainCamara;
+    private readonly IAjivaEcs _ecs;
     private WindowSystem window;
     private readonly IImageSystem imageSystem;
     private readonly DeviceSystem deviceSystem;
+    private readonly PeriodicUpdateRunner _updateRunner;
 
     /// <inheritdoc />
-    public Ajiva3dLayerSystem(IAjivaEcs ecs, WindowSystem window,IImageSystem imageSystem, DeviceSystem deviceSystem) : base(ecs)
+    public Ajiva3dLayerSystem(IAjivaEcs ecs,WindowSystem window,IImageSystem imageSystem, DeviceSystem deviceSystem)
     {
+        _ecs = ecs;
         this.window = window;
         this.imageSystem = imageSystem;
         this.deviceSystem = deviceSystem;
@@ -193,8 +196,7 @@ public class Ajiva3dLayerSystem : SystemBase, IInit, IUpdate, IAjivaLayer<Unifor
 
     private void CreateMainCamara()
     {
-        MainCamara = new Cameras.FpsCamera(Ecs);
-        MainCamara.Register(Ecs);
+        MainCamara = _ecs.CreateAndRegisterEntity<Cameras.FpsCamera>();
         MainCamara.UpdatePerspective(90, window.Canvas.Width, window.Canvas.Height);
         MainCamara.MovementSpeed = .5f;
     }
@@ -275,7 +277,7 @@ public class Ajiva3dLayerSystem : SystemBase, IInit, IUpdate, IAjivaLayer<Unifor
         {
             foreach (var renderSystem in LayerRenderComponentSystems) renderSystem.Dispose();
             LayerUniform.Dispose();
-            Ecs.Get<DeviceSystem>().WaitIdle();
+            deviceSystem.WaitIdle();
             //TODO mainCamara?.Dispose();
         }
         base.ReleaseUnmanagedResources(disposing);

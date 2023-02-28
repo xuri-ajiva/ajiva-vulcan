@@ -3,7 +3,6 @@ using ajiva.Components;
 using ajiva.Components.Mesh.Instance;
 using ajiva.Components.RenderAble;
 using ajiva.Components.Transform;
-using ajiva.Ecs;
 using ajiva.Models.Instance;
 using ajiva.Models.Layers.Layer3d;
 using ajiva.Models.Vertex;
@@ -12,21 +11,27 @@ using ajiva.Systems.VulcanEngine.Interfaces;
 using ajiva.Systems.VulcanEngine.Layer;
 using ajiva.Systems.VulcanEngine.Layers;
 using ajiva.Systems.VulcanEngine.Layers.Creation;
-using ajiva.Systems.VulcanEngine.Systems;
 using SharpVk;
 
 namespace ajiva.Systems.VulcanEngine.Layer3d;
 
 [Dependent(typeof(Ajiva3dLayerSystem))]
-public class SolidMeshRenderLayer : ComponentSystemBase<RenderInstanceMesh>, IInit, IAjivaLayerRenderSystem<UniformViewProj3d>, IUpdate
+public class SolidMeshRenderLayer : ComponentSystemBase<RenderInstanceMesh>, IAjivaLayerRenderSystem<UniformViewProj3d>, IUpdate
 {
+    //todo remove some duplicates between Layers
+    private readonly IDeviceSystem _deviceSystem;
+    private readonly ITextureSystem _textureSystem;
     private InstanceMeshPool<MeshInstanceData> instanceMeshPool;
     private long dataVersion;
 
     /// <inheritdoc />
-    public SolidMeshRenderLayer(IAjivaEcs ecs) : base(ecs)
+    public SolidMeshRenderLayer(IDeviceSystem deviceSystem, AssetManager assetManager, ITextureSystem textureSystem)
     {
-        Init();
+        _deviceSystem = deviceSystem;
+        _textureSystem = textureSystem;
+        MainShader = Shader.CreateShaderFrom(assetManager, "3d/SolidInstance", deviceSystem, "main");
+        instanceMeshPool = new InstanceMeshPool<MeshInstanceData>(deviceSystem);
+        instanceMeshPool.Changed.OnChanged += RebuildData;
     }
 
     public PipelineDescriptorInfos[]? PipelineDescriptorInfos { get; set; }
@@ -63,8 +68,7 @@ public class SolidMeshRenderLayer : ComponentSystemBase<RenderInstanceMesh>, IIn
     public void UpdateGraphicsPipelineLayer()
     {
         var bind = new[] {
-            Vertex3D.GetBindingDescription(VERTEX_BUFFER_BIND_ID),
-            new VertexInputBindingDescription(INSTANCE_BUFFER_BIND_ID, (uint)Marshal.SizeOf<MeshInstanceData>(), VertexInputRate.Instance)
+            Vertex3D.GetBindingDescription(VERTEX_BUFFER_BIND_ID), new VertexInputBindingDescription(INSTANCE_BUFFER_BIND_ID, (uint)Marshal.SizeOf<MeshInstanceData>(), VertexInputRate.Instance)
         };
 
         var attrib = new ViAdBuilder<MeshInstanceData>(Vertex3D.GetAttributeDescriptions(VERTEX_BUFFER_BIND_ID), INSTANCE_BUFFER_BIND_ID)
@@ -79,16 +83,20 @@ public class SolidMeshRenderLayer : ComponentSystemBase<RenderInstanceMesh>, IIn
             CreatePipelineDescriptorInfos();
 
         RenderTarget.GraphicsPipelineLayer = GraphicsPipelineLayerCreator.Default(RenderTarget.PassLayer.Parent, RenderTarget.PassLayer,
-            Ecs.Get<DeviceSystem>(), true,
+            _deviceSystem, true,
             bind, attrib, MainShader, PipelineDescriptorInfos);
     }
 
     private void CreatePipelineDescriptorInfos()
     {
-        var textureSamplerImageViews = Ecs.Get<ITextureSystem>().TextureSamplerImageViews;
+        var textureSamplerImageViews = _textureSystem.TextureSamplerImageViews;
         PipelineDescriptorInfos = new[] {
             new PipelineDescriptorInfos(DescriptorType.UniformBuffer, ShaderStageFlags.Vertex, 0, 1, BufferInfo: new[] {
-                new DescriptorBufferInfo { Buffer = AjivaLayer.LayerUniform.Uniform.Buffer!, Offset = 0, Range = (uint)AjivaLayer.LayerUniform.SizeOfT }
+                new DescriptorBufferInfo {
+                    Buffer = AjivaLayer.LayerUniform.Uniform.Buffer!,
+                    Offset = 0,
+                    Range = (uint)AjivaLayer.LayerUniform.SizeOfT
+                }
             }),
             new(DescriptorType.CombinedImageSampler, ShaderStageFlags.Fragment, 2, (uint)textureSamplerImageViews.Length, ImageInfo: textureSamplerImageViews)
         };
@@ -99,16 +107,6 @@ public class SolidMeshRenderLayer : ComponentSystemBase<RenderInstanceMesh>, IIn
 
     private const uint VERTEX_BUFFER_BIND_ID = 0;
     private const uint INSTANCE_BUFFER_BIND_ID = 1;
-
-    /// <inheritdoc />
-    public void Init()
-    {
-        var deviceSystem = Ecs.Get<DeviceSystem>();
-
-        MainShader = Shader.CreateShaderFrom(Ecs.Get<AssetManager>(), "3d/SolidInstance", deviceSystem, "main");
-        instanceMeshPool = new InstanceMeshPool<MeshInstanceData>(deviceSystem);
-        instanceMeshPool.Changed.OnChanged += RebuildData;
-    }
 
     private void RebuildData(IInstanceMeshPool<MeshInstanceData> sender)
     {

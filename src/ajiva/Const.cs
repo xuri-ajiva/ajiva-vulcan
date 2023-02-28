@@ -1,6 +1,6 @@
 ﻿namespace ajiva;
 
-internal static class Const
+public static class Const
 {
     public enum ExitCode : long
     {

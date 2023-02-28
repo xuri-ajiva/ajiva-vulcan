@@ -3,7 +3,6 @@ using ajiva.Components.Mesh;
 using ajiva.Components.Physics;
 using ajiva.Components.RenderAble;
 using ajiva.Components.Transform;
-using ajiva.Ecs;
 using ajiva.Ecs.Entity.Helper;
 using ajiva.Worker;
 using GlmSharp;
@@ -17,7 +16,7 @@ public partial class Cube
     private static Random r = new Random();
 
     /// <inheritdoc />
-    public Cube(IAjivaEcs ecs)
+    public Cube(IWorkerPool workerPool, MeshPool meshPool)
     {
         var mesh = MeshPrefab.Cube;
 
@@ -27,7 +26,7 @@ public partial class Cube
         };
         RenderInstanceMesh = new RenderInstanceMesh(mesh, Transform3d, TextureComponent);
         CollisionsComponent = new CollisionsComponent() {
-            Pool = ecs.Get<MeshPool>(),
+            Pool = meshPool,
             MeshId = mesh.MeshId
         };
         PhysicsComponent = new PhysicsComponent() {
@@ -37,6 +36,6 @@ public partial class Cube
             Force = new vec3(r.NextSingle(), -(9.8f * 9.8f), r.NextSingle()),
             Transform = Transform3d,
         };
-        BoundingBox = new BoundingBox(ecs, this, ecs.Get<IWorkerPool>());
+        BoundingBox = new BoundingBox(this, workerPool);
     }
 }

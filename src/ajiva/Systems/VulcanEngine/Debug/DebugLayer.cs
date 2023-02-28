@@ -4,7 +4,6 @@ using ajiva.Components.Mesh;
 using ajiva.Components.Mesh.Instance;
 using ajiva.Components.RenderAble;
 using ajiva.Components.Transform;
-using ajiva.Ecs;
 using ajiva.Models.Instance;
 using ajiva.Models.Layers.Layer3d;
 using ajiva.Models.Vertex;
@@ -20,18 +19,26 @@ using SharpVk;
 namespace ajiva.Systems.VulcanEngine.Debug;
 
 [Dependent(typeof(WindowSystem))]
-public class DebugLayer : ComponentSystemBase<DebugComponent>, IInit, IUpdate, IAjivaLayerRenderSystem<UniformViewProj3d>
+public class DebugLayer : ComponentSystemBase<DebugComponent>, IUpdate, IAjivaLayerRenderSystem<UniformViewProj3d>
 {
+    private readonly IDeviceSystem _deviceSystem;
+    private readonly AssetManager _assetManager;
+    private readonly ITextureSystem _textureSystem;
     private InstanceMeshPool<MeshInstanceData> instanceMeshPool;
     private readonly object mainLock = new object();
     private long dataVersion;
 
     /// <inheritdoc />
     /// <inheritdoc />
-    public DebugLayer(IAjivaEcs ecs) : base(ecs)
+    public DebugLayer(IDeviceSystem deviceSystem, AssetManager assetManager,ITextureSystem textureSystem)
     {
+        _deviceSystem = deviceSystem;
+        _assetManager = assetManager;
+        _textureSystem = textureSystem;
         GraphicsDataChanged = new ChangingObserver<IAjivaLayerRenderSystem>(this);
-        Init();
+        MainShader = Shader.CreateShaderFrom(assetManager, "3d/debug", deviceSystem, "main");
+        instanceMeshPool = new InstanceMeshPool<MeshInstanceData>(deviceSystem);
+        instanceMeshPool.Changed.OnChanged += RebuildData;
     }
 
     public PipelineDescriptorInfos[]? PipelineDescriptorInfos { get; set; }
@@ -86,13 +93,13 @@ public class DebugLayer : ComponentSystemBase<DebugComponent>, IInit, IUpdate, I
             CreatePipelineDescriptorInfos();
         
         RenderTarget.GraphicsPipelineLayer = CreateDebugPipe.Default(RenderTarget.PassLayer.Parent, RenderTarget.PassLayer,
-            Ecs.Get<DeviceSystem>(), true,
+            _deviceSystem, true,
             bind, attrib, MainShader, PipelineDescriptorInfos);
     }
 
     private void CreatePipelineDescriptorInfos()
     {
-        var textureSamplerImageViews = Ecs.Get<ITextureSystem>().TextureSamplerImageViews;
+        var textureSamplerImageViews = _textureSystem.TextureSamplerImageViews;
         PipelineDescriptorInfos = new[]
         {
             new PipelineDescriptorInfos(DescriptorType.UniformBuffer, ShaderStageFlags.Vertex, 0, 1, BufferInfo: new[]
@@ -112,16 +119,6 @@ public class DebugLayer : ComponentSystemBase<DebugComponent>, IInit, IUpdate, I
 
     /// <inheritdoc />
     public IAjivaLayer<UniformViewProj3d> AjivaLayer { get; set; }
-
-    /// <inheritdoc />
-    public void Init()
-    {
-        var deviceSystem = Ecs.Get<DeviceSystem>();
-
-        MainShader = Shader.CreateShaderFrom(Ecs.Get<AssetManager>(), "3d/debug", deviceSystem, "main");
-        instanceMeshPool = new InstanceMeshPool<MeshInstanceData>(deviceSystem);
-        instanceMeshPool.Changed.OnChanged += RebuildData;
-    }
 
     private void RebuildData(IInstanceMeshPool<MeshInstanceData> sender)
     {

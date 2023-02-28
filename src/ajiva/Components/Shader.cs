@@ -1,8 +1,7 @@
 ﻿using System.Runtime.CompilerServices;
-using ajiva.Models;
 using ajiva.Systems.Assets;
 using ajiva.Systems.Assets.Contracts;
-using ajiva.Systems.VulcanEngine.Systems;
+using ajiva.Systems.VulcanEngine.Interfaces;
 using SharpVk;
 using SharpVk.Shanq;
 using SharpVk.Shanq.GlmSharp;
@@ -12,9 +11,9 @@ namespace ajiva.Components;
 
 public class Shader : ThreadSaveCreatable
 {
-    private readonly DeviceSystem system;
+    private readonly IDeviceSystem system;
 
-    public Shader(DeviceSystem system, string name)
+    public Shader(IDeviceSystem system, string name)
     {
         this.system = system;
         Name = name;
@@ -84,7 +83,7 @@ public class Shader : ThreadSaveCreatable
         Created = true;
     }
 
-    public static Shader CreateShaderFrom(AssetManager assetManager, string dir, DeviceSystem system, string name)
+    public static Shader CreateShaderFrom(AssetManager assetManager, string dir, IDeviceSystem system, string name)
     {
         var sh = new Shader(system, name);
         sh.CreateShaderModules(assetManager, dir);
