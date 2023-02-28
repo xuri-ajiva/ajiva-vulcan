@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Threading;
 using Ajiva.Wrapper.Logger;
@@ -21,7 +20,7 @@ public class AjivaEcs : DisposingLogger, IAjivaEcs
         AddResolver<AjivaEcsDefaultResolver>();
     }
 
-    public Dictionary<uint, IEntity> Entities { get; } = new Dictionary<uint, IEntity>();
+    public Dictionary<Guid, IEntity> Entities { get; } = new Dictionary<Guid, IEntity>();
 
     /// <inheritdoc />
     public long EntitiesCount
@@ -58,27 +57,7 @@ public class AjivaEcs : DisposingLogger, IAjivaEcs
     {
         return (T)GetAny<IComponentSystem>(type).UnRegisterComponent(entity, component);
     }
-
-    /// <inheritdoc />
-    public bool TryAttachComponentToEntity<T, TAs>(IEntity entity, T component) where TAs : IComponent where T : class, TAs
-    {
-        entity.AddComponent<T, TAs>(component);
-        RegisterComponent(entity, typeof(TAs), component);
-        return true;
-    }
-
-    /// <inheritdoc />
-    public bool TryDetachComponentFromEntity<T>(IEntity entity, [MaybeNullWhen(false)] out T component) where T : class, IComponent
-    {
-        if (!entity.TryRemoveComponent<T>(out var ctnt))
-        {
-            component = default;
-            return false;
-        }
-        component = UnRegisterComponent(entity, ctnt.GetType(), (T)ctnt);
-        return true;
-    }
-
+    
 #endregion
 
 #region Create
@@ -163,7 +142,9 @@ public class AjivaEcs : DisposingLogger, IAjivaEcs
 
             foreach (var entity in Entities.Values)
             {
-                entity.Dispose();
+                if(entity is IDisposable disposable)
+                    disposable.Dispose();
+                //TODO entity.Dispose();
             }
             Entities.Clear();
 

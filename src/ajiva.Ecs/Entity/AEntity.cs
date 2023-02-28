@@ -7,19 +7,8 @@ namespace ajiva.Ecs.Entity;
 
 public abstract class AEntity : DisposingLogger, IEntity, IFluentEntity<AEntity>, IFluentEntity
 {
-    public AEntity()
-    {
-        lock (CurrentIdLock)
-        {
-            Id = CurrentId++;
-        }
-    }
-
-    private static uint CurrentId;
-    private static readonly object CurrentIdLock = new();
-
     /// <inheritdoc />
-    public uint Id { get; init; }
+    public Guid Id { get; init; } = Guid.NewGuid();
 
     public IDictionary<Type, IComponent> Components { get; } = new Dictionary<Type, IComponent>();
 
@@ -44,11 +33,6 @@ public abstract class AEntity : DisposingLogger, IEntity, IFluentEntity<AEntity>
         return Components.Remove(typeof(T), out var component) ? (T)component : default;
     }
 
-    public bool TryRemoveComponent<T>([MaybeNullWhen(false)] out IComponent component) where T : IComponent
-    {
-        return Components.Remove(typeof(T), out component);
-    }
-
     public T AddComponent<T, TAs>(T component) where TAs : IComponent where T : class, TAs
     {
         if (!HasComponent<TAs>()) Components.TryAdd(typeof(TAs), component);
@@ -65,22 +49,8 @@ public abstract class AEntity : DisposingLogger, IEntity, IFluentEntity<AEntity>
         return (T)Components[typeof(T)];
     }
 
-    /// <inheritdoc />
-    public T GetAny<T>() where T : IComponent
-    {
-        if (Components.ContainsKey(typeof(T)))
-            return Get<T>();
-
-        foreach (var (type, value) in Components)
-        {
-            if (type.IsAssignableTo(typeof(T)))
-            {
-                return (T)value;
-            }
-        }
-        throw new KeyNotFoundException();
-    }
-    
+    public abstract IEnumerable<IComponent?> GetComponents();
+    public abstract IEnumerable<Type> GetComponentTypes();
 
     /// <inheritdoc />
     public IFluentEntity Configure<TComponent>(Action<TComponent> configuration) where TComponent : IComponent

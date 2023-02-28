@@ -60,11 +60,12 @@ public abstract class ComponentSystemBase<T> : DisposingLogger, IComponentSystem
 
     protected override void ReleaseUnmanagedResources(bool disposing)
     {
+        /* TODO check if ownership of component has fully moved to entity
         foreach (var (component, entity) in ComponentEntityMap)
         {
             entity?.TryRemoveComponent<T>(out var _);
             component?.Dispose();
-        }
+        }  */
         ComponentEntityMap.Clear();
         ComponentEntityMap = null!;
     }

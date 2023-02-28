@@ -18,8 +18,10 @@ public interface IAjivaEcs : IDisposingLogger, IInit, IAjivaEcsObjectContainer<I
 
     T RegisterComponent<T>(IEntity entity, Type type, T component) where T : class, IComponent;
     T UnRegisterComponent<T>(IEntity entity, Type type, T component) where T : class, IComponent;
+    /*
     bool TryAttachComponentToEntity<T, TAs>(IEntity entity, T component) where TAs : IComponent where T : class, TAs;
     bool TryDetachComponentFromEntity<T>(IEntity entity, [MaybeNullWhen(false)] out T component) where T : class, IComponent;
+    */
 
 #endregion
 
