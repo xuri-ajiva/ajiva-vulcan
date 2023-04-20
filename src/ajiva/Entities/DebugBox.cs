@@ -8,10 +8,10 @@ namespace ajiva.Entities;
 [EntityComponent(typeof(Transform3d), typeof(DebugComponent))]
 public partial class DebugBox
 {
-    public DebugBox()
+    protected void InitializeDefault()
     {
-        Transform3d = new Transform3d();
-        DebugComponent = new DebugComponent(MeshPrefab.Cube, Transform3d) {
+        Transform3d ??= new Transform3d();
+        DebugComponent ??= new DebugComponent(MeshPrefab.Cube, Transform3d) {
             DrawTransform = true,
             DrawWireframe = true,
             Render = true

@@ -3,6 +3,7 @@
 using ajiva.Components.Media;
 using ajiva.Ecs;
 using ajiva.Entities;
+using ajiva.Extensions;
 using ajiva.Models.Buffer.ChangeAware;
 using ajiva.Models.Layers.Layer3d;
 using ajiva.Systems.VulcanEngine.Interfaces;
@@ -23,33 +24,26 @@ public class Ajiva3dLayerSystem : SystemBase, IUpdate, IAjivaLayer<UniformViewPr
     private Format depthFormat;
 
     private AImage? depthImage;
-    private Cameras.Camera? mainCamara;
     private readonly IAjivaEcs _ecs;
     private WindowSystem window;
     private readonly IImageSystem imageSystem;
     private readonly DeviceSystem deviceSystem;
+    private readonly EntityFactory _factory;
     private readonly PeriodicUpdateRunner _updateRunner;
 
     /// <inheritdoc />
-    public Ajiva3dLayerSystem(IAjivaEcs ecs,WindowSystem window,IImageSystem imageSystem, DeviceSystem deviceSystem)
+    public Ajiva3dLayerSystem(IAjivaEcs ecs,WindowSystem window,IImageSystem imageSystem, DeviceSystem deviceSystem, EntityFactory factory)
     {
         _ecs = ecs;
         this.window = window;
         this.imageSystem = imageSystem;
         this.deviceSystem = deviceSystem;
+        _factory = factory;
         LayerChanged = new ChangingObserver<IAjivaLayer>(this);
         Init();
     }
 
-    public Cameras.Camera MainCamara
-    {
-        get => mainCamara!;
-        set
-        {
-            //TODO mainCamara?.Dispose();
-            mainCamara = value;
-        }
-    }
+    public FpsCamera MainCamara { get; private set; }
 
     private object MainLock { get; } = new object();
 
@@ -185,7 +179,7 @@ public class Ajiva3dLayerSystem : SystemBase, IUpdate, IAjivaLayer<UniformViewPr
     {
         lock (MainLock)
         {
-            if (mainCamara is null)
+            if (MainCamara is null)
             {
                 CreateMainCamara();
             }
@@ -196,7 +190,7 @@ public class Ajiva3dLayerSystem : SystemBase, IUpdate, IAjivaLayer<UniformViewPr
 
     private void CreateMainCamara()
     {
-        MainCamara = _ecs.CreateAndRegisterEntity<Cameras.FpsCamera>();
+        MainCamara = _factory.CreateFpsCamera().Finalize();
         MainCamara.UpdatePerspective(90, window.Canvas.Width, window.Canvas.Height);
         MainCamara.MovementSpeed = .5f;
     }
@@ -208,7 +202,7 @@ public class Ajiva3dLayerSystem : SystemBase, IUpdate, IAjivaLayer<UniformViewPr
     {
         var byRef = LayerUniform.GetForChange(0);
         var changed = false;
-        if (byRef.Value.View != mainCamara!.View)
+        if (byRef.Value.View != MainCamara!.View)
         {
             changed = true;
             byRef.Value.View = MainCamara.View;
@@ -265,7 +259,7 @@ public class Ajiva3dLayerSystem : SystemBase, IUpdate, IAjivaLayer<UniformViewPr
     {
         lock (MainLock)
         {
-            mainCamara?.UpdatePerspective(mainCamara.Fov, newSize.Width, newSize.Height);
+            MainCamara?.UpdatePerspective(MainCamara.Fov, newSize.Width, newSize.Height);
         }
     }
 

@@ -6,9 +6,9 @@ namespace ajiva.Ecs.Example;
 [EntityComponent(typeof(StdComponent))]
 public partial class SdtEntity : DisposingLogger, IUpdate
 {
-    public SdtEntity()
+    protected void InitializeDefault()
     {
-        StdComponent = new StdComponent();
+        StdComponent ??= new StdComponent();
     }
 
     /// <inheritdoc />
