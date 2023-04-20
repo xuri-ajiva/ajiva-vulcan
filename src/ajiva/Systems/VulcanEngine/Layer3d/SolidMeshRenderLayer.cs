@@ -13,6 +13,7 @@ using ajiva.Systems.VulcanEngine.Interfaces;
 using ajiva.Systems.VulcanEngine.Layer;
 using ajiva.Systems.VulcanEngine.Layers;
 using ajiva.Systems.VulcanEngine.Layers.Creation;
+using GlmSharp;
 using SharpVk;
 
 namespace ajiva.Systems.VulcanEngine.Layer3d;
@@ -145,6 +146,7 @@ public class SolidMeshRenderLayer : ComponentSystemBase<RenderInstanceMesh>, IAj
     private void CreateInstance(RenderInstanceMesh res)
     {
         res.Instance = instanceMeshPool.CreateInstance(instanceMeshPool.AsInstanced(res.Mesh));
+        res.TransformChange(mat4.Zero);
     }
 
     private void DeleteInstance(RenderInstanceMesh res)
