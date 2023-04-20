@@ -27,7 +27,7 @@ public class PeriodicUpdateRunner
 
     private readonly Dictionary<IUpdate, UpdateData> updateDatas = new();
 
-    public void RegisterUpdate(IUpdate update)
+    public UpdateData RegisterUpdate(IUpdate update)
     {
         var data = new UpdateData();
         var runner = new Thread(() =>
@@ -39,6 +39,27 @@ public class PeriodicUpdateRunner
             updateDatas.Add(update, data);
         if (Running)
             runner.Start();
+        return data;
+    }
+    
+    public async Task UnRegisterUpdate(IUpdate update)
+    {
+        UpdateData? data;
+        lock (updateDatas)
+        {
+            if (updateDatas.TryGetValue(update, out data))
+            {
+                data.Source.Cancel();
+                updateDatas.Remove(update);
+            }
+        }
+        if (data is not null)
+        {
+            while (data.Runner.IsAlive)
+            {
+                await Task.Delay(1);
+            }
+        }
     }
 
     private void RunDelta(IUpdate update, UpdateData data)
