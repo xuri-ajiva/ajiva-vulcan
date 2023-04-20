@@ -75,11 +75,13 @@ public class EntitySourceGenerator : ISourceGenerator
         //Debugger.Launch();
         //add error to the compilation
         Compilation? compilation = context.Compilation;
-
         AddHelpers(context);
 
         // get the populated receiver
         if (context.SyntaxReceiver is not EntitySyntaxReceiver receiver) return;
+
+        List<string> usings = new();
+        List<string> names = new();
 
         // Extract all tyoes from [EntityComponentAttribute(typeof(T), typeof(T2), ...)]
         // all Classes that have this attribute will generate properties for each type
@@ -88,6 +90,7 @@ public class EntitySourceGenerator : ISourceGenerator
         {
             var model = compilation.GetSemanticModel(classDeclaration.SyntaxTree);
             var symbol = model.GetDeclaredSymbol(classDeclaration);
+            names.Add(symbol!.Name);
 
             var attributeList = classDeclaration.AttributeLists
                 .FirstOrDefault(x =>
@@ -129,12 +132,17 @@ public class EntitySourceGenerator : ISourceGenerator
             writer.WriteLine("using System.Diagnostics.CodeAnalysis;");
             writer.WriteLine("using System.Linq;");
             writer.WriteLine("using ajiva.Ecs.Entity.Helper;");
+            writer.WriteLine("using Autofac;");
+            writer.WriteLine("using Autofac.Builder;");
+            writer.WriteLine("using Autofac.Core;");
+            writer.WriteLine("using ajiva.Ecs;");
+
             //copy all usings from the class
             foreach (var usingDirectiveSyntax in classDeclaration.SyntaxTree.GetRoot().DescendantNodes().OfType<UsingDirectiveSyntax>())
             {
                 writer.WriteLine(usingDirectiveSyntax.ToString());
             }
-
+            usings.Add(symbol.ContainingNamespace.ToString());
             writer.WriteLine("namespace {0};", symbol.ContainingNamespace);
 
             if (symbol.ContainingType is not null)
@@ -238,15 +246,163 @@ public class EntitySourceGenerator : ISourceGenerator
             }
             UnIndent();
 
+            writer.WriteLine("protected {0}() {{}}", symbol.Name);
+            writer.WriteLine("internal static {0} CreateEmpty() {{ return new(); }}", symbol.Name);
+
+            writer.WriteLine("public ref struct Creator");
+            Indent();
+            writer.WriteLine("public {0}FactoryData FactoryData;", symbol.Name);
+            foreach (var t in types)
+            {
+                writer.WriteLine("public {0}? {1};", t, PropName(t));
+            }
+            writer.WriteLine("public {0} Create()", symbol.Name);
+            Indent();
+            writer.WriteLine("var entity = new {0}();", symbol.Name);
+            /*foreach (var t in types)
+            {
+                writer.WriteLine("entity.{0} = {0} is not null ? {0} : FactoryData.{0}.CreateComponent();", PropName(t));
+            }*/
+            foreach (var t in types)
+            {
+                writer.WriteLine("if({0} is not null) entity.{0} = {0};", PropName(t));
+            }
+            if (classDeclaration.Members.OfType<MethodDeclarationSyntax>().Any(x => x.Identifier.ToString() == "InitializeDefault"))
+                writer.WriteLine("entity.InitializeDefault();");
+            foreach (var t in types)
+            {
+                writer.WriteLine("if(entity.{0} is null) entity.{0} = FactoryData.{0}.CreateComponent(entity);", PropName(t));
+            }
+            writer.WriteLine("return entity;");
+            UnIndent();
+            writer.WriteLine("public {0} Finalize()", symbol.Name);
+            Indent();
+            writer.WriteLine("var entity = Create();");
+            foreach (var type in types)
+            {
+                writer.WriteLine("FactoryData.{0}.RegisterComponent(entity, entity.{0});", PropName(type));
+            }
+            writer.WriteLine("FactoryData.EntityRegistry.RegisterEntity(entity);");
+            writer.WriteLine("return entity;");
+            UnIndent();
+            foreach (var t in types)
+            {
+                writer.WriteLine("public {0}.Creator With({1} val) {{ {2} = val; return this; }}", symbol.Name, t, PropName(t));
+            }
+            UnIndent();
+
             if (symbol.ContainingType is not null)
             {
                 UnIndent();
             }
             UnIndent();
 
+            writer.WriteLine("public partial record {0}FactoryData(", symbol.Name);
+            foreach (var type in types)
+            {
+                writer.WriteLine("IComponentSystem<{0}> {1}, ", type, PropName(type));
+            }
+            writer.WriteLine("IEntityRegistry EntityRegistry) : IFactoryData");
+            Indent();
+            writer.WriteLine("public {0}.Creator Begin() => new() {{ FactoryData = this }};", symbol.Name);
+            UnIndent();
+
             //Debugger.Launch();
+            Console.WriteLine(writer.InnerWriter.ToString());
             context.AddSource($"{symbol?.Name}_EntityComponent.cs", SourceText.From(writer.InnerWriter.ToString(), Encoding.UTF8));
         }
+
+        AddFactory(context, usings, names);
+    }
+
+    private static void AddFactory(GeneratorExecutionContext context, List<string> usings, List<string> names)
+    {
+        using var cWriter = new IndentedTextWriter(new StringWriter(), "    ");
+
+        void CIndent()
+        {
+            cWriter.WriteLine("{");
+            cWriter.Indent++;
+        }
+
+        void CUnIndent()
+        {
+            cWriter.Indent--;
+            cWriter.WriteLine("}");
+        }
+
+        cWriter.WriteLine("// <auto-generated />");
+        cWriter.WriteLine("using System;");
+        cWriter.WriteLine("using System.Collections.Generic;");
+        cWriter.WriteLine("using System.Diagnostics.CodeAnalysis;");
+        cWriter.WriteLine("using System.Linq;");
+        cWriter.WriteLine("using ajiva.Ecs.Entity.Helper;");
+        cWriter.WriteLine("using Autofac;");
+        cWriter.WriteLine("using Autofac.Builder;");
+        cWriter.WriteLine("using Autofac.Core;");
+        cWriter.WriteLine("");
+        foreach (var @using in usings)
+        {
+            cWriter.WriteLine("using {0};", @using);
+        }
+        cWriter.WriteLine("");
+
+        cWriter.WriteLine("namespace {0}.Extensions", context.Compilation.AssemblyName);
+        CIndent();
+        cWriter.WriteLine("public static class EntityComponentHelperExtensions");
+        CIndent();
+
+        cWriter.WriteLine("public static ContainerBuilder AddFactoryData(this ContainerBuilder builder)");
+        CIndent();
+        cWriter.WriteLine("builder.RegisterType<EntityFactory>().AsSelf().SingleInstance();");
+        foreach (var name in names)
+        {
+            cWriter.WriteLine("builder.RegisterType<{0}FactoryData>().AsSelf().SingleInstance();", name);
+        }
+        cWriter.WriteLine("return builder;");
+        CUnIndent();
+
+        foreach (var name in names)
+        {
+            cWriter.WriteLine("public static {0}.Creator Create{0}(this IContainer container)", name);
+            CIndent();
+            cWriter.WriteLine("return new()");
+            CIndent();
+            cWriter.WriteLine("FactoryData = container.Resolve<{0}FactoryData>(),", name);
+            CUnIndent();
+            cWriter.WriteLine(";");
+            CUnIndent();
+        }
+        CUnIndent();
+
+        cWriter.WriteLine("public partial record EntityFactory(");
+        cWriter.Indent++;
+        var first = true;
+        foreach (var name in names)
+        {
+            if (first) first = false;
+            else cWriter.WriteLine(",");
+            cWriter.WriteLine("{0}FactoryData {0}FactoryData", name);
+        }
+        cWriter.Indent--;
+        cWriter.WriteLine(")");
+        CIndent();
+        foreach (var name in names)
+        {
+            cWriter.WriteLine("public {0}.Creator Create{0}()", name);
+            CIndent();
+            cWriter.WriteLine("return new()");
+            CIndent();
+            cWriter.WriteLine("FactoryData = {0}FactoryData,", name);
+            CUnIndent();
+            cWriter.WriteLine(";");
+            CUnIndent();
+        }
+        CUnIndent();
+
+        CUnIndent();
+        //Debugger.Launch();
+        context.AddSource("EntityContainerHelper.cs", SourceText.From(cWriter.InnerWriter.ToString(), Encoding.UTF8));
     }
 
     private void AddHelpers(GeneratorExecutionContext context)
