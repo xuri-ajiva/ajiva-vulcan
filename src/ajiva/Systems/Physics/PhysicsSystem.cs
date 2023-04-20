@@ -39,4 +39,6 @@ public class PhysicsSystem : ComponentSystemBase<PhysicsComponent>, IUpdate
     {
         enabled = physicsUpdated;
     }
+
+    public override PhysicsComponent CreateComponent(IEntity entity) => new PhysicsComponent();
 }

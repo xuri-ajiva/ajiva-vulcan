@@ -1,5 +1,7 @@
 ﻿using System.Runtime.InteropServices;
 using ajiva.Components;
+using ajiva.Components.Media;
+using ajiva.Components.Mesh;
 using ajiva.Components.Mesh.Instance;
 using ajiva.Components.RenderAble;
 using ajiva.Components.Transform.Ui;
@@ -43,7 +45,7 @@ public class Mesh2dRenderLayer : ComponentSystemBase<RenderInstanceMesh2D>, IUpd
         _instanceMeshPool.Changed.OnChanged += RebuildData;
     }
 
-    public PipelineDescriptorInfos[] PipelineDescriptorInfos { get; set; }
+    public PipelineDescriptorInfos[]? PipelineDescriptorInfos { get; set; }
 
     public Shader MainShader { get; set; }
 
@@ -174,5 +176,14 @@ public class Mesh2dRenderLayer : ComponentSystemBase<RenderInstanceMesh2D>, IUpd
         DeleteInstance(res);
         Interlocked.Increment(ref _dataVersion);
         return res;
+    }
+
+    public override RenderInstanceMesh2D CreateComponent(IEntity entity)
+    {
+        if (!entity.TryGetComponent<UiTransform>(out var transform))
+            transform = new UiTransform(null, UiAnchor.Zero, UiAnchor.Zero);
+        if(!entity.TryGetComponent<TextureComponent>(out var texture))
+            texture = new TextureComponent();
+        return new RenderInstanceMesh2D(MeshPrefab.Rect, transform, texture);
     }
 }

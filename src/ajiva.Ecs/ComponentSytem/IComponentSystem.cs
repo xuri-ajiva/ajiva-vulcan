@@ -15,4 +15,6 @@ public interface IComponentSystem<T> : IComponentSystem where T : IComponent
 
     T RegisterComponent(IEntity entity, T component);
     T UnRegisterComponent(IEntity entity, T component);
+    T CreateComponent(IEntity entity);
+    void DeleteComponent(T? component);
 }

@@ -52,6 +52,10 @@ public abstract class ComponentSystemBase<T> : DisposingLogger, IComponentSystem
         return component;
     }
 
+    public abstract T CreateComponent(IEntity entity);
+
+    public virtual void DeleteComponent(T? component) => component?.Dispose();
+
     protected override void ReleaseUnmanagedResources(bool disposing)
     {
         /* TODO check if ownership of component has fully moved to entity

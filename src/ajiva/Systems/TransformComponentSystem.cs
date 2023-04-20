@@ -6,6 +6,14 @@ namespace ajiva.Systems;
 
 public class TransformComponentSystem : ComponentSystemBase<Transform3d>, ITransformComponentSystem
 {
+    public override Transform3d RegisterComponent(IEntity entity, Transform3d component)
+    {
+        var ers = base.RegisterComponent(entity, component);
+        ers.UpdateAll();
+        return ers;
+    }
+
+    public override Transform3d CreateComponent(IEntity entity) => new Transform3d();
 }
 public class Transform2dComponentSystem : ComponentSystemBase<UiTransform>, ITransform2dComponentSystem
 {
@@ -41,4 +49,6 @@ public class Transform2dComponentSystem : ComponentSystemBase<UiTransform>, ITra
         }
         return base.UnRegisterComponent(entity, component);
     }
+
+    public override UiTransform CreateComponent(IEntity entity) => new UiTransform(RootTransform, UiAnchor.Zero, UiAnchor.Zero);
 }

@@ -166,6 +166,17 @@ public class DebugLayer : ComponentSystemBase<DebugComponent>, IUpdate, IAjivaLa
         return res;
     }
 
+    public override DebugComponent CreateComponent(IEntity entity)
+    {
+        if (!entity.TryGetComponent<Transform3d>(out var transform))
+            transform = new Transform3d();
+
+        return new DebugComponent(entity.TryGetComponent<RenderInstanceMesh>(out var meshInstance)
+                ? meshInstance.Mesh
+                : MeshPrefab.Cube,
+            transform);
+    }
+
     private void CreateInstance(DebugComponent res)
     {
         res.Instance = instanceMeshPool.CreateInstance(instanceMeshPool.AsInstanced(res.Mesh));

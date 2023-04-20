@@ -45,6 +45,11 @@ public class TextureSystem : ComponentSystemBase<TextureComponent>, ITextureSyst
         TextureSamplerImageViews[texture.TextureId] = texture.DescriptorImageInfo;
     }
 
+    public override TextureComponent CreateComponent(IEntity entity)
+    {
+        return new TextureComponent();
+    }
+
     /// <inheritdoc />
     protected override void ReleaseUnmanagedResources(bool disposing)
     {

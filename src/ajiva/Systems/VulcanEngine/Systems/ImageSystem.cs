@@ -155,4 +155,8 @@ public class ImageSystem : ComponentSystemBase<AImage>, IImageSystem
     }
     
 #endregion
+    public override AImage CreateComponent(IEntity entity)
+    {
+        return new AImage(false){}; //todo what to set data to?
+    }
 }

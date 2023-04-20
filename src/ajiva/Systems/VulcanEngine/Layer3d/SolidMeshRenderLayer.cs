@@ -1,5 +1,7 @@
 ﻿using System.Runtime.InteropServices;
 using ajiva.Components;
+using ajiva.Components.Media;
+using ajiva.Components.Mesh;
 using ajiva.Components.Mesh.Instance;
 using ajiva.Components.RenderAble;
 using ajiva.Components.Transform;
@@ -163,5 +165,14 @@ public class SolidMeshRenderLayer : ComponentSystemBase<RenderInstanceMesh>, IAj
         DeleteInstance(res);
         Interlocked.Increment(ref dataVersion);
         return res;
+    }
+
+    public override RenderInstanceMesh CreateComponent(IEntity entity)
+    {
+        if (!entity.TryGetComponent<Transform3d>(out var transform))
+            transform = new Transform3d();
+        if(!entity.TryGetComponent<TextureComponent>(out var texture))
+            texture = new TextureComponent();
+        return new RenderInstanceMesh(MeshPrefab.Rect, transform, texture);
     }
 }
