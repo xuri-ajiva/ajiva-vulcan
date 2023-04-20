@@ -121,6 +121,12 @@ internal static class Ext
             .AsSelf()
             .As<IEntityRegistry>()
             .SingleInstance();
+        
+        containerBuilder.RegisterType<UpdateManager>()
+            .As<IUpdateManager>()
+            .As<ILifetimeManager>()
+            .AsSelf()
+            .SingleInstance();
 
         containerBuilder.AddSingleSelf(new PeriodicUpdateRunner());
 
@@ -128,7 +134,7 @@ internal static class Ext
 
         var (instance, debugReportCallback) = Statics.CreateInstance(Glfw3.GetRequiredInstanceExtensions());
         containerBuilder.AddSingleSelf(instance);
-        containerBuilder.AddSingleSelf(debugReportCallback);
+        //containerBuilder.AddSingleSelf(debugReportCallback);
 
         containerBuilder.AddSystem<DeviceSystem, IDeviceSystem>();
 

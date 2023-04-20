@@ -9,4 +9,4 @@ public interface IEntityRegistry
     void RegisterEntity<T>(T entity) where T : class, IEntity;
     bool TryUnRegisterEntity<T>(uint id, [MaybeNullWhen(false)] out T entity) where T : IEntity;
     bool TryUnRegisterEntity<T>(T entity) where T : IEntity;
-}       
+}

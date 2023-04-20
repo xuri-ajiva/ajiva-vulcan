@@ -2,24 +2,23 @@
 using ajiva.Components.Physics;
 using ajiva.Components.Transform;
 using ajiva.Components.Transform.Ui;
-using ajiva.Ecs.Utils;
+using ajiva.Ecs;
 using ajiva.Entities.Ui;
 using ajiva.Extensions;
 using ajiva.Systems.Physics;
 using ajiva.Systems.VulcanEngine.Interfaces;
 using ajiva.Systems.VulcanEngine.Layer3d;
 using ajiva.Systems.VulcanEngine.Systems;
+using ajiva.Utils;
 using ajiva.Worker;
 using Ajiva.Wrapper.Logger;
 using Autofac;
 using GlmSharp;
-using SharpVk;
 using SharpVk.Glfw;
-using SharpVk.Multivendor;
 
 namespace ajiva.application;
 
-public class Application
+public class Application : DisposingLogger
 {
     private IContainer container;
 
@@ -83,46 +82,21 @@ public class Application
                     Rotation = new vec3(Random.Shared.Next(0, 100), Random.Shared.Next(0, 100), Random.Shared.Next(0, 100)),
                 })
                 .Finalize()
-                .Configure<CollisionsComponent>(x =>
-                {
-                    x.MeshId = meshPref.MeshId;
-                });
+                .Configure<CollisionsComponent>(x => { x.MeshId = meshPref.MeshId; });
         }
     }
 
-    public async Task SetupUpdate()
+    public void SetupUpdate()
     {
         container.Resolve<IWindowSystem>().OnKeyEvent += WindowOnOnKeyEvent;
+        container.Resolve<IUpdateManager>().RegisterUpdateForAllInContainer();
+    }
 
-        void LogStatus(Dictionary<IUpdate, PeriodicUpdateRunner.UpdateData> updateDatas)
-        {
-            ALog.Info($"PendingWorkItemCount: {ThreadPool.PendingWorkItemCount}, EntitiesCount: {proxy.Entities.Count}");
-            ALog.Info(new string('-', 100));
-            foreach (var (key, value) in updateDatas)
-            {
-                ALog.Info($"[ITERATION:{value.Iteration:X8}] | {value.Iteration.ToString(),-8}| {key.GetType().Name,-40}: Delta: {new TimeSpan(value.Delta):G}");
-            }
-        }
-
-        var updateRunner = container.Resolve<PeriodicUpdateRunner>();
-
-        var types = container.ComponentRegistry.Registrations
-            .Where(r => typeof(IUpdate).IsAssignableFrom(r.Activator.LimitType))
-            .Select(r => r.Activator.LimitType);
-
-        IEnumerable<IUpdate> lst = types.Select(t => container.Resolve(t) as IUpdate);
-
-        foreach (var registration in lst.Distinct())
-        {
-            updateRunner.RegisterUpdate(registration);
-        }
-        foreach (var update in proxy._updates)
-        {
-            updateRunner.RegisterUpdate(update);
-        }
-
-        updateRunner.Start();
-        await updateRunner.WaitHandle(LogStatus, CancellationToken.None);
+    public async Task Run(CancellationToken cancellation)
+    {
+        var updateManager = container.Resolve<IUpdateManager>();
+        updateManager.Run();
+        await updateManager.Wait(cancellation);
     }
 
     private Rect spinner;
@@ -238,15 +212,15 @@ public class Application
         }
     }
 
-    public void Dispose()
+    protected override void ReleaseUnmanagedResources(bool disposing)
     {
         container.Resolve<IDeviceSystem>().WaitIdle();
 
-        container.Dispose();
+        // container disposes all
+        //container.Resolve<DebugReportCallback>().Dispose();
+        //container.Resolve<Instance>().Dispose();
 
-        container.Resolve<DebugReportCallback>().Dispose();
-        container.Resolve<Instance>().Dispose();
-        container.Dispose();
+        //container.Dispose();
         GC.Collect();
         GC.WaitForPendingFinalizers();
         GC.Collect();

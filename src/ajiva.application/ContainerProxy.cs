@@ -1,11 +1,11 @@
 ﻿using System.Collections.Concurrent;
-using ajiva.Ecs.Component;
+using ajiva.Ecs;
 using ajiva.Ecs.Entity;
 using ajiva.Ecs.Utils;
 using ajiva.Utils;
 using Autofac;
 
-public class ContainerProxy : DisposingLogger
+public class ContainerProxy : DisposingLogger, IEntityRegistry
 {
     /*public TAs Get<T, TAs>() where T : class, IAjivaEcsObject where TAs : IAjivaEcsObject
     {
@@ -23,16 +23,11 @@ public class ContainerProxy : DisposingLogger
         {
             Thread.Yield();
         }
-        if(entity is IUpdate update)
-            RegisterUpdate(update);
+        if (entity is IUpdate update)
+            Container.Resolve<IUpdateManager>().RegisterUpdate(update);
     }
 
-    public bool TryUnRegisterEntity<T>(uint id, out T entity) where T : IEntity
-    {
-        throw new NotImplementedException();
-    }
-
-    public ConcurrentDictionary<Guid, IEntity> Entities { get; } = new();
+    public ConcurrentDictionary<Guid, IEntity> Entities { get; } = new ConcurrentDictionary<Guid, IEntity>();
 
     /// <inheritdoc />
     public bool TryUnRegisterEntity<T>(T entity) where T : IEntity
@@ -41,57 +36,15 @@ public class ContainerProxy : DisposingLogger
     }
 
     /// <inheritdoc />
-    public T RegisterComponent<T>(IEntity entity, Type type, T component) where T : class, IComponent
-    {
-        return Container.RegisterComponent(entity, type, component);
-    }
-
-    /// <inheritdoc />
-    public T UnRegisterComponent<T>(IEntity entity, Type type, T component) where T : class, IComponent
+    public bool TryUnRegisterEntity<T>(uint id, out T entity) where T : IEntity
     {
         throw new NotImplementedException();
     }
 
     /// <inheritdoc />
-    public long EntitiesCount { get; set; }
+    public long EntitiesCount  => Entities.Count;
 
-    /// <inheritdoc />
     public long ComponentsCount { get; set; }
 
     public IContainer Container { get; set; }
-
-    /// <inheritdoc />
-    public void IssueClose()
-    {
-        throw new NotImplementedException();
-    }
-
-    public List<IUpdate> _updates = new();
-
-    /// <inheritdoc />
-    public void RegisterUpdate(IUpdate update)
-    {
-        //throw new NotImplementedException();
-        Console.WriteLine($"RegisterUpdate: {update.GetType()}");
-        _updates.Add(update);
-    }
-
-    /// <inheritdoc />
-    public void StartUpdates()
-    {
-        throw new NotImplementedException();
-    }
-
-    /// <inheritdoc />
-    public void WaitForExit()
-    {
-        throw new NotImplementedException();
-    }
-
-    /*public T CreateAndRegisterEntity<T>() where T : class, IEntity
-    {
-        var entity = Container.ResolveUnregistered<T>();
-        entity.Register(Container);
-        return entity;
-    }*/
 }

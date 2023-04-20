@@ -29,7 +29,6 @@ ALog.Log(ALogLevel.Info, $"OSVersion: {Environment.OSVersion}");
 ALog.MinimumLogLevel = ALogLevel.Debug;
 Glfw3.Init();
 var builder = new ContainerBuilder();
-//builder.RegisterSource<MySource>();
 
 //todo generate this
 builder.AddFactoryData();
@@ -42,9 +41,16 @@ var proxy = container.CreateBaseLayer();
 var app = new Application(container, proxy);
 app.InitData();
 
-await app.SetupUpdate();
+app.SetupUpdate();
+var src = new CancellationTokenSource();
+src.CancelAfter(TimeSpan.FromMinutes(10));
+await app.Run(src.Token);
 
 app.Dispose();
+await container.DisposeAsync();
+Console.WriteLine("Press any key to exit...");
+Console.ReadKey();
+
 
 async void PackAssets()
 {
