@@ -1,4 +1,6 @@
-﻿using ajiva.Components.Transform;
+﻿using ajiva.Components.Mesh;
+using ajiva.Components.RenderAble;
+using ajiva.Components.Transform;
 using ajiva.Components.Transform.SpatialAcceleration;
 using ajiva.Entities;
 using ajiva.Models.Buffer;
@@ -11,6 +13,7 @@ namespace ajiva.Components.Physics;
 
 public class BoundingBox : DisposingLogger, IBoundingBox
 {
+    private readonly IEntity _entity;
     private readonly IWorkerPool _workerPool;
     private StaticOctalItem<BoundingBox>? _octalItem;
     private readonly IModelMatTransform _transform;
@@ -21,18 +24,15 @@ public class BoundingBox : DisposingLogger, IBoundingBox
 
     public BoundingBox(IEntity entity, IWorkerPool workerPool)
     {
+        _entity = entity;
         _workerPool = workerPool;
-        Collider = entity.Get<CollisionsComponent>() as ICollider;
+        meshLazy = new Lazy<Mesh<Vertex3D>>(() => (Mesh<Vertex3D>)_entity.Get<RenderInstanceMesh>().Mesh);
         _transform = entity.Get<Transform3d>();//entity.GetAny<IModelMatTransform>();
-        Collider.ChangingObserver.OnChanged += ColliderChanged;
         _transform.ChangingObserver.OnChanged += TransformChanged;
     }
 
     /// <inheritdoc />
     public StaticOctalSpace Space => _octalItem?.Space ?? StaticOctalSpace.Empty;
-
-    /// <inheritdoc />
-    public ICollider Collider { get; }
 
 
     private void TransformChanged(mat4 value)
@@ -68,11 +68,12 @@ public class BoundingBox : DisposingLogger, IBoundingBox
         ComputeBoxBackground();
     }
 
+    private Lazy<Mesh<Vertex3D>> meshLazy;
+
     private WorkResult ComputeBox()
     {
-        var mesh = Collider!.Pool.GetMesh(Collider.MeshId);
-        if (mesh.VertexBuffer is null) return WorkResult.Failed;
-        var buff = (BufferOfT<Vertex3D>)mesh.VertexBuffer;
+        if (meshLazy.Value.VertexBuffer is not BufferOfT<Vertex3D> buff) 
+            return WorkResult.Failed;
 
         float x1 = float.PositiveInfinity, x2 = float.NegativeInfinity, y1 = float.PositiveInfinity, y2 = float.NegativeInfinity, z1 = float.PositiveInfinity, z2 = float.NegativeInfinity; // 1 = min, 2 = max
         var mm = _transform.ModelMat;
@@ -152,6 +153,5 @@ public class BoundingBox : DisposingLogger, IBoundingBox
         base.ReleaseUnmanagedResources(disposing);
 
         _transform.ChangingObserver.OnChanged += TransformChanged;
-        Collider.ChangingObserver.OnChanged += ColliderChanged;
     }
 }
