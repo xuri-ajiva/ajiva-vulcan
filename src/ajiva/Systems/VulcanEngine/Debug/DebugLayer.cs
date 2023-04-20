@@ -11,14 +11,12 @@ using ajiva.Systems.Assets;
 using ajiva.Systems.VulcanEngine.Interfaces;
 using ajiva.Systems.VulcanEngine.Layer;
 using ajiva.Systems.VulcanEngine.Layers;
-using ajiva.Systems.VulcanEngine.Systems;
 using ajiva.Utils.Changing;
 using GlmSharp;
 using SharpVk;
 
 namespace ajiva.Systems.VulcanEngine.Debug;
 
-[Dependent(typeof(WindowSystem))]
 public class DebugLayer : ComponentSystemBase<DebugComponent>, IUpdate, IAjivaLayerRenderSystem<UniformViewProj3d>
 {
     private readonly IDeviceSystem _deviceSystem;
@@ -30,7 +28,7 @@ public class DebugLayer : ComponentSystemBase<DebugComponent>, IUpdate, IAjivaLa
 
     /// <inheritdoc />
     /// <inheritdoc />
-    public DebugLayer(IDeviceSystem deviceSystem, AssetManager assetManager,ITextureSystem textureSystem)
+    public DebugLayer(IDeviceSystem deviceSystem, AssetManager assetManager, ITextureSystem textureSystem)
     {
         _deviceSystem = deviceSystem;
         _assetManager = assetManager;
@@ -76,10 +74,8 @@ public class DebugLayer : ComponentSystemBase<DebugComponent>, IUpdate, IAjivaLa
     /// <inheritdoc />
     public void UpdateGraphicsPipelineLayer()
     {
-        var bind = new[]
-        {
-            Vertex3D.GetBindingDescription(VERTEX_BUFFER_BIND_ID),
-            new VertexInputBindingDescription(INSTANCE_BUFFER_BIND_ID, (uint)Marshal.SizeOf<MeshInstanceData>(), VertexInputRate.Instance)
+        var bind = new[] {
+            Vertex3D.GetBindingDescription(VERTEX_BUFFER_BIND_ID), new VertexInputBindingDescription(INSTANCE_BUFFER_BIND_ID, (uint)Marshal.SizeOf<MeshInstanceData>(), VertexInputRate.Instance)
         };
 
         var attrib = new ViAdBuilder<MeshInstanceData>(Vertex3D.GetAttributeDescriptions(VERTEX_BUFFER_BIND_ID), INSTANCE_BUFFER_BIND_ID)
@@ -89,9 +85,9 @@ public class DebugLayer : ComponentSystemBase<DebugComponent>, IUpdate, IAjivaLa
             .Add(nameof(MeshInstanceData.TextureIndex), Format.R32SInt)
             .Add(nameof(MeshInstanceData.Padding), Format.R32G32SFloat)
             .ToArray();
-        if(PipelineDescriptorInfos is null)
+        if (PipelineDescriptorInfos is null)
             CreatePipelineDescriptorInfos();
-        
+
         RenderTarget.GraphicsPipelineLayer = CreateDebugPipe.Default(RenderTarget.PassLayer.Parent, RenderTarget.PassLayer,
             _deviceSystem, true,
             bind, attrib, MainShader, PipelineDescriptorInfos);
@@ -100,11 +96,13 @@ public class DebugLayer : ComponentSystemBase<DebugComponent>, IUpdate, IAjivaLa
     private void CreatePipelineDescriptorInfos()
     {
         var textureSamplerImageViews = _textureSystem.TextureSamplerImageViews;
-        PipelineDescriptorInfos = new[]
-        {
-            new PipelineDescriptorInfos(DescriptorType.UniformBuffer, ShaderStageFlags.Vertex, 0, 1, BufferInfo: new[]
-            {
-                new DescriptorBufferInfo { Buffer = AjivaLayer.LayerUniform.Uniform.Buffer!, Offset = 0, Range = (uint)AjivaLayer.LayerUniform.SizeOfT }
+        PipelineDescriptorInfos = new[] {
+            new PipelineDescriptorInfos(DescriptorType.UniformBuffer, ShaderStageFlags.Vertex, 0, 1, BufferInfo: new[] {
+                new DescriptorBufferInfo {
+                    Buffer = AjivaLayer.LayerUniform.Uniform.Buffer!,
+                    Offset = 0,
+                    Range = (uint)AjivaLayer.LayerUniform.SizeOfT
+                }
             }),
             new(DescriptorType.CombinedImageSampler, ShaderStageFlags.Fragment, 2, (uint)textureSamplerImageViews.Length, ImageInfo: textureSamplerImageViews)
         };
@@ -112,7 +110,6 @@ public class DebugLayer : ComponentSystemBase<DebugComponent>, IUpdate, IAjivaLa
 
     /// <inheritdoc />
     public RenderTarget RenderTarget { get; set; }
-    
 
     private const uint VERTEX_BUFFER_BIND_ID = 0;
     private const uint INSTANCE_BUFFER_BIND_ID = 1;

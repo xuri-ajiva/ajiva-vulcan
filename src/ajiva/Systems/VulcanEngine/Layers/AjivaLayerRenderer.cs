@@ -1,5 +1,4 @@
-﻿using ajiva.Ecs;
-using ajiva.Systems.Assets;
+﻿using ajiva.Systems.Assets;
 using ajiva.Systems.VulcanEngine.Interfaces;
 using ajiva.Systems.VulcanEngine.Layer;
 using ajiva.Systems.VulcanEngine.Layers.Creation;
@@ -25,7 +24,7 @@ public class AjivaLayerRenderer : DisposingLogger
     public CommandBufferPool CommandBufferPool;
     private readonly ITextureSystem _textureSystem;
 
-    public AjivaLayerRenderer(DeviceSystem deviceSystem, Canvas canvas, CommandBufferPool commandBufferPool, ITextureSystem textureSystem, IAjivaEcs ecs, AssetManager assetManager)
+    public AjivaLayerRenderer(DeviceSystem deviceSystem, Canvas canvas, CommandBufferPool commandBufferPool, ITextureSystem textureSystem, AssetManager assetManager)
     {
         DeviceSystem = deviceSystem;
         Canvas = canvas;
@@ -34,7 +33,7 @@ public class AjivaLayerRenderer : DisposingLogger
         imageAvailable = deviceSystem.Device!.CreateSemaphore()!;
         renderFinished = deviceSystem.Device!.CreateSemaphore()!;
         fence = deviceSystem.Device.CreateFence();
-        CombinePipeline = new CombinePipeline(this, ecs, textureSystem, assetManager);
+        CombinePipeline = new CombinePipeline(this, textureSystem, assetManager);
     }
 
     public List<BasicLayerRenderProvider> DynamicLayerSystemData { get; } = new List<BasicLayerRenderProvider>();

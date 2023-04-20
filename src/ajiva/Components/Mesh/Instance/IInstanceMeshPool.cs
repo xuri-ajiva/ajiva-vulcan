@@ -1,10 +1,9 @@
-﻿using ajiva.Ecs;
-using ajiva.Utils.Changing;
+﻿using ajiva.Utils.Changing;
 using SharpVk;
 
 namespace ajiva.Components.Mesh.Instance;
 
-public interface IInstanceMeshPool<T> : IAjivaEcsObject, IDisposable where T : unmanaged
+public interface IInstanceMeshPool<T> : IDisposable where T : unmanaged
 {
     public IChangingObserver<IInstanceMeshPool<T>> Changed { get; }
     IInstancedMesh<T> AsInstanced(IMesh mesh);

@@ -1,12 +1,10 @@
 ﻿using System.Drawing;
 using ajiva.Components.Media;
 using ajiva.Systems.VulcanEngine.Interfaces;
-using ajiva.Systems.VulcanEngine.Systems;
 using ajiva.Worker;
 
 namespace ajiva.Generators.Texture;
 
-[Dependent(typeof(TextureSystem))]
 public class BoxTextureGenerator : SystemBase
 {
     /// <inheritdoc />

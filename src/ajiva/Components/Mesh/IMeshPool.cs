@@ -1,8 +1,6 @@
-﻿using ajiva.Ecs;
+﻿namespace ajiva.Components.Mesh;
 
-namespace ajiva.Components.Mesh;
-
-public interface IMeshPool : IAjivaEcsObject
+public interface IMeshPool
 {
     RenderInstanceReadyMeshPool Use();
     IMesh GetMesh(uint meshId);

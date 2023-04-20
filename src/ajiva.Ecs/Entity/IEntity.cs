@@ -4,7 +4,7 @@ using System.Diagnostics.CodeAnalysis;
 
 namespace ajiva.Ecs.Entity;
 
-public interface IEntity : IAjivaEcsObject
+public interface IEntity
 {
     Guid Id { get; }
     bool TryGetComponent<T>([MaybeNullWhen(false)] out T value) where T : IComponent;

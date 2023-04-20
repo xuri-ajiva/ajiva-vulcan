@@ -2,13 +2,11 @@
 using System.Runtime.InteropServices.ComTypes;
 using ajiva.Application;
 using ajiva.Components.Media;
-using ajiva.Systems.Assets;
 using ajiva.Systems.VulcanEngine.Interfaces;
 using SharpVk;
 
 namespace ajiva.Systems.VulcanEngine.Systems;
 
-[Dependent(typeof(ImageSystem), typeof(AssetManager))]
 public class TextureSystem : ComponentSystemBase<TextureComponent>, ITextureSystem
 {
     private readonly TextureCreator _creator;
@@ -40,7 +38,8 @@ public class TextureSystem : ComponentSystemBase<TextureComponent>, ITextureSyst
 
     public void MapTextureToDescriptor(ATexture texture)
     {
-        if (_config.TEXTURE_SAMPLER_COUNT <= texture.TextureId) throw new ArgumentException($"{nameof(texture.TextureId)} is more then {nameof(_config.TEXTURE_SAMPLER_COUNT)}", nameof(IBindCtx));
+        if (_config.TEXTURE_SAMPLER_COUNT <= texture.TextureId)
+            throw new ArgumentException($"{nameof(texture.TextureId)} is more then {nameof(_config.TEXTURE_SAMPLER_COUNT)}", nameof(IBindCtx));
 
         TextureSamplerImageViews[texture.TextureId] = texture.DescriptorImageInfo;
     }

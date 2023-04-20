@@ -17,7 +17,6 @@ using SharpVk;
 
 namespace ajiva.Systems.VulcanEngine.Layer3d;
 
-[Dependent(typeof(Ajiva3dLayerSystem))]
 public class SolidMeshRenderLayer : ComponentSystemBase<RenderInstanceMesh>, IAjivaLayerRenderSystem<UniformViewProj3d>, IUpdate
 {
     //todo remove some duplicates between Layers

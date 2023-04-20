@@ -1,7 +1,6 @@
 ﻿#region
 
 using ajiva.Components.Media;
-using ajiva.Ecs;
 using ajiva.Entities;
 using ajiva.Extensions;
 using ajiva.Models.Buffer.ChangeAware;
@@ -18,13 +17,11 @@ using SharpVk.Glfw;
 
 namespace ajiva.Systems.VulcanEngine.Layer3d;
 
-[Dependent(typeof(WindowSystem), typeof(GraphicsSystem), typeof(TransformComponentSystem))]
 public class Ajiva3dLayerSystem : SystemBase, IUpdate, IAjivaLayer<UniformViewProj3d>
 {
     private Format depthFormat;
 
     private AImage? depthImage;
-    private readonly IAjivaEcs _ecs;
     private WindowSystem window;
     private readonly IImageSystem imageSystem;
     private readonly DeviceSystem deviceSystem;
@@ -32,9 +29,8 @@ public class Ajiva3dLayerSystem : SystemBase, IUpdate, IAjivaLayer<UniformViewPr
     private readonly PeriodicUpdateRunner _updateRunner;
 
     /// <inheritdoc />
-    public Ajiva3dLayerSystem(IAjivaEcs ecs,WindowSystem window,IImageSystem imageSystem, DeviceSystem deviceSystem, EntityFactory factory)
+    public Ajiva3dLayerSystem(WindowSystem window,IImageSystem imageSystem, DeviceSystem deviceSystem, EntityFactory factory)
     {
-        _ecs = ecs;
         this.window = window;
         this.imageSystem = imageSystem;
         this.deviceSystem = deviceSystem;

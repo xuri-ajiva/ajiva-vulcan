@@ -11,7 +11,6 @@ using ajiva.Models.Vertex;
 using ajiva.Systems.Assets;
 using ajiva.Systems.VulcanEngine.Interfaces;
 using ajiva.Systems.VulcanEngine.Layer;
-using ajiva.Systems.VulcanEngine.Layer3d;
 using ajiva.Systems.VulcanEngine.Layers;
 using ajiva.Systems.VulcanEngine.Layers.Creation;
 using ajiva.Systems.VulcanEngine.Systems;
@@ -19,7 +18,6 @@ using SharpVk;
 
 namespace ajiva.Systems.VulcanEngine.Layer2d;
 
-[Dependent(typeof(Ajiva3dLayerSystem))]
 public class Mesh2dRenderLayer : ComponentSystemBase<RenderInstanceMesh2D>, IUpdate, IAjivaLayerRenderSystem<UniformLayer2d>
 {
     private readonly object _mainLock = new object();

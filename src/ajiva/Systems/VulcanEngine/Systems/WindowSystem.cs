@@ -32,12 +32,12 @@ public class WindowSystem : SystemBase, IUpdate, IWindowSystem
 
     private bool windowReady;
     private readonly Instance _instance;
-    private IAjivaEcs _ecs;
+    private ILifetimeManager _lifetimeManager;
 
-    public WindowSystem(Config config,Instance instance, IAjivaEcs ecs) 
+    public WindowSystem(Config config,Instance instance, ILifetimeManager lifetimeManager) 
     {
         _instance = instance;
-        _ecs = ecs;
+        _lifetimeManager = lifetimeManager;
         keyDelegate = KeyCallback;
         cursorPosDelegate = MouseCallback;
         sizeDelegate = SizeCallback;
@@ -62,7 +62,7 @@ public class WindowSystem : SystemBase, IUpdate, IWindowSystem
     {
         PollEvents();
         if (!windowReady)
-            _ecs.IssueClose();
+            _lifetimeManager.IssueClose();
     }
 
     /// <inheritdoc />
@@ -203,7 +203,6 @@ public class WindowSystem : SystemBase, IUpdate, IWindowSystem
         Glfw3.PollEvents();
     }
 }
-
 public delegate void WindowResizedDelegate(object sender, Extent2D oldSize, Extent2D newSize);
 
 public delegate void KeyEventHandler(object? sender, Key key, int scancode, InputAction inputAction, Modifier modifiers);

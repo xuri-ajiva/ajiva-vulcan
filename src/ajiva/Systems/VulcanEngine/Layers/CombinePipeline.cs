@@ -1,5 +1,4 @@
 ﻿using ajiva.Components;
-using ajiva.Ecs;
 using ajiva.Systems.Assets;
 using ajiva.Systems.VulcanEngine.Interfaces;
 using ajiva.Systems.VulcanEngine.Layers.Models;
@@ -10,16 +9,14 @@ namespace ajiva.Systems.VulcanEngine.Layers;
 public class CombinePipeline : DisposingLogger
 {
     private readonly AjivaLayerRenderer layerRenderer;
-    private readonly IAjivaEcs ecs;
     private readonly ITextureSystem _textureSystem;
     private readonly AssetManager _assetManager;
 
     private FullRenderTarget? fullRenderTarget;
 
-    public CombinePipeline(AjivaLayerRenderer layerRenderer, IAjivaEcs ecs, ITextureSystem textureSystem, AssetManager assetManager)
+    public CombinePipeline(AjivaLayerRenderer layerRenderer, ITextureSystem textureSystem, AssetManager assetManager)
     {
         this.layerRenderer = layerRenderer;
-        this.ecs = ecs;
         _textureSystem = textureSystem;
         _assetManager = assetManager;
     }

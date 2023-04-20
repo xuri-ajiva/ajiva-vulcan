@@ -6,7 +6,6 @@ using Buffer = SharpVk.Buffer;
 
 namespace ajiva.Systems.VulcanEngine.Systems;
 
-[Dependent(typeof(DeviceSystem))]
 public class ImageSystem : ComponentSystemBase<AImage>, IImageSystem
 {
     private readonly IDeviceSystem _deviceSystem;

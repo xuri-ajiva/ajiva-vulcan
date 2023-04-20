@@ -10,7 +10,6 @@ using SharpVk;
 
 namespace ajiva.Systems.VulcanEngine.Layer2d;
 
-[Dependent(typeof(WindowSystem), typeof(GraphicsSystem))]
 public class Ajiva2dLayerSystem : SystemBase, IAjivaLayer<UniformLayer2d>
 {
     private readonly WindowSystem _windowSystem;

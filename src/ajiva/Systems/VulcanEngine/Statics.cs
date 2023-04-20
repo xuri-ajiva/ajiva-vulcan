@@ -12,7 +12,9 @@ public static class Statics
 {
     private static HashSet<string> Ignore = new HashSet<string>() {
         "UNASSIGNED-CoreValidation-DrawState-InvalidImageLayout",
-        "VUID-VkPresentInfoKHR-pImageIndices-01296"
+        "VUID-VkPresentInfoKHR-pImageIndices-01296",
+        "VUID-VkGraphicsPipelineCreateInfo-layout-00756",
+        "UNASSIGNED-Threading-MultipleThreads"
     };
     private static readonly DebugReportCallbackDelegate DebugReportDelegate = (flags, objectType, o, location, messageCode, layerPrefix, message, userData) =>
     {

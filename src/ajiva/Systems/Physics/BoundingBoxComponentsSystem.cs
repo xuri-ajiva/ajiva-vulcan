@@ -1,12 +1,10 @@
 ﻿using ajiva.Components.Physics;
 using ajiva.Components.Transform.SpatialAcceleration;
-using ajiva.Systems.VulcanEngine.Debug;
 using ajiva.Worker;
 using GlmSharp;
 
 namespace ajiva.Systems.Physics;
 
-[Dependent(typeof(CollisionsComponentSystem), typeof(DebugLayer))]
 public class BoundingBoxComponentsSystem : ComponentSystemBase<BoundingBox>, IUpdate
 {
     StaticOctalTreeContainer<BoundingBox> _octalTree;

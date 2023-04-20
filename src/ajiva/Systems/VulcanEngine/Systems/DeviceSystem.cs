@@ -6,7 +6,6 @@ using SharpVk.Khronos;
 
 namespace ajiva.Systems.VulcanEngine.Systems;
 
-[Dependent(typeof(WindowSystem))]
 public class DeviceSystem : SystemBase, IDeviceSystem
 {
     private readonly WindowSystem _windowSystem;
