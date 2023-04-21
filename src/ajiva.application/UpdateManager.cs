@@ -1,6 +1,4 @@
 ﻿using ajiva.Ecs;
-using ajiva.Ecs.Utils;
-using Ajiva.Wrapper.Logger;
 using Autofac;
 
 public class UpdateManager : IUpdateManager, ILifetimeManager
@@ -8,12 +6,15 @@ public class UpdateManager : IUpdateManager, ILifetimeManager
     private readonly ContainerProxy _container;
     private readonly IEntityRegistry _entityRegistry;
     private readonly PeriodicUpdateRunner _updateRunner;
+    private readonly ILogger _logger;
 
-    public UpdateManager(ContainerProxy container, IEntityRegistry entityRegistry, PeriodicUpdateRunner updateRunner)
+    public UpdateManager(ContainerProxy container, IEntityRegistry entityRegistry, PeriodicUpdateRunner updateRunner,
+        ILogger logger)
     {
         _container = container;
         _entityRegistry = entityRegistry;
         _updateRunner = updateRunner;
+        _logger = logger;
     }
 
     public void RegisterUpdate(IUpdate update)
@@ -41,6 +42,7 @@ public class UpdateManager : IUpdateManager, ILifetimeManager
 
     public void Run()
     {
+        _logger.Information("Starting UpdateManager");
         _updateRunner.Start();
     }
 
@@ -56,11 +58,11 @@ public class UpdateManager : IUpdateManager, ILifetimeManager
 
     void LogStatus(Dictionary<IUpdate, PeriodicUpdateRunner.UpdateData> updateDatas)
     {
-        ALog.Info($"PendingWorkItemCount: {ThreadPool.PendingWorkItemCount}, EntitiesCount: {_entityRegistry.EntitiesCount}");
-        ALog.Info(new string('-', 100));
+        _logger.Information("PendingWorkItemCount: {PendingWorkItemCount}, EntitiesCount: {EntitiesCount}", ThreadPool.PendingWorkItemCount, _entityRegistry.EntitiesCount);
+        _logger.Information(new string('-', 100));
         foreach (var (key, value) in updateDatas)
         {
-            ALog.Info($"[ITERATION:{value.Iteration:X8}] | {value.Iteration.ToString(),-8}| {key.GetType().Name,-40}: Delta: {new TimeSpan(value.Delta):G}");
+            _logger.Information($"[ITERATION:{value.Iteration:X8}] | {value.Iteration.ToString(),-8}| {key.GetType().Name,-40}: Delta: {new TimeSpan(value.Delta):G}");
         }
     }
 

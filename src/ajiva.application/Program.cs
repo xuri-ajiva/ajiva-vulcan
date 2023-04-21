@@ -1,32 +1,43 @@
 ﻿// See https://aka.ms/new-console-template for more information
 using ajiva;
 using ajiva.application;
-using ajiva.Ecs.Component;
-using ajiva.Ecs.ComponentSytem;
 using ajiva.Extensions;
 using ajiva.Systems.Assets;
 using ajiva.Systems.Assets.Contracts;
-using Ajiva.Wrapper.Logger;
 using Autofac;
 using Autofac.Builder;
+using Autofac.Configuration;
 using Autofac.Core;
-using SharpVk.Glfw;
+using Microsoft.Extensions.Configuration;
+using Serilog.Extensions.Autofac.DependencyInjection;
+
+Console.WriteLine("Starting Ajiva Engine at " + DateTime.Now);
+Thread.CurrentThread.Name = "Main";
+
+var builder = new ContainerBuilder();
+var configuration = new ConfigurationBuilder()
+    .SetBasePath(Directory.GetCurrentDirectory())
+    .AddJsonFile("appsettings.json", false, true)
+    .AddJsonFile($"appsettings.{Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? "Production"}.json", true, true)
+    .Build();
+
+builder.RegisterModule(new ConfigurationModule(configuration));
+var loggerConfiguration = new LoggerConfiguration()
+    .ReadFrom.Configuration(configuration);
+builder.RegisterSerilog(loggerConfiguration);
+builder.RegisterInstance(Log.Logger);
+
+var logger = Log.ForContext<Program>();
+logger.Information("ProcessId: {ProcessId}", Environment.ProcessId);
+logger.Information("Version: {Version}", Environment.Version);
+logger.Information("Is64BitProcess: {Is64BitProcess}", Environment.Is64BitProcess);
+logger.Information("Is64BitOperatingSystem: {Is64BitOperatingSystem}", Environment.Is64BitOperatingSystem);
+logger.Information("OSVersion: {OSVersion}", Environment.OSVersion);
 
 if (args.Length > 0)
 {
     PackAssets();
 }
-
-ALog.MinimumLogLevel = ALogLevel.Debug;
-ALog.Log(ALogLevel.Info, $"ProcessId: {Environment.ProcessId}");
-ALog.Log(ALogLevel.Info, $"Version: {Environment.Version}");
-ALog.Log(ALogLevel.Info, $"Is64BitProcess: {Environment.Is64BitProcess}");
-ALog.Log(ALogLevel.Info, $"Is64BitOperatingSystem: {Environment.Is64BitOperatingSystem}");
-ALog.Log(ALogLevel.Info, $"OSVersion: {Environment.OSVersion}");
-
-ALog.MinimumLogLevel = ALogLevel.Debug;
-Glfw3.Init();
-var builder = new ContainerBuilder();
 
 //todo generate this
 builder.AddFactoryData();
@@ -48,7 +59,6 @@ app.Dispose();
 await container.DisposeAsync();
 Console.WriteLine("Press any key to exit...");
 Console.ReadKey();
-
 
 async void PackAssets()
 {

@@ -10,9 +10,7 @@ using ajiva.Systems.Physics;
 using ajiva.Systems.VulcanEngine.Interfaces;
 using ajiva.Systems.VulcanEngine.Layer3d;
 using ajiva.Systems.VulcanEngine.Systems;
-using ajiva.Utils;
 using ajiva.Worker;
-using Ajiva.Wrapper.Logger;
 using Autofac;
 using SharpVk.Glfw;
 
@@ -138,7 +136,7 @@ public class Application : DisposingLogger
 
                 change.Dispose();
                 return WorkResult.Succeeded;
-            }, o => ALog.Error(o), $"Creation of {rep * rep} Cubes");
+            }, o => Log.Error(o, o.Message), $"Creation of {rep * rep} Cubes");
         }
 
         switch (key)
@@ -176,7 +174,7 @@ public class Application : DisposingLogger
                 {
                     bbs.TogglePhysicUpdate();
                     return WorkResult.Succeeded;
-                }, exception => ALog.Error(exception), "DoPhysicFrame");
+                }, exception => Log.Error(exception, exception.Message), "DoPhysicFrame");
 
                 break;
             case Key.T:

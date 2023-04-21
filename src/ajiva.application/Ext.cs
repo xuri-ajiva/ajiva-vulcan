@@ -7,11 +7,6 @@ using ajiva.Components.RenderAble;
 using ajiva.Components.Transform;
 using ajiva.Components.Transform.Ui;
 using ajiva.Ecs;
-using ajiva.Ecs.Component;
-using ajiva.Ecs.ComponentSytem;
-using ajiva.Ecs.Entity;
-using ajiva.Ecs.System;
-using ajiva.Ecs.Utils;
 using ajiva.Generators.Texture;
 using ajiva.Models.Layers.Layer2d;
 using ajiva.Models.Layers.Layer3d;
@@ -25,7 +20,6 @@ using ajiva.Systems.VulcanEngine.Layer;
 using ajiva.Systems.VulcanEngine.Layer2d;
 using ajiva.Systems.VulcanEngine.Layer3d;
 using ajiva.Systems.VulcanEngine.Systems;
-using ajiva.Utils;
 using ajiva.Worker;
 using Autofac;
 using Autofac.Builder;
@@ -132,6 +126,7 @@ internal static class Ext
 
         containerBuilder.Register<Config>(c => Config.Default).AsSelf().SingleInstance();
 
+        Glfw3.Init(); // todo: move to vulkan engine
         var (instance, debugReportCallback) = Statics.CreateInstance(Glfw3.GetRequiredInstanceExtensions());
         containerBuilder.AddSingleSelf(instance);
         //containerBuilder.AddSingleSelf(debugReportCallback);
