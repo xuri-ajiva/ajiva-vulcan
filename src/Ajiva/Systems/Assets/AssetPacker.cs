@@ -8,28 +8,13 @@ namespace Ajiva.Systems.Assets;
 
 public class AssetPacker
 {
-    private static readonly string ShaderCompiler = Path.GetFullPath("./tools/spirv/glslangValidator.exe");
-    private static string? macros;
-
-    public static string Macros
-    {
-        get
-        {
-            if (macros is not null) return macros;
-
-            const string macroPrefix = " -D";
-            macros = Config.Default.ShaderConfig.GetAll().Select(x => macroPrefix + x.name + "=" + x.value).Aggregate((x, y) => x + y);
-            return macros;
-        }
-    }
-
-    public static async Task Pack(string assetOutput, AssetSpecification assetSpecification, bool overide = false)
+    public static async Task Pack(string assetOutput, AssetSpecification assetSpecification, ShaderConfig config, bool overide = false)
     {
         var assetPack = new AssetPack();
 
         var shaderRoot = assetSpecification.Get(AssetType.Shader);
 
-        Task.WaitAll(shaderRoot.EnumerateDirectories("", SearchOption.AllDirectories).Select(directory => CheckAndAddShadersInDir(assetPack, shaderRoot, directory)).ToArray());
+        Task.WaitAll(shaderRoot.EnumerateDirectories("", SearchOption.AllDirectories).Select(directory => CheckAndAddShadersInDir(assetPack, shaderRoot, directory, config)).ToArray());
 
         var textureRoot = assetSpecification.Get(AssetType.Texture);
 
@@ -88,7 +73,7 @@ public class AssetPacker
         return Task.CompletedTask;
     }
 
-    private static async Task CheckAndAddShadersInDir(AssetPack assetPack, FileSystemInfo root, DirectoryInfo shaderDirectory)
+    private static async Task CheckAndAddShadersInDir(AssetPack assetPack, FileSystemInfo root, DirectoryInfo shaderDirectory, ShaderConfig config)
     {
         // region compile
         var files = shaderDirectory.GetFiles();
@@ -111,7 +96,7 @@ public class AssetPacker
 
         var compiler = new Process
         {
-            StartInfo = new ProcessStartInfo(ShaderCompiler, string.Format("{0} {1} -t -C -V ", frag.Name, vert.Name) + Macros)
+            StartInfo = new ProcessStartInfo(FindCompiler(), $"{frag.Name} {vert.Name} -t -C -V " + BuildMacros(config))
             {
                 RedirectStandardError = true,
                 RedirectStandardOutput = true,
@@ -152,6 +137,30 @@ public class AssetPacker
 
         assetPack.Add(AssetType.Shader, relPathName, files.First(x => x.Name == Const.Default.VertexShaderName));
         assetPack.Add(AssetType.Shader, relPathName, files.First(x => x.Name == Const.Default.FragmentShaderName));
+    }
+
+    private static string BuildMacros(ShaderConfig config)
+    {
+
+        const string macroPrefix = " -D";
+        return config.GetAll().Select(x => macroPrefix + x.name + "=" + x.value).Aggregate((x, y) => x + y);
+    }
+
+    private static string FindCompiler()
+    {
+        const string search = "tools/spirv/glslangValidator.exe";
+
+        var dir = new DirectoryInfo(Directory.GetCurrentDirectory());
+        
+        while (dir.Parent is not null)
+        {
+            var path = Path.Combine(dir.FullName, search);
+            if (File.Exists(path))
+                return path;
+            dir = dir.Parent;
+        }
+        
+        throw new FileNotFoundException("Could not find glslangValidator.exe");
     }
 
     private static object _lock = new();

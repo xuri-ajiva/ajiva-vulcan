@@ -20,8 +20,12 @@ var configuration = new ConfigurationBuilder()
     .AddJsonFile("appsettings.json", false, true)
     .AddJsonFile($"appsettings.{Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? "Production"}.json", true, true)
     .Build();
+var config = configuration.GetSection("Ajiva").Get<AjivaConfig>();
 
-builder.RegisterModule(new ConfigurationModule(configuration));
+//builder.RegisterModule(new ConfigurationModule(configuration));
+builder.RegisterInstance(configuration);
+builder.RegisterInstance(config);
+
 var loggerConfiguration = new LoggerConfiguration()
     .ReadFrom.Configuration(configuration);
 builder.RegisterSerilog(loggerConfiguration);
@@ -36,7 +40,7 @@ logger.Information("OSVersion: {OSVersion}", Environment.OSVersion);
 
 if (args.Length > 0)
 {
-    PackAssets();
+    PackAssets(config);
 }
 
 //todo generate this
@@ -60,15 +64,15 @@ await container.DisposeAsync();
 Console.WriteLine("Press any key to exit...");
 Console.ReadKey();
 
-async void PackAssets()
+async void PackAssets(AjivaConfig ajivaConfig)
 {
-    await AssetPacker.Pack(Const.Default.AssetsFile,
+    await AssetPacker.Pack(ajivaConfig.AssetPath,
         new AssetSpecification(Const.Default.AssetsPath,
             new Dictionary<AssetType, string> {
                 [AssetType.Shader] = "Shaders",
                 [AssetType.Texture] = "Textures",
                 [AssetType.Model] = "Models"
-            }), true);
+            }), config.ShaderConfig, true);
 }
 
 public class MySource : IRegistrationSource
