@@ -17,8 +17,8 @@ Thread.CurrentThread.Name = "Main";
 var builder = new ContainerBuilder();
 var configuration = new ConfigurationBuilder()
     .SetBasePath(Directory.GetCurrentDirectory())
-    .AddJsonFile("appsettings.json", false, true)
-    .AddJsonFile($"appsettings.{Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? "Production"}.json", true, true)
+    .AddJsonFile("Appsettings.json", false, true)
+    .AddJsonFile($"Appsettings.{Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? "Production"}.json", true, true)
     .Build();
 var config = configuration.GetSection("Ajiva").Get<AjivaConfig>();
 
