@@ -1,10 +1,10 @@
-﻿using ajiva.Utils.Changing;
-using GlmSharp;
+﻿using System.Numerics;
+using ajiva.Utils.Changing;
 
 namespace ajiva.Components.Transform;
 
 public interface IModelMatTransform  : IComponent
 {
-    IChangingObserverOnlyValue<mat4> ChangingObserver { get; }
-    mat4 ModelMat { get; }
+    IChangingObserverOnlyValue<Matrix4x4> ChangingObserver { get; }
+    Matrix4x4 ModelMat { get; }
 }

@@ -1,14 +1,14 @@
-﻿using System.Runtime.InteropServices;
-using GlmSharp;
+﻿using System.Numerics;
+using System.Runtime.InteropServices;
 
 namespace ajiva.Models.Instance;
 
 [StructLayout(LayoutKind.Sequential)]
 public struct MeshInstanceData
 {
-    public vec3 Position;
-    public vec3 Rotation;
-    public vec3 Scale;
+    public Vector3 Position;
+    public Vector3 Rotation;
+    public Vector3 Scale;
     public uint TextureIndex;
-    public vec2 Padding;
+    public Vector2 Padding;
 }

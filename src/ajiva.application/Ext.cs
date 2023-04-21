@@ -1,4 +1,5 @@
-﻿using ajiva.Application;
+﻿using System.Numerics;
+using ajiva.Application;
 using ajiva.Components.Media;
 using ajiva.Components.Mesh;
 using ajiva.Components.Physics;
@@ -29,7 +30,6 @@ using ajiva.Worker;
 using Autofac;
 using Autofac.Builder;
 using Autofac.Core;
-using GlmSharp;
 using SharpVk.Glfw;
 
 internal static class Ext
@@ -217,11 +217,11 @@ internal static class Ext
         ajiva3dLayerSystem.MainCamara.Transform3d
             //TODO //BUG this calls into Camera.Get instead of FpsCamera.Get if we dont cast
             //BUG it alsow only updates the FPS Camera Transform if we cast, but the Camera Transform is used in the shaders
-            .RefPosition((ref vec3 vec) =>
+            .RefPosition((ref Vector3 vec) =>
             {
-                vec.x = 0;
-                vec.y = 0;
-                vec.z = -100;
+                vec.X = 0;
+                vec.Y = 0;
+                vec.Z = -100;
             });
 
         var meshPool = container.Resolve<IMeshPool>();

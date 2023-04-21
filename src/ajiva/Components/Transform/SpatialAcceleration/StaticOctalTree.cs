@@ -1,6 +1,6 @@
-﻿using System.Runtime.CompilerServices;
+﻿using System.Numerics;
+using System.Runtime.CompilerServices;
 using ajiva.Entities;
-using GlmSharp;
 
 namespace ajiva.Components.Transform.SpatialAcceleration;
 
@@ -44,21 +44,21 @@ public class StaticOctalTree<T, TItem> : IRespectable where TItem : StaticOctalI
 
         _children = new StaticOctalSpace[AREAS_PER_LEAF] {
             //Top Left Front
-            new StaticOctalSpace(new vec3(_area.Position.x, _area.Position.y, _area.Position.z), childSize),
+            new StaticOctalSpace(new Vector3(_area.Position.X, _area.Position.Y, _area.Position.Z), childSize),
             //Top Right Front
-            new StaticOctalSpace(new vec3(_area.Position.x + childSize.x, _area.Position.y, _area.Position.z), childSize),
+            new StaticOctalSpace(new Vector3(_area.Position.X + childSize.X, _area.Position.Y, _area.Position.Z), childSize),
             //Bottom Left Front
-            new StaticOctalSpace(new vec3(_area.Position.x, _area.Position.y + childSize.y, _area.Position.z), childSize),
+            new StaticOctalSpace(new Vector3(_area.Position.X, _area.Position.Y + childSize.Y, _area.Position.Z), childSize),
             //Bottom Right Front
-            new StaticOctalSpace(new vec3(_area.Position.x + childSize.x, _area.Position.y + childSize.y, _area.Position.z), childSize),
+            new StaticOctalSpace(new Vector3(_area.Position.X + childSize.X, _area.Position.Y + childSize.Y, _area.Position.Z), childSize),
             //Top Left Back
-            new StaticOctalSpace(new vec3(_area.Position.x, _area.Position.y, _area.Position.z + childSize.z), childSize),
+            new StaticOctalSpace(new Vector3(_area.Position.X, _area.Position.Y, _area.Position.Z + childSize.Z), childSize),
             //Top Right Back
-            new StaticOctalSpace(new vec3(_area.Position.x + childSize.x, _area.Position.y, _area.Position.z + childSize.z), childSize),
+            new StaticOctalSpace(new Vector3(_area.Position.X + childSize.X, _area.Position.Y, _area.Position.Z + childSize.Z), childSize),
             //Bottom Left Back
-            new StaticOctalSpace(new vec3(_area.Position.x, _area.Position.y + childSize.y, _area.Position.z + childSize.z), childSize),
+            new StaticOctalSpace(new Vector3(_area.Position.X, _area.Position.Y + childSize.Y, _area.Position.Z + childSize.Z), childSize),
             //Bottom Right Back
-            new StaticOctalSpace(new vec3(_area.Position.x + childSize.x, _area.Position.y + childSize.y, _area.Position.z + childSize.z), childSize)
+            new StaticOctalSpace(new Vector3(_area.Position.X + childSize.X, _area.Position.Y + childSize.Y, _area.Position.Z + childSize.Z), childSize)
         };
     }
 
@@ -80,18 +80,18 @@ public class StaticOctalTree<T, TItem> : IRespectable where TItem : StaticOctalI
 
         _visual.Configure<Transform3d>(trans =>
         {
-            trans.RefPosition((ref vec3 vec) =>
+            trans.RefPosition((ref Vector3 vec) =>
             {
-                vec.x = position[0];
-                vec.y = position[1];
-                vec.z = position[2];
+                vec.X = position[0];
+                vec.Y = position[1];
+                vec.Z = position[2];
             });
 
-            trans.RefScale((ref vec3 vec) =>
+            trans.RefScale((ref Vector3 vec) =>
             {
-                vec.x = scale.x;
-                vec.y = scale.y;
-                vec.z = scale.z;
+                vec.X = scale.X;
+                vec.Y = scale.Y;
+                vec.Z = scale.Z;
             });
         });
     }
@@ -223,18 +223,18 @@ public class StaticOctalTree<T, TItem> : IRespectable where TItem : StaticOctalI
 
             staticOctalTree._visual?.Configure<Transform3d>(trans =>
             {
-                trans.RefPosition((ref vec3 vec) =>
+                trans.RefPosition((ref Vector3 vec) =>
                 {
-                    vec.x = 0;
-                    vec.y = 0;
-                    vec.z = 0;
+                    vec.X = 0;
+                    vec.Y = 0;
+                    vec.Z = 0;
                 });
 
-                trans.RefScale((ref vec3 vec) =>
+                trans.RefScale((ref Vector3 vec) =>
                 {
-                    vec.x = 0;
-                    vec.y = 0;
-                    vec.z = 0;
+                    vec.X = 0;
+                    vec.Y = 0;
+                    vec.Z = 0;
                 });
             });
 
@@ -374,45 +374,45 @@ public readonly struct StaticOctalSpace
 {
     public override string ToString() => $"{nameof(StaticOctalSpace)} [p:{_position}, s:{_size}]";
 
-    private readonly vec3 _position;
-    private readonly vec3 _size;
+    private readonly Vector3 _position;
+    private readonly Vector3 _size;
 
-    public StaticOctalSpace(vec3 position, vec3 size)
+    public StaticOctalSpace(Vector3 position, Vector3 size)
     {
         _position = position;
         _size = size;
     }
 
-    public vec3 Min => _position;
-    public vec3 Max => _position + _size;
+    public Vector3 Min => _position;
+    public Vector3 Max => _position + _size;
 
-    public vec3 Position => _position;
-    public vec3 Size => _size;
-    public vec3 Center => _position + _size / 2;
-    public static StaticOctalSpace Empty { get; } = new StaticOctalSpace(vec3.Zero, vec3.Zero);
+    public Vector3 Position => _position;
+    public Vector3 Size => _size;
+    public Vector3 Center => _position + _size / 2;
+    public static StaticOctalSpace Empty { get; } = new StaticOctalSpace(Vector3.Zero, Vector3.Zero);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public bool Contains(vec3 point)
+    public bool Contains(Vector3 point)
     {
-        return point.x >= _position.x && point.x <= _position.x + _size.x &&
-               point.y >= _position.y && point.y <= _position.y + _size.y &&
-               point.z >= _position.z && point.z <= _position.z + _size.z;
+        return point.X >= _position.X && point.X <= _position.X + _size.X &&
+               point.Y >= _position.Y && point.Y <= _position.Y + _size.Y &&
+               point.Z >= _position.Z && point.Z <= _position.Z + _size.Z;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public bool Contains(StaticOctalSpace space)
     {
-        return space.Position.x >= _position.x && space.Position.x + space.Size.x <= _position.x + _size.x &&
-               space.Position.y >= _position.y && space.Position.y + space.Size.y <= _position.y + _size.y &&
-               space.Position.z >= _position.z && space.Position.z + space.Size.z <= _position.z + _size.z;
+        return space.Position.X >= _position.X && space.Position.X + space.Size.X <= _position.X + _size.X &&
+               space.Position.Y >= _position.Y && space.Position.Y + space.Size.Y <= _position.Y + _size.Y &&
+               space.Position.Z >= _position.Z && space.Position.Z + space.Size.Z <= _position.Z + _size.Z;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public bool Intersects(StaticOctalSpace space)
     {
-        return space.Position.x + space.Size.x >= _position.x && space.Position.x <= _position.x + _size.x &&
-               space.Position.y + space.Size.y >= _position.y && space.Position.y <= _position.y + _size.y &&
-               space.Position.z + space.Size.z >= _position.z && space.Position.z <= _position.z + _size.z;
+        return space.Position.X + space.Size.X >= _position.X && space.Position.X <= _position.X + _size.X &&
+               space.Position.Y + space.Size.Y >= _position.Y && space.Position.Y <= _position.Y + _size.Y &&
+               space.Position.Z + space.Size.Z >= _position.Z && space.Position.Z <= _position.Z + _size.Z;
     }
 }
 

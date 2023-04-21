@@ -1,11 +1,11 @@
-﻿using ajiva.Models.Buffer.ChangeAware;
+﻿using System.Numerics;
+using ajiva.Models.Buffer.ChangeAware;
 using ajiva.Models.Layers.Layer2d;
 using ajiva.Systems.VulcanEngine.Interfaces;
 using ajiva.Systems.VulcanEngine.Layer;
 using ajiva.Systems.VulcanEngine.Layers.Models;
 using ajiva.Systems.VulcanEngine.Systems;
 using ajiva.Utils.Changing;
-using GlmSharp;
 using SharpVk;
 
 namespace ajiva.Systems.VulcanEngine.Layer2d;
@@ -40,7 +40,7 @@ public class Ajiva2dLayerSystem : SystemBase, IAjivaLayer<UniformLayer2d>
         LayerUniform[0] = new UniformLayer2d
             //{ MousePos = new vec2(.5f, .5f), View = mat4.Ortho(-1.0f, 1.0f, -1.0f, 1.0f, -1.0f, 1.0f)});           
             {
-                Vec2 = new vec2(1337, 421337), MousePos = new vec2(.5f, .5f)
+                Vec2 = new (1337, 421337), MousePos = new (.5f, .5f)
             };
         BuildLayerUniform(canvas);
 
@@ -142,14 +142,15 @@ public class Ajiva2dLayerSystem : SystemBase, IAjivaLayer<UniformLayer2d>
     {
         var byRef = LayerUniform.GetForChange(0);
 
-        byRef.Value.View = mat4.Translate(-width / 2, -height / 2, 0) * mat4.Scale(width * 2, height * 2, 0);
-        byRef.Value.Proj = mat4.Ortho(-width, width, -height, height, -1, 1);
+        byRef.Value.View = Matrix4x4.CreateTranslation(-width / 2, -height / 2, 0) * Matrix4x4.CreateScale(width * 2, height * 2, 0);
+        //TODO OLD: byRef.Value.Proj = mat4.Ortho(-width, width, -height, height, -1, 1);
+        byRef.Value.Proj = Matrix4x4.CreateOrthographic(width, height, -1, 1);
         LayerUniform.Commit(0);
     }
 
-    private void MouseMoved(vec2 pos)
+    private void MouseMoved(Vector2 pos)
     {
-        var posNew = new vec2(pos.x / _windowSystem.Canvas.WidthF, pos.y / _windowSystem.Canvas.HeightF);
+        var posNew = new Vector2(pos.X / _windowSystem.Canvas.WidthF, pos.Y / _windowSystem.Canvas.HeightF);
 
         lock (MainLock)
         {

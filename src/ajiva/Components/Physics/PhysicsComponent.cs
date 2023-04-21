@@ -1,5 +1,5 @@
-﻿using ajiva.Components.Transform;
-using GlmSharp;
+﻿using System.Numerics;
+using ajiva.Components.Transform;
 
 namespace ajiva.Components.Physics;
 
@@ -7,13 +7,13 @@ public class PhysicsComponent : DisposingLogger, IComponent
 {
     public Transform3d Transform { get; set; }
     public float Mass { get; set; }
-    public vec3 Position
+    public Vector3 Position
     {
         get => Transform.Position;
         set => Transform.Position = value;
     }
-    public vec3 Velocity { get; set; }
-    public vec3 Force { get; set; }
+    public Vector3 Velocity { get; set; }
+    public Vector3 Force { get; set; }
     public bool IsStatic { get; set; }
 
     public float Epsilon { get; set; } = 0.00000001f;
@@ -33,19 +33,19 @@ public class PhysicsComponent : DisposingLogger, IComponent
         Velocity += a * d;
         //position
         Position += Velocity * d;
-        if (Velocity.LengthSqr < Epsilon)
+        if (Velocity.LengthSquared() < Epsilon)
         {
-            Velocity = vec3.Zero;
+            Velocity = Vector3.Zero;
         }
     }
 
     public void Reset()
     {
-        Velocity = new vec3(0.0f, 0.0f, 0.0f);
-        Force = new vec3(0.0f, 0.0f, 0.0f);
+        Velocity = new Vector3(0.0f, 0.0f, 0.0f);
+        Force = new Vector3(0.0f, 0.0f, 0.0f);
     }
 
-    public void ApplyForce(vec3 force)
+    public void ApplyForce(Vector3 force)
     {
         Force += force;
     }
@@ -55,11 +55,11 @@ public class PhysicsComponent : DisposingLogger, IComponent
     {
         if (other.Equals(this)) return;
         if (IsStatic && other.IsStatic) return;
-        var normal = (Position - other.Position).Normalized;
-        if (normal == vec3.NaN) return;
+        var normal = Vector3.Normalize(Position - other.Position);
+        if (normal == new Vector3(float.NaN)) return;
 
         var relativeVelocity = Velocity - other.Velocity;
-        var relativeVelocityInNormalDirection = vec3.Dot(relativeVelocity, normal);
+        var relativeVelocityInNormalDirection = Vector3.Dot(relativeVelocity, normal);
 
         if (relativeVelocityInNormalDirection > 0)
         {

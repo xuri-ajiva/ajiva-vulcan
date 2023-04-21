@@ -1,8 +1,8 @@
-﻿using ajiva.Application;
+﻿using System.Numerics;
+using ajiva.Application;
 using ajiva.Ecs;
 using ajiva.Systems.VulcanEngine.Interfaces;
 using ajiva.Systems.VulcanEngine.Layer;
-using GlmSharp;
 using SharpVk;
 using SharpVk.Glfw;
 using SharpVk.Glfw.extras;
@@ -24,7 +24,7 @@ public class WindowSystem : SystemBase, IUpdate, IWindowSystem
     private AjivaEngineLayer activeLayer;
 
     private DateTime lastResize = DateTime.MinValue;
-    private vec2 previousMousePosition = vec2.Zero;
+    private Vector2 previousMousePosition = Vector2.Zero;
     private WindowHandle window;
     private Extent2D priviesSize;
 
@@ -141,7 +141,7 @@ public class WindowSystem : SystemBase, IUpdate, IWindowSystem
 
     private void MouseCallback(WindowHandle windowHandle, double xPosition, double yPosition)
     {
-        var mousePos = new vec2((float)xPosition, (float)yPosition);
+        var mousePos = new Vector2((float)xPosition, (float)yPosition);
 
         if (mousePos == previousMousePosition)
             return;
@@ -207,4 +207,4 @@ public delegate void WindowResizedDelegate(object sender, Extent2D oldSize, Exte
 
 public delegate void KeyEventHandler(object? sender, Key key, int scancode, InputAction inputAction, Modifier modifiers);
 
-public record AjivaMouseMotionCallbackEventArgs(vec2 Pos, vec2 Delta, AjivaEngineLayer ActiveLayer);
+public record AjivaMouseMotionCallbackEventArgs(Vector2 Pos, Vector2 Delta, AjivaEngineLayer ActiveLayer);

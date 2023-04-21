@@ -1,9 +1,9 @@
-﻿using ajiva.Components.Media;
+﻿using System.Numerics;
+using ajiva.Components.Media;
 using ajiva.Models.Buffer.ChangeAware;
 using ajiva.Models.Instance;
 using ajiva.Models.Layers.Layer3d;
 using ajiva.Utils.Changing;
-using GlmSharp;
 
 namespace ajiva.Components.RenderAble;
 
@@ -14,14 +14,14 @@ public class RenderMesh3D : RenderMeshIdUnique<RenderMesh3D>
         OnTransformChange = TransformChange;
     }
 
-    public IChangingObserverOnlyValue<mat4>.OnChangedDelegate OnTransformChange { get; }
+    public IChangingObserverOnlyValue<Matrix4x4>.OnChangedDelegate OnTransformChange { get; }
 
     public TextureComponent? TextureComponent { get; set; }
 
     public IAChangeAwareBackupBufferOfT<SolidUniformModel>? Models { get; set; }
     public IAChangeAwareBackupBufferOfT<MeshInstanceData>? InstanceData { get; set; }
 
-    public void TransformChange(mat4 value)
+    public void TransformChange(Matrix4x4 value)
     {
         if (Models is null)
         {
@@ -44,11 +44,11 @@ public class RenderMesh3D : RenderMeshIdUnique<RenderMesh3D>
         {
             
             var data = InstanceData.GetForChange((int)Id);
-            data.Value.Position = new vec3(value.m30,value.m31,value.m32);
-            data.Value.Rotation = vec3.Zero;
-            data.Value.Scale = vec3.Ones;
+            data.Value.Position = value.Translation;
+            data.Value.Rotation = Vector3.Zero;
+            data.Value.Scale = Vector3.One;
             data.Value.TextureIndex = TextureComponent?.TextureId ?? 0;
-            data.Value.Padding = vec2.Ones;
+            data.Value.Padding = Vector2.One;
         }
 
     }

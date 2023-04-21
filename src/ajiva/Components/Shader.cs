@@ -4,7 +4,7 @@ using ajiva.Systems.Assets.Contracts;
 using ajiva.Systems.VulcanEngine.Interfaces;
 using SharpVk;
 using SharpVk.Shanq;
-using SharpVk.Shanq.GlmSharp;
+using SharpVk.Shanq.Numerics;
 using Buffer = System.Buffer;
 
 namespace ajiva.Components;

@@ -12,12 +12,10 @@ using Autofac.Builder;
 using Autofac.Core;
 using SharpVk.Glfw;
 
-/*
 if (args.Length > 0)
 {
     PackAssets();
 }
-*/
 
 ALog.MinimumLogLevel = ALogLevel.Debug;
 ALog.Log(ALogLevel.Info, $"ProcessId: {Environment.ProcessId}");

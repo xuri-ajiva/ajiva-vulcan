@@ -1,11 +1,11 @@
-﻿using GlmSharp;
+﻿using System.Numerics;
 
 namespace ajiva.Models.Layers.Layer3d;
 
 public struct UniformViewProj3d : IComp<UniformViewProj3d>
 {
-    public mat4 View;
-    public mat4 Proj;
+    public Matrix4x4 View;
+    public Matrix4x4 Proj;
 
     /// <inheritdoc />
     public bool CompareTo(UniformViewProj3d other)

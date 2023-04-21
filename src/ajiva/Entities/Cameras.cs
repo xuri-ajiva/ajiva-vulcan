@@ -1,9 +1,10 @@
-﻿using ajiva.Components.Transform;
+﻿using System.Numerics;
+using ajiva.Components.Transform;
 using ajiva.Ecs.Entity.Helper;
-using GlmSharp;
 
 namespace ajiva.Entities;
 
+/*
 [EntityComponent(typeof(Transform3d))]
 public partial class Camera
 {
@@ -62,8 +63,7 @@ public partial class Camera
         public bool right;
         public bool up;
     }
-}
-
+}*/
 [EntityComponent(typeof(Transform3d))]
 public sealed partial class FpsCamera : IUpdate
 {
@@ -73,21 +73,20 @@ public sealed partial class FpsCamera : IUpdate
     public float Fov;
     public float Height;
     public float Width;
-    public mat4 Projection { get; protected set; }
-    public mat4 View { get; private protected set; }
-    public mat4 ProjView => Projection * View;
+    public Matrix4x4 Projection { get; protected set; }
+    public Matrix4x4 View { get; private protected set; }
+    public Matrix4x4 ProjView => Projection * View;
     public float MovementSpeed { get; set; } = 1;
 
     public bool Moving()
     {
         return Keys.left || Keys.right || Keys.up || Keys.down;
     }
-    
 
-    public void Translate(vec3 v)
+    public void Translate(Vector3 v)
     {
-        this.Transform3d.Position += v;
-        View += mat4.Translate(v * -1.0F);
+        Transform3d.Position += v;
+        View += Matrix4x4.CreateTranslation(v * -1.0F);
     }
 
     public void UpdatePerspective(float fov, float width, float height)
@@ -95,9 +94,20 @@ public sealed partial class FpsCamera : IUpdate
         Fov = fov;
         Width = width;
         Height = height;
-        Projection = mat4.Perspective(fov / 2.0F, width / height, .1F, 1000.0F);
-        View = mat4.Identity;
+        //Projection = M(mat4.Perspective(fov / 2.0F, width / height, .1F, 1000.0F));
+        Projection = Matrix4x4.CreatePerspectiveFieldOfView(MathX.Radians(fov / 2.0F), width / height, .1F, 1000.0F);
+        View = Matrix4x4.Identity;
     }
+
+    /*private Matrix4x4 M(mat4 x)
+    {
+        return new Matrix4x4(
+            x.m00, x.m01, x.m02, x.m03,
+            x.m10, x.m11, x.m12, x.m13,
+            x.m20, x.m21, x.m22, x.m23,
+            x.m30, x.m31, x.m32, x.m33
+        );
+    }*/
 
     public class __Keys
     {
@@ -106,23 +116,24 @@ public sealed partial class FpsCamera : IUpdate
         public bool right;
         public bool up;
     }
+
 #endregion
-    
+
     private const float MouseSensitivity = 0.3F;
-    private vec3 lockAt;
+    private Vector3 lockAt;
     public bool FreeCam { get; set; } = true;
 
-    private vec3 CamFront =>
-        new vec3(
-            -glm.Cos(glm.Radians(Transform3d.Rotation.x)) * glm.Sin(glm.Radians(Transform3d.Rotation.y)),
-            glm.Sin(glm.Radians(Transform3d.Rotation.x)),
-            glm.Cos(glm.Radians(Transform3d.Rotation.x)) * glm.Cos(glm.Radians(Transform3d.Rotation.y))
-        ).Normalized;
+    private Vector3 CamFront =>
+        Vector3.Normalize(new Vector3(
+            -MathF.Cos(MathX.Radians(Transform3d.Rotation.X)) * MathF.Sin(MathX.Radians(Transform3d.Rotation.Y)),
+            MathF.Sin(MathX.Radians(Transform3d.Rotation.X)),
+            MathF.Cos(MathX.Radians(Transform3d.Rotation.X)) * MathF.Cos(MathX.Radians(Transform3d.Rotation.Y))
+        ));
 
     //private Transform3d Transform => base.Transform;
 
     /// <inheritdoc />
-    public vec3 FrontNormalized => CamFront;
+    public Vector3 FrontNormalized => CamFront;
 
     /// <inheritdoc />
     public void Update(UpdateInfo info)
@@ -135,11 +146,11 @@ public sealed partial class FpsCamera : IUpdate
 
     public void OnMouseMoved(float xRel, float yRel)
     {
-        Transform3d.RefRotation((ref vec3 r) =>
+        Transform3d.RefRotation((ref Vector3 r) =>
         {
-            r.y += xRel * MouseSensitivity; //yaw
-            r.x -= yRel * MouseSensitivity; //pitch
-            r.x = Math.Clamp(Transform3d.Rotation.x, -89.0F, 89.0f);
+            r.Y += xRel * MouseSensitivity; //yaw
+            r.X -= yRel * MouseSensitivity; //pitch
+            r.X = Math.Clamp(Transform3d.Rotation.X, -89.0F, 89.0f);
         });
 
         lockAt = CamFront;
@@ -148,7 +159,8 @@ public sealed partial class FpsCamera : IUpdate
 
     public void UpdateMatrices()
     {
-        View = mat4.LookAt(Transform3d.Position, Transform3d.Position + lockAt, vec3.UnitY);
+        View = Matrix4x4.CreateLookAt(Transform3d.Position, Transform3d.Position + lockAt, Vector3.UnitY);
+        //View = M(mat4.LookAt(v(Transform3d.Position), v(Transform3d.Position + lockAt), v(Vector3.UnitY)));
     }
 
     public void UpdatePosition(in float delta)
@@ -164,9 +176,9 @@ public sealed partial class FpsCamera : IUpdate
         if (Keys.down)
             Transform3d.Position -= camFront * moveSpeed;
         if (Keys.left)
-            Transform3d.Position -= glm.Cross(camFront, vec3.UnitY).Normalized * moveSpeed;
+            Transform3d.Position -= Vector3.Normalize(Vector3.Cross(camFront, Vector3.UnitY)) * moveSpeed;
         if (Keys.right)
-            Transform3d.Position += glm.Cross(camFront, vec3.UnitY).Normalized * moveSpeed;
+            Transform3d.Position += Vector3.Normalize(Vector3.Cross(camFront, Vector3.UnitY)) * moveSpeed;
 
         UpdateMatrices();
     }
@@ -174,20 +186,20 @@ public sealed partial class FpsCamera : IUpdate
     public void MoveFront(float amount)
     {
         //                      //// not move up and down
-        Translate((!FreeCam ? (vec3.UnitX * lockAt).Normalized : lockAt) * amount);
+        Translate((!FreeCam ? Vector3.Normalize(Vector3.UnitX * lockAt) : lockAt) * amount);
 
         UpdateMatrices();
     }
 
     public void MoveSideways(float amount)
     {
-        Translate(glm.Cross(lockAt, vec3.UnitY).Normalized * amount);
+        Translate(Vector3.Normalize(Vector3.Cross(lockAt, Vector3.UnitY)) * amount);
         UpdateMatrices();
     }
 
     public void MoveUp(float amount)
     {
-        Translate(vec3.UnitY * amount);
+        Translate(Vector3.UnitY * amount);
         UpdateMatrices();
     }
 

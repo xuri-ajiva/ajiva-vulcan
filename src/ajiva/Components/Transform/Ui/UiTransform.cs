@@ -1,6 +1,6 @@
 ﻿using System.Diagnostics;
+using System.Numerics;
 using ajiva.Utils.Changing;
-using GlmSharp;
 
 namespace ajiva.Components.Transform.Ui;
 
@@ -8,20 +8,20 @@ public class UiTransform : DisposingLogger, IComponent, IUiTransform
 {
     private UiAnchor verticalAnchor;
     private UiAnchor horizontalAnchor;
-    private vec2 rotation;
+    private Vector2 rotation;
     private bool isDirty;
     private Rect2Di displaySize;
     private Rect2Df renderSize;
     private IUiTransform? parent;
 
-    public UiTransform(IUiTransform? parent, UiAnchor verticalAnchor, UiAnchor horizontalAnchor, vec2? rotation = null)
+    public UiTransform(IUiTransform? parent, UiAnchor verticalAnchor, UiAnchor horizontalAnchor, Vector2? rotation = null)
     {
         ChangingObserver = new ChangingObserver(0);
 
         Parent = parent;
         VerticalAnchor = verticalAnchor;
         HorizontalAnchor = horizontalAnchor;
-        Rotation = rotation ?? new vec2(0, 0);
+        Rotation = rotation ?? new Vector2(0, 0);
     }
 
     private static (float pos, float span) ComputePos(UiAnchor uiAnchor, Rect2Di display, Rect2Df render)
@@ -121,7 +121,7 @@ public class UiTransform : DisposingLogger, IComponent, IUiTransform
             ChangingObserver.Changed();
         }
     }
-    public vec2 Rotation
+    public Vector2 Rotation
     {
         get
         {
@@ -216,12 +216,12 @@ public class UiTransform : DisposingLogger, IComponent, IUiTransform
     [Obsolete("Use RenderSize instead")]
     public RenderOffsetScale CalculateRenderOffsetScale()
     {
-        if (Parent is null) return new RenderOffsetScale(new vec2(0, 0), new vec2(1, 1));
+        if (Parent is null) return new RenderOffsetScale(new Vector2(0, 0), new Vector2(1, 1));
 
         var (posX, spanX) = ComputePos(horizontalAnchor, Parent.DisplaySize, Parent.RenderSize);
         var (posY, spanY) = ComputePos(verticalAnchor, Parent.DisplaySize, Parent.RenderSize);
 
-        var ret = new RenderOffsetScale(new vec2(posX, posY), new vec2(spanX, spanY));
+        var ret = new RenderOffsetScale(new Vector2(posX, posY), new Vector2(spanX, spanY));
         Validate(ret, RenderSize);
         return ret;
     }
@@ -236,10 +236,10 @@ public class UiTransform : DisposingLogger, IComponent, IUiTransform
         Validate(offset + scale, renderSize);
     }
 
-    private static void Validate(vec2 posVec, Rect2Df renderSize)
+    private static void Validate(Vector2 posVec, Rect2Df renderSize)
     {
-        Validate(posVec.x, renderSize.MinX, renderSize.MaxX);
-        Validate(posVec.y, renderSize.MinY, renderSize.MaxY);
+        Validate(posVec.X, renderSize.MinX, renderSize.MaxX);
+        Validate(posVec.Y, renderSize.MinY, renderSize.MaxY);
     }
 
     private static void Validate(float pos, float min, float max)

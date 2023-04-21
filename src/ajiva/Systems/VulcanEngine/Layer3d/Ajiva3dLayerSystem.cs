@@ -222,7 +222,7 @@ public class Ajiva3dLayerSystem : SystemBase, IUpdate, IAjivaLayer<UniformViewPr
         lock (MainLock)
         {
             var (_, delta, ajivaEngineLayer) = e;
-            if (ajivaEngineLayer == AjivaEngineLayer.Layer3d) MainCamara.OnMouseMoved(delta.x, delta.y);
+            if (ajivaEngineLayer == AjivaEngineLayer.Layer3d) MainCamara.OnMouseMoved(delta.X, delta.Y);
         }
     }
 

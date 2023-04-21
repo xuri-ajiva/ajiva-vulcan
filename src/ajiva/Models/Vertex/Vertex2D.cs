@@ -1,5 +1,5 @@
-﻿using System.Runtime.InteropServices;
-using GlmSharp;
+﻿using System.Numerics;
+using System.Runtime.InteropServices;
 using SharpVk;
 using SharpVk.Shanq;
 
@@ -7,23 +7,23 @@ namespace ajiva.Models.Vertex;
 
 public struct Vertex2D
 {
-    public Vertex2D(vec2 position, vec3 colour, vec2 textCoord)
+    public Vertex2D(Vector2 position, Vector3 colour, Vector2 textCoord)
     {
         Position = position;
         Colour = colour;
         TextCoord = textCoord;
     }
 
-    public Vertex2D(vec2 position, vec3 colour)
+    public Vertex2D(Vector2 position, Vector3 colour)
     {
         Position = position;
         Colour = colour;
         TextCoord = position;
     }
 
-    [Location(0)] public vec2 Position;
-    [Location(1)] public vec3 Colour;
-    [Location(3)] public vec2 TextCoord;
+    [Location(0)] public Vector2 Position;
+    [Location(1)] public Vector3 Colour;
+    [Location(3)] public Vector2 TextCoord;
 
     public static VertexInputBindingDescription GetBindingDescription(uint binding)
     {

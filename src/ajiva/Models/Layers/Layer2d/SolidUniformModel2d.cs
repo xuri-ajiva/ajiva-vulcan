@@ -1,10 +1,10 @@
-﻿using GlmSharp;
+﻿using System.Numerics;
 
 namespace ajiva.Models.Layers.Layer2d;
 
 public struct SolidUniformModel2d : IComp<SolidUniformModel2d>
 {
-    public mat4 Model;
+    public Matrix4x4 Model;
 
     /// <inheritdoc />
     public bool CompareTo(SolidUniformModel2d other)

@@ -1,4 +1,5 @@
-﻿using System.Runtime.InteropServices;
+﻿using System.Numerics;
+using System.Runtime.InteropServices;
 using ajiva.Components;
 using ajiva.Components.Mesh;
 using ajiva.Components.Mesh.Instance;
@@ -12,7 +13,6 @@ using ajiva.Systems.VulcanEngine.Interfaces;
 using ajiva.Systems.VulcanEngine.Layer;
 using ajiva.Systems.VulcanEngine.Layers;
 using ajiva.Utils.Changing;
-using GlmSharp;
 using SharpVk;
 
 namespace ajiva.Systems.VulcanEngine.Debug;
@@ -201,7 +201,7 @@ public class DebugComponent : RenderMeshIdUnique<DebugComponent>
 
     public IMesh Mesh { get; }
 
-    public void TransformChange(mat4 value)
+    public void TransformChange(Matrix4x4 value)
     {
         Instance?.UpdateData(Update);
     }
@@ -209,12 +209,12 @@ public class DebugComponent : RenderMeshIdUnique<DebugComponent>
     private void Update(ref MeshInstanceData value)
     {
         value.Position = transform.Position;
-        value.Rotation = glm.Radians(transform.Rotation);
+        value.Rotation = transform.Rotation; //todo: fix radians?
         value.Scale = transform.Scale;
-        value.Padding = vec2.Ones;
+        value.Padding = Vector2.One;;
     }
 
-    public IChangingObserverOnlyValue<mat4>.OnChangedDelegate OnTransformChange { get; }
+    public IChangingObserverOnlyValue<Matrix4x4>.OnChangedDelegate OnTransformChange { get; }
 
     public bool DrawTransform { get; set; }
     public bool DrawWireframe { get; set; }

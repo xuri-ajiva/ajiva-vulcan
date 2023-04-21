@@ -1,17 +1,17 @@
+using System.Numerics;
 using ajiva.Utils.Changing;
-using GlmSharp;
 
 namespace ajiva.Components.Transform;
 
-public class Transform3d : DisposingLogger, IComponent, ITransform<vec3, mat4>, IModelMatTransform
+public class Transform3d : DisposingLogger, ITransform<Vector3, Matrix4x4>, IModelMatTransform
 {
-    private vec3 position;
-    private vec3 rotation;
-    private vec3 scale;
+    private Vector3 position;
+    private Vector3 rotation;
+    private Vector3 scale;
 
-    public Transform3d(vec3 position, vec3 rotation, vec3 scale)
+    public Transform3d(Vector3 position, Vector3 rotation, Vector3 scale)
     {
-        ChangingObserver = new ChangingObserverOnlyValue<mat4>(() => ModelMat);
+        ChangingObserver = new ChangingObserverOnlyValue<Matrix4x4>(() => ModelMat);
         ChangingObserver.RaiseAndSetIfChanged(ref this.position, position);
         ChangingObserver.RaiseAndSetIfChanged(ref this.rotation, rotation);
         ChangingObserver.RaiseAndSetIfChanged(ref this.scale, scale);
@@ -20,23 +20,23 @@ public class Transform3d : DisposingLogger, IComponent, ITransform<vec3, mat4>, 
     {
         ChangingObserver.Changed(ChangingObserver.Result());
     }
-    public Transform3d(vec3 position, vec3 rotation) : this(position, rotation, vec3.Ones)
+    public Transform3d(Vector3 position, Vector3 rotation) : this(position, rotation, Vector3.One)
     {
     }
 
-    public Transform3d(vec3 position) : this(position, vec3.Zero)
+    public Transform3d(Vector3 position) : this(position, Vector3.Zero)
     {
     }
 
-    public Transform3d() : this(vec3.Zero)
+    public Transform3d() : this(Vector3.Zero)
     {
     }
 
-    public mat4 ScaleMat => mat4.Scale(Scale);
-    public mat4 RotationMat => mat4.RotateX(glm.Radians(Rotation.x)) * mat4.RotateY(glm.Radians(Rotation.y)) * mat4.RotateZ(glm.Radians(Rotation.z));
-    public mat4 PositionMat => mat4.Translate(Position);
+    public Matrix4x4 ScaleMat => Matrix4x4.CreateScale(Scale);
+    public Matrix4x4 RotationMat => Matrix4x4.CreateRotationX(MathX.Radians(Rotation.X)) * Matrix4x4.CreateRotationY(MathX.Radians(Rotation.Y)) * Matrix4x4.CreateRotationZ(MathX.Radians(Rotation.Z));
+    public Matrix4x4 PositionMat => Matrix4x4.CreateTranslation(Position);
 
-    public mat4 ModelMat => PositionMat * RotationMat * ScaleMat;
+    public Matrix4x4 ModelMat => PositionMat * RotationMat * ScaleMat;
 
     public override string ToString()
     {
@@ -45,40 +45,40 @@ public class Transform3d : DisposingLogger, IComponent, ITransform<vec3, mat4>, 
 
 #region propatys
 
-    public vec3 Position
+    public Vector3 Position
     {
         get => position;
         set => ChangingObserver.RaiseAndSetIfChanged(ref position, value);
     }
-    public vec3 Rotation
+    public Vector3 Rotation
     {
         get => rotation;
         set => ChangingObserver.RaiseAndSetIfChanged(ref rotation, value);
     }
-    public vec3 Scale
+    public Vector3 Scale
     {
         get => scale;
         set => ChangingObserver.RaiseAndSetIfChanged(ref scale, value);
     }
 
     /// <inheritdoc />
-    public IChangingObserverOnlyValue<mat4> ChangingObserver { get; set; }
+    public IChangingObserverOnlyValue<Matrix4x4> ChangingObserver { get; set; }
 
-    public void RefPosition(ITransform<vec3, mat4>.ModifyRef mod)
+    public void RefPosition(ITransform<Vector3, Matrix4x4>.ModifyRef mod)
     {
         var value = position;
         mod?.Invoke(ref position);
         ChangingObserver.RaiseIfChanged(position, value);
     }
 
-    public void RefRotation(ITransform<vec3, mat4>.ModifyRef mod)
+    public void RefRotation(ITransform<Vector3, Matrix4x4>.ModifyRef mod)
     {
         var value = rotation;
         mod?.Invoke(ref rotation);
         ChangingObserver.RaiseIfChanged(rotation, value);
     }
 
-    public void RefScale(ITransform<vec3, mat4>.ModifyRef mod)
+    public void RefScale(ITransform<Vector3, Matrix4x4>.ModifyRef mod)
     {
         var value = scale;
         mod?.Invoke(ref scale);

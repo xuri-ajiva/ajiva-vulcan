@@ -1,10 +1,10 @@
-﻿using GlmSharp;
+﻿using System.Numerics;
 
 namespace ajiva.Models.Layers.Layer3d;
 
 public struct SolidUniformModel : IComp<SolidUniformModel>
 {
-    public mat4 Model;
+    public Matrix4x4 Model;
     public uint TextureSamplerId;
     public int TextureSamplerId2;
     public int TextureSamplerId3;

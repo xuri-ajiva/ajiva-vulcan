@@ -1,4 +1,4 @@
-﻿using GlmSharp;
+﻿using System.Numerics;
 
 namespace ajiva.Components.Transform.Ui;
 
@@ -26,7 +26,7 @@ public class UIRootTransform : IUiTransform
     public UiAnchor HorizontalAnchor { get; set; } = default;
 
     /// <inheritdoc />
-    public vec2 Rotation { get; set; } = vec2.Zero;
+    public Vector2 Rotation { get; set; } = Vector2.Zero;
 
     /// <inheritdoc />
     public Rect2Di DisplaySize

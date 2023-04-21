@@ -1,9 +1,9 @@
-﻿using ajiva.Components.Media;
+﻿using System.Numerics;
+using ajiva.Components.Media;
 using ajiva.Components.Mesh;
 using ajiva.Components.Mesh.Instance;
 using ajiva.Components.Transform;
 using ajiva.Models.Instance;
-using GlmSharp;
 
 namespace ajiva.Components.RenderAble;
 
@@ -23,7 +23,7 @@ public class RenderInstanceMesh : DisposingLogger, IComponent
     public IMesh Mesh { get; }
     public TextureComponent? TextureComponent { get; }
 
-    public void TransformChange(mat4 value)
+    public void TransformChange(Matrix4x4 value)
     {
         Instance?.UpdateData(Update);
     }
@@ -31,9 +31,9 @@ public class RenderInstanceMesh : DisposingLogger, IComponent
     private void Update(ref MeshInstanceData value)
     {
         value.Position = transform.Position;
-        value.Rotation = glm.Radians(transform.Rotation);
+        value.Rotation = transform.Rotation; // todo check if radians are needed here
         value.Scale = transform.Scale;
         value.TextureIndex = TextureComponent?.TextureId ?? 0;
-        value.Padding = vec2.Ones;
+        value.Padding = Vector2.One;
     }
 }

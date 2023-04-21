@@ -1,10 +1,10 @@
-﻿using ajiva.Components.Media;
+﻿using System.Numerics;
+using ajiva.Components.Media;
 using ajiva.Components.Mesh;
 using ajiva.Components.Physics;
 using ajiva.Components.RenderAble;
 using ajiva.Components.Transform;
 using ajiva.Ecs.Entity.Helper;
-using GlmSharp;
 
 namespace ajiva.Entities;
 
@@ -25,8 +25,8 @@ public partial class Cube
         PhysicsComponent ??= new PhysicsComponent {
             IsStatic = false,
             Mass = 10,
-            Velocity = new vec3(r.NextSingle(), r.NextSingle(), r.NextSingle()),
-            Force = new vec3(r.NextSingle(), -(9.8f * 9.8f), r.NextSingle()),
+            Velocity = new Vector3(r.NextSingle(), r.NextSingle(), r.NextSingle()),
+            Force = new Vector3(r.NextSingle(), -(9.8f * 9.8f), r.NextSingle()),
             Transform = Transform3d,
         };
     }

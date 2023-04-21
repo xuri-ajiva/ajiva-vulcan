@@ -1,4 +1,5 @@
-﻿using ajiva.Components.Mesh;
+﻿using System.Numerics;
+using ajiva.Components.Mesh;
 using ajiva.Components.Physics;
 using ajiva.Components.Transform;
 using ajiva.Components.Transform.Ui;
@@ -13,7 +14,6 @@ using ajiva.Utils;
 using ajiva.Worker;
 using Ajiva.Wrapper.Logger;
 using Autofac;
-using GlmSharp;
 using SharpVk.Glfw;
 
 namespace ajiva.application;
@@ -78,8 +78,8 @@ public class Application : DisposingLogger
         {
             var cube = _factory.CreateCube()
                 .With(new Transform3d() {
-                    Position = new vec3(Random.Shared.Next(-posRange, posRange), Random.Shared.Next(-posRange, posRange), Random.Shared.Next(-posRange, posRange)),
-                    Rotation = new vec3(Random.Shared.Next(0, 100), Random.Shared.Next(0, 100), Random.Shared.Next(0, 100)),
+                    Position = new Vector3(Random.Shared.Next(-posRange, posRange), Random.Shared.Next(-posRange, posRange), Random.Shared.Next(-posRange, posRange)),
+                    Rotation = new Vector3(Random.Shared.Next(0, 100), Random.Shared.Next(0, 100), Random.Shared.Next(0, 100)),
                 })
                 .Finalize()
                 .Configure<CollisionsComponent>(x => { x.MeshId = meshPref.MeshId; });
@@ -128,9 +128,9 @@ public class Application : DisposingLogger
                         var cube = _factory.CreateCube()
                             .With(new Transform3d() {
                                 //trans.Position = new vec3(i * sz, (-index * 2) * Math.Min(rep / (float)i, 10) , j * sz);
-                                Position = new vec3(i * sz, (-index * 2), j * sz),
-                                Rotation = new vec3(i * 90, j * 90, 0),
-                                Scale = new vec3(sz / 2.1f),
+                                Position = new Vector3(i * sz, (-index * 2), j * sz),
+                                Rotation = new Vector3(i * 90, j * 90, 0),
+                                Scale = new Vector3(sz / 2.1f),
                             }).Finalize();
                     }
                 });
@@ -154,8 +154,8 @@ public class Application : DisposingLogger
                     {
                         var cube = _factory.CreateCube()
                             .With(new Transform3d() {
-                                Position = new vec3(Random.Shared.Next(-posRange, posRange), Random.Shared.Next(-posRange, posRange), Random.Shared.Next(-posRange, posRange)),
-                                Rotation = new vec3(Random.Shared.Next(0, 100), Random.Shared.Next(0, 100), Random.Shared.Next(0, 100)),
+                                Position = new Vector3(Random.Shared.Next(-posRange, posRange), Random.Shared.Next(-posRange, posRange), Random.Shared.Next(-posRange, posRange)),
+                                Rotation = new Vector3(Random.Shared.Next(0, 100), Random.Shared.Next(0, 100), Random.Shared.Next(0, 100)),
                             }).Finalize();
                     }
                     change.Dispose();
@@ -167,7 +167,7 @@ public class Application : DisposingLogger
                 {
                     x.Scale = new vec2(.05f);
                 }).Register(entityComponentSystem);*/
-                spinner.Get<UiTransform>().Rotation += new vec2(0, .1f);
+                spinner.Get<UiTransform>().Rotation += new Vector2(0, .1f);
                 break;
 
             case Key.P:
@@ -190,7 +190,7 @@ public class Application : DisposingLogger
                     .With(new Transform3d() {
                         Position = sys.MainCamara.Transform3d.Position + sys.MainCamara.FrontNormalized * 25,
                         Rotation = sys.MainCamara.Transform3d.Rotation,
-                        Scale = new vec3(3),
+                        Scale = new Vector3(3),
                     })
                     .Finalize()
                     .Configure<ICollider>(x => { x.IsStatic = true; })
@@ -202,7 +202,7 @@ public class Application : DisposingLogger
                 var cubex2 = _factory.CreateCube()
                     .With(new Transform3d() {
                         Position = sys2.MainCamara.Transform3d.Position,
-                        Scale = new vec3(10),
+                        Scale = new Vector3(10),
                     })
                     .Finalize()
                     .Configure<ICollider>(x => { x.IsStatic = true; })

@@ -2,7 +2,7 @@
 
 namespace ajiva.Components.Transform;
 
-public interface ITransform<TV, TM> : IDisposingLogger, IComponent where TV : struct, IReadOnlyList<float> where TM : struct, IReadOnlyList<float>
+public interface ITransform<TV, TM> : IDisposingLogger, IComponent where TV : struct where TM : struct
 {
     public delegate void ModifyRef(ref TV vec);
 

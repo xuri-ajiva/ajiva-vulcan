@@ -1,7 +1,7 @@
-﻿using ajiva.Components.Physics;
+﻿using System.Numerics;
+using ajiva.Components.Physics;
 using ajiva.Components.Transform.SpatialAcceleration;
 using ajiva.Worker;
-using GlmSharp;
 
 namespace ajiva.Systems.Physics;
 
@@ -17,7 +17,7 @@ public class BoundingBoxComponentsSystem : ComponentSystemBase<BoundingBox>, IUp
     {
         _physicsSystem = physicsSystem;
         _workerPool = workerPool;
-        var pos = new vec3(float.MinValue / MathF.PI);
+        var pos = new Vector3(float.MinValue / MathF.PI);
         _octalTree = new StaticOctalTreeContainer<BoundingBox>(new StaticOctalSpace(pos, pos * -MathF.E), 255);
     }
 

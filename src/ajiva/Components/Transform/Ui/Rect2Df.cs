@@ -1,4 +1,4 @@
-﻿using GlmSharp;
+﻿using System.Numerics;
 
 namespace ajiva.Components.Transform.Ui;
 
@@ -9,6 +9,6 @@ public readonly record struct Rect2Df(float MinX, float MinY, float MaxX, float 
     public float CenterX => MinX + SizeX / 2;
     public float CenterY => MinY + SizeY / 2;
     
-    public vec2 Min => new vec2(MinX, MinY);
-    public vec2 Max => new vec2(MaxX, MaxY);
+    public Vector2 Min => new Vector2(MinX, MinY);
+    public Vector2 Max => new Vector2(MaxX, MaxY);
 }

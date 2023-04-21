@@ -1,14 +1,14 @@
-﻿using System.Runtime.InteropServices;
-using GlmSharp;
+﻿using System.Numerics;
+using System.Runtime.InteropServices;
 
 namespace ajiva.Models.Instance;
 
 [StructLayout(LayoutKind.Sequential)]
 public struct UiInstanceData
 {
-    public vec2 Offset;
-    public vec2 Scale;
-    public vec2 Rotation;
+    public Vector2 Offset;
+    public Vector2 Scale;
+    public Vector2 Rotation;
     public uint TextureIndex;
     public UiDrawType DrawType;
 }

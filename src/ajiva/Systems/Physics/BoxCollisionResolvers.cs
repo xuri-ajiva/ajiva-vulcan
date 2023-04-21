@@ -1,5 +1,5 @@
-﻿using ajiva.Components.Transform.SpatialAcceleration;
-using GlmSharp;
+﻿using System.Numerics;
+using ajiva.Components.Transform.SpatialAcceleration;
 
 namespace ajiva.Systems.Physics;
 
@@ -7,14 +7,14 @@ internal static class BoxCollisionResolvers
 {
     public static Random Random = new Random();
 
-    public static vec3 Default(StaticOctalSpace a, StaticOctalSpace b)
+    /*public static Vector3 Default(StaticOctalSpace a, StaticOctalSpace b)
     {
         var axis = AxisResolve(a, b);
-        return axis + vec3.Random(Random, -0.01f, 0.01f);
+        return axis + Vector3.Random(Random, -0.01f, 0.01f);
         //var radius = -FastCubeCollisionResolver(a, b)/2;
-        //return glm.Mix(axis ,radius, new vec3(.2f));
+        //return glm.Mix(axis ,radius, new Vector3(.2f));
         //return -FastCubeCollisionResolver(a, b)/2;
-    }
+    }*/
 
     /// <summary>
     /// collision resolution between two cubes
@@ -22,7 +22,7 @@ internal static class BoxCollisionResolvers
     /// <param name="a"></param>
     /// <param name="b"></param>
     /// <returns>the vector to resolve the collision</returns>
-    private static vec3 FastCubeCollisionResolver(StaticOctalSpace a, StaticOctalSpace b)
+    private static Vector3 FastCubeCollisionResolver(StaticOctalSpace a, StaticOctalSpace b)
     {
         var aCenter = a.Min + a.Size / 2;
         var bCenter = b.Min + b.Size / 2;
@@ -39,37 +39,37 @@ internal static class BoxCollisionResolvers
         var y = 0f;
         var z = 0f;
 
-        if (aMinB.x < bMinA.x)
+        if (aMinB.X < bMinA.X)
         {
-            x = bMinA.x - aMinB.x;
+            x = bMinA.X - aMinB.X;
         }
-        else if (aMaxB.x > bMaxA.x)
+        else if (aMaxB.X > bMaxA.X)
         {
-            x = bMaxA.x - aMaxB.x;
-        }
-
-        if (aMinB.y < bMinA.y)
-        {
-            y = bMinA.y - aMinB.y;
-        }
-        else if (aMaxB.y > bMaxA.y)
-        {
-            y = bMaxA.y - aMaxB.y;
+            x = bMaxA.X - aMaxB.X;
         }
 
-        if (aMinB.z < bMinA.z)
+        if (aMinB.Y < bMinA.Y)
         {
-            z = bMinA.z - aMinB.z;
+            y = bMinA.Y - aMinB.Y;
         }
-        else if (aMaxB.z > bMaxA.z)
+        else if (aMaxB.Y > bMaxA.Y)
         {
-            z = bMaxA.z - aMaxB.z;
+            y = bMaxA.Y - aMaxB.Y;
         }
 
-        return new vec3(x, y, z);
+        if (aMinB.Z < bMinA.Z)
+        {
+            z = bMinA.Z - aMinB.Z;
+        }
+        else if (aMaxB.Z > bMaxA.Z)
+        {
+            z = bMaxA.Z - aMaxB.Z;
+        }
+
+        return new Vector3(x, y, z);
     }
 
-    private static vec3 RadiusResolve(StaticOctalSpace a, StaticOctalSpace b)
+    private static Vector3 RadiusResolve(StaticOctalSpace a, StaticOctalSpace b)
     {
         var aMin = a.Min;
         var aMax = a.Max;
@@ -82,15 +82,15 @@ internal static class BoxCollisionResolvers
         var aSize = aMax - aMin;
         var bSize = bMax - bMin;
 
-        var aRadius = aSize.Length / 2;
-        var bRadius = bSize.Length / 2;
+        var aRadius = aSize.Length() / 2;
+        var bRadius = bSize.Length() / 2;
 
         var aToB = bCenter - aCenter;
-        var aToBLength = aToB.Length;
+        var aToBLength = aToB.Length();
 
         if (aToBLength > aRadius + bRadius)
         {
-            return vec3.Zero;
+            return Vector3.Zero;
         }
 
         var aToBNormalized = aToB / aToBLength;
@@ -102,7 +102,7 @@ internal static class BoxCollisionResolvers
         return resolved;
     }
 
-    private static vec3 AxisResolve(StaticOctalSpace a, StaticOctalSpace b)
+    private static Vector3 AxisResolve(StaticOctalSpace a, StaticOctalSpace b)
     {
         var aCenter = a.Position + a.Size / 2;
         var bCenter = b.Position + b.Size / 2;
@@ -114,30 +114,30 @@ internal static class BoxCollisionResolvers
             ry = 0,
             rz = 0;
 
-        if (!(Math.Abs(v.x) < hh.x) || !(Math.Abs(v.y) < hh.y) || !(Math.Abs(v.z) < hh.z)) return vec3.Zero;
-        var o = hh - vec3.Abs(v);
-        if (o.x >= o.y)
+        if (!(Math.Abs(v.X) < hh.X) || !(Math.Abs(v.Y) < hh.Y) || !(Math.Abs(v.Z) < hh.Z)) return Vector3.Zero;
+        var o = hh - Vector3.Abs(v);
+        if (o.X >= o.Y)
         {
-            if (v.y > 0)
-                ry += o.y;
+            if (v.Y > 0)
+                ry += o.Y;
             else
-                ry -= o.y;
+                ry -= o.Y;
         }
-        else if (o.x >= o.z)
+        else if (o.X >= o.Z)
         {
-            if (v.z > 0)
-                rz += o.z;
+            if (v.Z > 0)
+                rz += o.Z;
             else
-                rz -= o.z;
+                rz -= o.Z;
         }
-        //if (o.y >= o.z)
+        //if (o.Y >= o.Z)
         else
         {
-            if (v.x > 0)
-                rx += o.x;
+            if (v.X > 0)
+                rx += o.X;
             else
-                rx -= o.x;
+                rx -= o.X;
         }
-        return new vec3(rx, ry, rz);
+        return new Vector3(rx, ry, rz);
     }
 }
