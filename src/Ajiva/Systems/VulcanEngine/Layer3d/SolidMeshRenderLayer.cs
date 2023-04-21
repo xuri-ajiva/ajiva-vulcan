@@ -1,5 +1,6 @@
 ﻿using System.Numerics;
 using System.Runtime.InteropServices;
+using Ajiva.Assets;
 using Ajiva.Components;
 using Ajiva.Components.Media;
 using Ajiva.Components.Mesh;
@@ -9,7 +10,6 @@ using Ajiva.Components.Transform;
 using Ajiva.Models.Instance;
 using Ajiva.Models.Layers.Layer3d;
 using Ajiva.Models.Vertex;
-using Ajiva.Systems.Assets;
 using Ajiva.Systems.VulcanEngine.Interfaces;
 using Ajiva.Systems.VulcanEngine.Layer;
 using Ajiva.Systems.VulcanEngine.Layers;
@@ -20,10 +20,12 @@ namespace Ajiva.Systems.VulcanEngine.Layer3d;
 
 public class SolidMeshRenderLayer : ComponentSystemBase<RenderInstanceMesh>, IAjivaLayerRenderSystem<UniformViewProj3d>, IUpdate
 {
+    private const uint VERTEX_BUFFER_BIND_ID = 0;
+    private const uint INSTANCE_BUFFER_BIND_ID = 1;
     //todo remove some duplicates between Layers
     private readonly IDeviceSystem _deviceSystem;
     private readonly ITextureSystem _textureSystem;
-    private InstanceMeshPool<MeshInstanceData> instanceMeshPool;
+    private readonly InstanceMeshPool<MeshInstanceData> instanceMeshPool;
     private long dataVersion;
 
     /// <inheritdoc />
@@ -89,6 +91,18 @@ public class SolidMeshRenderLayer : ComponentSystemBase<RenderInstanceMesh>, IAj
             bind, attrib, MainShader, PipelineDescriptorInfos);
     }
 
+    /// <inheritdoc />
+    public RenderTarget RenderTarget { get; set; }
+
+    /// <inheritdoc />
+    public void Update(UpdateInfo delta)
+    {
+        instanceMeshPool.Update(delta);
+    }
+
+    /// <inheritdoc />
+    public PeriodicUpdateInfo Info { get; } = new PeriodicUpdateInfo(TimeSpan.FromMilliseconds(10));
+
     private void CreatePipelineDescriptorInfos()
     {
         var textureSamplerImageViews = _textureSystem.TextureSamplerImageViews;
@@ -104,12 +118,6 @@ public class SolidMeshRenderLayer : ComponentSystemBase<RenderInstanceMesh>, IAj
         };
     }
 
-    /// <inheritdoc />
-    public RenderTarget RenderTarget { get; set; }
-
-    private const uint VERTEX_BUFFER_BIND_ID = 0;
-    private const uint INSTANCE_BUFFER_BIND_ID = 1;
-
     private void RebuildData(IInstanceMeshPool<MeshInstanceData> sender)
     {
         Interlocked.Increment(ref dataVersion);
@@ -121,15 +129,6 @@ public class SolidMeshRenderLayer : ComponentSystemBase<RenderInstanceMesh>, IAj
         base.ReleaseUnmanagedResources(disposing);
         instanceMeshPool.Dispose();
     }
-
-    /// <inheritdoc />
-    public void Update(UpdateInfo delta)
-    {
-        instanceMeshPool.Update(delta);
-    }
-
-    /// <inheritdoc />
-    public PeriodicUpdateInfo Info { get; } = new PeriodicUpdateInfo(TimeSpan.FromMilliseconds(10));
 
     /// <inheritdoc />
     public override RenderInstanceMesh RegisterComponent(IEntity entity, RenderInstanceMesh component)
@@ -172,7 +171,7 @@ public class SolidMeshRenderLayer : ComponentSystemBase<RenderInstanceMesh>, IAj
     {
         if (!entity.TryGetComponent<Transform3d>(out var transform))
             transform = new Transform3d();
-        if(!entity.TryGetComponent<TextureComponent>(out var texture))
+        if (!entity.TryGetComponent<TextureComponent>(out var texture))
             texture = new TextureComponent();
         return new RenderInstanceMesh(MeshPrefab.Rect, transform, texture);
     }

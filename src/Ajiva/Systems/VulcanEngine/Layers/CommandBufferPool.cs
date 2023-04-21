@@ -6,10 +6,9 @@ namespace Ajiva.Systems.VulcanEngine.Layers;
 
 public class CommandBufferPool
 {
-    private readonly DeviceSystem deviceSystem;
-
     private readonly List<RenderBuffer> allocatedBuffers = new List<RenderBuffer>();
     private readonly Queue<RenderBuffer> availableBuffers = new Queue<RenderBuffer>();
+    private readonly DeviceSystem deviceSystem;
     private readonly Dictionary<CommandBuffer, RenderBuffer> renderBuffersLockup = new Dictionary<CommandBuffer, RenderBuffer>();
 
     public CommandBufferPool(DeviceSystem deviceSystem)
@@ -30,13 +29,12 @@ public class CommandBufferPool
         commandBuffer.SetScissor(0, framebuffer.FullRec);
         commandBuffer.BindPipeline(PipelineBindPoint.Graphics, guard.Pipeline.Pipeline);
     }
-    
+
     public static void EndRecordeRenderBuffer(CommandBuffer commandBuffer)
     {
         commandBuffer.EndRenderPass();
         commandBuffer.End();
     }
-
 
     public RenderBuffer GetNewBuffer()
     {
@@ -50,7 +48,7 @@ public class CommandBufferPool
         renderBuffersLockup.Add(renderBuffer.CommandBuffer, renderBuffer);
         availableBuffers.Enqueue(renderBuffer);
         if (allocatedBuffers.Count > 50)
-            Log.Warning("Alloc Buffer for CommandBuffer@{GetHashCode()}, Total Buffers: {Count}",GetHashCode(),allocatedBuffers.Count);
+            Log.Warning("Alloc Buffer for CommandBuffer@{GetHashCode()}, Total Buffers: {Count}", GetHashCode(), allocatedBuffers.Count);
     }
 
     private RenderBuffer GetNextBuffer()
@@ -86,10 +84,7 @@ public class CommandBufferPool
         if (renderBuffer is null) return;
         allocatedBuffers.Remove(renderBuffer);
         if (availableBuffers.Contains(renderBuffer)) Log.Error("Buffer Available but should be deleted!");
-        deviceSystem.UseCommandPool(x =>
-        {
-            x.FreeCommandBuffers(renderBuffer.CommandBuffer);
-        }, CommandPoolSelector.Background);
+        deviceSystem.UseCommandPool(x => { x.FreeCommandBuffers(renderBuffer.CommandBuffer); }, CommandPoolSelector.Background);
     }
 
     private void FreeBuffers(CommandBuffer? commandBuffer)

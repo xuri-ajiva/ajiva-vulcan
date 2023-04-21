@@ -1,20 +1,28 @@
 ﻿using Ajiva.Ecs;
 using Autofac;
 
+namespace Ajiva.Application;
+
 public class UpdateManager : IUpdateManager, ILifetimeManager
 {
     private readonly ContainerProxy _container;
     private readonly IEntityRegistry _entityRegistry;
-    private readonly PeriodicUpdateRunner _updateRunner;
     private readonly ILogger _logger;
+    private readonly PeriodicUpdateRunner _updateRunner;
 
-    public UpdateManager(ContainerProxy container, IEntityRegistry entityRegistry, PeriodicUpdateRunner updateRunner,
+    public UpdateManager(
+        ContainerProxy container, IEntityRegistry entityRegistry, PeriodicUpdateRunner updateRunner,
         ILogger logger)
     {
         _container = container;
         _entityRegistry = entityRegistry;
         _updateRunner = updateRunner;
         _logger = logger;
+    }
+
+    public void IssueClose()
+    {
+        Task.Run(Stop);
     }
 
     public void RegisterUpdate(IUpdate update)
@@ -35,9 +43,7 @@ public class UpdateManager : IUpdateManager, ILifetimeManager
                      .Select(t => _container.Container.Resolve(t))
                      .OfType<IUpdate>()
                      .Distinct())
-        {
             _updateRunner.RegisterUpdate(registration);
-        }
     }
 
     public void Run()
@@ -56,18 +62,10 @@ public class UpdateManager : IUpdateManager, ILifetimeManager
         _updateRunner.Stop();
     }
 
-    void LogStatus(Dictionary<IUpdate, PeriodicUpdateRunner.UpdateData> updateDatas)
+    private void LogStatus(Dictionary<IUpdate, PeriodicUpdateRunner.UpdateData> updateDatas)
     {
         _logger.Information("PendingWorkItemCount: {PendingWorkItemCount}, EntitiesCount: {EntitiesCount}", ThreadPool.PendingWorkItemCount, _entityRegistry.EntitiesCount);
         _logger.Information(new string('-', 100));
-        foreach (var (key, value) in updateDatas)
-        {
-            _logger.Information($"[ITERATION:{value.Iteration:X8}] | {value.Iteration.ToString(),-8}| {key.GetType().Name,-40}: Delta: {new TimeSpan(value.Delta):G}");
-        }
-    }
-
-    public void IssueClose()
-    {
-        Task.Run(Stop);
+        foreach (var (key, value) in updateDatas) _logger.Information($"[ITERATION:{value.Iteration:X8}] | {value.Iteration.ToString(),-8}| {key.GetType().Name,-40}: Delta: {new TimeSpan(value.Delta):G}");
     }
 }

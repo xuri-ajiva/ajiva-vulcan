@@ -8,10 +8,9 @@ namespace Ajiva.Components.RenderAble;
 
 public class RenderInstanceMesh2D : DisposingLogger, IComponent
 {
-    public IInstancedMeshInstance<UiInstanceData>? Instance { get; set; }
+    private readonly TextureComponent? textureComponent;
 
     private readonly UiTransform transform;
-    private readonly TextureComponent? textureComponent;
 
     public RenderInstanceMesh2D(IMesh mesh, UiTransform transform, TextureComponent textureComponent)
     {
@@ -21,9 +20,14 @@ public class RenderInstanceMesh2D : DisposingLogger, IComponent
         this.textureComponent = textureComponent;
     }
 
+    public IInstancedMeshInstance<UiInstanceData>? Instance { get; set; }
+
     public IMesh Mesh { get; }
 
-    public void UpdateData() => Instance?.UpdateData(Update);
+    public void UpdateData()
+    {
+        Instance?.UpdateData(Update);
+    }
 
     private void Update(ref UiInstanceData value)
     {

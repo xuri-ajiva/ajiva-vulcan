@@ -35,8 +35,7 @@ public static class StaticBufferExtensions
 
         system.QueueSingleTimeCommand(QueueType.TransferQueue, CommandPoolSelector.Transit, command =>
         {
-            command.CopyBuffer(from.Buffer, to.Buffer, new BufferCopy
-            {
+            command.CopyBuffer(from.Buffer, to.Buffer, new BufferCopy {
                 Size = from.Size
             });
         });
@@ -47,9 +46,6 @@ public static class StaticBufferExtensions
         if (from.Size > to.Size)
             throw new ArgumentException("The Destination Buffer is smaller than the Source Buffer", nameof(to));
 
-        system.QueueSingleTimeCommand(QueueType.TransferQueue, CommandPoolSelector.Transit, command =>
-        {
-            command.CopyBuffer(from.Buffer, to.Buffer, regions);
-        });
+        system.QueueSingleTimeCommand(QueueType.TransferQueue, CommandPoolSelector.Transit, command => { command.CopyBuffer(from.Buffer, to.Buffer, regions); });
     }
 }

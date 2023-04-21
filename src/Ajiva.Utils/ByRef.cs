@@ -9,6 +9,13 @@ public class ByRef<T> where T : unmanaged
         Value = value;
     }
 
-    public static implicit operator T(ByRef<T> byRef) => byRef.Value;
-    public static implicit operator ByRef<T>(T value) => new ByRef<T>(value);
+    public static implicit operator T(ByRef<T> byRef)
+    {
+        return byRef.Value;
+    }
+
+    public static implicit operator ByRef<T>(T value)
+    {
+        return new ByRef<T>(value);
+    }
 }

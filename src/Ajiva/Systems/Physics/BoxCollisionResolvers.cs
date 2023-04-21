@@ -17,7 +17,7 @@ internal static class BoxCollisionResolvers
     }*/
 
     /// <summary>
-    /// collision resolution between two cubes
+    ///     collision resolution between two cubes
     /// </summary>
     /// <param name="a"></param>
     /// <param name="b"></param>
@@ -40,31 +40,16 @@ internal static class BoxCollisionResolvers
         var z = 0f;
 
         if (aMinB.X < bMinA.X)
-        {
             x = bMinA.X - aMinB.X;
-        }
-        else if (aMaxB.X > bMaxA.X)
-        {
-            x = bMaxA.X - aMaxB.X;
-        }
+        else if (aMaxB.X > bMaxA.X) x = bMaxA.X - aMaxB.X;
 
         if (aMinB.Y < bMinA.Y)
-        {
             y = bMinA.Y - aMinB.Y;
-        }
-        else if (aMaxB.Y > bMaxA.Y)
-        {
-            y = bMaxA.Y - aMaxB.Y;
-        }
+        else if (aMaxB.Y > bMaxA.Y) y = bMaxA.Y - aMaxB.Y;
 
         if (aMinB.Z < bMinA.Z)
-        {
             z = bMinA.Z - aMinB.Z;
-        }
-        else if (aMaxB.Z > bMaxA.Z)
-        {
-            z = bMaxA.Z - aMaxB.Z;
-        }
+        else if (aMaxB.Z > bMaxA.Z) z = bMaxA.Z - aMaxB.Z;
 
         return new Vector3(x, y, z);
     }
@@ -88,10 +73,7 @@ internal static class BoxCollisionResolvers
         var aToB = bCenter - aCenter;
         var aToBLength = aToB.Length();
 
-        if (aToBLength > aRadius + bRadius)
-        {
-            return Vector3.Zero;
-        }
+        if (aToBLength > aRadius + bRadius) return Vector3.Zero;
 
         var aToBNormalized = aToB / aToBLength;
 

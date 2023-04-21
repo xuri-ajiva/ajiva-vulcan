@@ -16,6 +16,6 @@ public enum UiDrawType : uint
 {
     TexturedRectangle,
     Button,
-    Ellipse,
+    Ellipse
     //TODO
 }

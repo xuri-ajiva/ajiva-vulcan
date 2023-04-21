@@ -3,8 +3,15 @@ namespace Ajiva.Utils.Changing;
 
 public static class ChangedObserverExtensions
 {
-    public static bool HasChanges(this IChangingObserver observer) => observer.ChangedAmount > 0;
-    public static bool HasChanges(this IOverTimeChangingObserver observer) => observer.ChangedAmount > 0;
+    public static bool HasChanges(this IChangingObserver observer)
+    {
+        return observer.ChangedAmount > 0;
+    }
+
+    public static bool HasChanges(this IOverTimeChangingObserver observer)
+    {
+        return observer.ChangedAmount > 0;
+    }
 
     public static void RaiseChanged<T>(this IOverTimeChangingObserver observer, ref T? field, T? value) where T : IEquatable<T>
     {
@@ -22,7 +29,6 @@ public static class ChangedObserverExtensions
     }
 
     /// <summary>
-    /// 
     /// </summary>
     /// <param name="observer"></param>
     /// <param name="cycle"></param>
@@ -32,10 +38,7 @@ public static class ChangedObserverExtensions
     {
         if (observer.Locked || observer.ChangedAmount <= 0) return false;
 
-        if (observer.ChangeBeginCycle == 0)
-        {
-            observer.ChangeBeginCycle = cycle;
-        }
+        if (observer.ChangeBeginCycle == 0) observer.ChangeBeginCycle = cycle;
         if (observer.ChangeBeginCycle + observer.DelayUpdateFor > cycle) return false;
         //observer.Updated();
         return true;
@@ -77,7 +80,7 @@ public static class ChangedObserverExtensions
     public static void RaiseAndSetIfChanged<TChange, TSender, TValue>(this IChangingObserverOnlyAfter<TSender, TValue> observer, ref TChange? field, TChange? value)
         where TSender : class where TValue : struct where TChange : IEquatable<TChange>
     {
-        if (value is not null && value.Equals(field) || field is not null && field.Equals(value)) return;
+        if ((value is not null && value.Equals(field)) || (field is not null && field.Equals(value))) return;
         field = value;
         observer.Changed(observer.Result());
     }
@@ -93,7 +96,7 @@ public static class ChangedObserverExtensions
     public static void RaiseAndSetIfChanged<TChange, TValue>(this IChangingObserverOnlyValue<TValue> observer, ref TChange? field, TChange? value)
         where TValue : struct where TChange : IEquatable<TChange>
     {
-        if (value is not null && value.Equals(field) || field is not null && field.Equals(value)) return;
+        if ((value is not null && value.Equals(field)) || (field is not null && field.Equals(value))) return;
         field = value;
         observer.Changed(observer.Result());
     }

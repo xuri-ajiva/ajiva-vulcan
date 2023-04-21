@@ -11,5 +11,9 @@ public class CollisionsComponentSystem : ComponentSystemBase<CollisionsComponent
     {
         _meshPool = meshPool;
     }
-    public override CollisionsComponent CreateComponent(IEntity entity) => new CollisionsComponent(_meshPool);
+
+    public override CollisionsComponent CreateComponent(IEntity entity)
+    {
+        return new CollisionsComponent(_meshPool);
+    }
 }

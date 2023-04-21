@@ -4,10 +4,9 @@ namespace Ajiva.Components;
 
 public class ObjectPool<T> where T : class, IRespectable, new()
 {
+    private readonly ConcurrentBag<T> _objects = new ConcurrentBag<T>();
     public long MaxSize { get; set; } = 5000;
     public static ObjectPool<T> Instance { get; } = new ObjectPool<T>();
-
-    private readonly ConcurrentBag<T> _objects = new ConcurrentBag<T>();
 
     public T Rent()
     {

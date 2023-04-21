@@ -13,9 +13,13 @@ namespace Ajiva.Components.Physics;
 public class BoundingBox : DisposingLogger, IBoundingBox
 {
     private readonly IEntity _entity;
-    private readonly IWorkerPool _workerPool;
-    private StaticOctalItem<BoundingBox>? _octalItem;
     private readonly IModelMatTransform _transform;
+    private readonly IWorkerPool _workerPool;
+
+    private readonly Lazy<Mesh<Vertex3D>> meshLazy;
+    private StaticOctalItem<BoundingBox>? _octalItem;
+
+    private StaticOctalTreeContainer<BoundingBox>? _octalTree;
 
     private uint _version;
 
@@ -33,11 +37,6 @@ public class BoundingBox : DisposingLogger, IBoundingBox
     /// <inheritdoc />
     public StaticOctalSpace Space => _octalItem?.Space ?? StaticOctalSpace.Empty;
 
-    private void TransformChanged(Matrix4x4 value)
-    {
-        ComputeBoxBackground();
-    }
-
     public void ComputeBoxBackground()
     {
         lock (this)
@@ -46,8 +45,6 @@ public class BoundingBox : DisposingLogger, IBoundingBox
             _workerPool.EnqueueWork((info, _) => vCpy < _version ? WorkResult.Failed : ComputeBox(), o => Log.Error(o, o.Message), nameof(ComputeBox));
         }
     }
-
-    private StaticOctalTreeContainer<BoundingBox>? _octalTree;
 
     /// <inheritdoc />
     public void SetTree(StaticOctalTreeContainer<BoundingBox> octalTree)
@@ -61,12 +58,15 @@ public class BoundingBox : DisposingLogger, IBoundingBox
         _octalTree = null;
     }
 
-    private void ColliderChanged(IChangingObserver changingObserver)
+    private void TransformChanged(Matrix4x4 value)
     {
         ComputeBoxBackground();
     }
 
-    private Lazy<Mesh<Vertex3D>> meshLazy;
+    private void ColliderChanged(IChangingObserver changingObserver)
+    {
+        ComputeBoxBackground();
+    }
 
     private WorkResult ComputeBox()
     {
@@ -98,15 +98,11 @@ public class BoundingBox : DisposingLogger, IBoundingBox
         {
             if (_octalTree is not null)
             {
-                var space = new StaticOctalSpace(new(x1, y1, z1), new(x2 - x1, y2 - y1, z2 - z1));
+                var space = new StaticOctalSpace(new Vector3(x1, y1, z1), new Vector3(x2 - x1, y2 - y1, z2 - z1));
                 if (_octalItem is not null)
-                {
                     _octalItem = _octalTree.Relocate(_octalItem, space);
-                }
                 else
-                {
                     _octalItem = _octalTree.Insert(this, space);
-                }
             }
 
             UpdateDynamicDataVisual();
@@ -117,7 +113,6 @@ public class BoundingBox : DisposingLogger, IBoundingBox
 
     private void UpdateDynamicDataVisual()
     {
-        return;
         /* if (_visual is null)
          {
              _visual = new DebugBox();

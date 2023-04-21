@@ -15,10 +15,7 @@ public class Transform3d : DisposingLogger, ITransform<Vector3, Matrix4x4>, IMod
         ChangingObserver.RaiseAndSetIfChanged(ref this.rotation, rotation);
         ChangingObserver.RaiseAndSetIfChanged(ref this.scale, scale);
     }
-    public void UpdateAll()
-    {
-        ChangingObserver.Changed(ChangingObserver.Result());
-    }
+
     public Transform3d(Vector3 position, Vector3 rotation) : this(position, rotation, Vector3.One)
     {
     }
@@ -32,7 +29,7 @@ public class Transform3d : DisposingLogger, ITransform<Vector3, Matrix4x4>, IMod
     }
 
     public Matrix4x4 ScaleMat => Matrix4x4.CreateScale(Scale);
-    public Matrix4x4 RotationMat => Matrix4x4.CreateRotationX(MathX.Radians(Rotation.X)) * Matrix4x4.CreateRotationY(MathX.Radians(Rotation.Y)) * Matrix4x4.CreateRotationZ(MathX.Radians(Rotation.Z));
+    public Matrix4x4 RotationMat => Matrix4x4.CreateRotationX(Rotation.X.Radians()) * Matrix4x4.CreateRotationY(Rotation.Y.Radians()) * Matrix4x4.CreateRotationZ(Rotation.Z.Radians());
     public Matrix4x4 PositionMat => Matrix4x4.CreateTranslation(Position);
 
     public Matrix4x4 ModelMat => PositionMat * RotationMat * ScaleMat;
@@ -40,6 +37,11 @@ public class Transform3d : DisposingLogger, ITransform<Vector3, Matrix4x4>, IMod
     public override string ToString()
     {
         return $"{nameof(Position)}: {Position}, {nameof(Rotation)}: {Rotation}, {nameof(Scale)}: {Scale}";
+    }
+
+    public void UpdateAll()
+    {
+        ChangingObserver.Changed(ChangingObserver.Result());
     }
 
 #region propatys

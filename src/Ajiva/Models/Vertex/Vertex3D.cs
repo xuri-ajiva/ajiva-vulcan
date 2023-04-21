@@ -27,8 +27,7 @@ public struct Vertex3D
 
     public static VertexInputBindingDescription GetBindingDescription(uint binding)
     {
-        return new VertexInputBindingDescription
-        {
+        return new VertexInputBindingDescription {
             Binding = binding,
             Stride = (uint)Marshal.SizeOf<Vertex3D>(),
             InputRate = VertexInputRate.Vertex

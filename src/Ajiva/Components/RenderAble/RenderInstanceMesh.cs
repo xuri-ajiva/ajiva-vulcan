@@ -10,7 +10,6 @@ namespace Ajiva.Components.RenderAble;
 public class RenderInstanceMesh : DisposingLogger, IComponent
 {
     private readonly Transform3d transform;
-    public IInstancedMeshInstance<MeshInstanceData>? Instance { get; set; }
 
     public RenderInstanceMesh(IMesh mesh, Transform3d transform, TextureComponent textureComponent)
     {
@@ -19,6 +18,8 @@ public class RenderInstanceMesh : DisposingLogger, IComponent
         Mesh = mesh;
         TextureComponent = textureComponent;
     }
+
+    public IInstancedMeshInstance<MeshInstanceData>? Instance { get; set; }
 
     public IMesh Mesh { get; }
     public TextureComponent? TextureComponent { get; }

@@ -5,13 +5,14 @@ namespace Ajiva.Components.Transform.Ui;
 
 public class UiTransform : DisposingLogger, IComponent, IUiTransform
 {
-    private UiAnchor verticalAnchor;
-    private UiAnchor horizontalAnchor;
-    private Vector2 rotation;
-    private bool isDirty;
+    private readonly List<IUiTransform> children = new List<IUiTransform>();
     private Rect2Di displaySize;
-    private Rect2Df renderSize;
+    private UiAnchor horizontalAnchor;
+    private bool isDirty;
     private IUiTransform? parent;
+    private Rect2Df renderSize;
+    private Vector2 rotation;
+    private UiAnchor verticalAnchor;
 
     public UiTransform(IUiTransform? parent, UiAnchor verticalAnchor, UiAnchor horizontalAnchor, Vector2? rotation = null)
     {
@@ -21,6 +22,33 @@ public class UiTransform : DisposingLogger, IComponent, IUiTransform
         VerticalAnchor = verticalAnchor;
         HorizontalAnchor = horizontalAnchor;
         Rotation = rotation ?? new Vector2(0, 0);
+    }
+
+    public void RecalculateSizes()
+    {
+        isDirty = false;
+        CalculateDisplaySize();
+        renderSize = CalculateRenderSize();
+        displaySize = CalculateDisplaySize();
+        foreach (var uiTransform in children) uiTransform.RecalculateSizes();
+    }
+
+    /// <inheritdoc />
+    public void AddChild(IUiTransform child)
+    {
+        if (child is null)
+            throw new ArgumentNullException(nameof(child));
+        child.Parent = this;
+        children.Add(child);
+    }
+
+    /// <inheritdoc />
+    public void RemoveChild(IUiTransform child)
+    {
+        if (child is null)
+            throw new ArgumentNullException(nameof(child));
+        child.Parent = null;
+        children.Remove(child);
     }
 
     private static (float pos, float span) ComputePos(UiAnchor uiAnchor, Rect2Di display, Rect2Df render)
@@ -33,8 +61,7 @@ public class UiTransform : DisposingLogger, IComponent, IUiTransform
             case UiAxis.Horizontal:
                 var computeFixedValueSpanX = ComputeFixedValue(uiAnchor.Span, display.SizeX, render.SizeX);
                 var computeFixedValueMarginX = ComputeFixedValue(uiAnchor.Margin, display.SizeX, render.SizeX);
-                return displayOrigin switch
-                {
+                return displayOrigin switch {
                     UiAlignmentOrigin.Center => (render.CenterX - computeFixedValueSpanX / 2, computeFixedValueSpanX),
                     UiAlignmentOrigin.Min => (render.MinX + computeFixedValueMarginX, computeFixedValueSpanX),
                     UiAlignmentOrigin.Max => (render.MaxX - (computeFixedValueMarginX + computeFixedValueSpanX), computeFixedValueSpanX),
@@ -44,8 +71,7 @@ public class UiTransform : DisposingLogger, IComponent, IUiTransform
             case UiAxis.Vertical:
                 var computeFixedValueSpanY = ComputeFixedValue(uiAnchor.Span, display.SizeY, render.SizeY);
                 var computeFixedValueMarginY = ComputeFixedValue(uiAnchor.Margin, display.SizeY, render.SizeY);
-                return displayOrigin switch
-                {
+                return displayOrigin switch {
                     UiAlignmentOrigin.Center => (render.CenterY - computeFixedValueSpanY / 2, computeFixedValueSpanY),
                     UiAlignmentOrigin.Min => (render.MinY + computeFixedValueMarginY, computeFixedValueSpanY),
                     UiAlignmentOrigin.Max => (render.MaxY - (computeFixedValueMarginY + computeFixedValueSpanY), computeFixedValueSpanY),
@@ -61,12 +87,51 @@ public class UiTransform : DisposingLogger, IComponent, IUiTransform
     private static float ComputeFixedValue(UiValueUnit uiValue, int displaySpan, float renderSpan)
     {
         var (value, uiUnit) = uiValue;
-        return uiUnit switch
-        {
-            UiUnit.Pixel => (value / displaySpan) * renderSpan,
-            UiUnit.Percent => (value / 100f) * renderSpan,
+        return uiUnit switch {
+            UiUnit.Pixel => value / displaySpan * renderSpan,
+            UiUnit.Percent => value / 100f * renderSpan,
             _ => throw new ArgumentOutOfRangeException(nameof(uiValue), "The " + nameof(UiUnit) + " value is out of Range")
         };
+    }
+
+    private Rect2Df CalculateRenderSize()
+    {
+        if (Parent is null) return new Rect2Df(0, 0, 0, 0);
+
+        var (posX, spanX) = ComputePos(horizontalAnchor, Parent.DisplaySize, Parent.RenderSize);
+        var (posY, spanY) = ComputePos(verticalAnchor, Parent.DisplaySize, Parent.RenderSize);
+
+        return new Rect2Df(posX, posY, posX + spanX, posY + spanY);
+    }
+
+    private Rect2Di CalculateDisplaySize()
+    {
+        if (Parent is null) return new Rect2Di(0, 0, 0, 0);
+
+        //unlerp the render size (value - min) / (max - min)
+
+        var minX = (int)(Parent.DisplaySize.SizeX * ((RenderSize.MinX - Parent.RenderSize.MinX) / Parent.RenderSize.SizeX));
+        var minY = (int)(Parent.DisplaySize.SizeY * ((RenderSize.MinY - Parent.RenderSize.MinY) / Parent.RenderSize.SizeY));
+
+        var maxX = (int)(Parent.DisplaySize.SizeX * ((RenderSize.MaxX - Parent.RenderSize.MinX) / Parent.RenderSize.SizeX));
+        var maxY = (int)(Parent.DisplaySize.SizeY * ((RenderSize.MaxY - Parent.RenderSize.MinY) / Parent.RenderSize.SizeY));
+
+        var r = new Rect2Di(minX, minY, maxX - minX, maxY - minY);
+        Log.Debug(GetHashCode().ToString("X8") + ": " + r);
+        return r;
+    }
+
+    [Obsolete("Use RenderSize instead")]
+    public RenderOffsetScale CalculateRenderOffsetScale()
+    {
+        if (Parent is null) return new RenderOffsetScale(new Vector2(0, 0), new Vector2(1, 1));
+
+        var (posX, spanX) = ComputePos(horizontalAnchor, Parent.DisplaySize, Parent.RenderSize);
+        var (posY, spanY) = ComputePos(verticalAnchor, Parent.DisplaySize, Parent.RenderSize);
+
+        var ret = new RenderOffsetScale(new Vector2(posX, posY), new Vector2(spanX, spanY));
+        Validate(ret, RenderSize);
+        return ret;
     }
 
 #region Props
@@ -152,78 +217,6 @@ public class UiTransform : DisposingLogger, IComponent, IUiTransform
     }
 
 #endregion
-
-    public void RecalculateSizes()
-    {
-        isDirty = false;
-        CalculateDisplaySize();
-        renderSize = CalculateRenderSize();
-        displaySize = CalculateDisplaySize();
-        foreach (var uiTransform in children)
-        {
-            uiTransform.RecalculateSizes();
-        }
-    }
-
-    /// <inheritdoc />
-    public void AddChild(IUiTransform child)
-    {
-        if (child is null)
-            throw new ArgumentNullException(nameof(child));
-        child.Parent = this;
-        children.Add(child);
-    }
-
-    /// <inheritdoc />
-    public void RemoveChild(IUiTransform child)
-    {
-        if (child is null)
-            throw new ArgumentNullException(nameof(child));
-        child.Parent = null;
-        children.Remove(child);
-    }
-
-    private readonly List<IUiTransform> children = new List<IUiTransform>();
-
-    private Rect2Df CalculateRenderSize()
-    {
-        if (Parent is null) return new Rect2Df(0, 0, 0, 0);
-
-        var (posX, spanX) = ComputePos(horizontalAnchor, Parent.DisplaySize, Parent.RenderSize);
-        var (posY, spanY) = ComputePos(verticalAnchor, Parent.DisplaySize, Parent.RenderSize);
-
-        return new Rect2Df(posX, posY, posX + spanX, posY + spanY);
-    }
-
-    private Rect2Di CalculateDisplaySize()
-    {
-        if (Parent is null) return new Rect2Di(0, 0, 0, 0);
-
-        //unlerp the render size (value - min) / (max - min)
-
-        var minX = (int)(Parent.DisplaySize.SizeX * ((RenderSize.MinX - Parent.RenderSize.MinX) / Parent.RenderSize.SizeX));
-        var minY = (int)(Parent.DisplaySize.SizeY * ((RenderSize.MinY - Parent.RenderSize.MinY) / Parent.RenderSize.SizeY));
-
-        var maxX = (int)(Parent.DisplaySize.SizeX * ((RenderSize.MaxX - Parent.RenderSize.MinX) / Parent.RenderSize.SizeX));
-        var maxY = (int)(Parent.DisplaySize.SizeY * ((RenderSize.MaxY - Parent.RenderSize.MinY) / Parent.RenderSize.SizeY));
-
-        var r= new Rect2Di(minX, minY, maxX - minX, maxY - minY);
-        Log.Debug((GetHashCode().ToString("X8") +": "+ r));
-        return r;
-    }
-
-    [Obsolete("Use RenderSize instead")]
-    public RenderOffsetScale CalculateRenderOffsetScale()
-    {
-        if (Parent is null) return new RenderOffsetScale(new Vector2(0, 0), new Vector2(1, 1));
-
-        var (posX, spanX) = ComputePos(horizontalAnchor, Parent.DisplaySize, Parent.RenderSize);
-        var (posY, spanY) = ComputePos(verticalAnchor, Parent.DisplaySize, Parent.RenderSize);
-
-        var ret = new RenderOffsetScale(new Vector2(posX, posY), new Vector2(spanX, spanY));
-        Validate(ret, RenderSize);
-        return ret;
-    }
 
 #region Validate
 

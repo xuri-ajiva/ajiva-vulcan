@@ -5,11 +5,11 @@ namespace Ajiva.Systems.VulcanEngine.Layer;
 public interface IAjivaLayerRenderSystem
 {
     public long DataVersion { get; }
+
+    RenderTarget RenderTarget { get; set; }
     void DrawComponents(RenderLayerGuard renderGuard, CancellationToken cancellationToken);
 
     void UpdateGraphicsPipelineLayer();
-    
-    RenderTarget RenderTarget { get; set; }
 }
 public interface IAjivaLayerRenderSystem<TParent> : IAjivaLayerRenderSystem, IDisposable where TParent : unmanaged
 {

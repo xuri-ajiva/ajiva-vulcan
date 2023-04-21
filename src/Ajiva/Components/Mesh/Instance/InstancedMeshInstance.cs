@@ -15,7 +15,10 @@ public class InstancedMeshInstance<T> : IInstancedMeshInstance<T> where T : unma
     public uint InstanceId { get; }
 
     /// <inheritdoc />
-    public void UpdateData(ActionRef<T> data) => InstancedMesh.UpdateData(InstanceId, data);
+    public void UpdateData(ActionRef<T> data)
+    {
+        InstancedMesh.UpdateData(InstanceId, data);
+    }
 
     /// <inheritdoc />
     public void Dispose()

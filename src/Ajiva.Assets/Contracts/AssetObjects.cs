@@ -1,7 +1,7 @@
 ﻿using System.Text.Json.Serialization;
 using ProtoBuf;
 
-namespace Ajiva.Systems.Assets.Contracts;
+namespace Ajiva.Assets.Contracts;
 
 [ProtoContract]
 public class AssetObjects

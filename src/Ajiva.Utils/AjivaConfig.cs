@@ -1,6 +1,4 @@
-﻿using System.Text.Json;
-
-namespace Ajiva.Application;
+﻿namespace Ajiva.Utils;
 
 public class AjivaConfig
 {

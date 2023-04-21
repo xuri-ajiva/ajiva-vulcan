@@ -30,14 +30,10 @@ public class CollisionsComponent : ChangingComponentBase, ICollider
     {
         if (itemCollider is CollisionsComponent item)
         {
-            if (item.MeshId == MeshId)
-            {
-                return;
-            }
+            if (item.MeshId == MeshId) return;
 
             var mesh = Pool.GetMesh(MeshId);
             var itemMesh = Pool.GetMesh(item.MeshId);
-            
         }
     }
 }

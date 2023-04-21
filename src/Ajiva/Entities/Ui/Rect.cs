@@ -16,7 +16,9 @@ public partial class Rect
             UiAnchor.Pixel(10, 20, UiAlignment.Top),
             UiAnchor.Pixel(10, 20, UiAlignment.Left)
         );
-        TextureComponent ??= new TextureComponent { TextureId = 1, };
+        TextureComponent ??= new TextureComponent {
+            TextureId = 1
+        };
         RenderInstanceMesh2D ??= new RenderInstanceMesh2D(mesh, UiTransform, TextureComponent);
     }
 }

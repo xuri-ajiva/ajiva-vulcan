@@ -6,17 +6,19 @@ namespace Ajiva.Components.Mesh.Instance;
 
 public class InstanceMeshPool<T> : DisposingLogger, IInstanceMeshPool<T>, IUpdate where T : unmanaged
 {
-    public Dictionary<uint, IInstancedMesh<T>> InstancedMeshes { get; } = new();
-    public Dictionary<uint, DynamicUniversalDedicatedBufferArray<T>> InstanceMeshData { get; } = new();
-    private readonly Dictionary<uint, uint> meshIdToInstancedMeshId = new();
+    private readonly object _lock = new object();
     private readonly IDeviceSystem deviceSystem;
-    public IChangingObserver<IInstanceMeshPool<T>> Changed { get; }
+    private readonly Dictionary<uint, uint> meshIdToInstancedMeshId = new Dictionary<uint, uint>();
 
     public InstanceMeshPool(IDeviceSystem deviceSystem)
     {
         this.deviceSystem = deviceSystem;
         Changed = new ChangingObserver<IInstanceMeshPool<T>>(this);
     }
+
+    public Dictionary<uint, IInstancedMesh<T>> InstancedMeshes { get; } = new Dictionary<uint, IInstancedMesh<T>>();
+    public Dictionary<uint, DynamicUniversalDedicatedBufferArray<T>> InstanceMeshData { get; } = new Dictionary<uint, DynamicUniversalDedicatedBufferArray<T>>();
+    public IChangingObserver<IInstanceMeshPool<T>> Changed { get; }
 
     /// <inheritdoc />
     public IInstancedMesh<T> AsInstanced(IMesh mesh)
@@ -43,11 +45,6 @@ public class InstanceMeshPool<T> : DisposingLogger, IInstanceMeshPool<T>, IUpdat
         }
     }
 
-    private void BufferResizedOnOnChanged(DynamicUniversalDedicatedBufferArray<T> sender)
-    {
-        Changed.Changed();
-    }
-
     /// <inheritdoc />
     public IInstancedMeshInstance<T> CreateInstance(IInstancedMesh<T> instancedMesh)
     {
@@ -55,7 +52,10 @@ public class InstanceMeshPool<T> : DisposingLogger, IInstanceMeshPool<T>, IUpdat
     }
 
     /// <inheritdoc />
-    public IInstancedMeshInstance<T> CreateInstance(uint instancedMeshId) => CreateInstance(InstancedMeshes[instancedMeshId]);
+    public IInstancedMeshInstance<T> CreateInstance(uint instancedMeshId)
+    {
+        return CreateInstance(InstancedMeshes[instancedMeshId]);
+    }
 
     /// <inheritdoc />
     public void DeleteInstance(IInstancedMeshInstance<T> instance)
@@ -79,13 +79,8 @@ public class InstanceMeshPool<T> : DisposingLogger, IInstanceMeshPool<T>, IUpdat
     /// <inheritdoc />
     public void CommitInstanceDataChanges()
     {
-        foreach (var instanceData in InstanceMeshData)
-        {
-            instanceData.Value.CommitChanges();
-        }
+        foreach (var instanceData in InstanceMeshData) instanceData.Value.CommitChanges();
     }
-
-    private readonly object _lock = new();
 
     /// <inheritdoc />
     public void Update(UpdateInfo delta)
@@ -97,18 +92,20 @@ public class InstanceMeshPool<T> : DisposingLogger, IInstanceMeshPool<T>, IUpdat
     }
 
     /// <inheritdoc />
+    public PeriodicUpdateInfo Info { get; } = new PeriodicUpdateInfo(TimeSpan.FromMilliseconds(10));
+
+    private void BufferResizedOnOnChanged(DynamicUniversalDedicatedBufferArray<T> sender)
+    {
+        Changed.Changed();
+    }
+
+    /// <inheritdoc />
     protected override void ReleaseUnmanagedResources(bool disposing)
     {
         base.ReleaseUnmanagedResources(disposing);
-        foreach (var (_, dynamicUniversalDedicatedBufferArray) in InstanceMeshData)
-        {
-            dynamicUniversalDedicatedBufferArray.Dispose();
-        }
+        foreach (var (_, dynamicUniversalDedicatedBufferArray) in InstanceMeshData) dynamicUniversalDedicatedBufferArray.Dispose();
         InstancedMeshes.Clear();
         InstanceMeshData.Clear();
         meshIdToInstancedMeshId.Clear();
     }
-
-    /// <inheritdoc />
-    public PeriodicUpdateInfo Info { get; } = new PeriodicUpdateInfo(TimeSpan.FromMilliseconds(10));
 }

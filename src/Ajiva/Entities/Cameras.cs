@@ -67,67 +67,23 @@ public partial class Camera
 [EntityComponent(typeof(Transform3d))]
 public sealed partial class FpsCamera : IUpdate
 {
-#region camera
-
-    public readonly __Keys Keys = new __Keys();
-    public float Fov;
-    public float Height;
-    public float Width;
-    public Matrix4x4 Projection { get; protected set; }
-    public Matrix4x4 View { get; private protected set; }
-    public Matrix4x4 ProjView => Projection * View;
-    public float MovementSpeed { get; set; } = 1;
-
-    public bool Moving()
-    {
-        return Keys.left || Keys.right || Keys.up || Keys.down;
-    }
-
-    public void Translate(Vector3 v)
-    {
-        Transform3d.Position += v;
-        View += Matrix4x4.CreateTranslation(v * -1.0F);
-    }
-
-    public void UpdatePerspective(float fov, float width, float height)
-    {
-        Fov = fov;
-        Width = width;
-        Height = height;
-        //Projection = M(mat4.Perspective(fov / 2.0F, width / height, .1F, 1000.0F));
-        Projection = Matrix4x4.CreatePerspectiveFieldOfView(MathX.Radians(fov / 2.0F), width / height, .1F, 1000.0F);
-        View = Matrix4x4.Identity;
-    }
-
-    /*private Matrix4x4 M(mat4 x)
-    {
-        return new Matrix4x4(
-            x.m00, x.m01, x.m02, x.m03,
-            x.m10, x.m11, x.m12, x.m13,
-            x.m20, x.m21, x.m22, x.m23,
-            x.m30, x.m31, x.m32, x.m33
-        );
-    }*/
-
-    public class __Keys
-    {
-        public bool down;
-        public bool left;
-        public bool right;
-        public bool up;
-    }
-
-#endregion
-
     private const float MouseSensitivity = 0.3F;
     private Vector3 lockAt;
+
+    public FpsCamera(PeriodicUpdateRunner runner)
+    {
+        //this.AddComponent(new RenderMesh3D());
+        runner.RegisterUpdate(this);
+        OnMouseMoved(0.0f, 0.0f);
+    }
+
     public bool FreeCam { get; set; } = true;
 
     private Vector3 CamFront =>
         Vector3.Normalize(new Vector3(
-            -MathF.Cos(MathX.Radians(Transform3d.Rotation.X)) * MathF.Sin(MathX.Radians(Transform3d.Rotation.Y)),
-            MathF.Sin(MathX.Radians(Transform3d.Rotation.X)),
-            MathF.Cos(MathX.Radians(Transform3d.Rotation.X)) * MathF.Cos(MathX.Radians(Transform3d.Rotation.Y))
+            -MathF.Cos(Transform3d.Rotation.X.Radians()) * MathF.Sin(Transform3d.Rotation.Y.Radians()),
+            MathF.Sin(Transform3d.Rotation.X.Radians()),
+            MathF.Cos(Transform3d.Rotation.X.Radians()) * MathF.Cos(Transform3d.Rotation.Y.Radians())
         ));
 
     //private Transform3d Transform => base.Transform;
@@ -203,10 +159,55 @@ public sealed partial class FpsCamera : IUpdate
         UpdateMatrices();
     }
 
-    public FpsCamera(PeriodicUpdateRunner runner) : base()
+#region camera
+
+    public readonly __Keys Keys = new __Keys();
+    public float Fov;
+    public float Height;
+    public float Width;
+    public Matrix4x4 Projection { get; protected set; }
+    public Matrix4x4 View { get; private protected set; }
+    public Matrix4x4 ProjView => Projection * View;
+    public float MovementSpeed { get; set; } = 1;
+
+    public bool Moving()
     {
-        //this.AddComponent(new RenderMesh3D());
-        runner.RegisterUpdate(this);
-        OnMouseMoved(0.0f, 0.0f);
+        return Keys.left || Keys.right || Keys.up || Keys.down;
     }
+
+    public void Translate(Vector3 v)
+    {
+        Transform3d.Position += v;
+        View += Matrix4x4.CreateTranslation(v * -1.0F);
+    }
+
+    public void UpdatePerspective(float fov, float width, float height)
+    {
+        Fov = fov;
+        Width = width;
+        Height = height;
+        //Projection = M(mat4.Perspective(fov / 2.0F, width / height, .1F, 1000.0F));
+        Projection = Matrix4x4.CreatePerspectiveFieldOfView((fov / 2.0F).Radians(), width / height, .1F, 1000.0F);
+        View = Matrix4x4.Identity;
+    }
+
+    /*private Matrix4x4 M(mat4 x)
+    {
+        return new Matrix4x4(
+            x.m00, x.m01, x.m02, x.m03,
+            x.m10, x.m11, x.m12, x.m13,
+            x.m20, x.m21, x.m22, x.m23,
+            x.m30, x.m31, x.m32, x.m33
+        );
+    }*/
+
+    public class __Keys
+    {
+        public bool down;
+        public bool left;
+        public bool right;
+        public bool up;
+    }
+
+#endregion
 }

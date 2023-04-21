@@ -12,8 +12,7 @@ public static class Extensions
     {
         lock (VKdeviceLock)
         {
-            return new SwapChainSupportDetails
-            {
+            return new SwapChainSupportDetails {
                 Capabilities = device.GetSurfaceCapabilities(surface),
                 Formats = device.GetSurfaceFormats(surface),
                 PresentModes = device.GetSurfacePresentModes(surface)
@@ -25,8 +24,7 @@ public static class Extensions
     public static Extent2D ChooseSwapExtent(this SurfaceCapabilities capabilities, Extent2D surfaceExtent)
     {
         if (capabilities.CurrentExtent.Width != uint.MaxValue) return capabilities.CurrentExtent;
-        return new Extent2D
-        {
+        return new Extent2D {
             Width = Math.Max(capabilities.MinImageExtent.Width, Math.Min(capabilities.MaxImageExtent.Width, surfaceExtent.Width)),
             Height = Math.Max(capabilities.MinImageExtent.Height, Math.Min(capabilities.MaxImageExtent.Height, surfaceExtent.Height))
         };
@@ -44,8 +42,7 @@ public static class Extensions
     public static SurfaceFormat ChooseSwapSurfaceFormat(this SurfaceFormat[] availableFormats)
     {
         if (availableFormats.Length == 1 && availableFormats[0].Format == Format.Undefined)
-            return new SurfaceFormat
-            {
+            return new SurfaceFormat {
                 Format = Format.B8G8R8A8UNorm,
                 ColorSpace = ColorSpace.SrgbNonlinear
             };

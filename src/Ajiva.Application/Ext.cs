@@ -1,5 +1,5 @@
 ﻿using System.Numerics;
-using Ajiva.Application;
+using Ajiva.Assets;
 using Ajiva.Components.Media;
 using Ajiva.Components.Mesh;
 using Ajiva.Components.Physics;
@@ -11,7 +11,6 @@ using Ajiva.Generators.Texture;
 using Ajiva.Models.Layers.Layer2d;
 using Ajiva.Models.Layers.Layer3d;
 using Ajiva.Systems;
-using Ajiva.Systems.Assets;
 using Ajiva.Systems.Physics;
 using Ajiva.Systems.VulcanEngine;
 using Ajiva.Systems.VulcanEngine.Debug;
@@ -24,8 +23,9 @@ using Ajiva.Worker;
 using Autofac;
 using Autofac.Builder;
 using Autofac.Core;
-using Microsoft.Extensions.Configuration;
 using SharpVk.Glfw;
+
+namespace Ajiva.Application;
 
 internal static class Ext
 {
@@ -78,12 +78,8 @@ internal static class Ext
     public static T Register<T>(this T entity, IContainer container) where T : class, IEntity
     {
         foreach (var component in entity.GetComponents())
-        {
             if (component is not null)
-            {
                 container.RegisterComponent(entity, component.GetType(), component);
-            }
-        }
         container.Resolve<ContainerProxy>().RegisterEntity(entity);
         //ecs.RegisterEntity(entity);
         return entity;
@@ -116,7 +112,7 @@ internal static class Ext
             .AsSelf()
             .As<IEntityRegistry>()
             .SingleInstance();
-        
+
         containerBuilder.RegisterType<UpdateManager>()
             .As<IUpdateManager>()
             .As<ILifetimeManager>()

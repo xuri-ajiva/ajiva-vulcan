@@ -1,5 +1,6 @@
 ﻿using System.Numerics;
 using System.Runtime.InteropServices;
+using Ajiva.Assets;
 using Ajiva.Components;
 using Ajiva.Components.Mesh;
 using Ajiva.Components.Mesh.Instance;
@@ -8,7 +9,6 @@ using Ajiva.Components.Transform;
 using Ajiva.Models.Instance;
 using Ajiva.Models.Layers.Layer3d;
 using Ajiva.Models.Vertex;
-using Ajiva.Systems.Assets;
 using Ajiva.Systems.VulcanEngine.Interfaces;
 using Ajiva.Systems.VulcanEngine.Layer;
 using Ajiva.Systems.VulcanEngine.Layers;
@@ -18,10 +18,12 @@ namespace Ajiva.Systems.VulcanEngine.Debug;
 
 public class DebugLayer : ComponentSystemBase<DebugComponent>, IUpdate, IAjivaLayerRenderSystem<UniformViewProj3d>
 {
-    private readonly IDeviceSystem _deviceSystem;
+    private const uint VERTEX_BUFFER_BIND_ID = 0;
+    private const uint INSTANCE_BUFFER_BIND_ID = 1;
     private readonly IAssetManager _assetManager;
+    private readonly IDeviceSystem _deviceSystem;
     private readonly ITextureSystem _textureSystem;
-    private InstanceMeshPool<MeshInstanceData> instanceMeshPool;
+    private readonly InstanceMeshPool<MeshInstanceData> instanceMeshPool;
     private readonly object mainLock = new object();
     private long dataVersion;
 
@@ -92,6 +94,24 @@ public class DebugLayer : ComponentSystemBase<DebugComponent>, IUpdate, IAjivaLa
             bind, attrib, MainShader, PipelineDescriptorInfos);
     }
 
+    /// <inheritdoc />
+    public RenderTarget RenderTarget { get; set; }
+
+    /// <inheritdoc />
+    public IAjivaLayer<UniformViewProj3d> AjivaLayer { get; set; }
+
+    /// <inheritdoc />
+    public void Update(UpdateInfo delta)
+    {
+        lock (mainLock)
+        {
+            instanceMeshPool.CommitInstanceDataChanges();
+        }
+    }
+
+    /// <inheritdoc />
+    public PeriodicUpdateInfo Info { get; } = new PeriodicUpdateInfo(TimeSpan.FromMilliseconds(15));
+
     private void CreatePipelineDescriptorInfos()
     {
         var textureSamplerImageViews = _textureSystem.TextureSamplerImageViews;
@@ -107,31 +127,10 @@ public class DebugLayer : ComponentSystemBase<DebugComponent>, IUpdate, IAjivaLa
         };
     }
 
-    /// <inheritdoc />
-    public RenderTarget RenderTarget { get; set; }
-
-    private const uint VERTEX_BUFFER_BIND_ID = 0;
-    private const uint INSTANCE_BUFFER_BIND_ID = 1;
-
-    /// <inheritdoc />
-    public IAjivaLayer<UniformViewProj3d> AjivaLayer { get; set; }
-
     private void RebuildData(IInstanceMeshPool<MeshInstanceData> sender)
     {
         Interlocked.Increment(ref dataVersion);
     }
-
-    /// <inheritdoc />
-    public void Update(UpdateInfo delta)
-    {
-        lock (mainLock)
-        {
-            instanceMeshPool.CommitInstanceDataChanges();
-        }
-    }
-
-    /// <inheritdoc />
-    public PeriodicUpdateInfo Info { get; } = new PeriodicUpdateInfo(TimeSpan.FromMilliseconds(15));
 
     /// <inheritdoc />
     public override DebugComponent RegisterComponent(IEntity entity, DebugComponent component)
@@ -188,7 +187,6 @@ public class DebugLayer : ComponentSystemBase<DebugComponent>, IUpdate, IAjivaLa
 public class DebugComponent : RenderMeshIdUnique<DebugComponent>
 {
     private readonly Transform3d transform;
-    public IInstancedMeshInstance<MeshInstanceData>? Instance { get; set; }
 
     public DebugComponent(IMesh mesh, Transform3d transform)
     {
@@ -198,7 +196,15 @@ public class DebugComponent : RenderMeshIdUnique<DebugComponent>
         OnTransformChange = TransformChange;
     }
 
+    public IInstancedMeshInstance<MeshInstanceData>? Instance { get; set; }
+
     public IMesh Mesh { get; }
+
+    public IChangingObserverOnlyValue<Matrix4x4>.OnChangedDelegate OnTransformChange { get; }
+
+    public bool DrawTransform { get; set; }
+    public bool DrawWireframe { get; set; }
+    public bool NoDepthTest { get; set; }
 
     public void TransformChange(Matrix4x4 value)
     {
@@ -210,12 +216,7 @@ public class DebugComponent : RenderMeshIdUnique<DebugComponent>
         value.Position = transform.Position;
         value.Rotation = transform.Rotation; //todo: fix radians?
         value.Scale = transform.Scale;
-        value.Padding = Vector2.One;;
+        value.Padding = Vector2.One;
+        ;
     }
-
-    public IChangingObserverOnlyValue<Matrix4x4>.OnChangedDelegate OnTransformChange { get; }
-
-    public bool DrawTransform { get; set; }
-    public bool DrawWireframe { get; set; }
-    public bool NoDepthTest { get; set; }
 }

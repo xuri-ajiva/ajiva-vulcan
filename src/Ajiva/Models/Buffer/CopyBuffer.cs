@@ -59,8 +59,7 @@ public class CopyBuffer<T> : BufferOfT<T> where T : struct
 
         system.ExecuteSingleTimeCommand(QueueType.TransferQueue, CommandPoolSelector.Transit, command =>
         {
-            command.CopyBuffer(Buffer, aBuffer.Buffer, new BufferCopy
-            {
+            command.CopyBuffer(Buffer, aBuffer.Buffer, new BufferCopy {
                 Size = Size
             });
         });
@@ -72,9 +71,6 @@ public class CopyBuffer<T> : BufferOfT<T> where T : struct
 
         if (aBuffer.Size < Size) throw new ArgumentException("The Destination Buffer is smaller than the Source Buffer", nameof(aBuffer));
 
-        system.ExecuteSingleTimeCommand(QueueType.TransferQueue, CommandPoolSelector.Transit, command =>
-        {
-            command.CopyBuffer(Buffer, aBuffer.Buffer, regions);
-        });
+        system.ExecuteSingleTimeCommand(QueueType.TransferQueue, CommandPoolSelector.Transit, command => { command.CopyBuffer(Buffer, aBuffer.Buffer, regions); });
     }
 }

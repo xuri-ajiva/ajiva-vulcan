@@ -7,13 +7,13 @@ public class ChangingObserver : IChangingObserver
         ChangeThreshold = changeThreshold;
     }
 
+    private object Lock { get; } = new object();
+
     /// <inheritdoc />
     public int ChangeThreshold { get; }
 
     /// <inheritdoc />
-    public int ChangedAmount { get; set; } = 0;
-
-    private object _lock { get; } = new();
+    public int ChangedAmount { get; set; }
 
     /// <inheritdoc />
     public event OnChangedDelegate? OnChanged;
@@ -21,7 +21,7 @@ public class ChangingObserver : IChangingObserver
     /// <inheritdoc />
     public void Changed()
     {
-        lock (_lock)
+        lock (Lock)
         {
             ChangedAmount++;
             if (ChangedAmount > ChangeThreshold)
@@ -42,6 +42,8 @@ public class ChangingObserverOnlyAfter<TSender, TValue> : IChangingObserverOnlyA
         ChangeThreshold = changeThreshold;
     }
 
+    private object Lock { get; } = new object();
+
     public TSender Owner { get; }
 
     /// <inheritdoc />
@@ -59,7 +61,7 @@ public class ChangingObserverOnlyAfter<TSender, TValue> : IChangingObserverOnlyA
     /// <inheritdoc />
     public void Changed(TValue after)
     {
-        lock (_lock)
+        lock (Lock)
         {
             ChangedAmount++;
             if (ChangedAmount > ChangeThreshold)
@@ -69,8 +71,6 @@ public class ChangingObserverOnlyAfter<TSender, TValue> : IChangingObserverOnlyA
             }
         }
     }
-
-    private object _lock { get; } = new();
 }
 public class ChangingObserver<TSender, TValue> : IChangingObserver<TSender, TValue> where TSender : class where TValue : struct
 {
@@ -80,6 +80,8 @@ public class ChangingObserver<TSender, TValue> : IChangingObserver<TSender, TVal
         Result = result;
         ChangeThreshold = changeThreshold;
     }
+
+    private object Lock { get; } = new object();
 
     public TSender Owner { get; }
 
@@ -98,7 +100,7 @@ public class ChangingObserver<TSender, TValue> : IChangingObserver<TSender, TVal
     /// <inheritdoc />
     public void Changed(TValue before, TValue after)
     {
-        lock (_lock)
+        lock (Lock)
         {
             ChangedAmount++;
             if (ChangedAmount > ChangeThreshold)
@@ -109,10 +111,7 @@ public class ChangingObserver<TSender, TValue> : IChangingObserver<TSender, TVal
             }
         }
     }
-
-    private object _lock { get; } = new();
 }
-
 public class ChangingObserverOnlyValue<TValue> : IChangingObserverOnlyValue<TValue> where TValue : struct
 {
     public ChangingObserverOnlyValue(Func<TValue> result)
@@ -142,7 +141,7 @@ public class ChangingObserver<TSender> : IChangingObserver<TSender> where TSende
         Owner = owner;
     }
 
-    private object _lock { get; } = new();
+    private object Lock { get; } = new object();
 
     /// <inheritdoc />
     public TSender Owner { get; set; }
@@ -156,14 +155,13 @@ public class ChangingObserver<TSender> : IChangingObserver<TSender> where TSende
     /// <inheritdoc />
     public void Changed()
     {
-        lock (_lock)
+        lock (Lock)
         {
             Version++;
             OnChanged?.Invoke(Owner);
         }
     }
 }
-
 public class OverTimeChangingObserver : IOverTimeChangingObserver
 {
     public OverTimeChangingObserver(int delayUpdateFor)
@@ -171,16 +169,19 @@ public class OverTimeChangingObserver : IOverTimeChangingObserver
         DelayUpdateFor = delayUpdateFor;
     }
 
+    private object Lock { get; } = new object();
+
+    public int BigChangeCount { get; set; }
+    public BachChange? Current { get; set; }
+
     /// <inheritdoc />
     public int DelayUpdateFor { get; }
 
     /// <inheritdoc />
-    public int ChangedAmount { get; set; } = 0;
+    public int ChangedAmount { get; set; }
 
     /// <inheritdoc />
-    public long ChangeBeginCycle { get; set; } = 0;
-
-    private object _lock { get; } = new();
+    public long ChangeBeginCycle { get; set; }
 
     /// <inheritdoc />
     public event IOverTimeChangingObserver.OnChangedDelegate? OnChanged;
@@ -191,7 +192,7 @@ public class OverTimeChangingObserver : IOverTimeChangingObserver
     /// <inheritdoc />
     public void Changed()
     {
-        lock (_lock)
+        lock (Lock)
         {
             ChangedAmount++;
         }
@@ -201,7 +202,7 @@ public class OverTimeChangingObserver : IOverTimeChangingObserver
     /// <inheritdoc />
     public void Updated()
     {
-        lock (_lock)
+        lock (Lock)
         {
             ChangedAmount = 0;
             ChangeBeginCycle = 0;
@@ -224,10 +225,7 @@ public class OverTimeChangingObserver : IOverTimeChangingObserver
             BigChangeCount = 0;
             if (Current is not null)
             {
-                if (ChangedAmount > Current.BeginChange)
-                {
-                    ChangeBeginCycle = Current.BeginCycle; // - DelayUpdateFor ?
-                }
+                if (ChangedAmount > Current.BeginChange) ChangeBeginCycle = Current.BeginCycle; // - DelayUpdateFor ?
                 Current = null;
             }
         }
@@ -236,8 +234,6 @@ public class OverTimeChangingObserver : IOverTimeChangingObserver
     /// <inheritdoc />
     public bool Locked => Current is not null;
 
-    public int BigChangeCount { get; set; }
-    public BachChange? Current { get; set; }
     public class BachChange : DisposingLogger
     {
         /// <inheritdoc />

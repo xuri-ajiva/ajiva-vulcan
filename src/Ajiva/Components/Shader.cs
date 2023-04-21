@@ -1,6 +1,6 @@
 ﻿using System.Runtime.CompilerServices;
-using Ajiva.Systems.Assets;
-using Ajiva.Systems.Assets.Contracts;
+using Ajiva.Assets;
+using Ajiva.Assets.Contracts;
 using Ajiva.Systems.VulcanEngine.Interfaces;
 using SharpVk;
 using SharpVk.Shanq;
@@ -25,12 +25,18 @@ public class Shader : ThreadSaveCreatable
     public string Name { get; }
 
     public PipelineShaderStageCreateInfo VertShaderPipelineStageCreateInfo =>
-        new PipelineShaderStageCreateInfo
-            { Stage = ShaderStageFlags.Vertex, Module = VertShader, Name = Name };
+        new PipelineShaderStageCreateInfo {
+            Stage = ShaderStageFlags.Vertex,
+            Module = VertShader,
+            Name = Name
+        };
 
     public PipelineShaderStageCreateInfo FragShaderPipelineStageCreateInfo =>
-        new PipelineShaderStageCreateInfo
-            { Stage = ShaderStageFlags.Fragment, Module = FragShader, Name = Name };
+        new PipelineShaderStageCreateInfo {
+            Stage = ShaderStageFlags.Fragment,
+            Module = FragShader,
+            Name = Name
+        };
 
     private static uint[] LoadShaderData(IAssetManager assetManager, string assetName, out int codeSize)
     {

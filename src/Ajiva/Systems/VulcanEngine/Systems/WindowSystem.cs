@@ -1,5 +1,4 @@
 ﻿using System.Numerics;
-using Ajiva.Application;
 using Ajiva.Ecs;
 using Ajiva.Systems.VulcanEngine.Interfaces;
 using Ajiva.Systems.VulcanEngine.Layer;
@@ -13,11 +12,15 @@ namespace Ajiva.Systems.VulcanEngine.Systems;
 
 public class WindowSystem : SystemBase, IUpdate, IWindowSystem
 {
+    private readonly Instance _instance;
+    private readonly ILifetimeManager _lifetimeManager;
     private readonly CursorPosDelegate cursorPosDelegate;
 
     //force NO gc on these delegates by keeping an reference
     private readonly KeyDelegate keyDelegate;
     private readonly WindowSizeDelegate sizeDelegate;
+
+    private readonly WindowConfig windowConfig;
 
     private readonly Thread windowThread;
     private readonly Queue<Action?> windowThreadQueue = new Queue<Action?>();
@@ -25,16 +28,12 @@ public class WindowSystem : SystemBase, IUpdate, IWindowSystem
 
     private DateTime lastResize = DateTime.MinValue;
     private Vector2 previousMousePosition = Vector2.Zero;
-    private WindowHandle window;
     private Extent2D priviesSize;
-
-    private readonly WindowConfig windowConfig;
+    private WindowHandle window;
 
     private bool windowReady;
-    private readonly Instance _instance;
-    private ILifetimeManager _lifetimeManager;
 
-    public WindowSystem(AjivaConfig config,Instance instance, ILifetimeManager lifetimeManager) 
+    public WindowSystem(AjivaConfig config, Instance instance, ILifetimeManager lifetimeManager)
     {
         _instance = instance;
         _lifetimeManager = lifetimeManager;
@@ -55,8 +54,6 @@ public class WindowSystem : SystemBase, IUpdate, IWindowSystem
         EnsureSurfaceExists();
     }
 
-    public Canvas Canvas { get; }
-
     /// <inheritdoc />
     public void Update(UpdateInfo delta)
     {
@@ -68,9 +65,36 @@ public class WindowSystem : SystemBase, IUpdate, IWindowSystem
     /// <inheritdoc />
     public PeriodicUpdateInfo Info { get; } = new PeriodicUpdateInfo(TimeSpan.FromMilliseconds(5));
 
+    public Canvas Canvas { get; }
+
     public event KeyEventHandler? OnKeyEvent;
     public event WindowResizedDelegate OnResize;
     public event EventHandler<AjivaMouseMotionCallbackEventArgs>? OnMouseMove;
+
+    public void EnsureSurfaceExists()
+    {
+        if (!Canvas.HasSurface)
+            Canvas.SurfaceHandle.Surface = _instance.CreateGlfw3Surface(window);
+    }
+
+    public void InitWindow()
+    {
+        Canvas.Height = windowConfig.Height;
+        Canvas.Width = windowConfig.Width;
+        windowThread.Start();
+
+        while (!windowReady) Thread.Sleep(1);
+    }
+
+    public void CloseWindow()
+    {
+        windowReady = false;
+    }
+
+    public void PollEvents()
+    {
+        Glfw3.PollEvents();
+    }
 
     private void WindowStartup()
     {
@@ -114,21 +138,6 @@ public class WindowSystem : SystemBase, IUpdate, IWindowSystem
         }
 
         windowReady = false;
-    }
-
-    public void EnsureSurfaceExists()
-    {
-        if (!Canvas.HasSurface)
-            Canvas.SurfaceHandle.Surface = _instance.CreateGlfw3Surface(window);
-    }
-
-    public void InitWindow()
-    {
-        Canvas.Height = windowConfig.Height;
-        Canvas.Width = windowConfig.Width;
-        windowThread.Start();
-
-        while (!windowReady) Thread.Sleep(1);
     }
 
     private void SizeCallback(WindowHandle windowHandle, int width, int height)
@@ -187,24 +196,12 @@ public class WindowSystem : SystemBase, IUpdate, IWindowSystem
         Glfw3.SetInputMode(window, Glfw3Enum.GLFW_CURSOR, activeLayer == AjivaEngineLayer.Layer3d ? Glfw3Enum.GLFW_CURSOR_DISABLED : Glfw3Enum.GLFW_CURSOR_NORMAL);
     }
 
-    public void CloseWindow()
-    {
-        windowReady = false;
-    }
-
     protected override void ReleaseUnmanagedResources(bool disposing)
     {
         Canvas.Dispose();
         CloseWindow();
     }
-
-    public void PollEvents()
-    {
-        Glfw3.PollEvents();
-    }
 }
 public delegate void WindowResizedDelegate(object sender, Extent2D oldSize, Extent2D newSize);
-
 public delegate void KeyEventHandler(object? sender, Key key, int scancode, InputAction inputAction, Modifier modifiers);
-
 public record AjivaMouseMotionCallbackEventArgs(Vector2 Pos, Vector2 Delta, AjivaEngineLayer ActiveLayer);

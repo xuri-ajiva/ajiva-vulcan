@@ -11,7 +11,7 @@ namespace Ajiva.Systems.VulcanEngine;
 
 public static class Statics
 {
-    private static HashSet<string> Ignore = new HashSet<string>() {
+    private static readonly HashSet<string> Ignore = new HashSet<string> {
         "UNASSIGNED-CoreValidation-DrawState-InvalidImageLayout",
         "VUID-VkPresentInfoKHR-pImageIndices-01296",
         "VUID-VkGraphicsPipelineCreateInfo-layout-00756",
@@ -27,7 +27,7 @@ public static class Statics
             if (Ignore.Contains(ident)) return false;
         }
         var stackframe = new StackFrame(2, true);
-        LogEventLevel lvl = (flags & DebugReportFlags.Error) != 0
+        var lvl = (flags & DebugReportFlags.Error) != 0
             ? LogEventLevel.Error
             : (flags & DebugReportFlags.Warning) != 0
                 ? LogEventLevel.Warning
@@ -36,7 +36,7 @@ public static class Statics
                     : (flags & DebugReportFlags.Debug) != 0
                         ? LogEventLevel.Debug
                         : LogEventLevel.Information;
-        
+
         Log.Write(lvl, "[{flags}] ({objectType}) {layerPrefix} #{message}", flags, objectType, layerPrefix, message);
         Log.Write(lvl, message);
         Log.Write(lvl, "File: {FileName}:{FileLineNumber} {trace}", stackframe.GetFileName(), stackframe.GetFileLineNumber(), BuildStackTraceError(3, 6));
@@ -45,10 +45,7 @@ public static class Statics
         {
             var stackTrace = new StackTrace(begin, true);
             var stringBuilder = new StringBuilder();
-            foreach (var frame in stackTrace.GetFrames().Take(count))
-            {
-                stringBuilder.Append($"from {frame.GetFileName()}:{frame.GetFileLineNumber()} ");
-            }
+            foreach (var frame in stackTrace.GetFrames().Take(count)) stringBuilder.Append($"from {frame.GetFileName()}:{frame.GetFileLineNumber()} ");
             return stringBuilder.ToString();
         }
 
@@ -73,7 +70,7 @@ public static class Statics
             BaseMipLevel = 0,
             LevelCount = 1,
             BaseArrayLayer = 0,
-            LayerCount = length,
+            LayerCount = length
         });
     }
 
@@ -107,7 +104,6 @@ public static class Statics
 
         throw new ArgumentOutOfRangeException(nameof(candidates), candidates, "failed to find supported format!");
     }
-    
 
     /*private static DataTarget dataTarget = DataTarget.AttachToProcess(Environment.ProcessId, false);
     private static ClrRuntime runtime = dataTarget.ClrVersions.First().CreateRuntime();*/
@@ -142,7 +138,7 @@ public static class Statics
 
         var instance = Instance.Create(
             enabledLayers.ToArray(),
-            enabledExtensionNames.Append(ExtExtensions.DebugReport).ToArray(), 
+            enabledExtensionNames.Append(ExtExtensions.DebugReport).ToArray(),
             InstanceCreateFlags.None,
             new ApplicationInfo {
                 ApplicationName = "Ajiva",

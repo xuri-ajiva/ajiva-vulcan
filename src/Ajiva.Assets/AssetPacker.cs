@@ -1,13 +1,11 @@
-﻿using System.Diagnostics;
-using System.Security.Cryptography;
+﻿using System.Security.Cryptography;
 using System.Text;
-using Ajiva.Application;
-using Ajiva.Systems.Assets.Contracts;
+using Ajiva.Assets.Contracts;
+using Ajiva.Utils;
 using CliWrap;
 using ProtoBuf;
-using Serilog;
 
-namespace Ajiva.Systems.Assets;
+namespace Ajiva.Assets;
 
 public class AssetPacker
 {

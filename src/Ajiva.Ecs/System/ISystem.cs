@@ -1,5 +1,4 @@
-﻿
-namespace Ajiva.Ecs.System;
+﻿namespace Ajiva.Ecs.System;
 
 public interface ISystem : IDisposingLogger
 {

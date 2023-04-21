@@ -3,58 +3,42 @@
 namespace Ajiva.Ecs.Utils;
 
 public record PeriodicUpdateInfo(TimeSpan Interval);
-
 public class PeriodicUpdateRunner
 {
-    public class UpdateData
-    {
-        public long Iteration;
-        public Thread Runner;
-        public readonly CancellationTokenSource Source;
-        public long Delta;
+    private readonly Dictionary<IUpdate, UpdateData> _updateData = new Dictionary<IUpdate, UpdateData>();
 
-        public UpdateData()
-        {
-            this.Source = new CancellationTokenSource();
-            Iteration = 0L;
-        }
-    }
-
-    private readonly Dictionary<IUpdate, UpdateData> updateDatas = new();
+    public bool Running { get; private set; }
 
     public UpdateData RegisterUpdate(IUpdate update)
     {
         var data = new UpdateData();
-        var runner = new Thread(() =>
-        {
-            RunDelta(update, data);
-        }) { Name = $"Update Runner for {update}" };
+        var runner = new Thread(() => { RunDelta(update, data); }) {
+            Name = $"Update Runner for {update}"
+        };
         data.Runner = runner;
-        lock (updateDatas)
-            updateDatas.Add(update, data);
+        lock (_updateData)
+        {
+            _updateData.Add(update, data);
+        }
         if (Running)
             runner.Start();
         return data;
     }
-    
+
     public async Task UnRegisterUpdate(IUpdate update)
     {
         UpdateData? data;
-        lock (updateDatas)
+        lock (_updateData)
         {
-            if (updateDatas.TryGetValue(update, out data))
+            if (_updateData.TryGetValue(update, out data))
             {
                 data.Source.Cancel();
-                updateDatas.Remove(update);
+                _updateData.Remove(update);
             }
         }
         if (data is not null)
-        {
-            while (data.Runner.IsAlive)
-            {
+            while (data.Runner?.IsAlive ?? false)
                 await Task.Delay(1);
-            }
-        }
     }
 
     private void RunDelta(IUpdate update, UpdateData data)
@@ -62,7 +46,7 @@ public class PeriodicUpdateRunner
         data.Iteration = 0L;
         data.Delta = update.Info.Interval.Ticks;
         var now = Stopwatch.GetTimestamp();
-        
+
         var ticks = update.Info.Interval.Ticks;
         while (!data.Source.IsCancellationRequested)
         {
@@ -70,15 +54,9 @@ public class PeriodicUpdateRunner
 
             data.Iteration++;
             var elapsed = Stopwatch.GetTimestamp() - now;
-            var remaining = (ticks - elapsed);
-            if (remaining / 10000 > 0)
-            {
-                Thread.Sleep((int)(remaining / 10000) - 1);
-            }
-            while (Stopwatch.GetTimestamp() - now < ticks)
-            {
-                Thread.Yield();
-            }
+            var remaining = ticks - elapsed;
+            if (remaining / 10000 > 0) Thread.Sleep((int)(remaining / 10000) - 1);
+            while (Stopwatch.GetTimestamp() - now < ticks) Thread.Yield();
 
             var end = Stopwatch.GetTimestamp();
             data.Delta = end - now;
@@ -88,61 +66,72 @@ public class PeriodicUpdateRunner
 
     public void Start(IUpdate update)
     {
-        lock (updateDatas)
-            updateDatas[update].Runner.Start();
+        lock (_updateData)
+        {
+            _updateData[update].Runner?.Start();
+        }
     }
 
     public void Start()
     {
         Running = true;
-        lock (updateDatas)
+        lock (_updateData)
         {
-            foreach (var data in updateDatas)
-            {
-                data.Value.Runner.Start();
-            }
+            foreach (var data in _updateData) data.Value.Runner?.Start();
         }
     }
 
     public void Stop()
     {
         Running = false;
-        lock (updateDatas)
-            foreach (var data in updateDatas)
-            {
+        lock (_updateData)
+        {
+            foreach (var data in _updateData)
                 data.Value.Source.Cancel();
-            }
+        }
     }
-
-    public bool Running { get; private set; }
 
     public void Cancel(IUpdate update)
     {
-        updateDatas[update].Source.Cancel();
+        _updateData[update].Source.Cancel();
     }
 
     public async Task WaitHandle(Action<Dictionary<IUpdate, UpdateData>> logStatus, CancellationToken cancellation)
     {
-        DateTime begin = DateTime.Now;
-        foreach (var (key, value) in updateDatas.ToArray())
-        {
-            while (value.Runner.IsAlive)
+        var begin = DateTime.Now;
+        foreach (var (key, value) in _updateData.ToArray())
+            while (value.Runner?.IsAlive ?? false)
             {
                 if ((DateTime.Now - begin).Seconds > 20)
                 {
                     begin = DateTime.Now;
-                    lock (updateDatas)
-                        logStatus.Invoke(updateDatas);
+                    lock (_updateData)
+                    {
+                        logStatus.Invoke(_updateData);
+                    }
                 }
 
                 await Task.Delay(10, cancellation);
                 if (cancellation.IsCancellationRequested) return;
             }
-        }
     }
 
     public IEnumerable<IUpdate> GetUpdating()
     {
-        return updateDatas.Keys.ToList();
+        return _updateData.Keys.ToList();
+    }
+
+    public class UpdateData
+    {
+        public readonly CancellationTokenSource Source;
+        public long Delta;
+        public long Iteration;
+        public Thread? Runner;
+
+        public UpdateData()
+        {
+            Source = new CancellationTokenSource();
+            Iteration = 0L;
+        }
     }
 }

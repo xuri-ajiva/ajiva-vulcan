@@ -18,9 +18,12 @@ namespace Ajiva.Application;
 
 public class Application : DisposingLogger
 {
-    private IContainer container;
+    private readonly EntityFactory _factory;
+    private readonly IContainer container;
 
     private ContainerProxy proxy;
+
+    private Rect spinner;
 
     public Application(IContainer container, ContainerProxy proxy)
     {
@@ -75,9 +78,9 @@ public class Application : DisposingLogger
         for (var i = 0; i < 10; i++)
         {
             var cube = _factory.CreateCube()
-                .With(new Transform3d() {
+                .With(new Transform3d {
                     Position = new Vector3(Random.Shared.Next(-posRange, posRange), Random.Shared.Next(-posRange, posRange), Random.Shared.Next(-posRange, posRange)),
-                    Rotation = new Vector3(Random.Shared.Next(0, 100), Random.Shared.Next(0, 100), Random.Shared.Next(0, 100)),
+                    Rotation = new Vector3(Random.Shared.Next(0, 100), Random.Shared.Next(0, 100), Random.Shared.Next(0, 100))
                 })
                 .Finalize()
                 .Configure<CollisionsComponent>(x => { x.MeshId = meshPref.MeshId; });
@@ -97,10 +100,7 @@ public class Application : DisposingLogger
         await updateManager.Wait(cancellation);
     }
 
-    private Rect spinner;
-    private readonly EntityFactory _factory;
-
-    void WindowOnOnKeyEvent(object? sender, Key key, int scancode, InputAction inputaction, Modifier modifiers)
+    private void WindowOnOnKeyEvent(object? sender, Key key, int scancode, InputAction inputaction, Modifier modifiers)
     {
         const int posRange = 100;
         if (inputaction != InputAction.Press) return;
@@ -124,11 +124,11 @@ public class Application : DisposingLogger
                     for (var j = 0; j < rep; j++)
                     {
                         var cube = _factory.CreateCube()
-                            .With(new Transform3d() {
+                            .With(new Transform3d {
                                 //trans.Position = new vec3(i * sz, (-index * 2) * Math.Min(rep / (float)i, 10) , j * sz);
-                                Position = new Vector3(i * sz, (-index * 2), j * sz),
+                                Position = new Vector3(i * sz, -index * 2, j * sz),
                                 Rotation = new Vector3(i * 90, j * 90, 0),
-                                Scale = new Vector3(sz / 2.1f),
+                                Scale = new Vector3(sz / 2.1f)
                             }).Finalize();
                     }
                 });
@@ -151,9 +151,9 @@ public class Application : DisposingLogger
                     for (var i = 0; i < 1000; i++)
                     {
                         var cube = _factory.CreateCube()
-                            .With(new Transform3d() {
+                            .With(new Transform3d {
                                 Position = new Vector3(Random.Shared.Next(-posRange, posRange), Random.Shared.Next(-posRange, posRange), Random.Shared.Next(-posRange, posRange)),
-                                Rotation = new Vector3(Random.Shared.Next(0, 100), Random.Shared.Next(0, 100), Random.Shared.Next(0, 100)),
+                                Rotation = new Vector3(Random.Shared.Next(0, 100), Random.Shared.Next(0, 100), Random.Shared.Next(0, 100))
                             }).Finalize();
                     }
                     change.Dispose();
@@ -185,10 +185,10 @@ public class Application : DisposingLogger
             case Key.F:
                 var sys = container.Resolve<Ajiva3dLayerSystem>();
                 var cubex = _factory.CreateCube()
-                    .With(new Transform3d() {
+                    .With(new Transform3d {
                         Position = sys.MainCamara.Transform3d.Position + sys.MainCamara.FrontNormalized * 25,
                         Rotation = sys.MainCamara.Transform3d.Rotation,
-                        Scale = new Vector3(3),
+                        Scale = new Vector3(3)
                     })
                     .Finalize()
                     .Configure<ICollider>(x => { x.IsStatic = true; })
@@ -198,9 +198,9 @@ public class Application : DisposingLogger
             case Key.G:
                 var sys2 = container.Resolve<Ajiva3dLayerSystem>();
                 var cubex2 = _factory.CreateCube()
-                    .With(new Transform3d() {
+                    .With(new Transform3d {
                         Position = sys2.MainCamara.Transform3d.Position,
-                        Scale = new Vector3(10),
+                        Scale = new Vector3(10)
                     })
                     .Finalize()
                     .Configure<ICollider>(x => { x.IsStatic = true; })

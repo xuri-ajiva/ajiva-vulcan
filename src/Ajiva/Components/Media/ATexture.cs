@@ -2,7 +2,7 @@
 
 namespace Ajiva.Components.Media;
 
-public partial class ATexture : DisposingLogger
+public class ATexture : DisposingLogger
 {
     public ATexture()
     {
@@ -15,8 +15,11 @@ public partial class ATexture : DisposingLogger
     public AImage Image { get; set; } = null!;
 
     public DescriptorImageInfo DescriptorImageInfo =>
-        new DescriptorImageInfo
-            { Sampler = Sampler, ImageView = Image.View, ImageLayout = ImageLayout.ShaderReadOnlyOptimal };
+        new DescriptorImageInfo {
+            Sampler = Sampler,
+            ImageView = Image.View,
+            ImageLayout = ImageLayout.ShaderReadOnlyOptimal
+        };
 
     /// <inheritdoc />
     protected override void ReleaseUnmanagedResources(bool disposing)

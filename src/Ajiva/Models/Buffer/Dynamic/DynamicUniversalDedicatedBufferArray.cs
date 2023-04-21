@@ -9,7 +9,14 @@ namespace Ajiva.Models.Buffer.Dynamic;
 public class DynamicUniversalDedicatedBufferArray<T> : DisposingLogger where T : unmanaged
 {
     private readonly IDeviceSystem deviceSystem;
-    public IChangingObserver<DynamicUniversalDedicatedBufferArray<T>> BufferResized { get; }
+
+    private readonly HashSet<uint> freeed = new HashSet<uint>();
+    private readonly int SizeOfT;
+
+    private T[] _items;
+    private int _version;
+    private BitArray Changed;
+    private BitArray Used;
 
     public DynamicUniversalDedicatedBufferArray(IDeviceSystem deviceSystem, int initialLength, BufferUsageFlags usageFlags = BufferUsageFlags.UniformBuffer)
     {
@@ -25,7 +32,7 @@ public class DynamicUniversalDedicatedBufferArray<T> : DisposingLogger where T :
         SizeOfT = Unsafe.SizeOf<T>();
 
         this.deviceSystem = deviceSystem;
-        _amount = 0;
+        Count = 0;
         _version = 0;
 
         Staging = new ResizableDedicatedBuffer(
@@ -45,31 +52,36 @@ public class DynamicUniversalDedicatedBufferArray<T> : DisposingLogger where T :
         BufferResized = new ChangingObserver<DynamicUniversalDedicatedBufferArray<T>>(this);
     }
 
-    private void BufferResizedOnChanged(ResizableDedicatedBuffer sender)
-    {
-        Log.Debug("Buffer Resized: {sender}",sender.Current().Buffer.RawHandle.ToUInt64().ToString("x8"));
-    }
+    public IChangingObserver<DynamicUniversalDedicatedBufferArray<T>> BufferResized { get; }
 
     public ResizableDedicatedBuffer Uniform { get; set; }
 
     public ResizableDedicatedBuffer Staging { get; set; }
 
-    private int _amount;
-    private int _version;
-    private int SizeOfT;
+    private void BufferResizedOnChanged(ResizableDedicatedBuffer sender)
+    {
+        Log.Debug("Buffer Resized: {sender}", sender.Current().Buffer.RawHandle.ToUInt64().ToString("x8"));
+    }
 
-    private T[] _items;
-
-    private HashSet<uint> freeed = new HashSet<uint>();
-    private BitArray Changed;
-    private BitArray Used;
+    public void Update(int index, ActionRef<T> action)
+    {
+        ref var item = ref _items[index];
+        action.Invoke(ref item);
+        lock (this)
+        {
+            Changed[index] = true;
+        }
+    }
 
 #region List
 
     public int Length { get; set; }
 
     /// <inheritdoc cref="List{T}.GetEnumerator" />
-    public IEnumerator<T> GetEnumerator() => _items.Take(_amount).Where((t, i) => Used[i]).GetEnumerator();
+    public IEnumerator<T> GetEnumerator()
+    {
+        return _items.Take(Count).Where((t, i) => Used[i]).GetEnumerator();
+    }
 
     public void Resize(int newLength)
     {
@@ -77,10 +89,7 @@ public class DynamicUniversalDedicatedBufferArray<T> : DisposingLogger where T :
         {
             Length = newLength;
             var newItems = new T[newLength];
-            if (_amount > 0)
-            {
-                Array.Copy(_items, newItems, _items.Length);
-            }
+            if (Count > 0) Array.Copy(_items, newItems, _items.Length);
             _items = newItems;
             deviceSystem.WaitIdle();
             Staging.Resize((uint)(newLength * SizeOfT));
@@ -93,7 +102,7 @@ public class DynamicUniversalDedicatedBufferArray<T> : DisposingLogger where T :
     }
 
     /// <summary>
-    /// Adds An new element
+    ///     Adds An new element
     /// </summary>
     /// <param name="item"></param>
     /// <returns>index of element</returns>
@@ -103,14 +112,11 @@ public class DynamicUniversalDedicatedBufferArray<T> : DisposingLogger where T :
         {
             _version++;
             var index = GetFirstUnusedIndex();
-            if (index >= (uint)_items.Length)
-            {
-                Grow((int)(index + 1));
-            }
+            if (index >= (uint)_items.Length) Grow((int)(index + 1));
             _items[index] = item;
             Used[(int)index] = true;
             Changed[(int)index] = true;
-            _amount += 1;
+            Count += 1;
             return index;
         }
     }
@@ -123,26 +129,22 @@ public class DynamicUniversalDedicatedBufferArray<T> : DisposingLogger where T :
             freeed.Remove(ret);
             return ret;
         }
-        var i = _amount;
+        var i = Count;
         for (; i < Used.Length; i++)
-        {
             if (!Used[i])
-            {
                 return (uint)i;
-            }
-        }
         return (uint)i;
     }
 
     /// <summary>
-    /// Increase the capacity of this list to at least the specified <paramref name="capacity"/>.
+    ///     Increase the capacity of this list to at least the specified <paramref name="capacity" />.
     /// </summary>
     /// <param name="capacity">The minimum capacity to ensure.</param>
     private void Grow(int capacity)
     {
         Debug.Assert(_items.Length < capacity);
 
-        int newCapacity = _items.Length == 0 ? DefaultCapacity : 2 * _items.Length;
+        var newCapacity = _items.Length == 0 ? DefaultCapacity : 2 * _items.Length;
 
         // Allow the list to grow to maximum possible capacity (~2G elements) before encountering overflow.
         // Note that this check works even when _items.Length overflowed thanks to the (uint) cast
@@ -171,9 +173,12 @@ public class DynamicUniversalDedicatedBufferArray<T> : DisposingLogger where T :
     }
 
     /// <summary>
-    /// Gets or sets the total number of elements the internal data structure can hold without resizing.
+    ///     Gets or sets the total number of elements the internal data structure can hold without resizing.
     /// </summary>
-    /// <returns>The number of elements that the <see cref="DynamicUniversalDedicatedBufferArray{T}"/> can contain before resizing is required.</returns>
+    /// <returns>
+    ///     The number of elements that the <see cref="DynamicUniversalDedicatedBufferArray{T}" /> can contain before
+    ///     resizing is required.
+    /// </returns>
     /// <exception cref="ArgumentException">Capacity is set to a value that is less than Count</exception>
     public int Capacity
     {
@@ -182,7 +187,7 @@ public class DynamicUniversalDedicatedBufferArray<T> : DisposingLogger where T :
         {
             lock (this)
             {
-                if (value < _amount)
+                if (value < Count)
                 {
                     Log.Warning("Setting Capacity Lower then size will not work");
                     throw new ArgumentOutOfRangeException(nameof(value), "Setting Capacity Lower then size will not work");
@@ -191,13 +196,9 @@ public class DynamicUniversalDedicatedBufferArray<T> : DisposingLogger where T :
                 if (value == _items.Length) return;
 
                 if (value <= 0)
-                {
                     Clear();
-                }
                 else
-                {
                     Resize(value);
-                }
             }
         }
     }
@@ -205,13 +206,13 @@ public class DynamicUniversalDedicatedBufferArray<T> : DisposingLogger where T :
     /// <inheritdoc cref="List{T}.Contains" />
     public bool Contains(T item)
     {
-        return _amount != 0 && IndexOf(item) != -1;
+        return Count != 0 && IndexOf(item) != -1;
     }
 
     /// <inheritdoc cref="List{T}.CopyTo" />
     public void CopyTo(T[] array, int arrayIndex)
     {
-        Array.Copy(_items, 0, array, arrayIndex, _amount);
+        Array.Copy(_items, 0, array, arrayIndex, Count);
     }
 
     /// <inheritdoc cref="List{T}.Remove" />
@@ -229,21 +230,20 @@ public class DynamicUniversalDedicatedBufferArray<T> : DisposingLogger where T :
 
     /// <inheritdoc cref="List{T}.Count" />
 
-    public int Count => _amount;
+    public int Count { get; private set; }
 
     public int IndexOf(T item)
-        => Array.IndexOf(_items, item, 0, _amount);
+    {
+        return Array.IndexOf(_items, item, 0, Count);
+    }
 
     /// <inheritdoc cref="List{T}.RemoveAt" />
     public void RemoveAt(uint index)
     {
         lock (this)
         {
-            if (index >= (uint)_amount)
-            {
-                throw new IndexOutOfRangeException("Index Out of range");
-            }
-            _amount--;
+            if (index >= (uint)Count) throw new IndexOutOfRangeException("Index Out of range");
+            Count--;
             Used[(int)index] = false;
             freeed.Add(index);
             _items[index] = default!;
@@ -262,7 +262,7 @@ public class DynamicUniversalDedicatedBufferArray<T> : DisposingLogger where T :
                 {
                     Changed[(int)index] = true;
                     Used[(int)index] = true;
-                    _amount++;
+                    Count++;
                     _version++;
                 }
                 _items[index] = value;
@@ -305,8 +305,7 @@ public class DynamicUniversalDedicatedBufferArray<T> : DisposingLogger where T :
 
             var regions = simple
                 .Where(x => x.Length > 0)
-                .Select(x => new BufferCopy
-                {
+                .Select(x => new BufferCopy {
                     Size = (ulong)(SizeOfT * x.Length),
                     DestinationOffset = (ulong)(SizeOfT * x.Begin),
                     SourceOffset = (ulong)(SizeOfT * x.Begin)
@@ -366,8 +365,7 @@ public class DynamicUniversalDedicatedBufferArray<T> : DisposingLogger where T :
 
     private BufferCopy GetRegion(int index)
     {
-        return new BufferCopy
-        {
+        return new BufferCopy {
             Size = (ulong)SizeOfT,
             DestinationOffset = (ulong)(SizeOfT * index),
             SourceOffset = (ulong)(SizeOfT * index)
@@ -408,12 +406,4 @@ public class DynamicUniversalDedicatedBufferArray<T> : DisposingLogger where T :
     }
 
 #endregion
-
-    public void Update(int index, ActionRef<T> action)
-    {
-        ref var item = ref _items[index];
-        action.Invoke(ref item);
-        lock (this)
-            Changed[index] = true;
-    }
 }

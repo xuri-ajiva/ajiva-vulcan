@@ -4,8 +4,7 @@ using Ajiva.Ecs.Entity.Helper;
 namespace Ajiva.Entities.Ui;
 
 [EntityComponent(typeof(UiTransform))]
-
-public partial class Panel 
+public partial class Panel
 {
     public Panel(UiTransform uiTransform)
     {

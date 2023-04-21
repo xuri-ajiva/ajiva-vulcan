@@ -1,4 +1,4 @@
-﻿namespace Ajiva.Systems.Assets.Contracts;
+﻿namespace Ajiva.Assets.Contracts;
 
 public enum AssetType
 {

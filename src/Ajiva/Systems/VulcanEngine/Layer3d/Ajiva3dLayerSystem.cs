@@ -18,17 +18,17 @@ namespace Ajiva.Systems.VulcanEngine.Layer3d;
 
 public class Ajiva3dLayerSystem : SystemBase, IUpdate, IAjivaLayer<UniformViewProj3d>
 {
+    private readonly EntityFactory _factory;
+    private readonly PeriodicUpdateRunner _updateRunner;
+    private readonly DeviceSystem deviceSystem;
+    private readonly IImageSystem imageSystem;
+    private readonly WindowSystem window;
     private Format depthFormat;
 
     private AImage? depthImage;
-    private WindowSystem window;
-    private readonly IImageSystem imageSystem;
-    private readonly DeviceSystem deviceSystem;
-    private readonly EntityFactory _factory;
-    private readonly PeriodicUpdateRunner _updateRunner;
 
     /// <inheritdoc />
-    public Ajiva3dLayerSystem(WindowSystem window,IImageSystem imageSystem, DeviceSystem deviceSystem, EntityFactory factory)
+    public Ajiva3dLayerSystem(WindowSystem window, IImageSystem imageSystem, DeviceSystem deviceSystem, EntityFactory factory)
     {
         this.window = window;
         this.imageSystem = imageSystem;
@@ -42,14 +42,12 @@ public class Ajiva3dLayerSystem : SystemBase, IUpdate, IAjivaLayer<UniformViewPr
 
     private object MainLock { get; } = new object();
 
+    public ClearValue[] ClearValues { get; } = {
+        new ClearColorValue(.1f, .1f, .1f, 0), new ClearDepthStencilValue(1.0f, 0)
+    };
+
     /// <inheritdoc />
     public Extent2D Extent { get; } = new Extent2D(2560, 1440);
-
-    public ClearValue[] ClearValues { get; } =
-    {
-        new ClearColorValue(.1f, .1f, .1f, 0),
-        new ClearDepthStencilValue(1.0f, 0)
-    };
 
     public IAChangeAwareBackupBufferOfT<UniformViewProj3d> LayerUniform { get; set; }
 
@@ -72,7 +70,9 @@ public class Ajiva3dLayerSystem : SystemBase, IUpdate, IAjivaLayer<UniformViewPr
         }
 
         var frameBufferFormat = deviceSystem.PhysicalDevice.FindSupportedFormat(
-            new[] { Format.R16G16B16A16UNorm, Format.R16G16B16UNorm, Format.R8G8B8UNorm, },
+            new[] {
+                Format.R16G16B16A16UNorm, Format.R16G16B16UNorm, Format.R8G8B8UNorm
+            },
             ImageTiling.Optimal,
             FormatFeatureFlags.ColorAttachment | FormatFeatureFlags.SampledImage);
         var frameBufferImage = imageSystem.CreateImageAndView(Extent.Width, Extent.Height,
@@ -82,8 +82,7 @@ public class Ajiva3dLayerSystem : SystemBase, IUpdate, IAjivaLayer<UniformViewPr
         var firstPass = layerIndex.First && layerRenderComponentSystemsIndex.First;
         var lastPass = layerIndex.Last && layerRenderComponentSystemsIndex.Last;
 
-        var renderPass = deviceSystem.Device!.CreateRenderPass(new[]
-            {
+        var renderPass = deviceSystem.Device!.CreateRenderPass(new[] {
                 new AttachmentDescription(AttachmentDescriptionFlags.None,
                     frameBufferFormat,
                     SampleCountFlags.SampleCount1,
@@ -103,19 +102,15 @@ public class Ajiva3dLayerSystem : SystemBase, IUpdate, IAjivaLayer<UniformViewPr
                     layerRenderComponentSystemsIndex.First ? ImageLayout.Undefined : ImageLayout.DepthStencilAttachmentOptimal,
                     ImageLayout.DepthStencilAttachmentOptimal)
             },
-            new SubpassDescription
-            {
+            new SubpassDescription {
                 DepthStencilAttachment = new AttachmentReference(1, ImageLayout.DepthStencilAttachmentOptimal),
                 PipelineBindPoint = PipelineBindPoint.Graphics,
-                ColorAttachments = new[]
-                {
+                ColorAttachments = new[] {
                     new AttachmentReference(0, ImageLayout.ColorAttachmentOptimal)
                 }
             },
-            new[]
-            {
-                new SubpassDependency
-                {
+            new[] {
+                new SubpassDependency {
                     SourceSubpass = Constants.SubpassExternal,
                     DestinationSubpass = 0,
                     SourceStageMask = PipelineStageFlags.BottomOfPipe,
@@ -123,8 +118,7 @@ public class Ajiva3dLayerSystem : SystemBase, IUpdate, IAjivaLayer<UniformViewPr
                     DestinationStageMask = PipelineStageFlags.ColorAttachmentOutput | PipelineStageFlags.EarlyFragmentTests,
                     DestinationAccessMask = AccessFlags.ColorAttachmentRead | AccessFlags.ColorAttachmentWrite | AccessFlags.DepthStencilAttachmentRead
                 },
-                new SubpassDependency
-                {
+                new SubpassDependency {
                     SourceSubpass = 0,
                     DestinationSubpass = Constants.SubpassExternal,
                     SourceStageMask = PipelineStageFlags.ColorAttachmentOutput | PipelineStageFlags.EarlyFragmentTests,
@@ -137,7 +131,9 @@ public class Ajiva3dLayerSystem : SystemBase, IUpdate, IAjivaLayer<UniformViewPr
         Framebuffer MakeFrameBuffer(ImageView imageView)
         {
             return deviceSystem.Device.CreateFramebuffer(renderPass,
-                new[] { imageView, depthImage.View },
+                new[] {
+                    imageView, depthImage.View
+                },
                 Extent.Width,
                 Extent.Height,
                 1);
@@ -147,15 +143,30 @@ public class Ajiva3dLayerSystem : SystemBase, IUpdate, IAjivaLayer<UniformViewPr
         var frameBuffer = MakeFrameBuffer(frameBufferImage.View);
         var renderPassLayer = new RenderPassLayer(swapChainLayer, renderPass);
         swapChainLayer.AddChild(renderPassLayer);
-        return new RenderTarget
-        {
-            ViewPortInfo = new FrameViewPortInfo(frameBuffer, frameBufferImage, Extent, 0..1),
+        return new RenderTarget {
+            ViewPortInfo = new FrameViewPortInfo(frameBuffer, frameBufferImage, Extent, ..1),
             PassLayer = renderPassLayer,
             ClearValues = firstPass
                 ? ClearValues
-                : new ClearValue[] { new ClearColorValue(.1f, .1f, .1f, 0) }
+                : new ClearValue[] {
+                    new ClearColorValue(.1f, .1f, .1f, 0)
+                }
         };
     }
+
+    /// <inheritdoc />
+    public void Update(UpdateInfo delta)
+    {
+        lock (MainLock)
+        {
+            if (MainCamara is null) CreateMainCamara();
+
+            UpdateCamaraProjView();
+        }
+    }
+
+    /// <inheritdoc />
+    public PeriodicUpdateInfo Info { get; } = new PeriodicUpdateInfo(TimeSpan.FromMilliseconds(10));
 
     /// <inheritdoc />
     public void Init()
@@ -169,29 +180,12 @@ public class Ajiva3dLayerSystem : SystemBase, IUpdate, IAjivaLayer<UniformViewPr
         LayerUniform = new AChangeAwareBackupBufferOfT<UniformViewProj3d>(1, deviceSystem);
     }
 
-    /// <inheritdoc />
-    public void Update(UpdateInfo delta)
-    {
-        lock (MainLock)
-        {
-            if (MainCamara is null)
-            {
-                CreateMainCamara();
-            }
-
-            UpdateCamaraProjView();
-        }
-    }
-
     private void CreateMainCamara()
     {
         MainCamara = _factory.CreateFpsCamera().Finalize();
         MainCamara.UpdatePerspective(90, window.Canvas.Width, window.Canvas.Height);
         MainCamara.MovementSpeed = .5f;
     }
-
-    /// <inheritdoc />
-    public PeriodicUpdateInfo Info { get; } = new PeriodicUpdateInfo(TimeSpan.FromMilliseconds(10));
 
     private void UpdateCamaraProjView()
     {

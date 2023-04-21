@@ -6,11 +6,9 @@ namespace Ajiva.Models.Buffer.Dynamic;
 
 public class ResizableDedicatedBuffer : DisposingLogger, IEquatable<ResizableDedicatedBuffer>
 {
+    private readonly MemoryPropertyFlags flags;
     private readonly IDeviceSystem system;
     private readonly BufferUsageFlags usage;
-    private readonly MemoryPropertyFlags flags;
-
-    public IChangingObserver<ResizableDedicatedBuffer> BufferResized { get; }
 
     public ResizableDedicatedBuffer(uint size, IDeviceSystem system, BufferUsageFlags usage, MemoryPropertyFlags flags)
     {
@@ -24,8 +22,18 @@ public class ResizableDedicatedBuffer : DisposingLogger, IEquatable<ResizableDed
         system.WatchObject(this);
     }
 
+    public IChangingObserver<ResizableDedicatedBuffer> BufferResized { get; }
+
     public Reactive<ABuffer> Buffer { get; }
     public uint Size { get; protected set; }
+
+    /// <inheritdoc />
+    public bool Equals(ResizableDedicatedBuffer? other)
+    {
+        if (ReferenceEquals(null, other)) return false;
+        if (ReferenceEquals(this, other)) return true;
+        return usage == other.usage && Size == other.Size && flags == other.flags && Buffer.Equals(other.Buffer);
+    }
 
     /// <inheritdoc />
     protected override void ReleaseUnmanagedResources(bool disposing)
@@ -58,25 +66,16 @@ public class ResizableDedicatedBuffer : DisposingLogger, IEquatable<ResizableDed
         }
     }
 
-
     public void CopyToRegions(ResizableDedicatedBuffer destination, ArrayProxy<BufferCopy> regions)
     {
         if (destination.Size < Size) throw new ArgumentException("The Destination Buffer is smaller than the Source Buffer", nameof(destination));
 
-        system.QueueSingleTimeCommand(QueueType.TransferQueue, CommandPoolSelector.Transit, command =>
-        {
-            command.CopyBuffer(Current().Buffer, destination.Current().Buffer, regions);
-        });
+        system.QueueSingleTimeCommand(QueueType.TransferQueue, CommandPoolSelector.Transit, command => { command.CopyBuffer(Current().Buffer, destination.Current().Buffer, regions); });
     }
 
-    public ABuffer Current() => Buffer.Value!;
-
-    /// <inheritdoc />
-    public bool Equals(ResizableDedicatedBuffer? other)
+    public ABuffer Current()
     {
-        if (ReferenceEquals(null, other)) return false;
-        if (ReferenceEquals(this, other)) return true;
-        return usage == other.usage && Size == other.Size && flags == other.flags && Buffer.Equals(other.Buffer) ;
+        return Buffer.Value!;
     }
 
     /// <inheritdoc />
@@ -84,8 +83,8 @@ public class ResizableDedicatedBuffer : DisposingLogger, IEquatable<ResizableDed
     {
         return !ReferenceEquals(null, obj)
                && (ReferenceEquals(this, obj)
-                   || obj.GetType() == GetType()
-                   && Equals((ResizableDedicatedBuffer)obj));
+                   || (obj.GetType() == GetType()
+                       && Equals((ResizableDedicatedBuffer)obj)));
     }
 
     /// <inheritdoc />

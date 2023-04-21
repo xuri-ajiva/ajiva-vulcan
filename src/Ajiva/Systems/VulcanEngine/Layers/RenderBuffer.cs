@@ -21,7 +21,7 @@ public class RenderBuffer
         get => inUse;
         set
         {
-            Log.Verbose("Set InUse To: {value,6}, {GetHashCode():X8}",value,GetHashCode());
+            Log.Verbose("Set InUse To: {value,6}, {GetHashCode():X8}", value, GetHashCode());
 
             inUse = value;
         }

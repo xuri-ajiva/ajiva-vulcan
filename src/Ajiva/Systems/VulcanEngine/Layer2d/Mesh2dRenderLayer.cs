@@ -1,4 +1,5 @@
 ﻿using System.Runtime.InteropServices;
+using Ajiva.Assets;
 using Ajiva.Components;
 using Ajiva.Components.Media;
 using Ajiva.Components.Mesh;
@@ -8,7 +9,6 @@ using Ajiva.Components.Transform.Ui;
 using Ajiva.Models.Instance;
 using Ajiva.Models.Layers.Layer2d;
 using Ajiva.Models.Vertex;
-using Ajiva.Systems.Assets;
 using Ajiva.Systems.VulcanEngine.Interfaces;
 using Ajiva.Systems.VulcanEngine.Layer;
 using Ajiva.Systems.VulcanEngine.Layers;
@@ -20,13 +20,15 @@ namespace Ajiva.Systems.VulcanEngine.Layer2d;
 
 public class Mesh2dRenderLayer : ComponentSystemBase<RenderInstanceMesh2D>, IUpdate, IAjivaLayerRenderSystem<UniformLayer2d>
 {
-    private readonly object _mainLock = new object();
-    private InstanceMeshPool<UiInstanceData> _instanceMeshPool;
-    private long _dataVersion;
-    private readonly WindowSystem _windowSystem;
-    private readonly DeviceSystem _deviceSystem;
+    private const uint VERTEX_BUFFER_BIND_ID = 0;
+    private const uint INSTANCE_BUFFER_BIND_ID = 1;
     private readonly IAssetManager _assetManager;
+    private readonly DeviceSystem _deviceSystem;
+    private readonly InstanceMeshPool<UiInstanceData> _instanceMeshPool;
+    private readonly object _mainLock = new object();
     private readonly ITextureSystem _textureSystem;
+    private readonly WindowSystem _windowSystem;
+    private long _dataVersion;
 
     /// <inheritdoc />
     public Mesh2dRenderLayer(WindowSystem windowSystem, DeviceSystem deviceSystem, IAssetManager assetManager, ITextureSystem textureSystem)
@@ -78,8 +80,7 @@ public class Mesh2dRenderLayer : ComponentSystemBase<RenderInstanceMesh2D>, IUpd
     public void UpdateGraphicsPipelineLayer()
     {
         var bind = new[] {
-            Vertex2D.GetBindingDescription(VERTEX_BUFFER_BIND_ID),
-            new VertexInputBindingDescription(INSTANCE_BUFFER_BIND_ID, (uint)Marshal.SizeOf<UiInstanceData>(), VertexInputRate.Instance)
+            Vertex2D.GetBindingDescription(VERTEX_BUFFER_BIND_ID), new VertexInputBindingDescription(INSTANCE_BUFFER_BIND_ID, (uint)Marshal.SizeOf<UiInstanceData>(), VertexInputRate.Instance)
         };
 
         var attrib = new ViAdBuilder<UiInstanceData>(
@@ -99,33 +100,8 @@ public class Mesh2dRenderLayer : ComponentSystemBase<RenderInstanceMesh2D>, IUpd
             bind, attrib, MainShader, PipelineDescriptorInfos);
     }
 
-    private void CreatePipelineDescriptorInfos()
-    {
-        var textureSamplerImageViews = _textureSystem.TextureSamplerImageViews;
-
-        PipelineDescriptorInfos = new[] {
-            new PipelineDescriptorInfos(DescriptorType.UniformBuffer, ShaderStageFlags.Vertex, 0, 1, BufferInfo: new[] {
-                new DescriptorBufferInfo { Buffer = AjivaLayer.LayerUniform.Uniform.Buffer!, Offset = 0, Range = (uint)AjivaLayer.LayerUniform.SizeOfT }
-            }),
-            new(DescriptorType.CombinedImageSampler, ShaderStageFlags.Fragment, 2, (uint)textureSamplerImageViews.Length, ImageInfo: textureSamplerImageViews)
-        };
-    }
-
     /// <inheritdoc />
     public RenderTarget RenderTarget { get; set; }
-
-    private const uint VERTEX_BUFFER_BIND_ID = 0;
-    private const uint INSTANCE_BUFFER_BIND_ID = 1;
-
-    private void UiResizeHandler(object sender, Extent2D oldSize, Extent2D newSize)
-    {
-        Interlocked.Increment(ref _dataVersion);
-    }
-
-    private void RebuildData(IInstanceMeshPool<UiInstanceData> sender)
-    {
-        Interlocked.Increment(ref _dataVersion);
-    }
 
     /// <inheritdoc />
     public void Update(UpdateInfo delta)
@@ -138,6 +114,32 @@ public class Mesh2dRenderLayer : ComponentSystemBase<RenderInstanceMesh2D>, IUpd
 
     /// <inheritdoc />
     public PeriodicUpdateInfo Info { get; } = new PeriodicUpdateInfo(TimeSpan.FromMilliseconds(15));
+
+    private void CreatePipelineDescriptorInfos()
+    {
+        var textureSamplerImageViews = _textureSystem.TextureSamplerImageViews;
+
+        PipelineDescriptorInfos = new[] {
+            new PipelineDescriptorInfos(DescriptorType.UniformBuffer, ShaderStageFlags.Vertex, 0, 1, BufferInfo: new[] {
+                new DescriptorBufferInfo {
+                    Buffer = AjivaLayer.LayerUniform.Uniform.Buffer!,
+                    Offset = 0,
+                    Range = (uint)AjivaLayer.LayerUniform.SizeOfT
+                }
+            }),
+            new(DescriptorType.CombinedImageSampler, ShaderStageFlags.Fragment, 2, (uint)textureSamplerImageViews.Length, ImageInfo: textureSamplerImageViews)
+        };
+    }
+
+    private void UiResizeHandler(object sender, Extent2D oldSize, Extent2D newSize)
+    {
+        Interlocked.Increment(ref _dataVersion);
+    }
+
+    private void RebuildData(IInstanceMeshPool<UiInstanceData> sender)
+    {
+        Interlocked.Increment(ref _dataVersion);
+    }
 
     /// <inheritdoc />
     public override RenderInstanceMesh2D RegisterComponent(IEntity entity, RenderInstanceMesh2D component)
@@ -180,7 +182,7 @@ public class Mesh2dRenderLayer : ComponentSystemBase<RenderInstanceMesh2D>, IUpd
     {
         if (!entity.TryGetComponent<UiTransform>(out var transform))
             transform = new UiTransform(null, UiAnchor.Zero, UiAnchor.Zero);
-        if(!entity.TryGetComponent<TextureComponent>(out var texture))
+        if (!entity.TryGetComponent<TextureComponent>(out var texture))
             texture = new TextureComponent();
         return new RenderInstanceMesh2D(MeshPrefab.Rect, transform, texture);
     }

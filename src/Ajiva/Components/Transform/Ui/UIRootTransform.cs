@@ -4,9 +4,11 @@ namespace Ajiva.Components.Transform.Ui;
 
 public class UIRootTransform : IUiTransform
 {
+    private readonly List<IUiTransform> children = new List<IUiTransform>();
     private Rect2Di displaySize;
+    private Rect2Df renderSize;
 
-    public UIRootTransform(int displayWidth, int displayHeight , float min, float max)
+    public UIRootTransform(int displayWidth, int displayHeight, float min, float max)
     {
         renderSize = new Rect2Df(min, min, max, max);
         displaySize = new Rect2Di(0, 0, displayWidth, displayHeight);
@@ -53,10 +55,7 @@ public class UIRootTransform : IUiTransform
     /// <inheritdoc />
     public void RecalculateSizes()
     {
-        foreach (var uiTransform in children)
-        {
-            uiTransform.RecalculateSizes();
-        }
+        foreach (var uiTransform in children) uiTransform.RecalculateSizes();
     }
 
     /// <inheritdoc />
@@ -76,7 +75,4 @@ public class UIRootTransform : IUiTransform
         child.Parent = null;
         children.Remove(child);
     }
-
-    private readonly List<IUiTransform> children = new List<IUiTransform>();
-    private Rect2Df renderSize;
 }

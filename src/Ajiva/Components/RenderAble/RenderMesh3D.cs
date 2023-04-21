@@ -27,9 +27,7 @@ public class RenderMesh3D : RenderMeshIdUnique<RenderMesh3D>
             Log.Warning("RenderMeshUpdate Failed!");
             return;
         }
-        else
         {
-            
             var data = Models.GetForChange((int)Id);
             data.Value.Model = value;
             data.Value.TextureSamplerId = TextureComponent?.TextureId ?? 0;
@@ -39,9 +37,7 @@ public class RenderMesh3D : RenderMeshIdUnique<RenderMesh3D>
             Log.Warning("RenderMeshUpdate Failed!");
             return;
         }
-        else
         {
-            
             var data = InstanceData.GetForChange((int)Id);
             data.Value.Position = value.Translation;
             data.Value.Rotation = Vector3.Zero;
@@ -49,6 +45,5 @@ public class RenderMesh3D : RenderMeshIdUnique<RenderMesh3D>
             data.Value.TextureIndex = TextureComponent?.TextureId ?? 0;
             data.Value.Padding = Vector2.One;
         }
-
     }
 }

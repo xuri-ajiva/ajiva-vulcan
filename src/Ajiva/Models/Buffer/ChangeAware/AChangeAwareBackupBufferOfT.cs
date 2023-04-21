@@ -108,8 +108,7 @@ public class AChangeAwareBackupBufferOfT<T> : DisposingLogger, IAChangeAwareBack
 
         var regions = simple
             .Where(x => x.Length > 0)
-            .Select(x => new BufferCopy
-            {
+            .Select(x => new BufferCopy {
                 Size = (ulong)(SizeOfT * x.Length),
                 DestinationOffset = (ulong)(SizeOfT * x.Begin),
                 SourceOffset = (ulong)(SizeOfT * x.Begin)
@@ -159,8 +158,7 @@ public class AChangeAwareBackupBufferOfT<T> : DisposingLogger, IAChangeAwareBack
 
     private BufferCopy GetRegion(int index)
     {
-        return new BufferCopy
-        {
+        return new BufferCopy {
             Size = (ulong)SizeOfT,
             DestinationOffset = (ulong)(SizeOfT * index),
             SourceOffset = (ulong)(SizeOfT * index)

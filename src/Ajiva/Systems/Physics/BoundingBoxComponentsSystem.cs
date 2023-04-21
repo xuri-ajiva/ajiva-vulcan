@@ -7,7 +7,7 @@ namespace Ajiva.Systems.Physics;
 
 public class BoundingBoxComponentsSystem : ComponentSystemBase<BoundingBox>, IUpdate
 {
-    StaticOctalTreeContainer<BoundingBox> _octalTree;
+    private readonly StaticOctalTreeContainer<BoundingBox> _octalTree;
     private readonly PhysicsSystem _physicsSystem;
     private readonly IWorkerPool _workerPool;
     private bool phisicsUpdated;
@@ -35,22 +35,12 @@ public class BoundingBoxComponentsSystem : ComponentSystemBase<BoundingBox>, IUp
     {
         //ALog.Debug("Begin DoPhysicFrame");
         foreach (var dynamicItem in _octalTree.Items)
-        {
-            foreach (var octalItem in _octalTree.Search(dynamicItem.Space))
-            {
-                if (ComponentEntityMap.TryGetValue(dynamicItem.Item, out var b1))
-                {
-                    if (ComponentEntityMap.TryGetValue(octalItem.Item, out var b2))
-                    {
-                        if (b1 != b2)
-                        {
-                            _physicsSystem.ResolveCollision(b1, b2);
-                        }
-                    }
-                }
-                //_physicsSystem.ResolveCollision(ComponentEntityMap[dynamicItem.Item], ComponentEntityMap[octalItem.Item]);
-            }
-        }
+        foreach (var octalItem in _octalTree.Search(dynamicItem.Space))
+            if (ComponentEntityMap.TryGetValue(dynamicItem.Item, out var b1))
+                if (ComponentEntityMap.TryGetValue(octalItem.Item, out var b2))
+                    if (b1 != b2)
+                        _physicsSystem.ResolveCollision(b1, b2);
+        //_physicsSystem.ResolveCollision(ComponentEntityMap[dynamicItem.Item], ComponentEntityMap[octalItem.Item]);
         //ALog.Debug("End DoPhysicFrame");
 
         /*

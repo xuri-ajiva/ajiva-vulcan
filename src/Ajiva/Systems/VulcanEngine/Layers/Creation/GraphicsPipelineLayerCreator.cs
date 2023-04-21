@@ -11,8 +11,7 @@ public static class GraphicsPipelineLayerCreator
     {
         System.Diagnostics.Debug.Assert(deviceSystem.Device != null, "deviceSystem.Device != null");
         var descriptorSetLayout = deviceSystem.Device.CreateDescriptorSetLayout(
-            descriptorInfos.Select(descriptor => new DescriptorSetLayoutBinding
-            {
+            descriptorInfos.Select(descriptor => new DescriptorSetLayoutBinding {
                 Binding = descriptor.DestinationBinding,
                 DescriptorCount = descriptor.DescriptorCount,
                 DescriptorType = descriptor.DescriptorType,
@@ -21,36 +20,28 @@ public static class GraphicsPipelineLayerCreator
 
         var pipelineLayout = deviceSystem.Device.CreatePipelineLayout(descriptorSetLayout, null);
 
-        var pipeline = deviceSystem.Device.CreateGraphicsPipelines(null, new[]
-        {
-            new GraphicsPipelineCreateInfo
-            {
+        var pipeline = deviceSystem.Device.CreateGraphicsPipelines(null, new[] {
+            new GraphicsPipelineCreateInfo {
                 Layout = pipelineLayout,
                 RenderPass = renderPassLayer.RenderPass,
                 Subpass = 0,
-                VertexInputState = new PipelineVertexInputStateCreateInfo
-                {
+                VertexInputState = new PipelineVertexInputStateCreateInfo {
                     VertexBindingDescriptions = bindingDescriptions,
                     VertexAttributeDescriptions = attributeDescriptions
                 },
-                InputAssemblyState = new PipelineInputAssemblyStateCreateInfo
-                {
+                InputAssemblyState = new PipelineInputAssemblyStateCreateInfo {
                     PrimitiveRestartEnable = false,
                     Topology = PrimitiveTopology.TriangleList
                 },
-                ViewportState = new PipelineViewportStateCreateInfo
-                {
-                    Viewports = new[]
-                    {
-                        new Viewport(x: 0, y: 0, width: 500, height: 500, maxDepth: 1, minDepth: 0)
+                ViewportState = new PipelineViewportStateCreateInfo {
+                    Viewports = new[] {
+                        new Viewport(0, 0, 500, 500, maxDepth: 1, minDepth: 0)
                     },
-                    Scissors = new[]
-                    {
-                        new Rect2D(offset: Offset2D.Zero, extent: new Extent2D(500, 500))
+                    Scissors = new[] {
+                        new Rect2D(Offset2D.Zero, new Extent2D(500, 500))
                     }
                 },
-                RasterizationState = new PipelineRasterizationStateCreateInfo
-                {
+                RasterizationState = new PipelineRasterizationStateCreateInfo {
                     DepthClampEnable = false,
                     RasterizerDiscardEnable = false,
                     PolygonMode = PolygonMode.Fill,
@@ -59,18 +50,14 @@ public static class GraphicsPipelineLayerCreator
                     //FrontFace = FrontFace.CounterClockwise,
                     DepthBiasEnable = false
                 },
-                MultisampleState = new PipelineMultisampleStateCreateInfo
-                {
+                MultisampleState = new PipelineMultisampleStateCreateInfo {
                     SampleShadingEnable = false,
                     RasterizationSamples = SampleCountFlags.SampleCount1,
                     MinSampleShading = 1
                 },
-                ColorBlendState = new PipelineColorBlendStateCreateInfo
-                {
-                    Attachments = new[]
-                    {
-                        new PipelineColorBlendAttachmentState
-                        {
+                ColorBlendState = new PipelineColorBlendStateCreateInfo {
+                    Attachments = new[] {
+                        new PipelineColorBlendAttachmentState {
                             ColorWriteMask = ColorComponentFlags.R
                                              | ColorComponentFlags.G
                                              | ColorComponentFlags.B
@@ -88,14 +75,11 @@ public static class GraphicsPipelineLayerCreator
                     LogicOp = LogicOp.Copy,
                     BlendConstants = (0, 0, 0, 0)
                 },
-                Stages = new[]
-                {
-                    mainShader.VertShaderPipelineStageCreateInfo,
-                    mainShader.FragShaderPipelineStageCreateInfo
+                Stages = new[] {
+                    mainShader.VertShaderPipelineStageCreateInfo, mainShader.FragShaderPipelineStageCreateInfo
                 },
                 DepthStencilState = useDepthImage
-                    ? new PipelineDepthStencilStateCreateInfo
-                    {
+                    ? new PipelineDepthStencilStateCreateInfo {
                         DepthTestEnable = true,
                         DepthWriteEnable = true,
                         DepthCompareOp = CompareOp.Less,
@@ -107,27 +91,23 @@ public static class GraphicsPipelineLayerCreator
                         Flags = new PipelineDepthStencilStateCreateFlags()
                     }
                     : null,
-                DynamicState = new PipelineDynamicStateCreateInfo
-                {
-                    DynamicStates = new[]
-                    {
-                        DynamicState.Viewport, DynamicState.Scissor, 
+                DynamicState = new PipelineDynamicStateCreateInfo {
+                    DynamicStates = new[] {
+                        DynamicState.Viewport, DynamicState.Scissor
                     }
                 }
             }
         }).Single();
 
         var descriptorPool = deviceSystem.Device.CreateDescriptorPool(10000, //TODO magic const, Why?
-            descriptorInfos.Select(descriptor => new DescriptorPoolSize
-            {
+            descriptorInfos.Select(descriptor => new DescriptorPoolSize {
                 Type = descriptor.DescriptorType,
                 DescriptorCount = descriptor.DescriptorCount
             }).ToArray());
         var descriptorSet = deviceSystem.Device.AllocateDescriptorSets(descriptorPool, descriptorSetLayout).Single();
 
         deviceSystem.Device.UpdateDescriptorSets(
-            descriptorInfos.Select(descriptor => new WriteDescriptorSet
-            {
+            descriptorInfos.Select(descriptor => new WriteDescriptorSet {
                 DestinationSet = descriptorSet,
                 DescriptorCount = descriptor.DescriptorCount,
                 DestinationBinding = descriptor.DestinationBinding,

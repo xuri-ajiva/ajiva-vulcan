@@ -1,10 +1,7 @@
-﻿// See https://aka.ms/new-console-template for more information
-using System.Diagnostics;
-using Ajiva;
+﻿using System.Diagnostics;
 using Ajiva.Application;
+using Ajiva.Assets;
 using Ajiva.Extensions;
-using Ajiva.Systems.Assets;
-using Ajiva.Systems.Assets.Contracts;
 using Autofac;
 using Autofac.Builder;
 using Autofac.Core;
@@ -41,10 +38,7 @@ logger.Information("Is64BitProcess: {Is64BitProcess}", Environment.Is64BitProces
 logger.Information("Is64BitOperatingSystem: {Is64BitOperatingSystem}", Environment.Is64BitOperatingSystem);
 logger.Information("OSVersion: {OSVersion}", Environment.OSVersion);
 
-if (args.Length > 0)
-{
-    AssetPacker.PackDefault(config, Const.Default.AssetsPath);
-}
+if (args.Length > 0) AssetPacker.PackDefault(config, Const.Default.AssetsPath);
 
 //todo generate this
 builder.AddFactoryData();
@@ -67,64 +61,66 @@ await container.DisposeAsync();
 Console.WriteLine("Press any key to exit...");
 Console.ReadKey();
 
-
-public class MySource : IRegistrationSource
+namespace Ajiva.Application
 {
-    /// <inheritdoc />
-    public IEnumerable<IComponentRegistration>
-        RegistrationsFor(Service service, Func<Service, IEnumerable<ServiceRegistration>> registrationAccessor)
+    public class MySource : IRegistrationSource
     {
-        var swt = service as IServiceWithType;
-        if (swt == null || !typeof(IComponentSystem).IsAssignableFrom(swt.ServiceType))
-            yield break;
-
-        var rb = RegistrationBuilder.ForDelegate(swt.ServiceType, (c, p) =>
+        /// <inheritdoc />
+        public IEnumerable<IComponentRegistration>
+            RegistrationsFor(Service service, Func<Service, IEnumerable<ServiceRegistration>> registrationAccessor)
         {
-            var type = swt.ServiceType.GetGenericArguments()[0];
-            var target = typeof(IComponentSystem<>).MakeGenericType(type);
-            return c.Resolve(target);
-        }).CreateRegistration();
+            var swt = service as IServiceWithType;
+            if (swt == null || !typeof(IComponentSystem).IsAssignableFrom(swt.ServiceType))
+                yield break;
 
-        yield return rb;
+            var rb = RegistrationBuilder.ForDelegate(swt.ServiceType, (c, p) =>
+            {
+                var type = swt.ServiceType.GetGenericArguments()[0];
+                var target = typeof(IComponentSystem<>).MakeGenericType(type);
+                return c.Resolve(target);
+            }).CreateRegistration();
 
-        // if swt is IComponent then just create a new instance
-        if (typeof(IComponent).IsAssignableFrom(swt.ServiceType))
-        {
-            var rb2 = RegistrationBuilder.ForDelegate(swt.ServiceType, (c, p) => { return Activator.CreateInstance(swt.ServiceType); }).CreateRegistration();
+            yield return rb;
 
-            yield return rb2;
+            // if swt is IComponent then just create a new instance
+            if (typeof(IComponent).IsAssignableFrom(swt.ServiceType))
+            {
+                var rb2 = RegistrationBuilder.ForDelegate(swt.ServiceType, (c, p) => { return Activator.CreateInstance(swt.ServiceType); }).CreateRegistration();
+
+                yield return rb2;
+            }
         }
+
+        /// <inheritdoc />
+        public bool IsAdapterForIndividualComponents { get; set; }
     }
 
-    /// <inheritdoc />
-    public bool IsAdapterForIndividualComponents { get; set; }
-}
-
-class CallerEnricher : ILogEventEnricher
-{
-    public void Enrich(LogEvent logEvent, ILogEventPropertyFactory propertyFactory)
+    internal class CallerEnricher : ILogEventEnricher
     {
-        var skip = 3;
-        while (true)
+        public void Enrich(LogEvent logEvent, ILogEventPropertyFactory propertyFactory)
         {
-            var stack = new StackFrame(skip, true);
-            if (!stack.HasMethod())
+            var skip = 3;
+            while (true)
             {
-                logEvent.AddPropertyIfAbsent(new LogEventProperty("Caller", new ScalarValue("<unknown method>")));
-                return;
-            }
+                var stack = new StackFrame(skip, true);
+                if (!stack.HasMethod())
+                {
+                    logEvent.AddPropertyIfAbsent(new LogEventProperty("Caller", new ScalarValue("<unknown method>")));
+                    return;
+                }
 
-            var method = stack.GetMethod();
-            if (method.DeclaringType.Assembly != typeof(Log).Assembly)
-            {
-                var methodName = $"{method.DeclaringType.Name}.{method.Name}";
-                var fileName = Path.GetFileName(stack.GetFileName());
-                var caller = $"{methodName} ({fileName}:{stack.GetFileLineNumber()})";
-                logEvent.AddPropertyIfAbsent(new LogEventProperty("Caller", new ScalarValue(caller)));
-                return;
-            }
+                var method = stack.GetMethod();
+                if (method.DeclaringType.Assembly != typeof(Log).Assembly)
+                {
+                    var methodName = $"{method.DeclaringType.Name}.{method.Name}";
+                    var fileName = Path.GetFileName(stack.GetFileName());
+                    var caller = $"{methodName} ({fileName}:{stack.GetFileLineNumber()})";
+                    logEvent.AddPropertyIfAbsent(new LogEventProperty("Caller", new ScalarValue(caller)));
+                    return;
+                }
 
-            skip++;
+                skip++;
+            }
         }
     }
 }

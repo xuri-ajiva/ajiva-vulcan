@@ -9,21 +9,16 @@ public record PipelineDescriptorInfos(DescriptorType DescriptorType, ShaderStage
 {
     public static PipelineDescriptorInfos[] CreateFrom(UniformBuffer<UniformViewProj3d> viewProj, UniformBuffer<SolidUniformModel> uniformModels, DescriptorImageInfo[] textureSamplerImageViews)
     {
-        return new[]
-        {
-            new PipelineDescriptorInfos(DescriptorType.UniformBuffer, ShaderStageFlags.Vertex, 0, 1, BufferInfo: new[]
-            {
-                new DescriptorBufferInfo
-                {
+        return new[] {
+            new PipelineDescriptorInfos(DescriptorType.UniformBuffer, ShaderStageFlags.Vertex, 0, 1, BufferInfo: new[] {
+                new DescriptorBufferInfo {
                     Buffer = viewProj.Uniform.Buffer,
                     Offset = 0,
                     Range = viewProj.Uniform.SizeOfT
                 }
             }),
-            new PipelineDescriptorInfos(DescriptorType.UniformBufferDynamic, ShaderStageFlags.Vertex, 1, 1, BufferInfo: new[]
-            {
-                new DescriptorBufferInfo
-                {
+            new PipelineDescriptorInfos(DescriptorType.UniformBufferDynamic, ShaderStageFlags.Vertex, 1, 1, BufferInfo: new[] {
+                new DescriptorBufferInfo {
                     Buffer = uniformModels.Uniform.Buffer,
                     Offset = 0,
                     Range = uniformModels.Uniform.SizeOfT
@@ -40,21 +35,16 @@ public record PipelineDescriptorInfos(DescriptorType DescriptorType, ShaderStage
 
     public static PipelineDescriptorInfos[] CreateFrom(Buffer viewProj, uint sizeOfViewProj, Buffer uniformModels, uint sizeOfModels, DescriptorImageInfo[] textureSamplerImageViews)
     {
-        return new[]
-        {
-            new PipelineDescriptorInfos(DescriptorType.UniformBuffer, ShaderStageFlags.Vertex, 0, 1, BufferInfo: new[]
-            {
-                new DescriptorBufferInfo
-                {
+        return new[] {
+            new PipelineDescriptorInfos(DescriptorType.UniformBuffer, ShaderStageFlags.Vertex, 0, 1, BufferInfo: new[] {
+                new DescriptorBufferInfo {
                     Buffer = viewProj,
                     Offset = 0,
                     Range = sizeOfViewProj
                 }
             }),
-            new PipelineDescriptorInfos(DescriptorType.UniformBufferDynamic, ShaderStageFlags.Vertex, 1, 1, BufferInfo: new[]
-            {
-                new DescriptorBufferInfo
-                {
+            new PipelineDescriptorInfos(DescriptorType.UniformBufferDynamic, ShaderStageFlags.Vertex, 1, 1, BufferInfo: new[] {
+                new DescriptorBufferInfo {
                     Buffer = uniformModels,
                     Offset = 0,
                     Range = sizeOfModels

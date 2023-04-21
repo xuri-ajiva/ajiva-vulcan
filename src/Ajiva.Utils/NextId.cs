@@ -4,7 +4,10 @@ namespace Ajiva.Utils;
 public interface INextId<T>
 {
     private static readonly ISet<uint> UsedIds = new SortedSet<uint>();
-    public static object @lock = new();
+    private static readonly object @lock = new object();
+
+    private static uint lastId;
+    public static uint MaxId = int.MaxValue;
 
     public static uint Next()
     {
@@ -24,13 +27,6 @@ public interface INextId<T>
         throw new IndexOutOfRangeException($"For {typeof(T).FullName} the Maximum Id Limit is Reached!");
     }
 
-    public static uint lastId;
-    public static uint MaxId = int.MaxValue;
-
-    // ReSharper disable once UnusedMember.Global
-#pragma warning disable 414
-    private static T type = default;
-#pragma warning restore 414
     public static void Remove(uint id)
     {
 #if __INextId_CHECK_ID

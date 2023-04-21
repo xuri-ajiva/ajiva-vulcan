@@ -1,4 +1,4 @@
-﻿using Ajiva.Systems.Assets;
+﻿using Ajiva.Assets;
 using Ajiva.Systems.VulcanEngine.Interfaces;
 using Ajiva.Systems.VulcanEngine.Layer;
 using Ajiva.Systems.VulcanEngine.Layers;
@@ -8,16 +8,15 @@ namespace Ajiva.Systems.VulcanEngine.Systems;
 
 public class GraphicsSystem : SystemBase, IUpdate, IGraphicsSystem
 {
-    private readonly DeviceSystem _deviceSystem;
-    private readonly WindowSystem _windowSystem;
-    private readonly TextureSystem _textureSystem;
     private static readonly object CurrentGraphicsLayoutSwapLock = new object();
+    private readonly IAssetManager _assetManager;
+    private readonly DeviceSystem _deviceSystem;
+    private readonly TextureSystem _textureSystem;
+    private readonly WindowSystem _windowSystem;
 
     private AjivaLayerRenderer? AjivaLayerRenderer;
 
-
     private bool reInitAjivaLayerRendererNeeded = true;
-    private readonly IAssetManager _assetManager;
 
     /// <inheritdoc />
     public GraphicsSystem(DeviceSystem deviceSystem, WindowSystem windowSystem, TextureSystem textureSystem, IAssetManager assetManager)
@@ -36,6 +35,45 @@ public class GraphicsSystem : SystemBase, IUpdate, IGraphicsSystem
     public List<IAjivaLayer> Layers { get; } = new List<IAjivaLayer>();
 
     public Format DepthFormat { get; set; }
+
+    public void RecreateCurrentGraphicsLayout()
+    {
+        lock (CurrentGraphicsLayoutSwapLock)
+        {
+            _deviceSystem.WaitIdle();
+
+            ReCreateRenderUnion();
+        }
+    }
+
+    public void DrawFrame()
+    {
+        var render = _deviceSystem.GraphicsQueue!;
+        var presentation = _deviceSystem.PresentQueue!;
+
+        _deviceSystem.ExecuteSingleTimeCommands(QueueType.GraphicsQueue, CommandPoolSelector.Foreground);
+        _deviceSystem.ExecuteSingleTimeCommands(QueueType.GraphicsQueue, CommandPoolSelector.Background);
+        _deviceSystem.ExecuteSingleTimeCommands(QueueType.TransferQueue, CommandPoolSelector.Transit);
+
+        lock (presentation)
+        {
+            lock (render)
+            {
+                AjivaLayerRenderer!.DrawFrame(render, presentation);
+            }
+        }
+    }
+
+    public void UpdateGraphicsData()
+    {
+        ChangingObserver.Updated();
+    }
+
+    public void AddUpdateLayer(IAjivaLayer layer)
+    {
+        layer.LayerChanged.OnChanged += LayerChangedOnOnChanged;
+        Layers.Add(layer);
+    }
 
     /// <inheritdoc />
     public void Update(UpdateInfo delta)
@@ -63,56 +101,16 @@ public class GraphicsSystem : SystemBase, IUpdate, IGraphicsSystem
         AjivaLayerRenderer = null!;
     }
 
-    public void RecreateCurrentGraphicsLayout()
-    {
-        lock (CurrentGraphicsLayoutSwapLock)
-        {
-            _deviceSystem.WaitIdle();
-
-            ReCreateRenderUnion();
-        }
-    }
-
     private void WindowResized(object sender, Extent2D oldSize, Extent2D newSize)
     {
         RecreateCurrentGraphicsLayout();
     }
-
-    public void DrawFrame()
-    {
-        var render = _deviceSystem.GraphicsQueue!;
-        var presentation = _deviceSystem.PresentQueue!;
-
-        _deviceSystem.ExecuteSingleTimeCommands(QueueType.GraphicsQueue, CommandPoolSelector.Foreground);
-        _deviceSystem.ExecuteSingleTimeCommands(QueueType.GraphicsQueue, CommandPoolSelector.Background);
-        _deviceSystem.ExecuteSingleTimeCommands(QueueType.TransferQueue, CommandPoolSelector.Transit);
-
-        lock (presentation)
-        {
-            lock (render)
-            {
-                AjivaLayerRenderer!.DrawFrame(render, presentation);
-            }
-        }
-    }
-    
 
     protected void ReCreateRenderUnion()
     {
         AjivaLayerRenderer ??= new AjivaLayerRenderer(_deviceSystem, _windowSystem.Canvas, new CommandBufferPool(_deviceSystem), _textureSystem, _assetManager);
 
         AjivaLayerRenderer.Init(Layers);
-    }
-
-    public void UpdateGraphicsData()
-    {
-        ChangingObserver.Updated();
-    }
-
-    public void AddUpdateLayer(IAjivaLayer layer)
-    {
-        layer.LayerChanged.OnChanged += LayerChangedOnOnChanged;
-        Layers.Add(layer);
     }
 
     private void LayerChangedOnOnChanged(IAjivaLayer sender)

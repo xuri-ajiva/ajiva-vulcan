@@ -1,4 +1,4 @@
-﻿namespace Ajiva.Systems.Assets;
+﻿namespace Ajiva.Assets;
 
 public static class AssetHelper
 {
@@ -17,6 +17,5 @@ public static class AssetHelper
                 else
                     span[i] = char.ToLower(s[i]);
         });
-        return name;
     }
 }

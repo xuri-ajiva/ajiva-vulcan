@@ -1,12 +1,12 @@
-﻿using Ajiva.Application;
-using Ajiva.Systems.Assets.Contracts;
+﻿using Ajiva.Assets.Contracts;
+using Ajiva.Utils;
 using ProtoBuf;
 
-namespace Ajiva.Systems.Assets;
+namespace Ajiva.Assets;
 
 public class AssetManager : SystemBase, IAssetManager
 {
-    string assetPath;
+    private readonly string assetPath;
 
     /// <inheritdoc />
     public AssetManager(AjivaConfig config)

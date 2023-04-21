@@ -16,8 +16,7 @@ public class Worker
         WorkName = "";
 
         //State.Publish(WorkResult.Waiting);
-        workingThread = new Thread(Work)
-        {
+        workingThread = new Thread(Work) {
             Name = $"WorkerThread {workerId.ToString()} from {WorkerPool.Name}",
             CurrentCulture = CultureInfo.InvariantCulture
         };

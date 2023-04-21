@@ -1,5 +1,4 @@
-﻿
-namespace Ajiva.Components.Transform.Kd;
+﻿namespace Ajiva.Components.Transform.Kd;
 
 public struct KdVec : IKdVec, IKdVecReadOnly
 {
@@ -32,10 +31,7 @@ public struct KdVec : IKdVec, IKdVecReadOnly
         if (lhs.Dimensions != rhs.Dimensions) throw new ArgumentException();
 
         var res = new KdVec(lhs.Dimensions);
-        for (var i = 0; i < lhs.Dimensions; i++)
-        {
-            res.values[i] = lhs.values[i] - rhs[i];
-        }
+        for (var i = 0; i < lhs.Dimensions; i++) res.values[i] = lhs.values[i] - rhs[i];
 
         return res;
     }
@@ -45,10 +41,7 @@ public struct KdVec : IKdVec, IKdVecReadOnly
         if (lhs.Dimensions != rhs.Dimensions) throw new ArgumentException();
 
         var res = new KdVec(lhs.Dimensions);
-        for (var i = 0; i < lhs.Dimensions; i++)
-        {
-            res.values[i] = lhs.values[i] / rhs[i];
-        }
+        for (var i = 0; i < lhs.Dimensions; i++) res.values[i] = lhs.values[i] / rhs[i];
 
         return res;
     }
@@ -58,10 +51,7 @@ public struct KdVec : IKdVec, IKdVecReadOnly
         if (lhs.Dimensions != rhs.Dimensions) throw new ArgumentException();
 
         var res = new KdVec(lhs.Dimensions);
-        for (var i = 0; i < lhs.Dimensions; i++)
-        {
-            res.values[i] = lhs.values[i] * rhs[i];
-        }
+        for (var i = 0; i < lhs.Dimensions; i++) res.values[i] = lhs.values[i] * rhs[i];
 
         return res;
     }
@@ -69,10 +59,7 @@ public struct KdVec : IKdVec, IKdVecReadOnly
     public static KdVec operator /(KdVec lhs, float scale)
     {
         var res = new KdVec(lhs.Dimensions);
-        for (var i = 0; i < lhs.Dimensions; i++)
-        {
-            res.values[i] = lhs.values[i] / scale;
-        }
+        for (var i = 0; i < lhs.Dimensions; i++) res.values[i] = lhs.values[i] / scale;
 
         return res;
     }
@@ -80,10 +67,7 @@ public struct KdVec : IKdVec, IKdVecReadOnly
     public static KdVec operator *(KdVec lhs, float scale)
     {
         var res = new KdVec(lhs.Dimensions);
-        for (var i = 0; i < lhs.Dimensions; i++)
-        {
-            res.values[i] = lhs.values[i] * scale;
-        }
+        for (var i = 0; i < lhs.Dimensions; i++) res.values[i] = lhs.values[i] * scale;
 
         return res;
     }
@@ -93,10 +77,7 @@ public struct KdVec : IKdVec, IKdVecReadOnly
         if (lhs.Dimensions != rhs.Dimensions) throw new ArgumentException();
 
         var res = new KdVec(lhs.Dimensions);
-        for (var i = 0; i < lhs.Dimensions; i++)
-        {
-            res.values[i] = lhs.values[i] + rhs[i];
-        }
+        for (var i = 0; i < lhs.Dimensions; i++) res.values[i] = lhs.values[i] + rhs[i];
 
         return res;
     }
@@ -104,18 +85,12 @@ public struct KdVec : IKdVec, IKdVecReadOnly
     public void Update(KdVec kdVec)
     {
         if (Dimensions != kdVec.Dimensions) throw new ArgumentException();
-        for (var i = 0; i < Dimensions; i++)
-        {
-            values[i] = kdVec.values[i];
-        }
+        for (var i = 0; i < Dimensions; i++) values[i] = kdVec.values[i];
     }
 
     public void Update(params float[] updated)
     {
         if (Dimensions != updated.Length) throw new ArgumentException();
-        for (var i = 0; i < Dimensions; i++)
-        {
-            values[i] = updated[i];
-        }
+        for (var i = 0; i < Dimensions; i++) values[i] = updated[i];
     }
 }

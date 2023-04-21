@@ -1,4 +1,4 @@
-﻿namespace Ajiva;
+﻿namespace Ajiva.Utils;
 
 public static class Const
 {

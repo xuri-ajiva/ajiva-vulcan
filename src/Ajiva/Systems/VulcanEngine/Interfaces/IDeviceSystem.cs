@@ -14,7 +14,7 @@ public interface IDeviceSystem : ISystem
     CommandBuffer? TransientSingleCommandBuffer { get; }
     CommandBuffer? BackgroundSingleCommandBuffer { get; }
     CommandBuffer? ForegroundSingleCommandBuffer { get; }
-    
+
     void WaitIdle();
     uint FindMemoryType(uint typeFilter, MemoryPropertyFlags flags);
     void WatchObject(IDisposable disposable);

@@ -19,9 +19,6 @@ public class DeviceSystem : SystemBase, IDeviceSystem
         CreateLogicalDevice();
     }
 
-    public PhysicalDevice? PhysicalDevice { get; private set; }
-    public Device? Device { get; private set; }
-
     internal Queue? GraphicsQueue { get; private set; }
     internal Queue? PresentQueue { get; private set; }
     internal Queue? TransferQueue { get; private set; }
@@ -29,12 +26,6 @@ public class DeviceSystem : SystemBase, IDeviceSystem
     internal ConcurrentQueue<Action<CommandBuffer>> GraphicsQueueQueue { get; } = new ConcurrentQueue<Action<CommandBuffer>>();
     internal ConcurrentQueue<Action<CommandBuffer>> PresentQueueQueue { get; } = new ConcurrentQueue<Action<CommandBuffer>>();
     internal ConcurrentQueue<Action<CommandBuffer>> TransferQueueQueue { get; } = new ConcurrentQueue<Action<CommandBuffer>>();
-
-    public Fence TransferQueueFence { get; private set; }
-    public Fence PresentQueueFence { get; private set; }
-    public Fence GraphicsQueueFence { get; private set; }
-
-    public CommandPool? TransientCommandPool { get; private set; }
     private CommandPool? BackgroundCommandPool { get; set; }
     private CommandPool? ForegroundCommandPool { get; set; }
 
@@ -42,46 +33,20 @@ public class DeviceSystem : SystemBase, IDeviceSystem
     private object BackgroundCommandPoolLock { get; } = new object();
     private object ForegroundCommandPoolLock { get; } = new object();
 
+    private List<IDisposable> Disposables { get; set; } = new List<IDisposable>();
+
+    public PhysicalDevice? PhysicalDevice { get; private set; }
+    public Device? Device { get; private set; }
+
+    public Fence TransferQueueFence { get; private set; }
+    public Fence PresentQueueFence { get; private set; }
+    public Fence GraphicsQueueFence { get; private set; }
+
+    public CommandPool? TransientCommandPool { get; private set; }
+
     public CommandBuffer? TransientSingleCommandBuffer { get; private set; }
     public CommandBuffer? BackgroundSingleCommandBuffer { get; private set; }
     public CommandBuffer? ForegroundSingleCommandBuffer { get; private set; }
-
-    private List<IDisposable> Disposables { get; set; } = new List<IDisposable>();
-
-    private void PickPhysicalDevice(Instance instance)
-    {
-        var availableDevices = instance.EnumeratePhysicalDevices();
-
-        PhysicalDevice = availableDevices.First(x => x.IsSuitableDevice(_windowSystem.Canvas));
-    }
-
-    private void CreateLogicalDevice()
-    {
-        queueFamilies = PhysicalDevice!.FindQueueFamilies(_windowSystem.Canvas);
-
-        Device = PhysicalDevice!.CreateDevice(queueFamilies.Indices
-                .Select(index => new DeviceQueueCreateInfo {
-                    QueueFamilyIndex = index,
-                    QueuePriorities = new[] {
-                        1f
-                    }
-                }).ToArray(),
-            null,
-            KhrExtensions.Swapchain, DeviceCreateFlags.None, new PhysicalDeviceFeatures {
-                //TODO Enable Features Used in any other part // remainder
-                SamplerAnisotropy = true,
-                FillModeNonSolid = true,
-                SampleRateShading = true,
-            });
-
-        GraphicsQueue = Device.GetQueue(queueFamilies.GraphicsFamily!.Value, 0);
-        PresentQueue = Device.GetQueue(queueFamilies.PresentFamily!.Value, 0);
-        TransferQueue = Device.GetQueue(queueFamilies.TransferFamily!.Value, 0);
-
-        GraphicsQueueFence = Device.CreateFence();
-        PresentQueueFence = Device.CreateFence();
-        TransferQueueFence = Device.CreateFence();
-    }
 
     public void WaitIdle()
     {
@@ -106,6 +71,64 @@ public class DeviceSystem : SystemBase, IDeviceSystem
     }
 
 #endregion
+
+    public void WatchObject(IDisposable disposable)
+    {
+        Disposables.Add(disposable);
+    }
+
+    public CommandBuffer[] AllocateCommandBuffers(CommandBufferLevel bufferLevel, int count, CommandPoolSelector selector)
+    {
+        lock (GetCommandPoolLock(selector))
+        {
+            System.Diagnostics.Debug.Assert(Device != null, nameof(Device) + " != null");
+            return Device.AllocateCommandBuffers(GetCommandPool(selector), bufferLevel, (uint)count);
+        }
+    }
+
+    public CommandBuffer AllocateCommandBuffer(CommandBufferLevel bufferLevel, CommandPoolSelector selector)
+    {
+        lock (GetCommandPoolLock(selector))
+        {
+            System.Diagnostics.Debug.Assert(Device != null, nameof(Device) + " != null");
+            return Device.AllocateCommandBuffers(GetCommandPool(selector), bufferLevel, 1)[0];
+        }
+    }
+
+    private void PickPhysicalDevice(Instance instance)
+    {
+        var availableDevices = instance.EnumeratePhysicalDevices();
+
+        PhysicalDevice = availableDevices.First(x => x.IsSuitableDevice(_windowSystem.Canvas));
+    }
+
+    private void CreateLogicalDevice()
+    {
+        queueFamilies = PhysicalDevice!.FindQueueFamilies(_windowSystem.Canvas);
+
+        Device = PhysicalDevice!.CreateDevice(queueFamilies.Indices
+                .Select(index => new DeviceQueueCreateInfo {
+                    QueueFamilyIndex = index,
+                    QueuePriorities = new[] {
+                        1f
+                    }
+                }).ToArray(),
+            null,
+            KhrExtensions.Swapchain, DeviceCreateFlags.None, new PhysicalDeviceFeatures {
+                //TODO Enable Features Used in any other part // remainder
+                SamplerAnisotropy = true,
+                FillModeNonSolid = true,
+                SampleRateShading = true
+            });
+
+        GraphicsQueue = Device.GetQueue(queueFamilies.GraphicsFamily!.Value, 0);
+        PresentQueue = Device.GetQueue(queueFamilies.PresentFamily!.Value, 0);
+        TransferQueue = Device.GetQueue(queueFamilies.TransferFamily!.Value, 0);
+
+        GraphicsQueueFence = Device.CreateFence();
+        PresentQueueFence = Device.CreateFence();
+        TransferQueueFence = Device.CreateFence();
+    }
 
     /// <inheritdoc />
     protected override void ReleaseUnmanagedResources(bool disposing)
@@ -134,29 +157,6 @@ public class DeviceSystem : SystemBase, IDeviceSystem
         TransientCommandPool = null;
         Device = null;
         PhysicalDevice = null;
-    }
-
-    public void WatchObject(IDisposable disposable)
-    {
-        Disposables.Add(disposable);
-    }
-
-    public CommandBuffer[] AllocateCommandBuffers(CommandBufferLevel bufferLevel, int count, CommandPoolSelector selector)
-    {
-        lock (GetCommandPoolLock(selector))
-        {
-            System.Diagnostics.Debug.Assert(Device != null, nameof(Device) + " != null");
-            return Device.AllocateCommandBuffers(GetCommandPool(selector), bufferLevel, (uint)count);
-        }
-    }
-
-    public CommandBuffer AllocateCommandBuffer(CommandBufferLevel bufferLevel, CommandPoolSelector selector)
-    {
-        lock (GetCommandPoolLock(selector))
-        {
-            System.Diagnostics.Debug.Assert(Device != null, nameof(Device) + " != null");
-            return Device.AllocateCommandBuffers(GetCommandPool(selector), bufferLevel, 1)[0];
-        }
     }
 
 #region CommandPool
@@ -252,10 +252,7 @@ public class DeviceSystem : SystemBase, IDeviceSystem
             {
                 while (queueQueue.TryDequeue(out var action))
                 {
-                    if (fence.GetStatus() == Result.Success)
-                    {
-                        Log.Error("Fence Error");
-                    }
+                    if (fence.GetStatus() == Result.Success) Log.Error("Fence Error");
 
                     ExecuteOnQueueWithFence(action, queue, fence, poolLock, commandBuffer, queueType);
                 }
@@ -280,10 +277,8 @@ public class DeviceSystem : SystemBase, IDeviceSystem
             singleCommandBuffer.End();
         }
 
-        queue.Submit(new SubmitInfo
-        {
-            CommandBuffers = new[]
-            {
+        queue.Submit(new SubmitInfo {
+            CommandBuffers = new[] {
                 singleCommandBuffer
             }
         }, fence);

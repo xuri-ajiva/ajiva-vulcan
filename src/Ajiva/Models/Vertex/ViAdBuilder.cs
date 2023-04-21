@@ -5,8 +5,8 @@ namespace Ajiva.Models.Vertex;
 
 public class ViAdBuilder<T>
 {
+    private readonly uint bindId;
     private readonly List<VertexInputAttributeDescription> input;
-    private uint bindId;
     private int lastLocation;
 
     public ViAdBuilder(IEnumerable<VertexInputAttributeDescription> input, uint bindId)
@@ -29,7 +29,13 @@ public class ViAdBuilder<T>
         return this;
     }
 
-    public VertexInputAttributeDescription For(string fieldName, Format format) => new VertexInputAttributeDescription((uint)++lastLocation, bindId, format, (uint)Marshal.OffsetOf<T>(fieldName));
+    public VertexInputAttributeDescription For(string fieldName, Format format)
+    {
+        return new VertexInputAttributeDescription((uint)++lastLocation, bindId, format, (uint)Marshal.OffsetOf<T>(fieldName));
+    }
 
-    public VertexInputAttributeDescription[] ToArray() => input.ToArray();
+    public VertexInputAttributeDescription[] ToArray()
+    {
+        return input.ToArray();
+    }
 }

@@ -1,6 +1,5 @@
 ﻿using System.Drawing;
 using System.Runtime.InteropServices.ComTypes;
-using Ajiva.Application;
 using Ajiva.Components.Media;
 using Ajiva.Systems.VulcanEngine.Interfaces;
 using SharpVk;
@@ -9,8 +8,8 @@ namespace Ajiva.Systems.VulcanEngine.Systems;
 
 public class TextureSystem : ComponentSystemBase<TextureComponent>, ITextureSystem
 {
-    private readonly TextureCreator _creator;
     private readonly ShaderConfig _config;
+    private readonly TextureCreator _creator;
 
     public TextureSystem(TextureCreator creator, AjivaConfig globalConfig)
     {
@@ -22,12 +21,13 @@ public class TextureSystem : ComponentSystemBase<TextureComponent>, ITextureSyst
 
         Default = _creator.FromFile("Logos:logo.png");
         Textures.Add(Default);
-        for (var i = 0; i < _config.TEXTURE_SAMPLER_COUNT; i++) 
+        for (var i = 0; i < _config.TEXTURE_SAMPLER_COUNT; i++)
             TextureSamplerImageViews[i] = Default.DescriptorImageInfo;
     }
 
-    public ATexture? Default { get; private set; }
     private List<ATexture> Textures { get; }
+
+    public ATexture? Default { get; }
     public DescriptorImageInfo[] TextureSamplerImageViews { get; }
 
     public void AddAndMapTextureToDescriptor(ATexture texture)
@@ -49,13 +49,6 @@ public class TextureSystem : ComponentSystemBase<TextureComponent>, ITextureSyst
         return new TextureComponent();
     }
 
-    /// <inheritdoc />
-    protected override void ReleaseUnmanagedResources(bool disposing)
-    {
-        for (var i = 0; i < _config.TEXTURE_SAMPLER_COUNT; i++) TextureSamplerImageViews[i] = default;
-        foreach (var texture in Textures) texture.Dispose();
-    }
-
     public ATexture CreateTextureAndMapToDescriptor(Bitmap bitmap)
     {
         var texture = _creator.FromBitmap(bitmap);
@@ -63,5 +56,15 @@ public class TextureSystem : ComponentSystemBase<TextureComponent>, ITextureSyst
         return texture;
     }
 
-    public Sampler CreateTextureSampler() => _creator.CreateTextureSampler();
+    public Sampler CreateTextureSampler()
+    {
+        return _creator.CreateTextureSampler();
+    }
+
+    /// <inheritdoc />
+    protected override void ReleaseUnmanagedResources(bool disposing)
+    {
+        for (var i = 0; i < _config.TEXTURE_SAMPLER_COUNT; i++) TextureSamplerImageViews[i] = default;
+        foreach (var texture in Textures) texture.Dispose();
+    }
 }

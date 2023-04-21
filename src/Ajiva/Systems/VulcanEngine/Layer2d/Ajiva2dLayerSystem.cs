@@ -11,9 +11,9 @@ namespace Ajiva.Systems.VulcanEngine.Layer2d;
 
 public class Ajiva2dLayerSystem : SystemBase, IAjivaLayer<UniformLayer2d>
 {
-    private readonly WindowSystem _windowSystem;
-    private readonly IImageSystem _imageSystem;
     private readonly IDeviceSystem _deviceSystem;
+    private readonly IImageSystem _imageSystem;
+    private readonly WindowSystem _windowSystem;
 
     /// <inheritdoc />
     public Ajiva2dLayerSystem(IDeviceSystem deviceSystem, WindowSystem windowSystem, IImageSystem imageSystem)
@@ -39,14 +39,12 @@ public class Ajiva2dLayerSystem : SystemBase, IAjivaLayer<UniformLayer2d>
         LayerUniform[0] = new UniformLayer2d
             //{ MousePos = new vec2(.5f, .5f), View = mat4.Ortho(-1.0f, 1.0f, -1.0f, 1.0f, -1.0f, 1.0f)});           
             {
-                Vec2 = new (1337, 421337), MousePos = new (.5f, .5f)
+                Vec2 = new Vector2(1337, 421337),
+                MousePos = new Vector2(.5f, .5f)
             };
         BuildLayerUniform(canvas);
 
-        _windowSystem.OnResize += delegate
-        {
-            BuildLayerUniform(_windowSystem.Canvas);
-        };
+        _windowSystem.OnResize += delegate { BuildLayerUniform(_windowSystem.Canvas); };
         _windowSystem.OnMouseMove += delegate(object? sender, AjivaMouseMotionCallbackEventArgs args)
         {
             if (args.ActiveLayer == AjivaEngineLayer.Layer2d) MouseMoved(args.Pos);
@@ -65,7 +63,7 @@ public class Ajiva2dLayerSystem : SystemBase, IAjivaLayer<UniformLayer2d>
     List<IAjivaLayerRenderSystem> IAjivaLayer.LayerRenderComponentSystems => new List<IAjivaLayerRenderSystem>(LayerRenderComponentSystems);
 
     /// <inheritdoc />
-    public IAChangeAwareBackupBufferOfT<UniformLayer2d> LayerUniform { get; private set; }
+    public IAChangeAwareBackupBufferOfT<UniformLayer2d> LayerUniform { get; }
 
     /// <inheritdoc />
     public List<IAjivaLayerRenderSystem<UniformLayer2d>> LayerRenderComponentSystems { get; } = new List<IAjivaLayerRenderSystem<UniformLayer2d>>();
@@ -74,34 +72,34 @@ public class Ajiva2dLayerSystem : SystemBase, IAjivaLayer<UniformLayer2d>
     public RenderTarget CreateRenderPassLayer(SwapChainLayer swapChainLayer, PositionAndMax layerIndex, PositionAndMax layerRenderComponentSystemsIndex)
     {
         var frameBufferFormat = _deviceSystem.PhysicalDevice.FindSupportedFormat(
-            new[] { Format.R16G16B16A16UNorm, Format.R16G16B16UNorm, Format.R8G8B8UNorm, },
+            new[] {
+                Format.R16G16B16A16UNorm, Format.R16G16B16UNorm, Format.R8G8B8UNorm
+            },
             ImageTiling.Optimal,
             FormatFeatureFlags.ColorAttachment | FormatFeatureFlags.SampledImage | FormatFeatureFlags.SampledImageFilterLinear);
         var frameBufferImage = _imageSystem.CreateImageAndView(Extent.Width, Extent.Height,
             frameBufferFormat, ImageTiling.Optimal, ImageUsageFlags.ColorAttachment | ImageUsageFlags.Sampled,
             MemoryPropertyFlags.DeviceLocal, ImageAspectFlags.Color);
 
-        var renderPass = _deviceSystem.Device!.CreateRenderPass(new[]
-            {
+        var renderPass = _deviceSystem.Device!.CreateRenderPass(new[] {
                 new AttachmentDescription(AttachmentDescriptionFlags.None,
                     frameBufferFormat,
                     SampleCountFlags.SampleCount1,
-                     AttachmentLoadOp.Clear,
+                    AttachmentLoadOp.Clear,
                     AttachmentStoreOp.Store,
                     AttachmentLoadOp.DontCare,
                     AttachmentStoreOp.DontCare,
                     ImageLayout.ColorAttachmentOptimal,
                     ImageLayout.ColorAttachmentOptimal)
             },
-            new SubpassDescription
-            {
+            new SubpassDescription {
                 PipelineBindPoint = PipelineBindPoint.Graphics,
-                ColorAttachments = new[] { new AttachmentReference(0, ImageLayout.ColorAttachmentOptimal) }
+                ColorAttachments = new[] {
+                    new AttachmentReference(0, ImageLayout.ColorAttachmentOptimal)
+                }
             },
-            new[]
-            {
-                new SubpassDependency
-                {
+            new[] {
+                new SubpassDependency {
                     SourceSubpass = Constants.SubpassExternal,
                     DestinationSubpass = 0,
                     SourceStageMask = PipelineStageFlags.BottomOfPipe,
@@ -109,8 +107,7 @@ public class Ajiva2dLayerSystem : SystemBase, IAjivaLayer<UniformLayer2d>
                     DestinationStageMask = PipelineStageFlags.ColorAttachmentOutput | PipelineStageFlags.EarlyFragmentTests,
                     DestinationAccessMask = AccessFlags.ColorAttachmentRead | AccessFlags.ColorAttachmentWrite | AccessFlags.DepthStencilAttachmentRead
                 },
-                new SubpassDependency
-                {
+                new SubpassDependency {
                     SourceSubpass = 0,
                     DestinationSubpass = Constants.SubpassExternal,
                     SourceStageMask = PipelineStageFlags.ColorAttachmentOutput | PipelineStageFlags.EarlyFragmentTests,
@@ -119,16 +116,19 @@ public class Ajiva2dLayerSystem : SystemBase, IAjivaLayer<UniformLayer2d>
                     DestinationAccessMask = AccessFlags.MemoryRead
                 }
             });
-        
-        var frameBuffer = _deviceSystem.Device.CreateFramebuffer(renderPass, new[] { frameBufferImage.View }, Extent.Width, Extent.Height, 1);
-        
+
+        var frameBuffer = _deviceSystem.Device.CreateFramebuffer(renderPass, new[] {
+            frameBufferImage.View
+        }, Extent.Width, Extent.Height, 1);
+
         var renderPassLayer = new RenderPassLayer(swapChainLayer, renderPass);
         swapChainLayer.AddChild(renderPassLayer);
-        return new RenderTarget
-        {
-            ViewPortInfo = new FrameViewPortInfo(frameBuffer, frameBufferImage, Extent, 0..1),
+        return new RenderTarget {
+            ViewPortInfo = new FrameViewPortInfo(frameBuffer, frameBufferImage, Extent, ..1),
             PassLayer = renderPassLayer,
-            ClearValues = new ClearValue[] { new ClearColorValue(.1f, .1f, .1f, .1f) }
+            ClearValues = new ClearValue[] {
+                new ClearColorValue(.1f, .1f, .1f, .1f)
+            }
         };
     }
 

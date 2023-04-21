@@ -4,31 +4,26 @@
         <TargetFramework>net7.0</TargetFramework>
         <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
         <Nullable>enable</Nullable>
+        <NoWarn>CA1416</NoWarn>
     </PropertyGroup>
     <ItemGroup>
-        <PackageReference Include="System.Drawing.Common" Version="6.0.0" />
-        <PackageReference Include="System.Linq.Async" Version="5.0.0" />
-        <PackageReference Include="System.Reactive.Linq" Version="5.0.0" />
+        <PackageReference Include="System.Drawing.Common" Version="6.0.0"/>
+        <PackageReference Include="System.Linq.Async" Version="5.0.0"/>
+        <PackageReference Include="System.Reactive.Linq" Version="5.0.0"/>
     </ItemGroup>
     <ItemGroup>
-        <ProjectReference Include="..\..\libs\SharpVk\src\SharpVk.Glfw\SharpVk.Glfw.csproj" />
-        <ProjectReference Include="..\..\libs\SharpVk\src\SharpVk.Shanq.Numerics\SharpVk.Shanq.Numerics.csproj" />
-        <ProjectReference Include="..\..\libs\SharpVk\src\SharpVk\SharpVk.csproj" />
-        <ProjectReference Include="..\Ajiva.Assets\Ajiva.Assets.csproj" />
-        <ProjectReference Include="..\Ajiva.Ecs\Ajiva.Ecs.csproj" />
+        <ProjectReference Include="..\..\libs\SharpVk\src\SharpVk.Glfw\SharpVk.Glfw.csproj"/>
+        <ProjectReference Include="..\..\libs\SharpVk\src\SharpVk.Shanq.Numerics\SharpVk.Shanq.Numerics.csproj"/>
+        <ProjectReference Include="..\..\libs\SharpVk\src\SharpVk\SharpVk.csproj"/>
+        <ProjectReference Include="..\Ajiva.Assets\Ajiva.Assets.csproj"/>
+        <ProjectReference Include="..\Ajiva.Ecs\Ajiva.Ecs.csproj"/>
     </ItemGroup>
-    
+
     <PropertyGroup>
         <PathMap>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)'))=./</PathMap>
     </PropertyGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\Ajiva.Generator\Ajiva.Generator.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
+        <ProjectReference Include="..\Ajiva.Generator\Ajiva.Generator.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false"/>
     </ItemGroup>
-
-    <ItemGroup>
-      <None Remove="Assets\default.asset.sha1.txt" />
-      <None Remove="default.config.json" />
-    </ItemGroup>
-
 </Project>

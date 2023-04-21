@@ -59,7 +59,7 @@ public class UniformBuffer<T> : ThreadSaveCreatable where T : struct, IComp<T>
 
     public void UpdateExpresion(BufferValueUpdateDelegate updateFunc)
     {
-        List<uint> updated = new List<uint>();
+        var updated = new List<uint>();
         for (uint i = 0; i < Staging.Length; i++)
             if (updateFunc(i, ref Staging.GetRef(i)))
                 updated.Add(i);
@@ -81,16 +81,16 @@ public class UniformBuffer<T> : ThreadSaveCreatable where T : struct, IComp<T>
 
     private BufferCopy[] RegionsToBufferCopy(List<uint> updated) //stupid idea
     {
-    return updated.Select(GetRegion).ToArray();
+        return updated.Select(GetRegion).ToArray();
     }
 
     private BufferCopy[] SimplifyFyRegions(List<uint> updated)
     {
         updated.Sort();
 
-        List<Regions> simple = new List<Regions>();
+        var simple = new List<Regions>();
 
-        Regions cur = new Regions();
+        var cur = new Regions();
         foreach (var u in updated)
             if (u - cur.End > cur.Length)
             {
@@ -106,8 +106,7 @@ public class UniformBuffer<T> : ThreadSaveCreatable where T : struct, IComp<T>
 
         return simple
             .Where(x => x.Length > 0)
-            .Select(x => new BufferCopy
-            {
+            .Select(x => new BufferCopy {
                 Size = Uniform.SizeOfT * x.Length,
                 DestinationOffset = Uniform.SizeOfT * x.Begin,
                 SourceOffset = Uniform.SizeOfT * x.Begin
@@ -116,8 +115,11 @@ public class UniformBuffer<T> : ThreadSaveCreatable where T : struct, IComp<T>
 
     private BufferCopy GetRegion(uint id)
     {
-        return new BufferCopy
-            { Size = Uniform.SizeOfT, DestinationOffset = Uniform.SizeOfT * id, SourceOffset = Uniform.SizeOfT * id };
+        return new BufferCopy {
+            Size = Uniform.SizeOfT,
+            DestinationOffset = Uniform.SizeOfT * id,
+            SourceOffset = Uniform.SizeOfT * id
+        };
     }
 
     private struct Regions

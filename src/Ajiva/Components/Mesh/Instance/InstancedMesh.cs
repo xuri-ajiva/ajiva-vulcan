@@ -19,7 +19,10 @@ public class InstancedMesh<T> : IInstancedMesh<T> where T : unmanaged
     public uint InstancedId { get; }
 
     /// <inheritdoc />
-    public void UpdateData(uint instanceId, ActionRef<T> action) => instanceDataBuffer.Update((int)instanceId, action);
+    public void UpdateData(uint instanceId, ActionRef<T> action)
+    {
+        instanceDataBuffer.Update((int)instanceId, action);
+    }
 
     /// <inheritdoc />
     public uint AddInstance(IInstancedMeshInstance<T> instancedMeshInstance)
@@ -33,12 +36,15 @@ public class InstancedMesh<T> : IInstancedMesh<T> where T : unmanaged
         instanceDataBuffer.RemoveAt(instancedMeshInstance.InstanceId);
     }
 
-    public void SetInstanceDataBuffer(DynamicUniversalDedicatedBufferArray<T> pInstanceDataBuffer) => instanceDataBuffer = pInstanceDataBuffer;
-
     /// <inheritdoc />
     public void Dispose()
     {
         GC.SuppressFinalize(this);
         INextId<IInstancedMesh<T>>.Remove(InstancedId);
+    }
+
+    public void SetInstanceDataBuffer(DynamicUniversalDedicatedBufferArray<T> pInstanceDataBuffer)
+    {
+        instanceDataBuffer = pInstanceDataBuffer;
     }
 }

@@ -22,7 +22,7 @@ public class MeshPool : IMeshPool
 
     public IMesh GetMesh(uint meshId)
     {
-        if(Meshes.TryGetValue(meshId, out var mesh)) return mesh;
+        if (Meshes.TryGetValue(meshId, out var mesh)) return mesh;
         Log.Warning("Mesh not found, returning error mesh");
         AddMesh(MeshPrefab.Error);
         return Meshes[meshId];
@@ -30,7 +30,7 @@ public class MeshPool : IMeshPool
 
     public void AddMesh(IMesh mesh)
     {
-        if(Meshes.ContainsKey(mesh.MeshId)) return; //mesh already added
+        if (Meshes.ContainsKey(mesh.MeshId)) return; //mesh already added
         mesh.Create(deviceSystem);
         Meshes.Add(mesh.MeshId, mesh); //todo add check if already added
     }

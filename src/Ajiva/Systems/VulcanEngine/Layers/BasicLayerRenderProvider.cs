@@ -4,9 +4,9 @@ namespace Ajiva.Systems.VulcanEngine.Layers;
 
 public class BasicLayerRenderProvider : DisposingLogger
 {
+    private readonly long _lastVersion = -1;
     private readonly AjivaLayerRenderer AjivaLayerRenderer;
     private readonly IAjivaLayerRenderSystem layer;
-    public RenderTarget RenderTarget => layer.RenderTarget;
 
     public BasicLayerRenderProvider(AjivaLayerRenderer AjivaLayerRenderer, IAjivaLayerRenderSystem layer)
     {
@@ -14,20 +14,20 @@ public class BasicLayerRenderProvider : DisposingLogger
         this.layer = layer;
     }
 
-    private long _lastVersion = -1;
+    public RenderTarget RenderTarget => layer.RenderTarget;
+
+    private RenderBuffer? CurrentBuffer { get; set; }
 
     public RenderBuffer GetLatestCommandBuffer()
     {
         if (CurrentBuffer is not null && _lastVersion == layer.DataVersion) return CurrentBuffer;
-        
+
         AjivaLayerRenderer.CommandBufferPool.ReturnBuffer(CurrentBuffer);
         CurrentBuffer = AjivaLayerRenderer.CommandBufferPool.GetNewBuffer();
         FillBuffer(CurrentBuffer);
 
         return CurrentBuffer;
     }
-
-    private RenderBuffer? CurrentBuffer { get; set; }
 
     private void FillBuffer(RenderBuffer buffer)
     {

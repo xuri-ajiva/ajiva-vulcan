@@ -22,10 +22,7 @@ public class PhysicsComponent : DisposingLogger, IComponent
     public void Update(TimeSpan deltaTime)
     {
         var d = (float)deltaTime.TotalSeconds;
-        if (IsStatic)
-        {
-            return;
-        }
+        if (IsStatic) return;
 
         //acceleration
         var a = Force / Mass;
@@ -33,10 +30,7 @@ public class PhysicsComponent : DisposingLogger, IComponent
         Velocity += a * d;
         //position
         Position += Velocity * d;
-        if (Velocity.LengthSquared() < Epsilon)
-        {
-            Velocity = Vector3.Zero;
-        }
+        if (Velocity.LengthSquared() < Epsilon) Velocity = Vector3.Zero;
     }
 
     public void Reset()
@@ -61,10 +55,7 @@ public class PhysicsComponent : DisposingLogger, IComponent
         var relativeVelocity = Velocity - other.Velocity;
         var relativeVelocityInNormalDirection = Vector3.Dot(relativeVelocity, normal);
 
-        if (relativeVelocityInNormalDirection > 0)
-        {
-            return;
-        }
+        if (relativeVelocityInNormalDirection > 0) return;
 
         var elasticity = 1.0f;
         var j = -(1.0f + elasticity) * relativeVelocityInNormalDirection;
@@ -76,7 +67,6 @@ public class PhysicsComponent : DisposingLogger, IComponent
             other.Velocity -= impulse / other.Mass;
     }
 }
-
 /*Shape = new BoxShape(new vec3(size, size, size)),
 Mass = 0,
 Position = new vec3(0, 0, -100),

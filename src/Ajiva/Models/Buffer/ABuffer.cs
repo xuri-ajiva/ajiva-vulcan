@@ -5,7 +5,7 @@ namespace Ajiva.Models.Buffer;
 
 public class ABuffer : DisposingLogger, IEquatable<ABuffer>
 {
-    static object _lock = new object();
+    private static readonly object _lock = new object();
 
     public ABuffer(uint size)
     {
@@ -16,6 +16,14 @@ public class ABuffer : DisposingLogger, IEquatable<ABuffer>
     public DeviceMemory? Memory { get; private set; }
     public uint Size { get; protected set; }
 
+    /// <inheritdoc />
+    public bool Equals(ABuffer? other)
+    {
+        if (ReferenceEquals(null, other)) return false;
+        if (ReferenceEquals(this, other)) return true;
+        return Equals(Buffer, other.Buffer) && Equals(Memory, other.Memory) && Size == other.Size;
+    }
+
     public void Create(IDeviceSystem system, BufferUsageFlags usage, MemoryPropertyFlags flags)
     {
         Buffer = system.Device!.CreateBuffer(Size, usage, SharingMode.Exclusive, null);
@@ -25,7 +33,8 @@ public class ABuffer : DisposingLogger, IEquatable<ABuffer>
         Memory = system.Device.AllocateMemory(memRequirements.Size, system.FindMemoryType(memRequirements.MemoryTypeBits, flags));
         Buffer.BindMemory(Memory, 0);
         system.WatchObject(this);
-    }    
+    }
+
     public static ABuffer Create(IDeviceSystem system, uint size, BufferUsageFlags usage, MemoryPropertyFlags flags)
     {
         var res = new ABuffer(size);
@@ -36,7 +45,7 @@ public class ABuffer : DisposingLogger, IEquatable<ABuffer>
     /// <inheritdoc />
     protected override void ReleaseUnmanagedResources(bool disposing)
     {
-        Log.Verbose("Buffer Deleted: {RawHandle}, Disposing: {disposing}",Buffer.RawHandle, disposing);
+        Log.Verbose("Buffer Deleted: {RawHandle}, Disposing: {disposing}", Buffer.RawHandle, disposing);
         Buffer?.Dispose();
         Memory?.Free();
     }
@@ -63,9 +72,26 @@ public class ABuffer : DisposingLogger, IEquatable<ABuffer>
         return new DisposablePointer(this, Size);
     }
 
+    /// <inheritdoc />
+    public override bool Equals(object? obj)
+    {
+        if (ReferenceEquals(null, obj)) return false;
+        if (ReferenceEquals(this, obj)) return true;
+        if (obj.GetType() != GetType()) return false;
+        return Equals((ABuffer)obj);
+    }
+
+    /// <inheritdoc />
+    public override int GetHashCode()
+    {
+        return HashCode.Combine(Buffer, Memory, Size);
+    }
+
     public class DisposablePointer : IDisposable
     {
         private readonly ABuffer buffer;
+
+        private Lazy<IntPtr> ptr;
 
         public DisposablePointer(ABuffer buffer, ulong size)
         {
@@ -73,7 +99,6 @@ public class ABuffer : DisposingLogger, IEquatable<ABuffer>
             ptr = new Lazy<IntPtr>(buffer.Map);
         }
 
-        private Lazy<IntPtr> ptr;
         public IntPtr Ptr => ptr.Value;
 
         /// <inheritdoc />
@@ -91,28 +116,5 @@ public class ABuffer : DisposingLogger, IEquatable<ABuffer>
         {
             return Ptr.ToPointer();
         }
-    }
-
-    /// <inheritdoc />
-    public bool Equals(ABuffer? other)
-    {
-        if (ReferenceEquals(null, other)) return false;
-        if (ReferenceEquals(this, other)) return true;
-        return Equals(Buffer, other.Buffer) && Equals(Memory, other.Memory) && Size == other.Size;
-    }
-
-    /// <inheritdoc />
-    public override bool Equals(object? obj)
-    {
-        if (ReferenceEquals(null, obj)) return false;
-        if (ReferenceEquals(this, obj)) return true;
-        if (obj.GetType() != GetType()) return false;
-        return Equals((ABuffer)obj);
-    }
-
-    /// <inheritdoc />
-    public override int GetHashCode()
-    {
-        return HashCode.Combine(Buffer, Memory, Size);
     }
 }

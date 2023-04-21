@@ -12,13 +12,13 @@ namespace Ajiva.Entities;
     typeof(CollisionsComponent), typeof(PhysicsComponent), typeof(BoundingBox))]
 public partial class Cube
 {
-    private static Random r = new Random();
+    private static readonly Random r = new Random();
 
     /// <inheritdoc />
     private void InitializeDefault()
     {
         Transform3d ??= new Transform3d();
-        TextureComponent ??= new TextureComponent() {
+        TextureComponent ??= new TextureComponent {
             TextureId = 1
         };
         RenderInstanceMesh ??= new RenderInstanceMesh(MeshPrefab.Cube, Transform3d, TextureComponent);
@@ -27,7 +27,7 @@ public partial class Cube
             Mass = 10,
             Velocity = new Vector3(r.NextSingle(), r.NextSingle(), r.NextSingle()),
             Force = new Vector3(r.NextSingle(), -(9.8f * 9.8f), r.NextSingle()),
-            Transform = Transform3d,
+            Transform = Transform3d
         };
     }
 }

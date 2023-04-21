@@ -1,9 +1,7 @@
 ﻿namespace Ajiva.Worker;
 
 public delegate WorkResult Work(WorkInfo info, object? userParam);
-
 public delegate void ErrorNotify(Exception exception);
-
 public class WorkInfo
 {
     internal WorkInfo(Work work, string name, ErrorNotify errorNotify, object? userParam = default)

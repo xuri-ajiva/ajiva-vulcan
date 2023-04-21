@@ -21,7 +21,7 @@ public static class SwapChainLayerCreator
         var surfaceFormat = swapChainSupport.Formats.ChooseSwapSurfaceFormat();
 
         var imageCount = swapChainSupport.Capabilities.MinImageCount + 1;
-        if (swapChainSupport.Capabilities.MaxImageCount > 0 && imageCount > swapChainSupport.Capabilities.MaxImageCount) 
+        if (swapChainSupport.Capabilities.MaxImageCount > 0 && imageCount > swapChainSupport.Capabilities.MaxImageCount)
             imageCount = swapChainSupport.Capabilities.MaxImageCount;
 
         var queueFamilies = deviceSystem.PhysicalDevice!.FindQueueFamilies(canvas);
@@ -45,8 +45,7 @@ public static class SwapChainLayerCreator
             true,
             null); //todo take old swapchain
 
-        var swapChainImage = swapChain.GetImages().Select(x => new AImage(false)
-        {
+        var swapChainImage = swapChain.GetImages().Select(x => new AImage(false) {
             Image = x,
             View = x.CreateImageView(deviceSystem.Device!, surfaceFormat.Format, ImageAspectFlags.Color)
         }).ToArray();

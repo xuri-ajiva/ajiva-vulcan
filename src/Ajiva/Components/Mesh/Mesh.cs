@@ -26,7 +26,6 @@ public class Mesh<T> : DisposingLogger, IMesh where T : struct
     /// <inheritdoc />
     public uint MeshId { get; set; }
 
-
     /// <inheritdoc />
     public void Create(DeviceSystem system)
     {
@@ -56,7 +55,7 @@ public class Mesh<T> : DisposingLogger, IMesh where T : struct
     {
         ATrace.Assert(deviceComponent != null, nameof(deviceComponent) + " != null");
 
-        BufferOfT<TV> aBuffer = new BufferOfT<TV>(val);
+        var aBuffer = new BufferOfT<TV>(val);
         var copyBuffer = CopyBuffer<TV>.CreateCopyBufferOnDevice(val, deviceComponent);
 
         aBuffer.Create(deviceComponent, BufferUsageFlags.TransferDestination | bufferUsage, MemoryPropertyFlags.DeviceLocal);

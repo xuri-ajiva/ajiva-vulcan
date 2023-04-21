@@ -1,5 +1,5 @@
-﻿using Ajiva.Components;
-using Ajiva.Systems.Assets;
+﻿using Ajiva.Assets;
+using Ajiva.Components;
 using Ajiva.Systems.VulcanEngine.Interfaces;
 using Ajiva.Systems.VulcanEngine.Layers.Models;
 using SharpVk;
@@ -8,9 +8,11 @@ namespace Ajiva.Systems.VulcanEngine.Layers;
 
 public class CombinePipeline : DisposingLogger
 {
-    private readonly AjivaLayerRenderer layerRenderer;
-    private readonly ITextureSystem _textureSystem;
     private readonly IAssetManager _assetManager;
+    private readonly ITextureSystem _textureSystem;
+    private readonly AjivaLayerRenderer layerRenderer;
+
+    private RenderBuffer[] cache = Array.Empty<RenderBuffer>();
 
     private FullRenderTarget? fullRenderTarget;
 
@@ -24,23 +26,18 @@ public class CombinePipeline : DisposingLogger
     private static DescriptorImageInfo[] CreateDescriptorImageInfo(IReadOnlyList<BasicLayerRenderProvider> dynamicLayerSystemData, ITextureSystem textureSystem)
     {
         var res = new DescriptorImageInfo[dynamicLayerSystemData.Count];
-        for (int i = 0; i < res.Length; i++)
-        {
+        for (var i = 0; i < res.Length; i++)
             res[i] = new DescriptorImageInfo {
                 Sampler = textureSystem.CreateTextureSampler(),
                 ImageView = dynamicLayerSystemData[i].RenderTarget.ViewPortInfo.FrameBufferImage.View,
                 ImageLayout = ImageLayout.General
             };
-        }
         return res;
     }
 
     public CommandBuffer Combine(IReadOnlyList<BasicLayerRenderProvider> dynamicLayerSystemData, uint nextImage)
     {
-        if (fullRenderTarget is null)
-        {
-            CreateFullRenderTarget(dynamicLayerSystemData);
-        }
+        if (fullRenderTarget is null) CreateFullRenderTarget(dynamicLayerSystemData);
 
         return FillBuffer(nextImage, dynamicLayerSystemData);
     }
@@ -52,8 +49,7 @@ public class CombinePipeline : DisposingLogger
         var deviceSystem = layerRenderer.DeviceSystem;
         var swapChainLayer = layerRenderer.swapChainLayer;
         var renderPass = deviceSystem.Device!.CreateRenderPass(
-            new[]
-            {
+            new[] {
                 new AttachmentDescription(AttachmentDescriptionFlags.None,
                     swapChainLayer.SwapChainFormat,
                     SampleCountFlags.SampleCount1,
@@ -62,27 +58,25 @@ public class CombinePipeline : DisposingLogger
                     AttachmentLoadOp.DontCare,
                     AttachmentStoreOp.DontCare,
                     ImageLayout.Undefined,
-                    ImageLayout.PresentSource),
+                    ImageLayout.PresentSource)
             },
-            new SubpassDescription
-            {
+            new SubpassDescription {
                 PipelineBindPoint = PipelineBindPoint.Graphics,
-                ColorAttachments = new[] { new AttachmentReference(0, ImageLayout.ColorAttachmentOptimal) },
+                ColorAttachments = new[] {
+                    new AttachmentReference(0, ImageLayout.ColorAttachmentOptimal)
+                }
             },
-            new[]
-            {
-                new SubpassDependency
-                {
+            new[] {
+                new SubpassDependency {
                     SourceSubpass = Constants.SubpassExternal,
                     DestinationSubpass = 0,
                     SourceStageMask = PipelineStageFlags.BottomOfPipe,
                     SourceAccessMask = AccessFlags.MemoryRead,
                     DestinationStageMask = PipelineStageFlags.ColorAttachmentOutput | PipelineStageFlags.EarlyFragmentTests,
                     DestinationAccessMask = AccessFlags.ColorAttachmentRead | AccessFlags.ColorAttachmentWrite | AccessFlags.DepthStencilAttachmentRead,
-                    DependencyFlags = DependencyFlags.None,
+                    DependencyFlags = DependencyFlags.None
                 },
-                new SubpassDependency
-                {
+                new SubpassDependency {
                     SourceSubpass = 0,
                     DestinationSubpass = Constants.SubpassExternal,
                     SourceStageMask = PipelineStageFlags.ColorAttachmentOutput | PipelineStageFlags.EarlyFragmentTests,
@@ -94,7 +88,9 @@ public class CombinePipeline : DisposingLogger
             });
 
         var frameBuffers = swapChainLayer.SwapChainImages.Select(x => deviceSystem.Device.CreateFramebuffer(renderPass,
-            new[] { x.View },
+            new[] {
+                x.View
+            },
             swapChainLayer.Canvas.Width,
             swapChainLayer.Canvas.Height,
             1)).ToArray();
@@ -105,8 +101,7 @@ public class CombinePipeline : DisposingLogger
         var mainShader = Shader.CreateShaderFrom(_assetManager, "combine", layerRenderer.DeviceSystem, "main");
         System.Diagnostics.Debug.Assert(layerRenderer.DeviceSystem.Device != null, "deviceSystem.Device != null");
         var descriptorSetLayout = layerRenderer.DeviceSystem.Device.CreateDescriptorSetLayout(
-            new DescriptorSetLayoutBinding
-            {
+            new DescriptorSetLayoutBinding {
                 Binding = 1,
                 DescriptorCount = (uint)descriptorImageInfos.Length,
                 DescriptorType = DescriptorType.CombinedImageSampler,
@@ -115,26 +110,38 @@ public class CombinePipeline : DisposingLogger
 
         var pipelineLayout = layerRenderer.DeviceSystem.Device.CreatePipelineLayout(descriptorSetLayout, null);
 
-        var pipeline = layerRenderer.DeviceSystem.Device.CreateGraphicsPipelines(null, new GraphicsPipelineCreateInfo
-        {
+        var pipeline = layerRenderer.DeviceSystem.Device.CreateGraphicsPipelines(null, new GraphicsPipelineCreateInfo {
             Layout = pipelineLayout,
             RenderPass = renderPassLayer.RenderPass,
             Subpass = 0,
             VertexInputState = new PipelineVertexInputStateCreateInfo(),
-            InputAssemblyState = new PipelineInputAssemblyStateCreateInfo { PrimitiveRestartEnable = false, Topology = PrimitiveTopology.TriangleList },
-            ViewportState = new PipelineViewportStateCreateInfo
-            {
-                Viewports = new[] { new Viewport(0, 0, 500, 500, maxDepth: 1, minDepth: 0) },
-                Scissors = new[] { new Rect2D(Offset2D.Zero, new Extent2D(500, 500)) }
+            InputAssemblyState = new PipelineInputAssemblyStateCreateInfo {
+                PrimitiveRestartEnable = false,
+                Topology = PrimitiveTopology.TriangleList
             },
-            RasterizationState = new PipelineRasterizationStateCreateInfo { DepthClampEnable = false, RasterizerDiscardEnable = false, PolygonMode = PolygonMode.Fill, LineWidth = 1, DepthBiasEnable = false },
-            MultisampleState = new PipelineMultisampleStateCreateInfo { SampleShadingEnable = false, RasterizationSamples = SampleCountFlags.SampleCount1, MinSampleShading = 1 },
-            ColorBlendState = new PipelineColorBlendStateCreateInfo
-            {
-                Attachments = new[]
-                {
-                    new PipelineColorBlendAttachmentState
-                    {
+            ViewportState = new PipelineViewportStateCreateInfo {
+                Viewports = new[] {
+                    new Viewport(0, 0, 500, 500, maxDepth: 1, minDepth: 0)
+                },
+                Scissors = new[] {
+                    new Rect2D(Offset2D.Zero, new Extent2D(500, 500))
+                }
+            },
+            RasterizationState = new PipelineRasterizationStateCreateInfo {
+                DepthClampEnable = false,
+                RasterizerDiscardEnable = false,
+                PolygonMode = PolygonMode.Fill,
+                LineWidth = 1,
+                DepthBiasEnable = false
+            },
+            MultisampleState = new PipelineMultisampleStateCreateInfo {
+                SampleShadingEnable = false,
+                RasterizationSamples = SampleCountFlags.SampleCount1,
+                MinSampleShading = 1
+            },
+            ColorBlendState = new PipelineColorBlendStateCreateInfo {
+                Attachments = new[] {
+                    new PipelineColorBlendAttachmentState {
                         ColorWriteMask = ColorComponentFlags.R
                                          | ColorComponentFlags.G
                                          | ColorComponentFlags.B
@@ -146,29 +153,37 @@ public class CombinePipeline : DisposingLogger
                         SourceAlphaBlendFactor = BlendFactor.One,
                         DestinationAlphaBlendFactor = BlendFactor.Zero,
                         AlphaBlendOp = BlendOp.Add
-                    } 
+                    }
                 },
                 LogicOpEnable = false,
                 LogicOp = LogicOp.Copy,
                 BlendConstants = (0, 0, 0, 0)
             },
-            Stages = new[] { mainShader.VertShaderPipelineStageCreateInfo, mainShader.FragShaderPipelineStageCreateInfo },
-            DynamicState = new PipelineDynamicStateCreateInfo { DynamicStates = new[] { DynamicState.Viewport, DynamicState.Scissor, } }
+            Stages = new[] {
+                mainShader.VertShaderPipelineStageCreateInfo, mainShader.FragShaderPipelineStageCreateInfo
+            },
+            DynamicState = new PipelineDynamicStateCreateInfo {
+                DynamicStates = new[] {
+                    DynamicState.Viewport, DynamicState.Scissor
+                }
+            }
         }).Single();
 
         var descriptorPool = layerRenderer.DeviceSystem.Device.CreateDescriptorPool(1000,
-            new DescriptorPoolSize { Type = DescriptorType.CombinedImageSampler, DescriptorCount = (uint)descriptorImageInfos.Length }
+            new DescriptorPoolSize {
+                Type = DescriptorType.CombinedImageSampler,
+                DescriptorCount = (uint)descriptorImageInfos.Length
+            }
         );
         var descriptorSet = layerRenderer.DeviceSystem.Device.AllocateDescriptorSets(descriptorPool, descriptorSetLayout).Single();
 
-        layerRenderer.DeviceSystem.Device.UpdateDescriptorSets(new WriteDescriptorSet
-        {
+        layerRenderer.DeviceSystem.Device.UpdateDescriptorSets(new WriteDescriptorSet {
             DestinationSet = descriptorSet,
             DescriptorCount = (uint)descriptorImageInfos.Length,
             DestinationBinding = 1,
             DescriptorType = DescriptorType.CombinedImageSampler,
             DestinationArrayElement = 0,
-            ImageInfo = descriptorImageInfos,
+            ImageInfo = descriptorImageInfos
         }, null);
 
         var graphicsPipelineLayer = new GraphicsPipelineLayer(renderPassLayer, pipeline, pipelineLayout, descriptorPool, descriptorSet, descriptorSetLayout);
@@ -183,8 +198,6 @@ public class CombinePipeline : DisposingLogger
 
         return unchecked((uint)init);
     }
-
-    private RenderBuffer[] cache = Array.Empty<RenderBuffer>();
 
     private CommandBuffer FillBuffer(uint nextImage, IReadOnlyCollection<BasicLayerRenderProvider> basicLayerRenderProviders)
     {
@@ -209,7 +222,9 @@ public class CombinePipeline : DisposingLogger
         var commandBuffer = renderBuffer.CommandBuffer;
         commandBuffer.Reset();
         commandBuffer.Begin(CommandBufferUsageFlags.SimultaneousUse);
-        commandBuffer.BeginRenderPass(fullRenderTarget.RenderPassLayer.RenderPass, fullRenderTarget.FrameBuffers[nextImage], fullRenderTarget.SwapChainLayer.Canvas.Rect, new ClearValue[] { new ClearColorValue(.1f, .1f, .1f, .1f) }, SubpassContents.Inline);
+        commandBuffer.BeginRenderPass(fullRenderTarget.RenderPassLayer.RenderPass, fullRenderTarget.FrameBuffers[nextImage], fullRenderTarget.SwapChainLayer.Canvas.Rect, new ClearValue[] {
+            new ClearColorValue(.1f, .1f, .1f, .1f)
+        }, SubpassContents.Inline);
         commandBuffer.SetViewport(0, new Viewport(0, 0, fullRenderTarget.SwapChainLayer.Canvas.Width, fullRenderTarget.SwapChainLayer.Canvas.Height, 0, 1));
         commandBuffer.SetScissor(0, fullRenderTarget.SwapChainLayer.Canvas.Rect);
         commandBuffer.BindPipeline(PipelineBindPoint.Graphics, fullRenderTarget.GraphicsPipelineLayer.Pipeline);

@@ -23,11 +23,11 @@ public class BoxTextureGenerator : SystemBase
         g.Flush();
 
         //MissingTexture.TextureId = 0;
-        ATexture texture = textureSystem.CreateTextureAndMapToDescriptor(bitmap);
+        var texture = textureSystem.CreateTextureAndMapToDescriptor(bitmap);
 
         //return WorkResult.Succeeded;
         //}, ALog.WriteLine, "Missing Texture Generator");
     }
 
-    public ATexture MissingTexture { get; private set; }
+    public ATexture MissingTexture { get; }
 }

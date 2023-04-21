@@ -7,32 +7,37 @@ namespace Ajiva.Components.Transform.SpatialAcceleration;
 public class StaticOctalTree<T, TItem> : IRespectable where TItem : StaticOctalItem<T>
 {
     private const int AREAS_PER_LEAF = 8;
-    private int _maxDepth;
-    private int _depth;
 
     private StaticOctalSpace _area;
 
-    private StaticOctalSpace[] _children;
-    private StaticOctalTree<T, TItem>?[]? _childrenTrees;
+    private StaticOctalSpace[] _children = null!;
+    private StaticOctalTree<T, TItem>?[] _childrenTrees;
+    private int _depth;
     private LinkedList<TItem>? _items;
+    private int _maxDepth;
 
-    private bool hasRest = false;
+    private DebugBox? _visual;
+
+    private bool hasRest;
+
+    /// <inheritdoc />
+    public void Reset()
+    {
+        Clear();
+        hasRest = true;
+    }
 
     public void Setup(StaticOctalSpace area, int depth, int maxDepth)
     {
         _depth = depth;
         _maxDepth = maxDepth;
-        if (_childrenTrees is not null && _childrenTrees.Any(x => x is not null))
-        {
-            Log.Error("already setup");
-        }
+        // ReSharper disable once ConditionIsAlwaysTrueOrFalseAccordingToNullableAPIContract
+        if (_childrenTrees is not null && _childrenTrees.Any(x => x is not null)) Log.Error("already setup");
         _childrenTrees ??= new StaticOctalTree<T, TItem>[AREAS_PER_LEAF]; //ArrayPool<StaticOctalTree<T, TItem>>.Shared.Rent(AREAS_PER_LEAF);
         _items ??= new LinkedList<TItem>(); //todo move to first use
         Resize(area);
         hasRest = false;
     }
-
-    private DebugBox? _visual;
 
     // Force area change on Tree, invalidates this and all child layers
     public void Resize(StaticOctalSpace area)
@@ -131,7 +136,7 @@ public class StaticOctalTree<T, TItem> : IRespectable where TItem : StaticOctalI
                 }
 
                 // Yes, so add item to it
-                return _childrenTrees[i].Insert(item);
+                return _childrenTrees[i]!.Insert(item);
             }
         }
 
@@ -152,35 +157,25 @@ public class StaticOctalTree<T, TItem> : IRespectable where TItem : StaticOctalI
         // if there is overlap
         lock (_items)
 
+        {
             foreach (var item in _items)
-            {
                 if (searchArea.Intersects(item.Space))
-                {
                     items.Add(item);
-                }
-            }
+        }
 
         // Now, check for items belonging to any of the children
         for (var i = 0; i < AREAS_PER_LEAF; i++)
         {
-            if (_childrenTrees[i] is null)
-            {
-                continue;
-            }
+            if (_childrenTrees[i] is null) continue;
 
             // If child is entirely contained within area, recursively
             // add all of its children, no need to check boundaries
             if (searchArea.Contains(_children[i]))
-            {
                 _childrenTrees[i]?.Items(items);
-            }
 
             // If child overlaps with area, check if it intersects
             // with area, if so, recursively add all of its children
-            else if (searchArea.Intersects(_children[i]))
-            {
-                _childrenTrees[i]?.Search(searchArea, items);
-            }
+            else if (searchArea.Intersects(_children[i])) _childrenTrees[i]?.Search(searchArea, items);
         }
     }
 
@@ -192,10 +187,8 @@ public class StaticOctalTree<T, TItem> : IRespectable where TItem : StaticOctalI
         }
 
         for (var i = 0; i < AREAS_PER_LEAF; i++)
-        {
             if (_childrenTrees[i] is not null)
                 _childrenTrees[i]!.Items(items);
-        }
     }
 
     public LinkedListNode<TItem>? Remove(TItem item)
@@ -259,10 +252,8 @@ public class StaticOctalTree<T, TItem> : IRespectable where TItem : StaticOctalI
 
         // If this tree has no items, but has children, it is not empty
         for (var i = 0; i < AREAS_PER_LEAF; i++)
-        {
             if (_childrenTrees[i] is not null)
                 return false;
-        }
 
         // If this tree has no items, and no children, it is empty
         return true;
@@ -273,24 +264,31 @@ public class StaticOctalTree<T, TItem> : IRespectable where TItem : StaticOctalI
         //ArrayPool<StaticOctalTree<T, TItem>>.Shared.Return(_childrenTrees, true);
         Clear();
     }
-
-    /// <inheritdoc />
-    public void Reset()
-    {
-        Clear();
-        hasRest = true;
-    }
 }
 public class StaticOctalTreeContainer<T>
 {
+    private readonly LinkedList<LinkedListNode<StaticOctalItem<T>>> _items = new LinkedList<LinkedListNode<StaticOctalItem<T>>>();
     private readonly StaticOctalTree<T, StaticOctalItem<T>> _tree;
-    private readonly LinkedList<LinkedListNode<StaticOctalItem<T>>> _items = new();
 
     public StaticOctalTreeContainer(StaticOctalSpace area, int maxDepth)
     {
         _tree = new StaticOctalTree<T, StaticOctalItem<T>>();
         _tree.Setup(area, 0, maxDepth);
         Log.Information("Created tree {area} depth 0 Center {2}", area, area.Position + area.Size / 2);
+    }
+
+    public bool IsEmpty => _items.Count == 0;
+    public int Count => _items.Count;
+
+    public List<StaticOctalItem<T>> Items
+    {
+        get
+        {
+            lock (_items)
+            {
+                return _items.Select(x => x.Value).ToList();
+            }
+        }
     }
 
     public StaticOctalItem<T> Insert(StaticOctalItem<T> item)
@@ -337,20 +335,6 @@ public class StaticOctalTreeContainer<T>
         }
     }
 
-    public bool IsEmpty => _items.Count == 0;
-    public int Count => _items.Count;
-
-    public List<StaticOctalItem<T>> Items
-    {
-        get
-        {
-            lock (_items)
-            {
-                return _items.Select(x => x.Value).ToList();
-            }
-        }
-    }
-
     public StaticOctalItem<T>? Relocate(StaticOctalItem<T> item, StaticOctalSpace space)
     {
         var oldItem = _tree.Remove(item);
@@ -374,7 +358,10 @@ public class StaticOctalTreeContainer<T>
 }
 public readonly struct StaticOctalSpace
 {
-    public override string ToString() => $"{nameof(StaticOctalSpace)} [p:{_position}, s:{_size}]";
+    public override string ToString()
+    {
+        return $"{nameof(StaticOctalSpace)} [p:{_position}, s:{_size}]";
+    }
 
     private readonly Vector3 _position;
     private readonly Vector3 _size;

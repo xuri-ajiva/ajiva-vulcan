@@ -65,8 +65,7 @@ public class Canvas : DisposingLogger
 
     public Canvas Fork(Offset2D offsetBy, Extent2D shrinkBy)
     {
-        Canvas n = new Canvas(rect, SurfaceHandle)
-        {
+        var n = new Canvas(rect, SurfaceHandle) {
             Offset = offsetBy,
             baseCanvas = this
         };
@@ -79,8 +78,7 @@ public class Canvas : DisposingLogger
     public Canvas Fork(Rect2D newRect)
     {
         ValidateThrow(newRect, rect); //todo user baseRect?, because it is the max valid ??
-        return new Canvas(rect, SurfaceHandle)
-        {
+        return new Canvas(rect, SurfaceHandle) {
             rect = newRect,
             baseCanvas = this
         };

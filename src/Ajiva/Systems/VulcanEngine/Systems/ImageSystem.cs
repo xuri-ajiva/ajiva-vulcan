@@ -16,11 +16,6 @@ public class ImageSystem : ComponentSystemBase<AImage>, IImageSystem
         _deviceSystem = deviceSystem;
     }
 
-    /// <inheritdoc />
-    public void Init()
-    {
-    }
-
     public AImage CreateImageAndView(uint width, uint height, Format format, ImageTiling tiling, ImageUsageFlags usage, MemoryPropertyFlags properties, ImageAspectFlags aspectFlags)
     {
         var aImage = new AImage(true);
@@ -28,18 +23,15 @@ public class ImageSystem : ComponentSystemBase<AImage>, IImageSystem
 
         aImage.Image = device.CreateImage(ImageType.Image2d, format, new Extent3D(width, height, 1), 1, 1, SampleCountFlags.SampleCount1, tiling, usage, SharingMode.Exclusive, ArrayProxy<uint>.Null, ImageLayout.Undefined);
 
-        var memRequirements = device.GetImageMemoryRequirements2(new ImageMemoryRequirementsInfo2
-        {
+        var memRequirements = device.GetImageMemoryRequirements2(new ImageMemoryRequirementsInfo2 {
             Image = aImage.Image
         });
 
-        aImage.Memory = device.AllocateMemory(memRequirements.MemoryRequirements.Size, _deviceSystem.FindMemoryType(memRequirements.MemoryRequirements.MemoryTypeBits, properties), new DedicatedAllocationMemoryAllocateInfo
-        {
+        aImage.Memory = device.AllocateMemory(memRequirements.MemoryRequirements.Size, _deviceSystem.FindMemoryType(memRequirements.MemoryRequirements.MemoryTypeBits, properties), new DedicatedAllocationMemoryAllocateInfo {
             Image = aImage.Image
         });
 
-        device.BindImageMemory2(new BindImageMemoryInfo
-        {
+        device.BindImageMemory2(new BindImageMemoryInfo {
             Image = aImage.Image,
             Memory = aImage.Memory,
             MemoryOffset = 0
@@ -67,21 +59,29 @@ public class ImageSystem : ComponentSystemBase<AImage>, IImageSystem
         return aImage;
     }
 
+    public override AImage CreateComponent(IEntity entity)
+    {
+        return new AImage(false); //todo what to set data to?
+    }
+
+    /// <inheritdoc />
+    public void Init()
+    {
+    }
+
 #region imageHelp
 
     public void CopyBufferToImage(Buffer buffer, Image image, uint width, uint height)
     {
         _deviceSystem.ExecuteSingleTimeCommand(QueueType.TransferQueue, CommandPoolSelector.Transit, command =>
         {
-            command.CopyBufferToImage(buffer, image, ImageLayout.TransferDestinationOptimal, new BufferImageCopy
-            {
+            command.CopyBufferToImage(buffer, image, ImageLayout.TransferDestinationOptimal, new BufferImageCopy {
                 BufferOffset = 0,
                 BufferRowLength = 0,
                 BufferImageHeight = 0,
                 ImageOffset = new Offset3D(),
                 ImageExtent = new Extent3D(width, height, 1),
-                ImageSubresource = new ImageSubresourceLayers
-                {
+                ImageSubresource = new ImageSubresourceLayers {
                     AspectMask = ImageAspectFlags.Color,
                     MipLevel = 0,
                     BaseArrayLayer = 0,
@@ -93,8 +93,7 @@ public class ImageSystem : ComponentSystemBase<AImage>, IImageSystem
 
     public void TransitionImageLayout(Image image, Format format, ImageLayout oldLayout, ImageLayout newLayout)
     {
-        var subresourceRange = new ImageSubresourceRange
-        {
+        var subresourceRange = new ImageSubresourceRange {
             BaseMipLevel = 0,
             LevelCount = 1,
             BaseArrayLayer = 0,
@@ -112,8 +111,7 @@ public class ImageSystem : ComponentSystemBase<AImage>, IImageSystem
             subresourceRange.AspectMask = ImageAspectFlags.Color;
         }
 
-        var barrier = new ImageMemoryBarrier
-        {
+        var barrier = new ImageMemoryBarrier {
             OldLayout = oldLayout,
             NewLayout = newLayout,
             Image = image,
@@ -152,10 +150,6 @@ public class ImageSystem : ComponentSystemBase<AImage>, IImageSystem
 
         _deviceSystem.ExecuteSingleTimeCommand(QueueType.GraphicsQueue, CommandPoolSelector.Foreground, command => command.PipelineBarrier(sourceStage, destinationStage, ArrayProxy<MemoryBarrier>.Null, ArrayProxy<BufferMemoryBarrier>.Null, barrier));
     }
-    
+
 #endregion
-    public override AImage CreateComponent(IEntity entity)
-    {
-        return new AImage(false){}; //todo what to set data to?
-    }
 }

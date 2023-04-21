@@ -7,6 +7,10 @@ namespace Ajiva.Utils;
 
 public static class ATrace
 {
+    public static ConcurrentDictionary<Type, long> Instances = new ConcurrentDictionary<Type, long>();
+    public static readonly Collection<Type> FullLog = new Collection<Type>();
+    public static Collection<Type> Log = new Collection<Type>();
+
     public static void Assert([DoesNotReturnIf(false)] bool condition, string? message)
     {
         if (condition) return;
@@ -14,10 +18,6 @@ public static class ATrace
         var callingFrame = new StackTrace().GetFrame(1);
         throw new TypeInitializationException(callingFrame?.GetMethod()?.DeclaringType?.Name ?? "Unknown", new ArgumentException(message));
     }
-
-    public static ConcurrentDictionary<Type, long> Instances = new();
-    public static readonly Collection<Type> FullLog = new();
-    public static Collection<Type> Log = new();
 
     public static void LogDeconstructed(Type type)
     {
@@ -47,14 +47,20 @@ public static class ATrace
             Serilog.Log.Debug($"New Creation of Type {type}, Count {Instances[tReal]}, Stack:\n" + GetStack());
     }
 
-    public static string GetStack(int skip = 2) => string.Join("", new StackTrace(true).GetFrames().Skip(skip).Select(x => x.ToString()));
+    public static string GetStack(int skip = 2)
+    {
+        return string.Join("", new StackTrace(true).GetFrames().Skip(skip).Select(x => x.ToString()));
+    }
 
-    public static void PrintStack() => Console.Write(GetStack());
+    public static void PrintStack()
+    {
+        Console.Write(GetStack());
+    }
 
     public static void LockInline(string value)
     {
         var (left, top) = Console.GetCursorPosition();
-        Console.Write(value );
+        Console.Write(value);
         Console.Write("                     ");
         Console.SetCursorPosition(left, top);
     }

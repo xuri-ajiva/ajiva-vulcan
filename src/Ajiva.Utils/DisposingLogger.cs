@@ -5,15 +5,7 @@ namespace Ajiva.Utils;
 
 public abstract class DisposingLogger : IDisposingLogger
 {
-    protected readonly object disposeLock = new();
-    public bool Disposed { get; private set; }
-
-    [DebuggerStepThrough]
-    static void Log(string msg)
-    {
-        //LogHelper.Log(msg);
-        //Block.WriteNext(msg);
-    }
+    protected readonly object DisposeLock = new object();
 
 #if LOGGING_TRUE
     protected DisposingLogger()
@@ -21,9 +13,20 @@ public abstract class DisposingLogger : IDisposingLogger
         Log($"Created: {GetType()}");
     }
 #endif
+    public bool Disposed { get; private set; }
+
+    [DebuggerStepThrough]
+    private static void Log(string msg)
+    {
+        //LogHelper.Log(msg);
+        //Block.WriteNext(msg);
+    }
+
 #region IDisposable
 
-    protected virtual void ReleaseUnmanagedResources(bool disposing) { }
+    protected virtual void ReleaseUnmanagedResources(bool disposing)
+    {
+    }
 
     [DebuggerStepThrough]
     protected virtual void Dispose(bool disposing)
@@ -35,7 +38,7 @@ public abstract class DisposingLogger : IDisposingLogger
             Log($"Disposed: {GetType()}");
 #endif
 
-        lock (disposeLock)
+        lock (DisposeLock)
         {
             if (Disposed) return;
             if (!disposing)

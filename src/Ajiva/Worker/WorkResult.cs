@@ -7,6 +7,6 @@ public enum WorkResult
     Idelle,
     Failed,
     Succeeded,
-    Locking,          
+    Locking,
     Disabled
 }

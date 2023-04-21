@@ -1,6 +1,6 @@
-﻿using Ajiva.Systems.Assets.Contracts;
+﻿using Ajiva.Assets.Contracts;
 
-namespace Ajiva.Systems.Assets;
+namespace Ajiva.Assets;
 
 public class AssetSpecification
 {

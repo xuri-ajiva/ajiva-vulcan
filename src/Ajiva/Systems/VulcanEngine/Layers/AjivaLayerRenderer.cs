@@ -1,4 +1,4 @@
-﻿using Ajiva.Systems.Assets;
+﻿using Ajiva.Assets;
 using Ajiva.Systems.VulcanEngine.Interfaces;
 using Ajiva.Systems.VulcanEngine.Layer;
 using Ajiva.Systems.VulcanEngine.Layers.Creation;
@@ -12,6 +12,7 @@ namespace Ajiva.Systems.VulcanEngine.Layers;
 
 public class AjivaLayerRenderer : DisposingLogger
 {
+    private readonly ITextureSystem _textureSystem;
     private readonly object bufferLock = new object();
     internal readonly Canvas Canvas;
     internal readonly DeviceSystem DeviceSystem;
@@ -19,10 +20,9 @@ public class AjivaLayerRenderer : DisposingLogger
     public readonly Semaphore imageAvailable;
     public readonly Semaphore renderFinished;
     public readonly object submitInfoLock = new object();
-    public SwapChainLayer swapChainLayer;
     public CombinePipeline CombinePipeline;
     public CommandBufferPool CommandBufferPool;
-    private readonly ITextureSystem _textureSystem;
+    public SwapChainLayer swapChainLayer;
 
     public AjivaLayerRenderer(DeviceSystem deviceSystem, Canvas canvas, CommandBufferPool commandBufferPool, ITextureSystem textureSystem, IAssetManager assetManager)
     {
@@ -74,10 +74,7 @@ public class AjivaLayerRenderer : DisposingLogger
 
     private void DeleteDynamicLayerData()
     {
-        foreach (var data in DynamicLayerSystemData)
-        {
-            data.Dispose();
-        }
+        foreach (var data in DynamicLayerSystemData) data.Dispose();
         DynamicLayerSystemData.Clear();
     }
 
@@ -111,10 +108,7 @@ public class AjivaLayerRenderer : DisposingLogger
     private ArrayProxy<SubmitInfo>? GetSubmitInfo(uint nextImage)
     {
         var commandBuffers = new CommandBuffer[DynamicLayerSystemData.Count + 1];
-        for (var i = 0; i < DynamicLayerSystemData.Count; i++)
-        {
-            commandBuffers[i] = DynamicLayerSystemData[i].GetLatestCommandBuffer().CommandBuffer;
-        }
+        for (var i = 0; i < DynamicLayerSystemData.Count; i++) commandBuffers[i] = DynamicLayerSystemData[i].GetLatestCommandBuffer().CommandBuffer;
 
         commandBuffers[^1] = CombinePipeline.Combine(DynamicLayerSystemData, nextImage);
 
