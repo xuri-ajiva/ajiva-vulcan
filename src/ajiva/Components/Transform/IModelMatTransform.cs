@@ -1,7 +1,6 @@
 ﻿using System.Numerics;
-using ajiva.utils.Changing;
 
-namespace ajiva.Components.Transform;
+namespace Ajiva.Components.Transform;
 
 public interface IModelMatTransform  : IComponent
 {

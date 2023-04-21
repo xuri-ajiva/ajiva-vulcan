@@ -1,8 +1,7 @@
-﻿using ajiva.Systems.VulcanEngine.Layer;
-using ajiva.utils.Changing;
+﻿using Ajiva.Systems.VulcanEngine.Layer;
 using SharpVk;
 
-namespace ajiva.Systems.VulcanEngine.Interfaces;
+namespace Ajiva.Systems.VulcanEngine.Interfaces;
 
 public interface IGraphicsSystem : ISystem
 {

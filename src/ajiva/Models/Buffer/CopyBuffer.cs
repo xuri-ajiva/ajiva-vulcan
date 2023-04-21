@@ -1,9 +1,9 @@
 ﻿using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
-using ajiva.Systems.VulcanEngine.Systems;
+using Ajiva.Systems.VulcanEngine.Systems;
 using SharpVk;
 
-namespace ajiva.Models.Buffer;
+namespace Ajiva.Models.Buffer;
 
 public class CopyBuffer<T> : BufferOfT<T> where T : struct
 {

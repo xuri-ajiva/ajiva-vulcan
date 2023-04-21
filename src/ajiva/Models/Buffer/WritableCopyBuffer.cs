@@ -1,4 +1,4 @@
-﻿namespace ajiva.Models.Buffer;
+﻿namespace Ajiva.Models.Buffer;
 
 public class WritableCopyBuffer<T> : CopyBuffer<T> where T : struct, IComp<T>
 {

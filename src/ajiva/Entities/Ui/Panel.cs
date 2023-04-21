@@ -1,7 +1,7 @@
-﻿using ajiva.Components.Transform.Ui;
-using ajiva.Ecs.Entity.Helper;
+﻿using Ajiva.Components.Transform.Ui;
+using Ajiva.Ecs.Entity.Helper;
 
-namespace ajiva.Entities.Ui;
+namespace Ajiva.Entities.Ui;
 
 [EntityComponent(typeof(UiTransform))]
 

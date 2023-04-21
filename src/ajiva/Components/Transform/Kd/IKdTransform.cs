@@ -1,4 +1,4 @@
-﻿namespace ajiva.Components.Transform.Kd;
+﻿namespace Ajiva.Components.Transform.Kd;
 
 public interface IKdTransformReadOnly : IComponent
 {

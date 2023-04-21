@@ -1,6 +1,6 @@
 ﻿using SharpVk;
 
-namespace ajiva.Systems.VulcanEngine.Layers;
+namespace Ajiva.Systems.VulcanEngine.Layers;
 
 public class RenderBuffer
 {

@@ -1,7 +1,7 @@
-﻿using ajiva.Components.Mesh;
-using ajiva.Components.Physics;
+﻿using Ajiva.Components.Mesh;
+using Ajiva.Components.Physics;
 
-namespace ajiva.Systems.Physics;
+namespace Ajiva.Systems.Physics;
 
 public class CollisionsComponentSystem : ComponentSystemBase<CollisionsComponent>
 {

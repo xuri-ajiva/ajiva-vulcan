@@ -1,5 +1,5 @@
 ﻿using System.Collections.Concurrent;
-using ajiva.Ecs;
+using Ajiva.Ecs;
 using Autofac;
 
 public class ContainerProxy : DisposingLogger, IEntityRegistry

@@ -1,6 +1,4 @@
-﻿using ajiva.utils.Changing;
-
-namespace ajiva.Components.RenderAble;
+﻿namespace Ajiva.Components.RenderAble;
 
 public abstract class RenderMeshIdUnique<T> : ChangingComponentBase, IRenderMesh where T : RenderMeshIdUnique<T>
 {

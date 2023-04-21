@@ -1,4 +1,4 @@
-﻿namespace ajiva.Components.Transform.Ui;
+﻿namespace Ajiva.Components.Transform.Ui;
 
 public readonly record struct Rect2Di(int X, int Y, int Width, int Height)
 {

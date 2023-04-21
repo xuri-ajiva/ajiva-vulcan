@@ -1,6 +1,6 @@
 ﻿using SharpVk;
 
-namespace ajiva.Systems.VulcanEngine.Layers.Models;
+namespace Ajiva.Systems.VulcanEngine.Layers.Models;
 
 public class RenderPassLayer : DisposingLogger
 {

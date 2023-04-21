@@ -1,8 +1,8 @@
 ﻿using System.Drawing;
-using ajiva.Components.Media;
+using Ajiva.Components.Media;
 using SharpVk;
 
-namespace ajiva.Systems.VulcanEngine.Interfaces;
+namespace Ajiva.Systems.VulcanEngine.Interfaces;
 
 public interface ITextureSystem : IComponentSystem<TextureComponent>
 {

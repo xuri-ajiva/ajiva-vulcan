@@ -1,12 +1,12 @@
 using System.Drawing;
 using System.Drawing.Imaging;
-using ajiva.Models.Buffer;
-using ajiva.Systems.Assets;
-using ajiva.Systems.Assets.Contracts;
-using ajiva.Systems.VulcanEngine.Interfaces;
+using Ajiva.Models.Buffer;
+using Ajiva.Systems.Assets;
+using Ajiva.Systems.Assets.Contracts;
+using Ajiva.Systems.VulcanEngine.Interfaces;
 using SharpVk;
 
-namespace ajiva.Components.Media;
+namespace Ajiva.Components.Media;
 
 public class TextureCreator
 {

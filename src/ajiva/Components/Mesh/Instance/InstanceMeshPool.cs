@@ -1,9 +1,8 @@
-﻿using ajiva.Models.Buffer.Dynamic;
-using ajiva.Systems.VulcanEngine.Interfaces;
-using ajiva.utils.Changing;
+﻿using Ajiva.Models.Buffer.Dynamic;
+using Ajiva.Systems.VulcanEngine.Interfaces;
 using SharpVk;
 
-namespace ajiva.Components.Mesh.Instance;
+namespace Ajiva.Components.Mesh.Instance;
 
 public class InstanceMeshPool<T> : DisposingLogger, IInstanceMeshPool<T>, IUpdate where T : unmanaged
 {

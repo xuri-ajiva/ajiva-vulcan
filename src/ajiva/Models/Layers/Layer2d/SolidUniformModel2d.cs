@@ -1,6 +1,6 @@
 ﻿using System.Numerics;
 
-namespace ajiva.Models.Layers.Layer2d;
+namespace Ajiva.Models.Layers.Layer2d;
 
 public struct SolidUniformModel2d : IComp<SolidUniformModel2d>
 {

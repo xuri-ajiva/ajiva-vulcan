@@ -1,8 +1,6 @@
-﻿using System;
-using ajiva.Ecs.Entity.Helper;
-using ajiva.utils;
+﻿using Ajiva.Ecs.Entity.Helper;
 
-namespace ajiva.Ecs.Example;
+namespace Ajiva.Ecs.Example;
 
 [EntityComponent(typeof(StdComponent))]
 public partial class SdtEntity : DisposingLogger, IUpdate

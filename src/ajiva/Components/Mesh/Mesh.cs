@@ -1,8 +1,8 @@
-﻿using ajiva.Models.Buffer;
-using ajiva.Systems.VulcanEngine.Systems;
+﻿using Ajiva.Models.Buffer;
+using Ajiva.Systems.VulcanEngine.Systems;
 using SharpVk;
 
-namespace ajiva.Components.Mesh;
+namespace Ajiva.Components.Mesh;
 
 public class Mesh<T> : DisposingLogger, IMesh where T : struct
 {

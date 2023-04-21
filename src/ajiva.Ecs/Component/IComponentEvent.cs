@@ -1,4 +1,4 @@
-﻿namespace ajiva.Ecs.Component;
+﻿namespace Ajiva.Ecs.Component;
 
 public interface IComponentEvent
 {

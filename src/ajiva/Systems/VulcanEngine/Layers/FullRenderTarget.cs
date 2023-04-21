@@ -1,8 +1,8 @@
-﻿using ajiva.Components;
-using ajiva.Systems.VulcanEngine.Layers.Models;
+﻿using Ajiva.Components;
+using Ajiva.Systems.VulcanEngine.Layers.Models;
 using SharpVk;
 
-namespace ajiva.Systems.VulcanEngine.Layers;
+namespace Ajiva.Systems.VulcanEngine.Layers;
 
 public class FullRenderTarget : DisposingLogger
 {

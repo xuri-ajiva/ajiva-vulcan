@@ -1,15 +1,14 @@
 ﻿using System.Numerics;
-using ajiva.Components.Mesh;
-using ajiva.Components.RenderAble;
-using ajiva.Components.Transform;
-using ajiva.Components.Transform.SpatialAcceleration;
-using ajiva.Entities;
-using ajiva.Models.Buffer;
-using ajiva.Models.Vertex;
-using ajiva.utils.Changing;
-using ajiva.Worker;
+using Ajiva.Components.Mesh;
+using Ajiva.Components.RenderAble;
+using Ajiva.Components.Transform;
+using Ajiva.Components.Transform.SpatialAcceleration;
+using Ajiva.Entities;
+using Ajiva.Models.Buffer;
+using Ajiva.Models.Vertex;
+using Ajiva.Worker;
 
-namespace ajiva.Components.Physics;
+namespace Ajiva.Components.Physics;
 
 public class BoundingBox : DisposingLogger, IBoundingBox
 {

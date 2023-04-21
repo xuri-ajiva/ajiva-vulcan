@@ -1,4 +1,4 @@
-﻿namespace ajiva.Components.Transform.Ui;
+﻿namespace Ajiva.Components.Transform.Ui;
 
 public record struct UiAnchor(UiAlignment Alignment, UiValueUnit Margin, UiValueUnit Span)
 {

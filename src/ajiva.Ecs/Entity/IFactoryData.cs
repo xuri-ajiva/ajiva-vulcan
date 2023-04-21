@@ -1,4 +1,4 @@
-﻿namespace ajiva.Ecs.Entity;
+﻿namespace Ajiva.Ecs.Entity;
 
 public interface IFactoryData
 {

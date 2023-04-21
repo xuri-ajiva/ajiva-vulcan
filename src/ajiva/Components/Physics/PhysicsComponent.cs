@@ -1,7 +1,7 @@
 ﻿using System.Numerics;
-using ajiva.Components.Transform;
+using Ajiva.Components.Transform;
 
-namespace ajiva.Components.Physics;
+namespace Ajiva.Components.Physics;
 
 public class PhysicsComponent : DisposingLogger, IComponent
 {

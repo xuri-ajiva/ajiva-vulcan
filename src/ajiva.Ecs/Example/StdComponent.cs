@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace ajiva.Ecs.Example;
+﻿namespace Ajiva.Ecs.Example;
 
 public class StdComponent : IComponent
 {

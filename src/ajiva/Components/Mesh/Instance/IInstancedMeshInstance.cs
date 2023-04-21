@@ -1,4 +1,4 @@
-﻿namespace ajiva.Components.Mesh.Instance;
+﻿namespace Ajiva.Components.Mesh.Instance;
 
 public interface IInstancedMeshInstance<T> : IDisposable where T : unmanaged
 {

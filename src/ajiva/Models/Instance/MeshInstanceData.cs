@@ -1,7 +1,7 @@
 ﻿using System.Numerics;
 using System.Runtime.InteropServices;
 
-namespace ajiva.Models.Instance;
+namespace Ajiva.Models.Instance;
 
 [StructLayout(LayoutKind.Sequential)]
 public struct MeshInstanceData

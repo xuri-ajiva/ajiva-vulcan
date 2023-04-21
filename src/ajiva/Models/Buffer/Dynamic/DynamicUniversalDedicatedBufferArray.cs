@@ -1,11 +1,10 @@
 ﻿using System.Collections;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
-using ajiva.Systems.VulcanEngine.Interfaces;
-using ajiva.utils.Changing;
+using Ajiva.Systems.VulcanEngine.Interfaces;
 using SharpVk;
 
-namespace ajiva.Models.Buffer.Dynamic;
+namespace Ajiva.Models.Buffer.Dynamic;
 
 public class DynamicUniversalDedicatedBufferArray<T> : DisposingLogger where T : unmanaged
 {

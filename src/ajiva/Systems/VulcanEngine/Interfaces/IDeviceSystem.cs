@@ -1,7 +1,7 @@
-﻿using ajiva.Systems.VulcanEngine.Systems;
+﻿using Ajiva.Systems.VulcanEngine.Systems;
 using SharpVk;
 
-namespace ajiva.Systems.VulcanEngine.Interfaces;
+namespace Ajiva.Systems.VulcanEngine.Interfaces;
 
 public interface IDeviceSystem : ISystem
 {

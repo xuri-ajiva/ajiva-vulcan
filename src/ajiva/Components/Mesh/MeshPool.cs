@@ -1,8 +1,8 @@
-﻿using ajiva.Components.RenderAble;
-using ajiva.Systems.VulcanEngine.Systems;
+﻿using Ajiva.Components.RenderAble;
+using Ajiva.Systems.VulcanEngine.Systems;
 using SharpVk;
 
-namespace ajiva.Components.Mesh;
+namespace Ajiva.Components.Mesh;
 
 public class MeshPool : IMeshPool
 {

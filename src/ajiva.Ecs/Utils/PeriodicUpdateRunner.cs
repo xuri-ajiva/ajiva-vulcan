@@ -1,12 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
-using ajiva.utils;
+﻿using System.Diagnostics;
 
-namespace ajiva.Ecs.Utils;
+namespace Ajiva.Ecs.Utils;
 
 public record PeriodicUpdateInfo(TimeSpan Interval);
 

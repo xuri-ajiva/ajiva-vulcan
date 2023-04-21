@@ -1,8 +1,8 @@
-﻿using ajiva.Systems.VulcanEngine.Layer;
-using ajiva.Systems.VulcanEngine.Layers.Models;
+﻿using Ajiva.Systems.VulcanEngine.Layer;
+using Ajiva.Systems.VulcanEngine.Layers.Models;
 using SharpVk;
 
-namespace ajiva.Systems.VulcanEngine.Layers;
+namespace Ajiva.Systems.VulcanEngine.Layers;
 
 public ref struct RenderLayerGuard
 {

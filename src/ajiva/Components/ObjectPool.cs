@@ -1,6 +1,6 @@
 ﻿using System.Collections.Concurrent;
 
-namespace ajiva.Components;
+namespace Ajiva.Components;
 
 public class ObjectPool<T> where T : class, IRespectable, new()
 {

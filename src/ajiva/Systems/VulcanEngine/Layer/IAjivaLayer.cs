@@ -1,9 +1,8 @@
-﻿using ajiva.Models.Buffer.ChangeAware;
-using ajiva.Systems.VulcanEngine.Layers.Models;
-using ajiva.utils.Changing;
+﻿using Ajiva.Models.Buffer.ChangeAware;
+using Ajiva.Systems.VulcanEngine.Layers.Models;
 using SharpVk;
 
-namespace ajiva.Systems.VulcanEngine.Layer;
+namespace Ajiva.Systems.VulcanEngine.Layer;
 
 public interface IAjivaLayer<T> : IAjivaLayer, IDisposable where T : unmanaged
 {
@@ -12,11 +11,11 @@ public interface IAjivaLayer<T> : IAjivaLayer, IDisposable where T : unmanaged
 }
 public static class AjivaLayerExtensions
 {
-    public static void AddLayer<T>(this IAjivaLayer<T> ajivaLayer, IAjivaLayerRenderSystem<T> ajivaLayerRenderSystem) where T : unmanaged
+    public static void AddLayer<T>(this IAjivaLayer<T> AjivaLayer, IAjivaLayerRenderSystem<T> AjivaLayerRenderSystem) where T : unmanaged
     {
-        ajivaLayerRenderSystem.AjivaLayer = ajivaLayer;
-        ajivaLayer.LayerRenderComponentSystems.Add(ajivaLayerRenderSystem);
-        ajivaLayer.LayerChanged.Changed();
+        AjivaLayerRenderSystem.AjivaLayer = AjivaLayer;
+        AjivaLayer.LayerRenderComponentSystems.Add(AjivaLayerRenderSystem);
+        AjivaLayer.LayerChanged.Changed();
     }
 }
 public interface IAjivaLayer

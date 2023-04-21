@@ -1,6 +1,6 @@
 ﻿using System.Numerics;
 
-namespace ajiva.Components.Transform.Ui;
+namespace Ajiva.Components.Transform.Ui;
 
 public class UIRootTransform : IUiTransform
 {

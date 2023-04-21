@@ -1,6 +1,6 @@
-﻿using ajiva.Systems.VulcanEngine.Systems;
+﻿using Ajiva.Systems.VulcanEngine.Systems;
 
-namespace ajiva.Systems.VulcanEngine.Interfaces;
+namespace Ajiva.Systems.VulcanEngine.Interfaces;
 
 public interface IWindowSystem
 {

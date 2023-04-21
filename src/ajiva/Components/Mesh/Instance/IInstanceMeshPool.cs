@@ -1,7 +1,6 @@
-﻿using ajiva.utils.Changing;
-using SharpVk;
+﻿using SharpVk;
 
-namespace ajiva.Components.Mesh.Instance;
+namespace Ajiva.Components.Mesh.Instance;
 
 public interface IInstanceMeshPool<T> : IDisposable where T : unmanaged
 {

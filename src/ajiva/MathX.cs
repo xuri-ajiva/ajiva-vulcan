@@ -1,6 +1,6 @@
 ﻿using System.Numerics;
 
-namespace ajiva;
+namespace Ajiva;
 
 public static class MathX
 {
@@ -16,42 +16,42 @@ public static class MathX
             : v;
 
     /// <summary>
-    /// Returns a Vector3 from component-wise application of Mix (min * (1-a) + max * a).
+    /// Returns a Vector3 from component-wise Application of Mix (min * (1-a) + max * a).
     /// </summary>
     public static Vector3 Mix(Vector3 min, Vector3 max, Vector3 a) => new Vector3(Mix(min.X, max.X, a.X), Mix(min.Y, max.Y, a.Y), Mix(min.Z, max.Z, a.Z));
 
     /// <summary>
-    /// Returns a Vector3 from component-wise application of Mix (min * (1-a) + max * a).
+    /// Returns a Vector3 from component-wise Application of Mix (min * (1-a) + max * a).
     /// </summary>
     public static float Mix(float min, float max, float a) => min * (1 - a) + max * a;
 
     /// <summary>
-    /// Returns a Vector3 from component-wise application of Lerp (min * (1-a) + max * a).
+    /// Returns a Vector3 from component-wise Application of Lerp (min * (1-a) + max * a).
     /// </summary>
     public static Vector3 Lerp(Vector3 min, Vector3 max, Vector3 a) => new Vector3(Lerp(min.X, max.X, a.X), Lerp(min.Y, max.Y, a.Y), Lerp(min.Z, max.Z, a.Z));
 
     /// <summary>
-    /// Returns a Vector3 from component-wise application of Lerp (min * (1-a) + max * a).
+    /// Returns a Vector3 from component-wise Application of Lerp (min * (1-a) + max * a).
     /// </summary>
     public static float Lerp(float min, float max, float a) => min * (1 - a) + max * a;
 
     /// <summary>
-    /// Returns a Vector3 from component-wise application of Smoothstep (((v - edge0) / (edge1 - edge0)).Clamp().HermiteInterpolationOrder3()).
+    /// Returns a Vector3 from component-wise Application of Smoothstep (((v - edge0) / (edge1 - edge0)).Clamp().HermiteInterpolationOrder3()).
     /// </summary>
     public static Vector3 Smoothstep(Vector3 edge0, Vector3 edge1, Vector3 v) => new Vector3(Smoothstep(edge0.X, edge1.X, v.X), Smoothstep(edge0.Y, edge1.Y, v.Y), Smoothstep(edge0.Z, edge1.Z, v.Z));
 
     /// <summary>
-    /// Returns a Vector3 from component-wise application of Smoothstep (((v - edge0) / (edge1 - edge0)).Clamp().HermiteInterpolationOrder3()).
+    /// Returns a Vector3 from component-wise Application of Smoothstep (((v - edge0) / (edge1 - edge0)).Clamp().HermiteInterpolationOrder3()).
     /// </summary>
     public static float Smoothstep(float edge0, float edge1, float v) => HermiteInterpolationOrder3(Clamp(((v - edge0) / (edge1 - edge0))));
 
     /// <summary>
-    /// Returns a Vector3 from component-wise application of Smootherstep (((v - edge0) / (edge1 - edge0)).Clamp().HermiteInterpolationOrder5()).
+    /// Returns a Vector3 from component-wise Application of Smootherstep (((v - edge0) / (edge1 - edge0)).Clamp().HermiteInterpolationOrder5()).
     /// </summary>
     public static Vector3 Smootherstep(Vector3 edge0, Vector3 edge1, Vector3 v) => new Vector3(Smootherstep(edge0.X, edge1.X, v.X), Smootherstep(edge0.Y, edge1.Y, v.Y), Smootherstep(edge0.Z, edge1.Z, v.Z));
 
     /// <summary>
-    /// Returns a Vector3 from component-wise application of Smootherstep (((v - edge0) / (edge1 - edge0)).Clamp().HermiteInterpolationOrder5()).
+    /// Returns a Vector3 from component-wise Application of Smootherstep (((v - edge0) / (edge1 - edge0)).Clamp().HermiteInterpolationOrder5()).
     /// </summary>
     public static float Smootherstep(float edge0, float edge1, float v) => HermiteInterpolationOrder5(Clamp((v - edge0) / (edge1 - edge0)));
 }

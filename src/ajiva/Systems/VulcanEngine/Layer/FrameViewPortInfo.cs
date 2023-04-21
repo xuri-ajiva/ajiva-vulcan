@@ -1,7 +1,7 @@
-﻿using ajiva.Components.Media;
+﻿using Ajiva.Components.Media;
 using SharpVk;
 
-namespace ajiva.Systems.VulcanEngine.Layer;
+namespace Ajiva.Systems.VulcanEngine.Layer;
 
 public record FrameViewPortInfo(Framebuffer Framebuffer, AImage FrameBufferImage, Extent2D Extent, Range DepthRange)
 {

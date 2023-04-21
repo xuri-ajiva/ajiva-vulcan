@@ -1,6 +1,6 @@
-﻿using ajiva.Models.Buffer.Dynamic;
+﻿using Ajiva.Models.Buffer.Dynamic;
 
-namespace ajiva.Components.Mesh.Instance;
+namespace Ajiva.Components.Mesh.Instance;
 
 public class InstancedMesh<T> : IInstancedMesh<T> where T : unmanaged
 {

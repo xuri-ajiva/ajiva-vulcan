@@ -1,14 +1,14 @@
-﻿using ajiva.Systems.Assets;
-using ajiva.Systems.VulcanEngine.Interfaces;
-using ajiva.Systems.VulcanEngine.Layer;
-using ajiva.Systems.VulcanEngine.Layers.Creation;
-using ajiva.Systems.VulcanEngine.Layers.Models;
-using ajiva.Systems.VulcanEngine.Systems;
+﻿using Ajiva.Systems.Assets;
+using Ajiva.Systems.VulcanEngine.Interfaces;
+using Ajiva.Systems.VulcanEngine.Layer;
+using Ajiva.Systems.VulcanEngine.Layers.Creation;
+using Ajiva.Systems.VulcanEngine.Layers.Models;
+using Ajiva.Systems.VulcanEngine.Systems;
 using SharpVk;
 using SharpVk.Khronos;
 using Semaphore = SharpVk.Semaphore;
 
-namespace ajiva.Systems.VulcanEngine.Layers;
+namespace Ajiva.Systems.VulcanEngine.Layers;
 
 public class AjivaLayerRenderer : DisposingLogger
 {
@@ -58,13 +58,13 @@ public class AjivaLayerRenderer : DisposingLogger
         var systemIndex = 0;
         for (var layerIndex = 0; layerIndex < layers.Count; layerIndex++)
         {
-            var ajivaLayer = layers[layerIndex];
-            for (var layerRenderComponentSystemsIndex = 0; layerRenderComponentSystemsIndex < ajivaLayer.LayerRenderComponentSystems.Count; layerRenderComponentSystemsIndex++)
+            var AjivaLayer = layers[layerIndex];
+            for (var layerRenderComponentSystemsIndex = 0; layerRenderComponentSystemsIndex < AjivaLayer.LayerRenderComponentSystems.Count; layerRenderComponentSystemsIndex++)
             {
-                var layer = ajivaLayer.LayerRenderComponentSystems[layerRenderComponentSystemsIndex];
-                layer.RenderTarget = ajivaLayer.CreateRenderPassLayer(swapChainLayer,
+                var layer = AjivaLayer.LayerRenderComponentSystems[layerRenderComponentSystemsIndex];
+                layer.RenderTarget = AjivaLayer.CreateRenderPassLayer(swapChainLayer,
                     new PositionAndMax(layerIndex, 0, layers.Count - 1),
-                    new PositionAndMax(layerRenderComponentSystemsIndex, 0, ajivaLayer.LayerRenderComponentSystems.Count - 1));
+                    new PositionAndMax(layerRenderComponentSystemsIndex, 0, AjivaLayer.LayerRenderComponentSystems.Count - 1));
                 layer.UpdateGraphicsPipelineLayer();
                 DynamicLayerSystemData.Add(new BasicLayerRenderProvider(this, layer));
                 systemIndex++;

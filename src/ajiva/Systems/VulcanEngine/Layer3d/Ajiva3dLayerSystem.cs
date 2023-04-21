@@ -1,21 +1,20 @@
 ﻿#region
 
-using ajiva.Components.Media;
-using ajiva.Entities;
-using ajiva.Extensions;
-using ajiva.Models.Buffer.ChangeAware;
-using ajiva.Models.Layers.Layer3d;
-using ajiva.Systems.VulcanEngine.Interfaces;
-using ajiva.Systems.VulcanEngine.Layer;
-using ajiva.Systems.VulcanEngine.Layers.Models;
-using ajiva.Systems.VulcanEngine.Systems;
-using ajiva.utils.Changing;
+using Ajiva.Components.Media;
+using Ajiva.Entities;
+using Ajiva.Extensions;
+using Ajiva.Models.Buffer.ChangeAware;
+using Ajiva.Models.Layers.Layer3d;
+using Ajiva.Systems.VulcanEngine.Interfaces;
+using Ajiva.Systems.VulcanEngine.Layer;
+using Ajiva.Systems.VulcanEngine.Layers.Models;
+using Ajiva.Systems.VulcanEngine.Systems;
 using SharpVk;
 using SharpVk.Glfw;
 
 #endregion
 
-namespace ajiva.Systems.VulcanEngine.Layer3d;
+namespace Ajiva.Systems.VulcanEngine.Layer3d;
 
 public class Ajiva3dLayerSystem : SystemBase, IUpdate, IAjivaLayer<UniformViewProj3d>
 {
@@ -221,8 +220,8 @@ public class Ajiva3dLayerSystem : SystemBase, IUpdate, IAjivaLayer<UniformViewPr
     {
         lock (MainLock)
         {
-            var (_, delta, ajivaEngineLayer) = e;
-            if (ajivaEngineLayer == AjivaEngineLayer.Layer3d) MainCamara.OnMouseMoved(delta.X, delta.Y);
+            var (_, delta, AjivaEngineLayer) = e;
+            if (AjivaEngineLayer == AjivaEngineLayer.Layer3d) MainCamara.OnMouseMoved(delta.X, delta.Y);
         }
     }
 

@@ -1,6 +1,6 @@
 ﻿using System.Collections.Concurrent;
 
-namespace ajiva.Worker;
+namespace Ajiva.Worker;
 
 public class WorkerPool : SystemBase, IWorkerPool
 {

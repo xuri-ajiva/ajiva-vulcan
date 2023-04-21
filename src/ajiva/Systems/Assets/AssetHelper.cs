@@ -1,4 +1,4 @@
-﻿namespace ajiva.Systems.Assets;
+﻿namespace Ajiva.Systems.Assets;
 
 public class AssetHelper
 {

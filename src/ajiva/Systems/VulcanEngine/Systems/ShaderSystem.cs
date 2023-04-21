@@ -1,4 +1,4 @@
-﻿namespace ajiva.Systems.VulcanEngine.Systems;
+﻿namespace Ajiva.Systems.VulcanEngine.Systems;
 
 /*[Dependent(typeof(DeviceSystem))]
 public class ShaderSystem : SystemBase

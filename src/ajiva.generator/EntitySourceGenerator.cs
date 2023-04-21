@@ -6,7 +6,7 @@ using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Text;
 
-namespace ajiva.generator;
+namespace Ajiva.Generator;
 
 [Generator]
 public class EntitySourceGenerator : ISourceGenerator
@@ -110,7 +110,7 @@ public class EntitySourceGenerator : ISourceGenerator
                 }).ToArray();
             if (types is null) continue;
 
-            context.ReportDiagnostic(Diagnostic.Create(new DiagnosticDescriptor("ajiva.ecs.info", "Generateing Entity: " + symbol.Name, "Generateing Entity: " + symbol.Name, "Generateing Entity: " + symbol.Name, DiagnosticSeverity.Warning, true, "Generateing Entity: " + symbol.Name), Location.None));
+            context.ReportDiagnostic(Diagnostic.Create(new DiagnosticDescriptor("Ajiva.ecs.info", "Generateing Entity: " + symbol.Name, "Generateing Entity: " + symbol.Name, "Generateing Entity: " + symbol.Name, DiagnosticSeverity.Warning, true, "Generateing Entity: " + symbol.Name), Location.None));
 
             using var writer = new IndentedTextWriter(new StringWriter(), "    ");
 
@@ -131,11 +131,11 @@ public class EntitySourceGenerator : ISourceGenerator
             writer.WriteLine("using System.Collections.Generic;");
             writer.WriteLine("using System.Diagnostics.CodeAnalysis;");
             writer.WriteLine("using System.Linq;");
-            writer.WriteLine("using ajiva.Ecs.Entity.Helper;");
+            writer.WriteLine("using Ajiva.Ecs.Entity.Helper;");
             writer.WriteLine("using Autofac;");
             writer.WriteLine("using Autofac.Builder;");
             writer.WriteLine("using Autofac.Core;");
-            writer.WriteLine("using ajiva.Ecs;");
+            writer.WriteLine("using Ajiva.Ecs;");
 
             //copy all usings from the class
             foreach (var usingDirectiveSyntax in classDeclaration.SyntaxTree.GetRoot().DescendantNodes().OfType<UsingDirectiveSyntax>())
@@ -308,7 +308,7 @@ public class EntitySourceGenerator : ISourceGenerator
             UnIndent();
 
             //Debugger.Launch();
-            Console.WriteLine(writer.InnerWriter.ToString());
+            //Console.WriteLine(writer.InnerWriter.ToString());
             context.AddSource($"{symbol?.Name}_EntityComponent.cs", SourceText.From(writer.InnerWriter.ToString(), Encoding.UTF8));
         }
 
@@ -336,7 +336,7 @@ public class EntitySourceGenerator : ISourceGenerator
         cWriter.WriteLine("using System.Collections.Generic;");
         cWriter.WriteLine("using System.Diagnostics.CodeAnalysis;");
         cWriter.WriteLine("using System.Linq;");
-        cWriter.WriteLine("using ajiva.Ecs.Entity.Helper;");
+        cWriter.WriteLine("using Ajiva.Ecs.Entity.Helper;");
         cWriter.WriteLine("using Autofac;");
         cWriter.WriteLine("using Autofac.Builder;");
         cWriter.WriteLine("using Autofac.Core;");
@@ -411,7 +411,7 @@ public class EntitySourceGenerator : ISourceGenerator
         context.AddSource("EntityComponentAttribute", SourceText.From($$"""
             using System;
             
-            namespace ajiva.Ecs.Entity.Helper
+            namespace Ajiva.Ecs.Entity.Helper
             {
                 [AttributeUsage(AttributeTargets.Class)]
                 public class {{AttributeName}}Attribute : Attribute

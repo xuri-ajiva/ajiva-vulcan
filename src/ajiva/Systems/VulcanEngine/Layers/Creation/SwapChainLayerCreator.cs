@@ -1,10 +1,10 @@
-﻿using ajiva.Components.Media;
-using ajiva.Systems.VulcanEngine.Layers.Models;
-using ajiva.Systems.VulcanEngine.Systems;
+﻿using Ajiva.Components.Media;
+using Ajiva.Systems.VulcanEngine.Layers.Models;
+using Ajiva.Systems.VulcanEngine.Systems;
 using SharpVk;
 using SharpVk.Khronos;
 
-namespace ajiva.Systems.VulcanEngine.Layers.Creation;
+namespace Ajiva.Systems.VulcanEngine.Layers.Creation;
 
 public static class SwapChainLayerCreator
 {

@@ -1,8 +1,8 @@
-﻿using ajiva.Systems.VulcanEngine.Interfaces;
-using ajiva.Systems.VulcanEngine.Systems;
+﻿using Ajiva.Systems.VulcanEngine.Interfaces;
+using Ajiva.Systems.VulcanEngine.Systems;
 using SharpVk;
 
-namespace ajiva.Models.Buffer.ChangeAware;
+namespace Ajiva.Models.Buffer.ChangeAware;
 
 public static class StaticBufferExtensions
 {

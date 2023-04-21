@@ -1,8 +1,8 @@
 ﻿using System.Numerics;
 using System.Runtime.CompilerServices;
-using ajiva.Entities;
+using Ajiva.Entities;
 
-namespace ajiva.Components.Transform.SpatialAcceleration;
+namespace Ajiva.Components.Transform.SpatialAcceleration;
 
 public class StaticOctalTree<T, TItem> : IRespectable where TItem : StaticOctalItem<T>
 {

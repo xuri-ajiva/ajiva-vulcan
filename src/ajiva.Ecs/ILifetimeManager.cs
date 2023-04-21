@@ -1,4 +1,4 @@
-﻿namespace ajiva.Ecs;
+﻿namespace Ajiva.Ecs;
 
 public interface ILifetimeManager
 {

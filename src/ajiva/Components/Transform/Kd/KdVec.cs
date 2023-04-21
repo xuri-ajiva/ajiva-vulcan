@@ -1,5 +1,5 @@
 ﻿
-namespace ajiva.Components.Transform.Kd;
+namespace Ajiva.Components.Transform.Kd;
 
 public struct KdVec : IKdVec, IKdVecReadOnly
 {

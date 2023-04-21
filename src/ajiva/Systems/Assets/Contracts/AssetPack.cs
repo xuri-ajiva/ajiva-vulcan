@@ -1,6 +1,6 @@
 ﻿using ProtoBuf;
 
-namespace ajiva.Systems.Assets.Contracts;
+namespace Ajiva.Systems.Assets.Contracts;
 
 [ProtoContract]
 public class AssetPack

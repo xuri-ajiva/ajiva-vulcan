@@ -1,6 +1,6 @@
 ﻿using System.Runtime.CompilerServices;
 
-namespace ajiva.Models;
+namespace Ajiva.Models;
 
 public struct QueueFamilyIndices
 {

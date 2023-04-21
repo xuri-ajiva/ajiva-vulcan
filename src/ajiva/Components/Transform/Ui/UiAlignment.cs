@@ -1,4 +1,4 @@
-﻿namespace ajiva.Components.Transform.Ui;
+﻿namespace Ajiva.Components.Transform.Ui;
 
 [Flags]
 public enum UiAlignment : byte

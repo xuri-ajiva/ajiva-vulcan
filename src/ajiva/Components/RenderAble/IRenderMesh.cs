@@ -1,4 +1,4 @@
-﻿namespace ajiva.Components.RenderAble;
+﻿namespace Ajiva.Components.RenderAble;
 
 public interface IRenderMesh : IComponent
 {

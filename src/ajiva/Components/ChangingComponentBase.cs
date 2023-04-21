@@ -1,6 +1,4 @@
-﻿using ajiva.utils.Changing;
-
-namespace ajiva.Components;
+﻿namespace Ajiva.Components;
 
 public class ChangingComponentBase : DisposingLogger, IComponent
 {

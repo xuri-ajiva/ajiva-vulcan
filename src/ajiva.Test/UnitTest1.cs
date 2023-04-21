@@ -1,6 +1,6 @@
 using Xunit;
 
-namespace ajiva.Test;
+namespace Ajiva.Test;
 
 public class UnitTest1
 {

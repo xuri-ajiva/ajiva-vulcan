@@ -1,6 +1,6 @@
 ﻿using System.Runtime.InteropServices;
 
-namespace ajiva.Models;
+namespace Ajiva.Models;
 
 internal static class ImageHelper
 {

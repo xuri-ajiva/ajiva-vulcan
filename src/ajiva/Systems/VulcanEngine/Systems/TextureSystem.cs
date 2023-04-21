@@ -1,18 +1,18 @@
 ﻿using System.Drawing;
 using System.Runtime.InteropServices.ComTypes;
-using ajiva.Application;
-using ajiva.Components.Media;
-using ajiva.Systems.VulcanEngine.Interfaces;
+using Ajiva.Application;
+using Ajiva.Components.Media;
+using Ajiva.Systems.VulcanEngine.Interfaces;
 using SharpVk;
 
-namespace ajiva.Systems.VulcanEngine.Systems;
+namespace Ajiva.Systems.VulcanEngine.Systems;
 
 public class TextureSystem : ComponentSystemBase<TextureComponent>, ITextureSystem
 {
     private readonly TextureCreator _creator;
     private readonly ShaderConfig _config;
 
-    public TextureSystem(TextureCreator creator, Config globalConfig)
+    public TextureSystem(TextureCreator creator, AjivaConfig globalConfig)
     {
         _creator = creator;
         _config = globalConfig.ShaderConfig;

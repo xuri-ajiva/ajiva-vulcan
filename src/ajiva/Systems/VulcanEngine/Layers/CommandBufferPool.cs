@@ -1,8 +1,8 @@
-﻿using ajiva.Systems.VulcanEngine.Layer;
-using ajiva.Systems.VulcanEngine.Systems;
+﻿using Ajiva.Systems.VulcanEngine.Layer;
+using Ajiva.Systems.VulcanEngine.Systems;
 using SharpVk;
 
-namespace ajiva.Systems.VulcanEngine.Layers;
+namespace Ajiva.Systems.VulcanEngine.Layers;
 
 public class CommandBufferPool
 {

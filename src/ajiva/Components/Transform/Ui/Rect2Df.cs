@@ -1,6 +1,6 @@
 ﻿using System.Numerics;
 
-namespace ajiva.Components.Transform.Ui;
+namespace Ajiva.Components.Transform.Ui;
 
 public readonly record struct Rect2Df(float MinX, float MinY, float MaxX, float MaxY)
 {

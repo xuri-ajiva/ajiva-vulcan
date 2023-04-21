@@ -1,14 +1,13 @@
 ﻿using System.Numerics;
-using ajiva.Models.Buffer.ChangeAware;
-using ajiva.Models.Layers.Layer2d;
-using ajiva.Systems.VulcanEngine.Interfaces;
-using ajiva.Systems.VulcanEngine.Layer;
-using ajiva.Systems.VulcanEngine.Layers.Models;
-using ajiva.Systems.VulcanEngine.Systems;
-using ajiva.utils.Changing;
+using Ajiva.Models.Buffer.ChangeAware;
+using Ajiva.Models.Layers.Layer2d;
+using Ajiva.Systems.VulcanEngine.Interfaces;
+using Ajiva.Systems.VulcanEngine.Layer;
+using Ajiva.Systems.VulcanEngine.Layers.Models;
+using Ajiva.Systems.VulcanEngine.Systems;
 using SharpVk;
 
-namespace ajiva.Systems.VulcanEngine.Layer2d;
+namespace Ajiva.Systems.VulcanEngine.Layer2d;
 
 public class Ajiva2dLayerSystem : SystemBase, IAjivaLayer<UniformLayer2d>
 {
@@ -27,7 +26,7 @@ public class Ajiva2dLayerSystem : SystemBase, IAjivaLayer<UniformLayer2d>
         var canvas = _windowSystem.Canvas;
 
         /*MainShader = Shader.CreateShaderFrom("./Shaders/2d", deviceSystem, "main");
-        PipelineDescriptorInfos = ajiva.Systems.VulcanEngine.Unions.PipelineDescriptorInfos.CreateFrom(
+        PipelineDescriptorInfos = Ajiva.Systems.VulcanEngine.Unions.PipelineDescriptorInfos.CreateFrom(
             LayerUniform.Uniform.Buffer!, (uint)LayerUniform.SizeOfT,
             Models.Uniform.Buffer!, (uint)Models.SizeOfT,
             Ecs.GetComponentSystem<TextureSystem, ATexture>().TextureSamplerImageViews

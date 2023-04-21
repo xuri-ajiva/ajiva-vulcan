@@ -1,11 +1,10 @@
-﻿using ajiva.Systems.Assets;
-using ajiva.Systems.VulcanEngine.Interfaces;
-using ajiva.Systems.VulcanEngine.Layer;
-using ajiva.Systems.VulcanEngine.Layers;
-using ajiva.utils.Changing;
+﻿using Ajiva.Systems.Assets;
+using Ajiva.Systems.VulcanEngine.Interfaces;
+using Ajiva.Systems.VulcanEngine.Layer;
+using Ajiva.Systems.VulcanEngine.Layers;
 using SharpVk;
 
-namespace ajiva.Systems.VulcanEngine.Systems;
+namespace Ajiva.Systems.VulcanEngine.Systems;
 
 public class GraphicsSystem : SystemBase, IUpdate, IGraphicsSystem
 {
@@ -14,7 +13,7 @@ public class GraphicsSystem : SystemBase, IUpdate, IGraphicsSystem
     private readonly TextureSystem _textureSystem;
     private static readonly object CurrentGraphicsLayoutSwapLock = new object();
 
-    private AjivaLayerRenderer? ajivaLayerRenderer;
+    private AjivaLayerRenderer? AjivaLayerRenderer;
 
 
     private bool reInitAjivaLayerRendererNeeded = true;
@@ -41,7 +40,7 @@ public class GraphicsSystem : SystemBase, IUpdate, IGraphicsSystem
     /// <inheritdoc />
     public void Update(UpdateInfo delta)
     {
-        if (reInitAjivaLayerRendererNeeded || ajivaLayerRenderer is null)
+        if (reInitAjivaLayerRendererNeeded || AjivaLayerRenderer is null)
         {
             RecreateCurrentGraphicsLayout();
             reInitAjivaLayerRendererNeeded = false;
@@ -60,8 +59,8 @@ public class GraphicsSystem : SystemBase, IUpdate, IGraphicsSystem
     /// <inheritdoc />
     protected override void ReleaseUnmanagedResources(bool disposing)
     {
-        ajivaLayerRenderer?.Dispose();
-        ajivaLayerRenderer = null!;
+        AjivaLayerRenderer?.Dispose();
+        AjivaLayerRenderer = null!;
     }
 
     public void RecreateCurrentGraphicsLayout()
@@ -92,7 +91,7 @@ public class GraphicsSystem : SystemBase, IUpdate, IGraphicsSystem
         {
             lock (render)
             {
-                ajivaLayerRenderer!.DrawFrame(render, presentation);
+                AjivaLayerRenderer!.DrawFrame(render, presentation);
             }
         }
     }
@@ -100,9 +99,9 @@ public class GraphicsSystem : SystemBase, IUpdate, IGraphicsSystem
 
     protected void ReCreateRenderUnion()
     {
-        ajivaLayerRenderer ??= new AjivaLayerRenderer(_deviceSystem, _windowSystem.Canvas, new CommandBufferPool(_deviceSystem), _textureSystem, _assetManager);
+        AjivaLayerRenderer ??= new AjivaLayerRenderer(_deviceSystem, _windowSystem.Canvas, new CommandBufferPool(_deviceSystem), _textureSystem, _assetManager);
 
-        ajivaLayerRenderer.Init(Layers);
+        AjivaLayerRenderer.Init(Layers);
     }
 
     public void UpdateGraphicsData()

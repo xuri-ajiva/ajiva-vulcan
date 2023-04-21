@@ -1,9 +1,9 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 #
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ajiva", "ajiva\ajiva.csproj", "{2376F26D-3DEA-4AEA-9972-A816D360D4D3}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ajiva", "Ajiva\Ajiva.csproj", "{2376F26D-3DEA-4AEA-9972-A816D360D4D3}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ajiva.Ecs", "ajiva.Ecs\ajiva.Ecs.csproj", "{F8A4D9DE-A906-435A-A30A-49C799ADFAE1}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ajiva.Ecs", "Ajiva.Ecs\Ajiva.Ecs.csproj", "{F8A4D9DE-A906-435A-A30A-49C799ADFAE1}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Libs", "Libs", "{113BF263-982F-4D50-AFE7-087351C3AD19}"
 EndProject
@@ -27,13 +27,13 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SharpVk.TestHarness", "..\l
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SharpVk.Tests", "..\libs\SharpVk\src\SharpVk.Tests\SharpVk.Tests.csproj", "{1FC0F593-B357-4BF6-8F58-4CD1A80C62A2}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ajiva.Test", "ajiva.Test\ajiva.Test.csproj", "{C6FFDF04-C2C1-41F8-90F4-E64F846B5A98}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ajiva.Test", "Ajiva.Test\Ajiva.Test.csproj", "{C6FFDF04-C2C1-41F8-90F4-E64F846B5A98}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ajiva.application", "ajiva.application\ajiva.application.csproj", "{5D2E12B3-813E-463E-8CF4-9659E1449BC2}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ajiva.Application", "Ajiva.Application\Ajiva.Application.csproj", "{5D2E12B3-813E-463E-8CF4-9659E1449BC2}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ajiva.generator", "ajiva.generator\ajiva.generator.csproj", "{9F6F5836-48EF-4B16-B07C-F9B2982DA5A4}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ajiva.Generator", "Ajiva.Generator\Ajiva.Generator.csproj", "{9F6F5836-48EF-4B16-B07C-F9B2982DA5A4}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ajiva.generator.test", "ajiva.generator.test\ajiva.generator.test.csproj", "{5A250D76-B0F3-4097-9C1B-6411A0FACF94}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ajiva.Generator.Test", "Ajiva.Generator.test\Ajiva.Generator.Test.csproj", "{5A250D76-B0F3-4097-9C1B-6411A0FACF94}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ajiva.Utils", "Ajiva.Utils\Ajiva.Utils.csproj", "{43A12E87-8D25-49EE-BA41-A094E5B94213}"
 EndProject

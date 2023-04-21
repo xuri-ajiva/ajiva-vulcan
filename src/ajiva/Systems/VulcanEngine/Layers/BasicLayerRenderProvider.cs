@@ -1,16 +1,16 @@
-﻿using ajiva.Systems.VulcanEngine.Layer;
+﻿using Ajiva.Systems.VulcanEngine.Layer;
 
-namespace ajiva.Systems.VulcanEngine.Layers;
+namespace Ajiva.Systems.VulcanEngine.Layers;
 
 public class BasicLayerRenderProvider : DisposingLogger
 {
-    private readonly AjivaLayerRenderer ajivaLayerRenderer;
+    private readonly AjivaLayerRenderer AjivaLayerRenderer;
     private readonly IAjivaLayerRenderSystem layer;
     public RenderTarget RenderTarget => layer.RenderTarget;
 
-    public BasicLayerRenderProvider(AjivaLayerRenderer ajivaLayerRenderer, IAjivaLayerRenderSystem layer)
+    public BasicLayerRenderProvider(AjivaLayerRenderer AjivaLayerRenderer, IAjivaLayerRenderSystem layer)
     {
-        this.ajivaLayerRenderer = ajivaLayerRenderer;
+        this.AjivaLayerRenderer = AjivaLayerRenderer;
         this.layer = layer;
     }
 
@@ -20,8 +20,8 @@ public class BasicLayerRenderProvider : DisposingLogger
     {
         if (CurrentBuffer is not null && _lastVersion == layer.DataVersion) return CurrentBuffer;
         
-        ajivaLayerRenderer.CommandBufferPool.ReturnBuffer(CurrentBuffer);
-        CurrentBuffer = ajivaLayerRenderer.CommandBufferPool.GetNewBuffer();
+        AjivaLayerRenderer.CommandBufferPool.ReturnBuffer(CurrentBuffer);
+        CurrentBuffer = AjivaLayerRenderer.CommandBufferPool.GetNewBuffer();
         FillBuffer(CurrentBuffer);
 
         return CurrentBuffer;
@@ -31,7 +31,7 @@ public class BasicLayerRenderProvider : DisposingLogger
 
     private void FillBuffer(RenderBuffer buffer)
     {
-        var renderLayerGuard = new RenderLayerGuard(buffer, layer.RenderTarget, ajivaLayerRenderer);
+        var renderLayerGuard = new RenderLayerGuard(buffer, layer.RenderTarget, AjivaLayerRenderer);
         CommandBufferPool.BeginRecordeRenderBuffer(
             buffer.CommandBuffer,
             layer.RenderTarget.ViewPortInfo,

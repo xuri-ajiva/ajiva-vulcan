@@ -1,9 +1,9 @@
-﻿using ajiva.Components.Mesh;
-using ajiva.Components.Transform;
-using ajiva.Ecs.Entity.Helper;
-using ajiva.Systems.VulcanEngine.Debug;
+﻿using Ajiva.Components.Mesh;
+using Ajiva.Components.Transform;
+using Ajiva.Ecs.Entity.Helper;
+using Ajiva.Systems.VulcanEngine.Debug;
 
-namespace ajiva.Entities;
+namespace Ajiva.Entities;
 
 [EntityComponent(typeof(Transform3d), typeof(DebugComponent))]
 public partial class DebugBox

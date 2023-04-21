@@ -1,10 +1,10 @@
-﻿using ajiva.Components;
-using ajiva.Systems.VulcanEngine.Interfaces;
-using ajiva.Systems.VulcanEngine.Layers;
-using ajiva.Systems.VulcanEngine.Layers.Models;
+﻿using Ajiva.Components;
+using Ajiva.Systems.VulcanEngine.Interfaces;
+using Ajiva.Systems.VulcanEngine.Layers;
+using Ajiva.Systems.VulcanEngine.Layers.Models;
 using SharpVk;
 
-namespace ajiva.Systems.VulcanEngine.Debug;
+namespace Ajiva.Systems.VulcanEngine.Debug;
 
 public class CreateDebugPipe
 {

@@ -1,4 +1,4 @@
-﻿namespace ajiva.Systems.VulcanEngine.Layers.Creation;
+﻿namespace Ajiva.Systems.VulcanEngine.Layers.Creation;
 
 /*
 public static class RenderPassLayerCreator

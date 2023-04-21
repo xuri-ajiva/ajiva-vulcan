@@ -1,7 +1,7 @@
 ﻿using System.Numerics;
-using ajiva.Components.Transform.SpatialAcceleration;
+using Ajiva.Components.Transform.SpatialAcceleration;
 
-namespace ajiva.Systems.Physics;
+namespace Ajiva.Systems.Physics;
 
 internal static class BoxCollisionResolvers
 {

@@ -1,10 +1,10 @@
-﻿using ajiva.Components.Media;
-using ajiva.Components.Mesh;
-using ajiva.Components.RenderAble;
-using ajiva.Components.Transform.Ui;
-using ajiva.Ecs.Entity.Helper;
+﻿using Ajiva.Components.Media;
+using Ajiva.Components.Mesh;
+using Ajiva.Components.RenderAble;
+using Ajiva.Components.Transform.Ui;
+using Ajiva.Ecs.Entity.Helper;
 
-namespace ajiva.Entities.Ui;
+namespace Ajiva.Entities.Ui;
 
 [EntityComponent(typeof(UiTransform), typeof(TextureComponent), typeof(RenderInstanceMesh2D))]
 public partial class Rect

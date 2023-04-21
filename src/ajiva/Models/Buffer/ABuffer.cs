@@ -1,7 +1,7 @@
-﻿using ajiva.Systems.VulcanEngine.Interfaces;
+﻿using Ajiva.Systems.VulcanEngine.Interfaces;
 using SharpVk;
 
-namespace ajiva.Models.Buffer;
+namespace Ajiva.Models.Buffer;
 
 public class ABuffer : DisposingLogger, IEquatable<ABuffer>
 {

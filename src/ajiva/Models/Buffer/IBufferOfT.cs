@@ -1,6 +1,6 @@
 ﻿using SharpVk;
 
-namespace ajiva.Models.Buffer;
+namespace Ajiva.Models.Buffer;
 
 public interface IBufferOfT
 {

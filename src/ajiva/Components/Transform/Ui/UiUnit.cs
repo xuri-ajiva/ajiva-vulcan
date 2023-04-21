@@ -1,4 +1,4 @@
-﻿namespace ajiva.Components.Transform.Ui;
+﻿namespace Ajiva.Components.Transform.Ui;
 
 public enum UiUnit : byte
 {

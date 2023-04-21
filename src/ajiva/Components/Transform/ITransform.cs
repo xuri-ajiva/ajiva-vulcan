@@ -1,6 +1,4 @@
-﻿using ajiva.utils.Changing;
-
-namespace ajiva.Components.Transform;
+﻿namespace Ajiva.Components.Transform;
 
 public interface ITransform<TV, TM> : IDisposingLogger, IComponent where TV : struct where TM : struct
 {

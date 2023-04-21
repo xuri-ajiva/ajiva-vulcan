@@ -1,9 +1,9 @@
 ﻿// See https://aka.ms/new-console-template for more information
-using ajiva;
-using ajiva.application;
-using ajiva.Extensions;
-using ajiva.Systems.Assets;
-using ajiva.Systems.Assets.Contracts;
+using Ajiva;
+using Ajiva.Application;
+using Ajiva.Extensions;
+using Ajiva.Systems.Assets;
+using Ajiva.Systems.Assets.Contracts;
 using Autofac;
 using Autofac.Builder;
 using Autofac.Configuration;

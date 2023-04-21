@@ -1,4 +1,4 @@
-﻿namespace ajiva;
+﻿namespace Ajiva;
 
 public static class Const
 {
@@ -8,8 +8,6 @@ public static class Const
     }
     public static class Default
     {
-        public const string Config = "default.config.json";
-
         public const string AssetsFile = AssetsPath + "/default.asset";
         public const string AssetsPath = "Assets";
 

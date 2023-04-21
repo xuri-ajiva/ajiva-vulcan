@@ -1,21 +1,21 @@
 /*
 using System.Diagnostics.CodeAnalysis;
-using ajiva.Systems.VulcanEngine.Layer;
-using ajiva.Systems.VulcanEngine.Layers.Models;
-using ajiva.Systems.VulcanEngine.Systems;
+using Ajiva.Systems.VulcanEngine.Layer;
+using Ajiva.Systems.VulcanEngine.Layers.Models;
+using Ajiva.Systems.VulcanEngine.Systems;
 using SharpVk;
 
-namespace ajiva.Systems.VulcanEngine.Layers;
+namespace Ajiva.Systems.VulcanEngine.Layers;
 
 
 public class DynamicLayerAjivaLayerRenderSystemData : DisposingLogger
 {
     private const int QueueMembersMax = 2;
-    private readonly IAjivaLayerRenderSystem ajivaLayerRenderSystem;
+    private readonly IAjivaLayerRenderSystem AjivaLayerRenderSystem;
 
     private readonly List<RenderBuffer> allocatedBuffers = new List<RenderBuffer>();
     private readonly Queue<RenderBuffer> availableBuffers = new Queue<RenderBuffer>();
-    private readonly IAjivaLayer ajivaLayer;
+    private readonly IAjivaLayer AjivaLayer;
 
     public readonly object Lock = new object();
     private readonly object lockForFillBuffer = new object();
@@ -27,12 +27,12 @@ public class DynamicLayerAjivaLayerRenderSystemData : DisposingLogger
     private int queueForFillBuffer;
 
     public DynamicLayerAjivaLayerRenderSystemData(AjivaLayerRenderer renderer,
-        IAjivaLayer ajivaLayer,
-        IAjivaLayerRenderSystem ajivaLayerRenderSystem)
+        IAjivaLayer AjivaLayer,
+        IAjivaLayerRenderSystem AjivaLayerRenderSystem)
     {
         this.renderer = renderer;
-        this.ajivaLayer = ajivaLayer;
-        this.ajivaLayerRenderSystem = ajivaLayerRenderSystem;
+        this.AjivaLayer = AjivaLayer;
+        this.AjivaLayerRenderSystem = AjivaLayerRenderSystem;
         for (var i = 0; i < Const.Default.BackupBuffers; i++) AllocateNewBuffers();
     }
 
@@ -73,7 +73,7 @@ public class DynamicLayerAjivaLayerRenderSystemData : DisposingLogger
         foreach (var commandBuffer in renderBuffer.CommandBuffers) renderBuffersLockup.Add(commandBuffer, renderBuffer);
         availableBuffers.Enqueue(renderBuffer);
         if (allocatedBuffers.Count > 20)
-            ALog.Warn($"Alloc Buffer for {ajivaLayerRenderSystem}, Total Buffers: {allocatedBuffers.Count}");
+            ALog.Warn($"Alloc Buffer for {AjivaLayerRenderSystem}, Total Buffers: {allocatedBuffers.Count}");
     }
 
     private RenderBuffer GetNextBuffer()
@@ -104,7 +104,7 @@ public class DynamicLayerAjivaLayerRenderSystemData : DisposingLogger
     {
         lock (renderBuffer)
         {
-            var vTmp = ajivaLayerRenderSystem.DataVersion;
+            var vTmp = AjivaLayerRenderSystem.DataVersion;
             if (renderBuffer.Version == vTmp)
                 return;
 
@@ -199,8 +199,8 @@ public class DynamicLayerAjivaLayerRenderSystemData : DisposingLogger
     {
         lock (renderer.DeviceSystem.GetCommandPoolLock(CommandPoolSelector.Background))
         {
-            BeginRecordeRenderBuffer(guard.Buffer, new FrameViewPortInfo(framebuffer, ajivaLayer.Extent, 0..1), guard, cancellationToken);
-            ajivaLayerRenderSystem.DrawComponents(guard, cancellationToken);
+            BeginRecordeRenderBuffer(guard.Buffer, new FrameViewPortInfo(framebuffer, AjivaLayer.Extent, 0..1), guard, cancellationToken);
+            AjivaLayerRenderSystem.DrawComponents(guard, cancellationToken);
             EndRecordeRenderBuffer(guard.Buffer);
         }
     }
@@ -234,7 +234,7 @@ public class DynamicLayerAjivaLayerRenderSystemData : DisposingLogger
 
     public void CheckUpToDate()
     {
-        if (CurrentActiveVersion != ajivaLayerRenderSystem.DataVersion)
+        if (CurrentActiveVersion != AjivaLayerRenderSystem.DataVersion)
         {
             FillNextBufferAsync();
         }

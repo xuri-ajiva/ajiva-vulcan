@@ -1,6 +1,6 @@
-﻿using ajiva.Models.Vertex;
+﻿using Ajiva.Models.Vertex;
 
-namespace ajiva.Components.Mesh;
+namespace Ajiva.Components.Mesh;
 
 public class MeshPrefab
 {

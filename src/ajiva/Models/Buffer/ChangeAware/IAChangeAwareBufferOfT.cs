@@ -1,6 +1,6 @@
 ﻿using System.Collections;
 
-namespace ajiva.Models.Buffer.ChangeAware;
+namespace Ajiva.Models.Buffer.ChangeAware;
 
 public interface IAChangeAwareBufferOfT<T> : IDisposable where T : struct
 {

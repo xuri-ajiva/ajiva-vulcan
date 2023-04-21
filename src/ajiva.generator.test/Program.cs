@@ -1,5 +1,5 @@
 ﻿// See https://aka.ms/new-console-template for more information
-using ajiva.Test;
+using Ajiva.Test;
 
 Console.WriteLine("Hello, World!");
 var entity = new TestEntity();

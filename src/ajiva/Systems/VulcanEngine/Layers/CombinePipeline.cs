@@ -1,10 +1,10 @@
-﻿using ajiva.Components;
-using ajiva.Systems.Assets;
-using ajiva.Systems.VulcanEngine.Interfaces;
-using ajiva.Systems.VulcanEngine.Layers.Models;
+﻿using Ajiva.Components;
+using Ajiva.Systems.Assets;
+using Ajiva.Systems.VulcanEngine.Interfaces;
+using Ajiva.Systems.VulcanEngine.Layers.Models;
 using SharpVk;
 
-namespace ajiva.Systems.VulcanEngine.Layers;
+namespace Ajiva.Systems.VulcanEngine.Layers;
 
 public class CombinePipeline : DisposingLogger
 {

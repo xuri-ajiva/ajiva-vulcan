@@ -1,7 +1,7 @@
-﻿using ajiva.Systems.VulcanEngine.Layers.Models;
+﻿using Ajiva.Systems.VulcanEngine.Layers.Models;
 using SharpVk;
 
-namespace ajiva.Systems.VulcanEngine.Layer;
+namespace Ajiva.Systems.VulcanEngine.Layer;
 
 public class RenderTarget
 {

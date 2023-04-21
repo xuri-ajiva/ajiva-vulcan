@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using ajiva.utils;
-
-namespace ajiva.Ecs.ComponentSytem;
+﻿namespace Ajiva.Ecs.ComponentSytem;
 
 public abstract class ComponentSystemBase<T> : DisposingLogger, IComponentSystem<T> where T : IComponent
 {

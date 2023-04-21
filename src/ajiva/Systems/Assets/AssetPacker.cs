@@ -1,10 +1,10 @@
 ﻿using System.Diagnostics;
 using System.Security.Cryptography;
-using ajiva.Application;
-using ajiva.Systems.Assets.Contracts;
+using Ajiva.Application;
+using Ajiva.Systems.Assets.Contracts;
 using ProtoBuf;
 
-namespace ajiva.Systems.Assets;
+namespace Ajiva.Systems.Assets;
 
 public class AssetPacker
 {

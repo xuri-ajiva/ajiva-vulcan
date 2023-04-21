@@ -1,7 +1,4 @@
-﻿using System.Threading;
-using System.Threading.Tasks;
-
-namespace ajiva.Ecs;
+﻿namespace Ajiva.Ecs;
 
 public interface IUpdateManager
 {

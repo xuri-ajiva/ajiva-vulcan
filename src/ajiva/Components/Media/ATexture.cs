@@ -1,6 +1,6 @@
 ﻿using SharpVk;
 
-namespace ajiva.Components.Media;
+namespace Ajiva.Components.Media;
 
 public partial class ATexture : DisposingLogger
 {

@@ -1,8 +1,8 @@
-﻿using ajiva.Components.Media;
+﻿using Ajiva.Components.Media;
 using SharpVk;
 using SharpVk.Khronos;
 
-namespace ajiva.Systems.VulcanEngine.Layers.Models;
+namespace Ajiva.Systems.VulcanEngine.Layers.Models;
 
 public class SwapChainLayer : DisposingLogger
 

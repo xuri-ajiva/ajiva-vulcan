@@ -1,9 +1,8 @@
-﻿using ajiva.Systems.VulcanEngine.Interfaces;
-using ajiva.Systems.VulcanEngine.Systems;
-using ajiva.utils.Changing;
+﻿using Ajiva.Systems.VulcanEngine.Interfaces;
+using Ajiva.Systems.VulcanEngine.Systems;
 using SharpVk;
 
-namespace ajiva.Models.Buffer.Dynamic;
+namespace Ajiva.Models.Buffer.Dynamic;
 
 public class ResizableDedicatedBuffer : DisposingLogger, IEquatable<ResizableDedicatedBuffer>
 {

@@ -1,9 +1,9 @@
 ﻿using System.Numerics;
-using ajiva.Components.Physics;
-using ajiva.Components.Transform.SpatialAcceleration;
-using ajiva.Worker;
+using Ajiva.Components.Physics;
+using Ajiva.Components.Transform.SpatialAcceleration;
+using Ajiva.Worker;
 
-namespace ajiva.Systems.Physics;
+namespace Ajiva.Systems.Physics;
 
 public class BoundingBoxComponentsSystem : ComponentSystemBase<BoundingBox>, IUpdate
 {

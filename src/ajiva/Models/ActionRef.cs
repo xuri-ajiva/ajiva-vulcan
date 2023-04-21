@@ -1,4 +1,4 @@
-﻿namespace ajiva.Models;
+﻿namespace Ajiva.Models;
 
 public delegate void ActionRef<TIn>(ref TIn value);
 

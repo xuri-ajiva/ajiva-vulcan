@@ -1,6 +1,6 @@
-﻿using ajiva.Components.Physics;
+﻿using Ajiva.Components.Physics;
 
-namespace ajiva.Systems.Physics;
+namespace Ajiva.Systems.Physics;
 
 public class PhysicsSystem : ComponentSystemBase<PhysicsComponent>, IUpdate
 {

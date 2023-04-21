@@ -4,7 +4,7 @@
         <TargetFramework>net7.0</TargetFramework>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
-        <RootNamespace>ajiva.utils</RootNamespace>
+        <RootNamespace>Ajiva.Utils</RootNamespace>
     </PropertyGroup>
 
     <ItemGroup>

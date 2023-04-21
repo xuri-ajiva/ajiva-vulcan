@@ -1,10 +1,10 @@
 ﻿using System.Collections.Concurrent;
 using System.Runtime.CompilerServices;
-using ajiva.Systems.VulcanEngine.Interfaces;
+using Ajiva.Systems.VulcanEngine.Interfaces;
 using SharpVk;
 using SharpVk.Khronos;
 
-namespace ajiva.Systems.VulcanEngine.Systems;
+namespace Ajiva.Systems.VulcanEngine.Systems;
 
 public class DeviceSystem : SystemBase, IDeviceSystem
 {

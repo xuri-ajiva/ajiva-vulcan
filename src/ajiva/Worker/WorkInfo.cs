@@ -1,4 +1,4 @@
-﻿namespace ajiva.Worker;
+﻿namespace Ajiva.Worker;
 
 public delegate WorkResult Work(WorkInfo info, object? userParam);
 

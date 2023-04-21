@@ -1,8 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
+﻿using System.Diagnostics.CodeAnalysis;
 
-namespace ajiva.Ecs.Entity;
+namespace Ajiva.Ecs.Entity;
 
 public interface IEntity
 {

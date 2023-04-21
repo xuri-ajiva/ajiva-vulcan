@@ -1,4 +1,4 @@
-﻿namespace ajiva.Worker;
+﻿namespace Ajiva.Worker;
 
 public interface IWorkerPool
 {

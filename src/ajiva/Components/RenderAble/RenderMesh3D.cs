@@ -1,11 +1,10 @@
 ﻿using System.Numerics;
-using ajiva.Components.Media;
-using ajiva.Models.Buffer.ChangeAware;
-using ajiva.Models.Instance;
-using ajiva.Models.Layers.Layer3d;
-using ajiva.utils.Changing;
+using Ajiva.Components.Media;
+using Ajiva.Models.Buffer.ChangeAware;
+using Ajiva.Models.Instance;
+using Ajiva.Models.Layers.Layer3d;
 
-namespace ajiva.Components.RenderAble;
+namespace Ajiva.Components.RenderAble;
 
 public class RenderMesh3D : RenderMeshIdUnique<RenderMesh3D>
 {

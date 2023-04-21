@@ -1,7 +1,7 @@
 ﻿using System.Diagnostics;
 using System.Runtime.CompilerServices;
 
-namespace ajiva.Models;
+namespace Ajiva.Models;
 
 public abstract class ThreadSaveCreatable : DisposingLogger
 {

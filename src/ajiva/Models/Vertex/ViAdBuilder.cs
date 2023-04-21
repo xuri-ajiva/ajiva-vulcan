@@ -1,7 +1,7 @@
 ﻿using System.Runtime.InteropServices;
 using SharpVk;
 
-namespace ajiva.Models.Vertex;
+namespace Ajiva.Models.Vertex;
 
 public class ViAdBuilder<T>
 {

@@ -1,15 +1,15 @@
 ﻿using System.Numerics;
-using ajiva.Application;
-using ajiva.Ecs;
-using ajiva.Systems.VulcanEngine.Interfaces;
-using ajiva.Systems.VulcanEngine.Layer;
+using Ajiva.Application;
+using Ajiva.Ecs;
+using Ajiva.Systems.VulcanEngine.Interfaces;
+using Ajiva.Systems.VulcanEngine.Layer;
 using SharpVk;
 using SharpVk.Glfw;
 using SharpVk.Glfw.extras;
 using Glfw3 = SharpVk.Glfw.Glfw3;
 using Key = SharpVk.Glfw.Key;
 
-namespace ajiva.Systems.VulcanEngine.Systems;
+namespace Ajiva.Systems.VulcanEngine.Systems;
 
 public class WindowSystem : SystemBase, IUpdate, IWindowSystem
 {
@@ -34,7 +34,7 @@ public class WindowSystem : SystemBase, IUpdate, IWindowSystem
     private readonly Instance _instance;
     private ILifetimeManager _lifetimeManager;
 
-    public WindowSystem(Config config,Instance instance, ILifetimeManager lifetimeManager) 
+    public WindowSystem(AjivaConfig config,Instance instance, ILifetimeManager lifetimeManager) 
     {
         _instance = instance;
         _lifetimeManager = lifetimeManager;

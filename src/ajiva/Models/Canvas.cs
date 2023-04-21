@@ -1,10 +1,9 @@
 ﻿using System.ComponentModel.DataAnnotations;
-using ajiva.Components;
-using ajiva.utils.Changing;
+using Ajiva.Components;
 using SharpVk;
 using SharpVk.Khronos;
 
-namespace ajiva.Models;
+namespace Ajiva.Models;
 
 public class SurfaceHandle : ChangingComponentBase
 {

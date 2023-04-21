@@ -3,7 +3,7 @@ using System.Runtime.InteropServices;
 using SharpVk;
 using SharpVk.Shanq;
 
-namespace ajiva.Models.Vertex;
+namespace Ajiva.Models.Vertex;
 
 public struct Vertex3D
 {

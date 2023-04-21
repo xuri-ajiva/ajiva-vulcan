@@ -1,4 +1,4 @@
-﻿namespace ajiva.Entities;
+﻿namespace Ajiva.Entities;
 
 /*
 public class TransformFormEntity<T, TV, TM> : ChangingObserverEntity where T : class, ITransform<TV, TM>, new() where TV : struct, IReadOnlyList<float> where TM : struct, IReadOnlyList<float>

@@ -1,20 +1,20 @@
 ﻿using System.Numerics;
-using ajiva.Components.Mesh;
-using ajiva.Components.Physics;
-using ajiva.Components.Transform;
-using ajiva.Components.Transform.Ui;
-using ajiva.Ecs;
-using ajiva.Entities.Ui;
-using ajiva.Extensions;
-using ajiva.Systems.Physics;
-using ajiva.Systems.VulcanEngine.Interfaces;
-using ajiva.Systems.VulcanEngine.Layer3d;
-using ajiva.Systems.VulcanEngine.Systems;
-using ajiva.Worker;
+using Ajiva.Components.Mesh;
+using Ajiva.Components.Physics;
+using Ajiva.Components.Transform;
+using Ajiva.Components.Transform.Ui;
+using Ajiva.Ecs;
+using Ajiva.Entities.Ui;
+using Ajiva.Extensions;
+using Ajiva.Systems.Physics;
+using Ajiva.Systems.VulcanEngine.Interfaces;
+using Ajiva.Systems.VulcanEngine.Layer3d;
+using Ajiva.Systems.VulcanEngine.Systems;
+using Ajiva.Worker;
 using Autofac;
 using SharpVk.Glfw;
 
-namespace ajiva.application;
+namespace Ajiva.Application;
 
 public class Application : DisposingLogger
 {

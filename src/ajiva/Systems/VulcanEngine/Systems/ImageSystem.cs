@@ -1,10 +1,10 @@
-﻿using ajiva.Components.Media;
-using ajiva.Systems.VulcanEngine.Interfaces;
+﻿using Ajiva.Components.Media;
+using Ajiva.Systems.VulcanEngine.Interfaces;
 using SharpVk;
 using SharpVk.NVidia;
 using Buffer = SharpVk.Buffer;
 
-namespace ajiva.Systems.VulcanEngine.Systems;
+namespace Ajiva.Systems.VulcanEngine.Systems;
 
 public class ImageSystem : ComponentSystemBase<AImage>, IImageSystem
 {

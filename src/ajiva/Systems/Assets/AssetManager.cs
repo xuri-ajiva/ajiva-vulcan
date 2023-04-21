@@ -1,15 +1,15 @@
-﻿using ajiva.Application;
-using ajiva.Systems.Assets.Contracts;
+﻿using Ajiva.Application;
+using Ajiva.Systems.Assets.Contracts;
 using ProtoBuf;
 
-namespace ajiva.Systems.Assets;
+namespace Ajiva.Systems.Assets;
 
 public class AssetManager : SystemBase, IAssetManager
 {
     string assetPath;
 
     /// <inheritdoc />
-    public AssetManager(Config config)
+    public AssetManager(AjivaConfig config)
     {
         assetPath = config.AssetPath;
         AssetPack = Serializer.Deserialize<AssetPack>(new ReadOnlyMemory<byte>(File.ReadAllBytes(assetPath)));

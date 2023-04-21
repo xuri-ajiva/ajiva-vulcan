@@ -1,10 +1,10 @@
-﻿using ajiva.Components.Media;
-using ajiva.Components.Mesh;
-using ajiva.Components.Mesh.Instance;
-using ajiva.Components.Transform.Ui;
-using ajiva.Models.Instance;
+﻿using Ajiva.Components.Media;
+using Ajiva.Components.Mesh;
+using Ajiva.Components.Mesh.Instance;
+using Ajiva.Components.Transform.Ui;
+using Ajiva.Models.Instance;
 
-namespace ajiva.Components.RenderAble;
+namespace Ajiva.Components.RenderAble;
 
 public class RenderInstanceMesh2D : DisposingLogger, IComponent
 {

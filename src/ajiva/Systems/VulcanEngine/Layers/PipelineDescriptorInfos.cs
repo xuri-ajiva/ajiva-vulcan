@@ -1,9 +1,9 @@
-﻿using ajiva.Models.Buffer;
-using ajiva.Models.Layers.Layer3d;
+﻿using Ajiva.Models.Buffer;
+using Ajiva.Models.Layers.Layer3d;
 using SharpVk;
 using Buffer = SharpVk.Buffer;
 
-namespace ajiva.Systems.VulcanEngine.Layers;
+namespace Ajiva.Systems.VulcanEngine.Layers;
 
 public record PipelineDescriptorInfos(DescriptorType DescriptorType, ShaderStageFlags StageFlags, uint DestinationBinding, uint DescriptorCount, uint DestinationArrayElement = 0, DescriptorImageInfo[]? ImageInfo = default, BufferView[]? TexelBufferView = default, DescriptorBufferInfo[]? BufferInfo = default)
 {

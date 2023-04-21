@@ -1,7 +1,7 @@
 ﻿#nullable enable
 using System.Diagnostics.CodeAnalysis;
 
-namespace ajiva.Ecs;
+namespace Ajiva.Ecs;
 
 public interface IEntityRegistry
 {

@@ -1,10 +1,10 @@
 ﻿using System.Collections;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
-using ajiva.Systems.VulcanEngine.Systems;
+using Ajiva.Systems.VulcanEngine.Systems;
 using SharpVk;
 
-namespace ajiva.Models.Buffer.ChangeAware;
+namespace Ajiva.Models.Buffer.ChangeAware;
 
 public class AChangeAwareBufferOfT<T> : DisposingLogger, IAChangeAwareBufferOfT<T> where T : struct
 {

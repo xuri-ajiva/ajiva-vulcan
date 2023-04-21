@@ -1,8 +1,8 @@
 ﻿using System.Numerics;
-using ajiva.Components.Transform;
-using ajiva.Ecs.Entity.Helper;
+using Ajiva.Components.Transform;
+using Ajiva.Ecs.Entity.Helper;
 
-namespace ajiva.Entities;
+namespace Ajiva.Entities;
 
 /*
 [EntityComponent(typeof(Transform3d))]

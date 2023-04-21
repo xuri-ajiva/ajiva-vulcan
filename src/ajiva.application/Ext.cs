@@ -1,29 +1,30 @@
 ﻿using System.Numerics;
-using ajiva.Application;
-using ajiva.Components.Media;
-using ajiva.Components.Mesh;
-using ajiva.Components.Physics;
-using ajiva.Components.RenderAble;
-using ajiva.Components.Transform;
-using ajiva.Components.Transform.Ui;
-using ajiva.Ecs;
-using ajiva.Generators.Texture;
-using ajiva.Models.Layers.Layer2d;
-using ajiva.Models.Layers.Layer3d;
-using ajiva.Systems;
-using ajiva.Systems.Assets;
-using ajiva.Systems.Physics;
-using ajiva.Systems.VulcanEngine;
-using ajiva.Systems.VulcanEngine.Debug;
-using ajiva.Systems.VulcanEngine.Interfaces;
-using ajiva.Systems.VulcanEngine.Layer;
-using ajiva.Systems.VulcanEngine.Layer2d;
-using ajiva.Systems.VulcanEngine.Layer3d;
-using ajiva.Systems.VulcanEngine.Systems;
-using ajiva.Worker;
+using Ajiva.Application;
+using Ajiva.Components.Media;
+using Ajiva.Components.Mesh;
+using Ajiva.Components.Physics;
+using Ajiva.Components.RenderAble;
+using Ajiva.Components.Transform;
+using Ajiva.Components.Transform.Ui;
+using Ajiva.Ecs;
+using Ajiva.Generators.Texture;
+using Ajiva.Models.Layers.Layer2d;
+using Ajiva.Models.Layers.Layer3d;
+using Ajiva.Systems;
+using Ajiva.Systems.Assets;
+using Ajiva.Systems.Physics;
+using Ajiva.Systems.VulcanEngine;
+using Ajiva.Systems.VulcanEngine.Debug;
+using Ajiva.Systems.VulcanEngine.Interfaces;
+using Ajiva.Systems.VulcanEngine.Layer;
+using Ajiva.Systems.VulcanEngine.Layer2d;
+using Ajiva.Systems.VulcanEngine.Layer3d;
+using Ajiva.Systems.VulcanEngine.Systems;
+using Ajiva.Worker;
 using Autofac;
 using Autofac.Builder;
 using Autofac.Core;
+using Microsoft.Extensions.Configuration;
 using SharpVk.Glfw;
 
 internal static class Ext
@@ -124,8 +125,6 @@ internal static class Ext
 
         containerBuilder.AddSingleSelf(new PeriodicUpdateRunner());
 
-        containerBuilder.Register<Config>(c => Config.Default).AsSelf().SingleInstance();
-
         Glfw3.Init(); // todo: move to vulkan engine
         var (instance, debugReportCallback) = Statics.CreateInstance(Glfw3.GetRequiredInstanceExtensions());
         containerBuilder.AddSingleSelf(instance);
@@ -186,30 +185,30 @@ internal static class Ext
 
 //var t = container.ResolveUnregistered<Transform3d>(new TypedParameter(typeof(vec3), new vec3(1, 2, 3)));
 
-        var config = container.Resolve<Config>();
+        var config = container.Resolve<AjivaConfig>();
 
-        var ajiva3dLayerSystem = container.Resolve<Ajiva3dLayerSystem>();
-        var ajiva2dLayerSystem = container.Resolve<Ajiva2dLayerSystem>();
+        var Ajiva3dLayerSystem = container.Resolve<Ajiva3dLayerSystem>();
+        var Ajiva2dLayerSystem = container.Resolve<Ajiva2dLayerSystem>();
         var solidMeshRenderLayer = container.Resolve<SolidMeshRenderLayer>();
         var debugLayer = container.Resolve<DebugLayer>();
         var rectRender = container.Resolve<Mesh2dRenderLayer>();
 
         var graphicsSystem = container.Resolve<IGraphicsSystem>();
 
-        graphicsSystem.AddUpdateLayer(ajiva3dLayerSystem);
-        graphicsSystem.AddUpdateLayer(ajiva2dLayerSystem);
+        graphicsSystem.AddUpdateLayer(Ajiva3dLayerSystem);
+        graphicsSystem.AddUpdateLayer(Ajiva2dLayerSystem);
 
-        ajiva3dLayerSystem.AddLayer(solidMeshRenderLayer);
-        ajiva3dLayerSystem.AddLayer(debugLayer);
-        ajiva2dLayerSystem.AddLayer(rectRender);
+        Ajiva3dLayerSystem.AddLayer(solidMeshRenderLayer);
+        Ajiva3dLayerSystem.AddLayer(debugLayer);
+        Ajiva2dLayerSystem.AddLayer(rectRender);
 
 //var collisionsComponentSystem = container.Resolve<CollisionsComponentSystem>();
 //var boundingBoxComponentsSystem = container.Resolve<BoundingBoxComponentsSystem>();
 
         //windowSystem = container.Resolve<IWindowSystem>();
 
-        ajiva3dLayerSystem.Update(new UpdateInfo());
-        ajiva3dLayerSystem.MainCamara.Transform3d
+        Ajiva3dLayerSystem.Update(new UpdateInfo());
+        Ajiva3dLayerSystem.MainCamara.Transform3d
             //TODO //BUG this calls into Camera.Get instead of FpsCamera.Get if we dont cast
             //BUG it alsow only updates the FPS Camera Transform if we cast, but the Camera Transform is used in the shaders
             .RefPosition((ref Vector3 vec) =>

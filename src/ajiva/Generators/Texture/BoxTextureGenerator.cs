@@ -1,9 +1,9 @@
 ﻿using System.Drawing;
-using ajiva.Components.Media;
-using ajiva.Systems.VulcanEngine.Interfaces;
-using ajiva.Worker;
+using Ajiva.Components.Media;
+using Ajiva.Systems.VulcanEngine.Interfaces;
+using Ajiva.Worker;
 
-namespace ajiva.Generators.Texture;
+namespace Ajiva.Generators.Texture;
 
 public class BoxTextureGenerator : SystemBase
 {

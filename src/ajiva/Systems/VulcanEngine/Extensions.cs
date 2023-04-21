@@ -2,7 +2,7 @@
 using SharpVk;
 using SharpVk.Khronos;
 
-namespace ajiva.Systems.VulcanEngine;
+namespace Ajiva.Systems.VulcanEngine;
 
 public static class Extensions
 {

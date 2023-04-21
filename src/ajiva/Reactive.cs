@@ -1,4 +1,4 @@
-﻿namespace ajiva;
+﻿namespace Ajiva;
 
 public class Reactive<T> where T : IEquatable<T>
 {

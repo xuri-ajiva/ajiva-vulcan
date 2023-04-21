@@ -1,7 +1,7 @@
 ﻿using System.Numerics;
 using System.Runtime.InteropServices;
 
-namespace ajiva.Models.Layers.Layer2d;
+namespace Ajiva.Models.Layers.Layer2d;
 
 [StructLayout(LayoutKind.Sequential)]
 public struct UniformLayer2d : IComp<UniformLayer2d>

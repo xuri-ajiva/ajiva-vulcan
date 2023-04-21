@@ -1,4 +1,4 @@
-﻿namespace ajiva.Systems.VulcanEngine.Layer;
+﻿namespace Ajiva.Systems.VulcanEngine.Layer;
 
 public enum AjivaEngineLayer
 {

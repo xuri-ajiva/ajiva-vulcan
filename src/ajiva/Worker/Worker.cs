@@ -1,6 +1,6 @@
 ﻿using System.Globalization;
 
-namespace ajiva.Worker;
+namespace Ajiva.Worker;
 
 public class Worker
 {

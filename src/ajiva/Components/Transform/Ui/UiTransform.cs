@@ -1,8 +1,7 @@
 ﻿using System.Diagnostics;
 using System.Numerics;
-using ajiva.utils.Changing;
 
-namespace ajiva.Components.Transform.Ui;
+namespace Ajiva.Components.Transform.Ui;
 
 public class UiTransform : DisposingLogger, IComponent, IUiTransform
 {

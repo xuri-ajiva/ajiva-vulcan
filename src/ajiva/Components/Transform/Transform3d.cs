@@ -1,7 +1,6 @@
 using System.Numerics;
-using ajiva.utils.Changing;
 
-namespace ajiva.Components.Transform;
+namespace Ajiva.Components.Transform;
 
 public class Transform3d : DisposingLogger, ITransform<Vector3, Matrix4x4>, IModelMatTransform
 {

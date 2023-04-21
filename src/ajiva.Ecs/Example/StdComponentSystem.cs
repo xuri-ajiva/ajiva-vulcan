@@ -1,7 +1,4 @@
-﻿using System;
-using ajiva.utils;
-
-namespace ajiva.Ecs.Example;
+﻿namespace Ajiva.Ecs.Example;
 
 public class StdComponentSystem : ComponentSystemBase<StdComponent>, IUpdate
 {

@@ -1,13 +1,13 @@
 ﻿using System.Runtime.CompilerServices;
-using ajiva.Systems.Assets;
-using ajiva.Systems.Assets.Contracts;
-using ajiva.Systems.VulcanEngine.Interfaces;
+using Ajiva.Systems.Assets;
+using Ajiva.Systems.Assets.Contracts;
+using Ajiva.Systems.VulcanEngine.Interfaces;
 using SharpVk;
 using SharpVk.Shanq;
 using SharpVk.Shanq.Numerics;
 using Buffer = System.Buffer;
 
-namespace ajiva.Components;
+namespace Ajiva.Components;
 
 public class Shader : ThreadSaveCreatable
 {

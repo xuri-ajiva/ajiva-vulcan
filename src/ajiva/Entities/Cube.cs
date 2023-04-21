@@ -1,12 +1,12 @@
 ﻿using System.Numerics;
-using ajiva.Components.Media;
-using ajiva.Components.Mesh;
-using ajiva.Components.Physics;
-using ajiva.Components.RenderAble;
-using ajiva.Components.Transform;
-using ajiva.Ecs.Entity.Helper;
+using Ajiva.Components.Media;
+using Ajiva.Components.Mesh;
+using Ajiva.Components.Physics;
+using Ajiva.Components.RenderAble;
+using Ajiva.Components.Transform;
+using Ajiva.Ecs.Entity.Helper;
 
-namespace ajiva.Entities;
+namespace Ajiva.Entities;
 
 [EntityComponent(typeof(Transform3d), typeof(TextureComponent), typeof(RenderInstanceMesh),
     typeof(CollisionsComponent), typeof(PhysicsComponent), typeof(BoundingBox))]

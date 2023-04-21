@@ -1,8 +1,7 @@
-﻿using ajiva.Systems.VulcanEngine;
-using ajiva.utils.Changing;
+﻿using Ajiva.Systems.VulcanEngine;
 using SharpVk;
 
-namespace ajiva.Components.Media;
+namespace Ajiva.Components.Media;
 
 public class AImage : ChangingComponentBase
 {

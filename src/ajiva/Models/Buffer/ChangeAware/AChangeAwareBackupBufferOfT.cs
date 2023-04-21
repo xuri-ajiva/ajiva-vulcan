@@ -1,9 +1,9 @@
 ﻿using System.Collections;
 using System.Runtime.CompilerServices;
-using ajiva.Systems.VulcanEngine.Interfaces;
+using Ajiva.Systems.VulcanEngine.Interfaces;
 using SharpVk;
 
-namespace ajiva.Models.Buffer.ChangeAware;
+namespace Ajiva.Models.Buffer.ChangeAware;
 
 public class AChangeAwareBackupBufferOfT<T> : DisposingLogger, IAChangeAwareBackupBufferOfT<T> where T : unmanaged
 {

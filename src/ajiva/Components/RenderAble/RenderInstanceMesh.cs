@@ -1,11 +1,11 @@
 ﻿using System.Numerics;
-using ajiva.Components.Media;
-using ajiva.Components.Mesh;
-using ajiva.Components.Mesh.Instance;
-using ajiva.Components.Transform;
-using ajiva.Models.Instance;
+using Ajiva.Components.Media;
+using Ajiva.Components.Mesh;
+using Ajiva.Components.Mesh.Instance;
+using Ajiva.Components.Transform;
+using Ajiva.Models.Instance;
 
-namespace ajiva.Components.RenderAble;
+namespace Ajiva.Components.RenderAble;
 
 public class RenderInstanceMesh : DisposingLogger, IComponent
 {

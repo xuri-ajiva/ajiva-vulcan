@@ -1,9 +1,9 @@
-﻿using ajiva.Components;
-using ajiva.Systems.VulcanEngine.Interfaces;
-using ajiva.Systems.VulcanEngine.Layers.Models;
+﻿using Ajiva.Components;
+using Ajiva.Systems.VulcanEngine.Interfaces;
+using Ajiva.Systems.VulcanEngine.Layers.Models;
 using SharpVk;
 
-namespace ajiva.Systems.VulcanEngine.Layers.Creation;
+namespace Ajiva.Systems.VulcanEngine.Layers.Creation;
 
 public static class GraphicsPipelineLayerCreator
 {

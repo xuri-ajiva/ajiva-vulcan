@@ -1,6 +1,6 @@
-﻿using ajiva.Systems.Assets.Contracts;
+﻿using Ajiva.Systems.Assets.Contracts;
 
-namespace ajiva.Systems.Assets;
+namespace Ajiva.Systems.Assets;
 
 public interface IAssetManager : ISystem
 {

@@ -1,7 +1,7 @@
-﻿using ajiva.Systems.VulcanEngine.Systems;
+﻿using Ajiva.Systems.VulcanEngine.Systems;
 using SharpVk;
 
-namespace ajiva.Models.Buffer;
+namespace Ajiva.Models.Buffer;
 
 public class UniformBuffer<T> : ThreadSaveCreatable where T : struct, IComp<T>
 {

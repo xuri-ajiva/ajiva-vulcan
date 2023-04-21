@@ -1,6 +1,6 @@
-﻿using ajiva.Components.Transform.SpatialAcceleration;
+﻿using Ajiva.Components.Transform.SpatialAcceleration;
 
-namespace ajiva.Components.Physics;
+namespace Ajiva.Components.Physics;
 
 public interface IBoundingBox : IComponent
 {

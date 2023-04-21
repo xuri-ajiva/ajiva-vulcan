@@ -1,7 +1,6 @@
-﻿using ajiva.Components.Mesh;
-using ajiva.utils.Changing;
+﻿using Ajiva.Components.Mesh;
 
-namespace ajiva.Components.Physics;
+namespace Ajiva.Components.Physics;
 
 public class CollisionsComponent : ChangingComponentBase, ICollider
 {

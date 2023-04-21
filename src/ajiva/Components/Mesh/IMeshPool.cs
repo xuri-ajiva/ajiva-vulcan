@@ -1,4 +1,4 @@
-﻿namespace ajiva.Components.Mesh;
+﻿namespace Ajiva.Components.Mesh;
 
 public interface IMeshPool
 {

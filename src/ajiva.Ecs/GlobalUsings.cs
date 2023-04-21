@@ -1,6 +1,12 @@
-﻿global using ajiva.Ecs.Component;
-global using ajiva.Ecs.ComponentSytem;
-global using ajiva.Ecs.Entity;
-global using ajiva.Ecs.System;
-global using ajiva.Ecs.Utils;
+﻿global using System;
+global using System.Collections.Generic;
+global using System.Linq;
+global using System.Threading;
+global using System.Threading.Tasks;
+global using Ajiva.Ecs.Component;
+global using Ajiva.Ecs.ComponentSytem;
+global using Ajiva.Ecs.Entity;
+global using Ajiva.Ecs.System;
+global using Ajiva.Ecs.Utils;
+global using Ajiva.Utils;
 global using Serilog;

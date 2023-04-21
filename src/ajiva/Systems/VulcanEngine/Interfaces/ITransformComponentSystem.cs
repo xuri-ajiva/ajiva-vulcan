@@ -1,7 +1,7 @@
-﻿using ajiva.Components.Transform;
-using ajiva.Components.Transform.Ui;
+﻿using Ajiva.Components.Transform;
+using Ajiva.Components.Transform.Ui;
 
-namespace ajiva.Systems.VulcanEngine.Interfaces;
+namespace Ajiva.Systems.VulcanEngine.Interfaces;
 
 public interface ITransformComponentSystem : IComponentSystem<Transform3d>
 {

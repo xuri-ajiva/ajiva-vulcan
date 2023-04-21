@@ -1,13 +1,13 @@
 ﻿using System.Diagnostics;
 using System.Text;
-using ajiva.Components.Media;
-using ajiva.Systems.VulcanEngine.Systems;
+using Ajiva.Components.Media;
+using Ajiva.Systems.VulcanEngine.Systems;
 using Serilog.Events;
 using SharpVk;
 using SharpVk.Multivendor;
 using Version = SharpVk.Version;
 
-namespace ajiva.Systems.VulcanEngine;
+namespace Ajiva.Systems.VulcanEngine;
 
 public static class Statics
 {
@@ -142,11 +142,12 @@ public static class Statics
 
         var instance = Instance.Create(
             enabledLayers.ToArray(),
-            enabledExtensionNames.Append(ExtExtensions.DebugReport).ToArray(),
-            applicationInfo: new ApplicationInfo {
-                ApplicationName = "ajiva",
+            enabledExtensionNames.Append(ExtExtensions.DebugReport).ToArray(), 
+            InstanceCreateFlags.None,
+            new ApplicationInfo {
+                ApplicationName = "Ajiva",
                 ApplicationVersion = new Version(0, 0, 1),
-                EngineName = "ajiva-engine",
+                EngineName = "Ajiva-Engine",
                 EngineVersion = new Version(0, 0, 1),
                 ApiVersion = new Version(1, 0, 0)
             });

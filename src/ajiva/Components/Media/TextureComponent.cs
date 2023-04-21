@@ -1,4 +1,4 @@
-﻿namespace ajiva.Components.Media;
+﻿namespace Ajiva.Components.Media;
 
 public class TextureComponent : DisposingLogger, IComponent
 {

@@ -1,6 +1,6 @@
-﻿using ajiva.Systems.VulcanEngine.Layers;
+﻿using Ajiva.Systems.VulcanEngine.Layers;
 
-namespace ajiva.Systems.VulcanEngine.Layer;
+namespace Ajiva.Systems.VulcanEngine.Layer;
 
 public interface IAjivaLayerRenderSystem
 {
