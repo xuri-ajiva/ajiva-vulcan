@@ -6,7 +6,7 @@ using ajiva.Components.Transform.SpatialAcceleration;
 using ajiva.Entities;
 using ajiva.Models.Buffer;
 using ajiva.Models.Vertex;
-using ajiva.Utils.Changing;
+using ajiva.utils.Changing;
 using ajiva.Worker;
 
 namespace ajiva.Components.Physics;
@@ -44,7 +44,7 @@ public class BoundingBox : DisposingLogger, IBoundingBox
         lock (this)
         {
             var vCpy = ++_version;
-            _workerPool.EnqueueWork((info, _) => vCpy < _version ? WorkResult.Failed : ComputeBox(), o => ALog.Error(o), nameof(ComputeBox));
+            _workerPool.EnqueueWork((info, _) => vCpy < _version ? WorkResult.Failed : ComputeBox(), o => Log.Error(o, o.Message), nameof(ComputeBox));
         }
     }
 
@@ -53,13 +53,13 @@ public class BoundingBox : DisposingLogger, IBoundingBox
     /// <inheritdoc />
     public void SetTree(StaticOctalTreeContainer<BoundingBox> octalTree)
     {
-        this._octalTree = octalTree;
+        _octalTree = octalTree;
     }
 
     /// <inheritdoc />
     public void RemoveTree()
     {
-        this._octalTree = null;
+        _octalTree = null;
     }
 
     private void ColliderChanged(IChangingObserver changingObserver)

@@ -2,6 +2,7 @@
 using System.Text;
 using ajiva.Components.Media;
 using ajiva.Systems.VulcanEngine.Systems;
+using Serilog.Events;
 using SharpVk;
 using SharpVk.Multivendor;
 using Version = SharpVk.Version;
@@ -26,19 +27,19 @@ public static class Statics
             if (Ignore.Contains(ident)) return false;
         }
         var stackframe = new StackFrame(2, true);
-        var lvl = (flags & DebugReportFlags.Error) != 0
-            ? ALogLevel.Error
+        LogEventLevel lvl = (flags & DebugReportFlags.Error) != 0
+            ? LogEventLevel.Error
             : (flags & DebugReportFlags.Warning) != 0
-                ? ALogLevel.Warning
+                ? LogEventLevel.Warning
                 : (flags & DebugReportFlags.PerformanceWarning) != 0
-                    ? ALogLevel.Warning
+                    ? LogEventLevel.Warning
                     : (flags & DebugReportFlags.Debug) != 0
-                        ? ALogLevel.Debug
-                        : ALogLevel.Info;
+                        ? LogEventLevel.Debug
+                        : LogEventLevel.Information;
         
-        ALog.Log(lvl, $"[{flags}] ({objectType}) {layerPrefix} #{message}");
-        ALog.Log(lvl, message);
-        ALog.Log(lvl, $"File: {stackframe.GetFileName()}:{stackframe.GetFileLineNumber()} " + BuildStackTraceError(3, 6));
+        Log.Write(lvl, "[{flags}] ({objectType}) {layerPrefix} #{message}", flags, objectType, layerPrefix, message);
+        Log.Write(lvl, message);
+        Log.Write(lvl, "File: {FileName}:{FileLineNumber} {trace}", stackframe.GetFileName(), stackframe.GetFileLineNumber(), BuildStackTraceError(3, 6));
 
         string BuildStackTraceError(int begin, int count)
         {
@@ -106,12 +107,7 @@ public static class Statics
 
         throw new ArgumentOutOfRangeException(nameof(candidates), candidates, "failed to find supported format!");
     }
-
-    public static void LogStackTrace()
-    {
-        var stackFrame = new StackTrace(true);
-        foreach (var frame in stackFrame.GetFrames()) Console.WriteLine($"{frame.GetFileName()}:{frame.GetFileLineNumber()}");
-    }
+    
 
     /*private static DataTarget dataTarget = DataTarget.AttachToProcess(Environment.ProcessId, false);
     private static ClrRuntime runtime = dataTarget.ClrVersions.First().CreateRuntime();*/

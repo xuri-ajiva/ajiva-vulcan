@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using ajiva.utils;
 
 namespace ajiva.Ecs.Utils;
 
@@ -67,14 +68,13 @@ public class PeriodicUpdateRunner
         data.Iteration = 0L;
         data.Delta = update.Info.Interval.Ticks;
         var now = Stopwatch.GetTimestamp();
-
+        
         var ticks = update.Info.Interval.Ticks;
         while (!data.Source.IsCancellationRequested)
         {
             update.Update(new UpdateInfo(new TimeSpan(data.Delta), data.Iteration));
 
             data.Iteration++;
-
             var elapsed = Stopwatch.GetTimestamp() - now;
             var remaining = (ticks - elapsed);
             if (remaining / 10000 > 0)

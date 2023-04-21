@@ -1,4 +1,5 @@
 ﻿using System;
+using ajiva.utils;
 
 namespace ajiva.Ecs.Example;
 

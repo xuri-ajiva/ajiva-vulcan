@@ -2,7 +2,7 @@
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using ajiva.Systems.VulcanEngine.Interfaces;
-using ajiva.Utils.Changing;
+using ajiva.utils.Changing;
 using SharpVk;
 
 namespace ajiva.Models.Buffer.Dynamic;
@@ -23,7 +23,7 @@ public class DynamicUniversalDedicatedBufferArray<T> : DisposingLogger where T :
         for (var i = 0; i < initialLength; i++)
             _items[i] = new T();
 
-        SizeOfT = UsVc<T>.Size;
+        SizeOfT = Unsafe.SizeOf<T>();
 
         this.deviceSystem = deviceSystem;
         _amount = 0;
@@ -48,7 +48,7 @@ public class DynamicUniversalDedicatedBufferArray<T> : DisposingLogger where T :
 
     private void BufferResizedOnChanged(ResizableDedicatedBuffer sender)
     {
-        ALog.Debug($"Buffer Resized: {sender.Current().Buffer.RawHandle.ToUInt64():X8}");
+        Log.Debug("Buffer Resized: {sender}",sender.Current().Buffer.RawHandle.ToUInt64().ToString("x8"));
     }
 
     public ResizableDedicatedBuffer Uniform { get; set; }
@@ -185,7 +185,7 @@ public class DynamicUniversalDedicatedBufferArray<T> : DisposingLogger where T :
             {
                 if (value < _amount)
                 {
-                    ALog.Warn("Setting Capacity Lower then size will not work");
+                    Log.Warning("Setting Capacity Lower then size will not work");
                     throw new ArgumentOutOfRangeException(nameof(value), "Setting Capacity Lower then size will not work");
                 }
 

@@ -254,7 +254,7 @@ public class DeviceSystem : SystemBase, IDeviceSystem
                 {
                     if (fence.GetStatus() == Result.Success)
                     {
-                        ALog.Error("Fence Error");
+                        Log.Error("Fence Error");
                     }
 
                     ExecuteOnQueueWithFence(action, queue, fence, poolLock, commandBuffer, queueType);
@@ -267,7 +267,7 @@ public class DeviceSystem : SystemBase, IDeviceSystem
     {
         if (action is null)
         {
-            ALog.Error("Action is Null");
+            Log.Error("Action is Null");
             return;
         }
 

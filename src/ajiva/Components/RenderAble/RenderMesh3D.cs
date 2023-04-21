@@ -3,7 +3,7 @@ using ajiva.Components.Media;
 using ajiva.Models.Buffer.ChangeAware;
 using ajiva.Models.Instance;
 using ajiva.Models.Layers.Layer3d;
-using ajiva.Utils.Changing;
+using ajiva.utils.Changing;
 
 namespace ajiva.Components.RenderAble;
 
@@ -25,7 +25,7 @@ public class RenderMesh3D : RenderMeshIdUnique<RenderMesh3D>
     {
         if (Models is null)
         {
-            ALog.Warn("RenderMeshUpdate Failed!");
+            Log.Warning("RenderMeshUpdate Failed!");
             return;
         }
         else
@@ -37,7 +37,7 @@ public class RenderMesh3D : RenderMeshIdUnique<RenderMesh3D>
         }
         if (InstanceData is null)
         {
-            ALog.Warn("RenderMeshUpdate Failed!");
+            Log.Warning("RenderMeshUpdate Failed!");
             return;
         }
         else

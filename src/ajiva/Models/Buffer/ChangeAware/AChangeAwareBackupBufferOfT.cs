@@ -1,4 +1,5 @@
 ﻿using System.Collections;
+using System.Runtime.CompilerServices;
 using ajiva.Systems.VulcanEngine.Interfaces;
 using SharpVk;
 
@@ -17,7 +18,7 @@ public class AChangeAwareBackupBufferOfT<T> : DisposingLogger, IAChangeAwareBack
         for (var i = 0; i < length; i++)
             Value[i] = new ByRef<T>(new T());
 
-        SizeOfT = UsVc<T>.Size;
+        SizeOfT = Unsafe.SizeOf<T>();
 
         this.deviceSystem = deviceSystem;
         currentMax = 0;

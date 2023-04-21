@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using ajiva.Components;
-using ajiva.Utils.Changing;
+using ajiva.utils.Changing;
 using SharpVk;
 using SharpVk.Khronos;
 
@@ -31,7 +31,7 @@ public class SurfaceHandle : ChangingComponentBase
         }
         catch (Exception e)
         {
-            ALog.Error(e);
+            Log.Error(e, e.Message);
         }
     }
 

@@ -23,7 +23,7 @@ public class MeshPool : IMeshPool
     public IMesh GetMesh(uint meshId)
     {
         if(Meshes.TryGetValue(meshId, out var mesh)) return mesh;
-        ALog.Warn("Mesh not found, returning error mesh");
+        Log.Warning("Mesh not found, returning error mesh");
         AddMesh(MeshPrefab.Error);
         return Meshes[meshId];
     }

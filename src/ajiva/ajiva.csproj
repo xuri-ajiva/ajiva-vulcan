@@ -12,8 +12,6 @@
         <PackageReference Include="System.Reactive.Linq" Version="5.0.0" />
     </ItemGroup>
     <ItemGroup>
-        <ProjectReference Include="..\..\libs\ajiva-utils\src\Ajiva.Include\Ajiva.Include.csproj" />
-        <ProjectReference Include="..\..\libs\ajiva-utils\src\Ajiva.Wrapper\Ajiva.Wrapper.csproj" />
         <ProjectReference Include="..\..\libs\SharpVk\src\SharpVk.Glfw\SharpVk.Glfw.csproj" />
         <ProjectReference Include="..\..\libs\SharpVk\src\SharpVk.Shanq.Numerics\SharpVk.Shanq.Numerics.csproj" />
         <ProjectReference Include="..\..\libs\SharpVk\src\SharpVk\SharpVk.csproj" />

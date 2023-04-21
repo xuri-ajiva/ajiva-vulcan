@@ -24,7 +24,7 @@ public class StaticOctalTree<T, TItem> : IRespectable where TItem : StaticOctalI
         _maxDepth = maxDepth;
         if (_childrenTrees is not null && _childrenTrees.Any(x => x is not null))
         {
-            ALog.Error("already setup");
+            Log.Error("already setup");
         }
         _childrenTrees ??= new StaticOctalTree<T, TItem>[AREAS_PER_LEAF]; //ArrayPool<StaticOctalTree<T, TItem>>.Shared.Rent(AREAS_PER_LEAF);
         _items ??= new LinkedList<TItem>(); //todo move to first use
@@ -290,7 +290,7 @@ public class StaticOctalTreeContainer<T>
     {
         _tree = new StaticOctalTree<T, StaticOctalItem<T>>();
         _tree.Setup(area, 0, maxDepth);
-        ALog.Info($"Created tree {area} depth {0} Center {(area.Position + area.Size / 2)}");
+        Log.Information("Created tree {area} depth 0 Center {2}", area, area.Position + area.Size / 2);
     }
 
     public StaticOctalItem<T> Insert(StaticOctalItem<T> item)
@@ -363,10 +363,12 @@ public class StaticOctalTreeContainer<T>
         found = _items.Find(oldItem); //96.4% execution time (52.3% in EqualityComparer<T>.Default.Equals)
         if (found is null)
         {
-            ALog.Error($"Could not find item {item} in list");
+            Log.Error("Could not find item {item} in list", item);
             return null;
         }
-        found.Value = _tree.Insert(item with { Space = space });
+        found.Value = _tree.Insert(item with {
+            Space = space
+        });
         return found.Value.Value;
     }
 }
@@ -415,5 +417,4 @@ public readonly struct StaticOctalSpace
                space.Position.Z + space.Size.Z >= _position.Z && space.Position.Z <= _position.Z + _size.Z;
     }
 }
-
 public record class StaticOctalItem<TItem>(TItem Item, StaticOctalSpace Space);

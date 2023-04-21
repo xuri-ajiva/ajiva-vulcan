@@ -46,7 +46,8 @@ public class WorkerPool : SystemBase, IWorkerPool
 
     public void StartMonitoring(CancellationToken cancellationToken)
     {
-        var block = new ConsoleBlock(workers.Length + 2);
+        //todo use Spectre.Console
+        /*var block = new ConsoleBlock(workers.Length + 2);
 
         block.WriteAt("Monitoring Started...", 0);
         var format = "X" + (workers.Length - 1).ToString("X").Length;
@@ -59,7 +60,7 @@ public class WorkerPool : SystemBase, IWorkerPool
                 block.WriteAt($"Open Workers: {workers.Length} Work: {concurrentQueue.Count}", 1);
                 block.WriteAt($"{nameof(Worker)} {workers[ci].WorkerId.ToString(format)} [{result.ToString()}] ~> {workers[ci].WorkName}", ci + 2);
             }, cancellationToken);
-        }
+        }*/
     }
 
     /// <inheritdoc />

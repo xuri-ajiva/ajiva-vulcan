@@ -36,7 +36,7 @@ public class ABuffer : DisposingLogger, IEquatable<ABuffer>
     /// <inheritdoc />
     protected override void ReleaseUnmanagedResources(bool disposing)
     {
-        ALog.Trace($"Buffer Deleted: {Buffer.RawHandle}, Disposing: {disposing}");
+        Log.Verbose("Buffer Deleted: {RawHandle}, Disposing: {disposing}",Buffer.RawHandle, disposing);
         Buffer?.Dispose();
         Memory?.Free();
     }
@@ -106,7 +106,7 @@ public class ABuffer : DisposingLogger, IEquatable<ABuffer>
     {
         if (ReferenceEquals(null, obj)) return false;
         if (ReferenceEquals(this, obj)) return true;
-        if (obj.GetType() != this.GetType()) return false;
+        if (obj.GetType() != GetType()) return false;
         return Equals((ABuffer)obj);
     }
 

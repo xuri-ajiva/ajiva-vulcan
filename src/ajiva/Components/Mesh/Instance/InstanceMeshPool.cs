@@ -1,6 +1,6 @@
 ﻿using ajiva.Models.Buffer.Dynamic;
 using ajiva.Systems.VulcanEngine.Interfaces;
-using ajiva.Utils.Changing;
+using ajiva.utils.Changing;
 using SharpVk;
 
 namespace ajiva.Components.Mesh.Instance;

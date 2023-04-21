@@ -15,7 +15,7 @@ public class Worker
         WorkerPool = workerPool;
         WorkName = "";
 
-        State.Publish(WorkResult.Waiting);
+        //State.Publish(WorkResult.Waiting);
         workingThread = new Thread(Work)
         {
             Name = $"WorkerThread {workerId.ToString()} from {WorkerPool.Name}",
@@ -26,7 +26,7 @@ public class Worker
     internal string WorkName { get; private protected set; }
     public WorkerPool WorkerPool { get; }
 
-    public Notify<WorkResult> State { get; } = new Notify<WorkResult>();
+    //public Notify<WorkResult> State { get; } = new Notify<WorkResult>();
 
     private void Work(object? state)
     {
@@ -35,13 +35,13 @@ public class Worker
             if (WorkerPool.CancellationTokenSource.IsCancellationRequested)
                 return;
             WorkInfo? work;
-            State.Publish(WorkResult.Waiting);
+            //State.Publish(WorkResult.Waiting);
             if (!WorkerPool.SyncSemaphore.WaitOne(500))
                 continue;
 
             lock (WorkerPool.AvailableLock)
             {
-                State.Publish(WorkResult.Locking);
+                //State.Publish(WorkResult.Locking);
 
                 if (!WorkerPool.TryGetWork(out work)) continue;
             }
@@ -49,9 +49,9 @@ public class Worker
 
             WorkName = work.Name;
             work.ActiveWorker = this;
-            State.Publish(WorkResult.Working);
+            //State.Publish(WorkResult.Working);
             var result = work.Invoke();
-            State.Publish(result);
+            //State.Publish(result);
         }
     }
 

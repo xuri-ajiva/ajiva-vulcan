@@ -6,8 +6,8 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\..\libs\ajiva-utils\src\Ajiva.Include\Ajiva.Include.csproj" />
         <ProjectReference Include="..\ajiva.generator\ajiva.generator.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
+        <ProjectReference Include="..\Ajiva.Utils\Ajiva.Utils.csproj" />
     </ItemGroup>
 
     <ItemGroup>

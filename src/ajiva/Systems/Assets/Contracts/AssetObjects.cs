@@ -12,7 +12,9 @@ public class AssetObjects
     }
 
     [JsonConstructor]
-    public AssetObjects() { }
+    public AssetObjects()
+    {
+    }
 
     [ProtoMember(1)]
     public AssetType AssetType { get; }
@@ -23,7 +25,8 @@ public class AssetObjects
     public void Add(string name, byte[] data)
     {
         var assetName = AssetHelper.AsName(name);
-        if (Assets.ContainsKey(assetName)) ALog.Warn($"Duplicate AssetName {AssetType}:{assetName}");
+        if (Assets.ContainsKey(assetName))
+            Log.Warning("Duplicate AssetName {AssetType}:{assetName}", AssetType, assetName);
         Assets.Add(assetName, data);
     }
 
@@ -31,7 +34,7 @@ public class AssetObjects
     {
         if (Assets.TryGetValue(AssetHelper.AsName(name), out var data)) return data;
 
-        ALog.Error($"Asset Not Found, {AssetType}:{name}");
+        Log.Error("Asset Not Found, {AssetType}:{name}", AssetType, name);
         return Array.Empty<byte>();
     }
 }

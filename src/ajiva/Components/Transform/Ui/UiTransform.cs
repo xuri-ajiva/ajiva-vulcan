@@ -1,6 +1,6 @@
 ﻿using System.Diagnostics;
 using System.Numerics;
-using ajiva.Utils.Changing;
+using ajiva.utils.Changing;
 
 namespace ajiva.Components.Transform.Ui;
 
@@ -96,7 +96,7 @@ public class UiTransform : DisposingLogger, IComponent, IUiTransform
 
             if ((value.Alignment & UiAlignment.AlignmentMask) == UiAlignment.None)
             {
-                ALog.Warn("Alignment Type Not set for Vertical Anchor Fixing...");
+                Log.Warning("Alignment Type Not set for Vertical Anchor Fixing...");
                 value.Alignment |= UiAlignment.Vertical;
             }
             verticalAnchor = value;
@@ -113,7 +113,7 @@ public class UiTransform : DisposingLogger, IComponent, IUiTransform
 
             if ((value.Alignment & UiAlignment.AlignmentMask) == UiAlignment.None)
             {
-                ALog.Warn("Alignment Type Not set for Horizontal Anchor Fixing...");
+                Log.Warning("Alignment Type Not set for Horizontal Anchor Fixing...");
                 value.Alignment |= UiAlignment.Horizontal;
             }
             horizontalAnchor = value;
@@ -209,7 +209,7 @@ public class UiTransform : DisposingLogger, IComponent, IUiTransform
         var maxY = (int)(Parent.DisplaySize.SizeY * ((RenderSize.MaxY - Parent.RenderSize.MinY) / Parent.RenderSize.SizeY));
 
         var r= new Rect2Di(minX, minY, maxX - minX, maxY - minY);
-        ALog.Debug(GetHashCode().ToString("X8") +": "+ r);
+        Log.Debug((GetHashCode().ToString("X8") +": "+ r));
         return r;
     }
 
@@ -245,10 +245,10 @@ public class UiTransform : DisposingLogger, IComponent, IUiTransform
     private static void Validate(float pos, float min, float max)
     {
         if (pos < min)
-            ALog.Debug("Ui Component might be out of Visible Range");
+            Log.Debug("Ui Component might be out of Visible Range");
         //throw new ArgumentOutOfRangeException(nameof(posVecY), posVecY, "The " + nameof(posVecY) + " value is out of Range");
         if (pos > max)
-            ALog.Debug("Ui Component might be out of Visible Range");
+            Log.Debug("Ui Component might be out of Visible Range");
         //throw new ArgumentOutOfRangeException(nameof(posVecY), posVecY, "The " + nameof(posVecY) + " value is out of Range");
     }
 

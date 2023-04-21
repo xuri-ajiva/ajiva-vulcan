@@ -18,7 +18,7 @@ public class ViAdBuilder<T>
 
     public ViAdBuilder(uint bindId)
     {
-        this.input = new List<VertexInputAttributeDescription>();
+        input = new List<VertexInputAttributeDescription>();
         lastLocation = -1;
         this.bindId = bindId;
     }

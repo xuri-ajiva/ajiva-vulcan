@@ -1,4 +1,5 @@
 ﻿using System.Collections;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using ajiva.Systems.VulcanEngine.Systems;
 using SharpVk;
@@ -14,7 +15,7 @@ public class AChangeAwareBufferOfT<T> : DisposingLogger, IAChangeAwareBufferOfT<
         Length = length;
         Changed = new BitArray(length);
         Value = new T[length];
-        SizeOfT = UsVc<T>.Size;
+        SizeOfT = Unsafe.SizeOf<T>();
         Buffer = new ABuffer((uint)(SizeOfT * length));
         Buffer.Create(deviceSystem, usage, flags);
     }
@@ -24,7 +25,7 @@ public class AChangeAwareBufferOfT<T> : DisposingLogger, IAChangeAwareBufferOfT<
         Length = value.Length;
         Changed = new BitArray(value.Length);
         Value = value;
-        SizeOfT = UsVc<T>.Size;
+        SizeOfT = Unsafe.SizeOf<T>();
         Buffer = new ABuffer((uint)(SizeOfT * Length));
         Buffer.Create(deviceSystem, usage, flags);
     }

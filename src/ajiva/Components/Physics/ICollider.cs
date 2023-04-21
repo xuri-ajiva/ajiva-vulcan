@@ -1,5 +1,5 @@
 ﻿using ajiva.Components.Mesh;
-using ajiva.Utils.Changing;
+using ajiva.utils.Changing;
 
 namespace ajiva.Components.Physics;
 

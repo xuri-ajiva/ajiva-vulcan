@@ -21,7 +21,7 @@ public class RenderBuffer
         get => inUse;
         set
         {
-            ALog.Trace($"Set InUse To: {value,6}, {GetHashCode():X8}");
+            Log.Verbose("Set InUse To: {value,6}, {GetHashCode():X8}",value,GetHashCode());
 
             inUse = value;
         }

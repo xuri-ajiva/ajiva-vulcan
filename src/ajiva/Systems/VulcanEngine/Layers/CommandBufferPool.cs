@@ -50,7 +50,7 @@ public class CommandBufferPool
         renderBuffersLockup.Add(renderBuffer.CommandBuffer, renderBuffer);
         availableBuffers.Enqueue(renderBuffer);
         if (allocatedBuffers.Count > 50)
-            ALog.Warn($"Alloc Buffer for {nameof(CommandBuffer)}@{GetHashCode()}, Total Buffers: {allocatedBuffers.Count}");
+            Log.Warning("Alloc Buffer for CommandBuffer@{GetHashCode()}, Total Buffers: {Count}",GetHashCode(),allocatedBuffers.Count);
     }
 
     private RenderBuffer GetNextBuffer()
@@ -85,7 +85,7 @@ public class CommandBufferPool
     {
         if (renderBuffer is null) return;
         allocatedBuffers.Remove(renderBuffer);
-        if (availableBuffers.Contains(renderBuffer)) ALog.Error("Buffer Available but should be deleted!");
+        if (availableBuffers.Contains(renderBuffer)) Log.Error("Buffer Available but should be deleted!");
         deviceSystem.UseCommandPool(x =>
         {
             x.FreeCommandBuffers(renderBuffer.CommandBuffer);

@@ -1,4 +1,6 @@
-﻿namespace ajiva.Ecs.Utils;
+﻿using ajiva.utils;
+
+namespace ajiva.Ecs.Utils;
 
 public interface IUpdate
 {

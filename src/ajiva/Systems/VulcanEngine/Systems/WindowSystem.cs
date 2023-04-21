@@ -49,7 +49,7 @@ public class WindowSystem : SystemBase, IUpdate, IWindowSystem
 
         windowConfig = config.Window;
 
-        OnResize += (_, size, newSize) => ALog.Info($"Resized from [w: {size.Width}, h: {size.Height}] to [w: {newSize.Width}, h: {newSize.Height}]");
+        OnResize += (_, size, newSize) => Log.Information("Resized from [w: {Width}, h: {Height}] to [w: {Width}, h: {Height}]", size.Width, size.Height, newSize.Width, newSize.Height);
 
         InitWindow();
         EnsureSurfaceExists();
@@ -104,7 +104,7 @@ public class WindowSystem : SystemBase, IUpdate, IWindowSystem
                 }
                 catch (Exception e)
                 {
-                    ALog.Error(e);
+                    Log.Error(e, e.Message);
                 }
             SharpVk.Glfw.extras.Glfw3.WaitEventsTimeout(1);
 

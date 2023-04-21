@@ -49,7 +49,7 @@ public class AssetPacker
             Serializer.Serialize(ms, assetPack);
             var serializedAsset = ms.ToArray();
 
-            var assetHash = SHA1.Create().ComputeHash(serializedAsset);
+            var assetHash = SHA1.HashData(serializedAsset);
             if (File.Exists(assetOutput))
             {
                 if (overide)
@@ -59,7 +59,7 @@ public class AssetPacker
                         var diskHash = File.ReadAllBytes(hashFilePath);
                         if (assetHash.SequenceEqual(diskHash))
                         {
-                            ALog.Warn($"Asset Already Build, Content Identical: {assetHash.Select(x => x.ToString("X")).Aggregate((x, y) => x + y)}");
+                            Log.Warning("Asset Already Build, Content Identical: {Hash}", assetHash.Select(x => x.ToString("X")).Aggregate((x, y) => x + y));
                             return;
                         }
                     }
@@ -75,7 +75,7 @@ public class AssetPacker
         }
         catch (Exception e)
         {
-            Console.WriteLine(e);
+            Log.Error(e, "Error Writing Asset");
         }
     }
 
@@ -100,18 +100,18 @@ public class AssetPacker
             return;
         if (vert is null)
         {
-            ALog.Error($"[PACK/ERROR] Vertex Shader is Null! for: {shaderDirectory.Name}");
+            Log.Error("[PACK/ERROR] Vertex Shader is Null! for: {Name}", shaderDirectory.Name);
             return;
         }
         if (frag is null)
         {
-            ALog.Error($"[PACK/ERROR] Fragment Shader is Null! for: {shaderDirectory.Name}");
+            Log.Error("[PACK/ERROR] Fragment Shader is Null! for: {Name}", shaderDirectory.Name);
             return;
         }
 
         var compiler = new Process
         {
-            StartInfo = new ProcessStartInfo(ShaderCompiler, $"{frag.Name} {vert.Name} -t -C -V " + Macros)
+            StartInfo = new ProcessStartInfo(ShaderCompiler, string.Format("{0} {1} -t -C -V ", frag.Name, vert.Name) + Macros)
             {
                 RedirectStandardError = true,
                 RedirectStandardOutput = true,
@@ -137,12 +137,12 @@ public class AssetPacker
 
         lock (_lock)
         {
-            ALog.Info($"[COMPILE/INFO]: Shaders for: {shaderDirectory.Name}");
+            Log.Information("[COMPILE/INFO]: Shaders for: {Name}", shaderDirectory.Name);
             if (!string.IsNullOrEmpty(output))
-                ALog.Info($"[COMPILE/RESULT/INFO]\n{output.TrimEnd('\n')}");
+                Log.Information("[COMPILE/RESULT/INFO]\n{output}", output.TrimEnd('\n'));
             if (!string.IsNullOrEmpty(errors))
-                ALog.Error($"[COMPILE/RESULT/ERROR]\n{errors.TrimEnd('\n')}");
-            ALog.Info($"[COMPILE/RESULT/EXIT] Compiler Process has exited with code {compiler.ExitCode}");
+                Log.Error("[COMPILE/RESULT/ERROR]\n{errors}", errors.TrimEnd('\n'));
+            Log.Information("[COMPILE/RESULT/EXIT] Compiler Process has exited with code {ExitCode}", compiler.ExitCode);
             if (compiler.ExitCode != 0) Environment.Exit((int)(compiler.ExitCode + Const.ExitCode.ShaderCompile));
         }
 

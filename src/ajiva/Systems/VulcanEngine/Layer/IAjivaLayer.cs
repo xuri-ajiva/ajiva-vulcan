@@ -1,6 +1,6 @@
 ﻿using ajiva.Models.Buffer.ChangeAware;
 using ajiva.Systems.VulcanEngine.Layers.Models;
-using ajiva.Utils.Changing;
+using ajiva.utils.Changing;
 using SharpVk;
 
 namespace ajiva.Systems.VulcanEngine.Layer;

@@ -9,7 +9,7 @@ using ajiva.Systems.VulcanEngine.Interfaces;
 using ajiva.Systems.VulcanEngine.Layer;
 using ajiva.Systems.VulcanEngine.Layers.Models;
 using ajiva.Systems.VulcanEngine.Systems;
-using ajiva.Utils.Changing;
+using ajiva.utils.Changing;
 using SharpVk;
 using SharpVk.Glfw;
 

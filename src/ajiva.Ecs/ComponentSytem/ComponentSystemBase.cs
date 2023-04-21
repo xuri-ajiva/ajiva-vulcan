@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using Ajiva.Wrapper.Logger;
+using ajiva.utils;
 
 namespace ajiva.Ecs.ComponentSytem;
 
@@ -46,7 +46,7 @@ public abstract class ComponentSystemBase<T> : DisposingLogger, IComponentSystem
             {
                 if (entity != entity1)
                 {
-                    ALog.Error("Removing component not assigned to entity");
+                    Log.Error("Removing component not assigned to entity");
                 }
             }
         return component;

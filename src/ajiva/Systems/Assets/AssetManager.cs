@@ -21,7 +21,7 @@ public class AssetManager : SystemBase, IAssetManager
     {
         if (AssetPack.Assets.TryGetValue(assetType, out var assets)) return assets.GetAsset(name);
 
-        ALog.Error($"Asset Not Found, {assetType}:{name}");
+        Log.Error("Asset Not Found, {AssetType}:{name}", assetType, name);
         return Array.Empty<byte>();
     }
 
