@@ -19,7 +19,7 @@ namespace Ajiva.Systems.VulcanEngine.Debug;
 public class DebugLayer : ComponentSystemBase<DebugComponent>, IUpdate, IAjivaLayerRenderSystem<UniformViewProj3d>
 {
     private readonly IDeviceSystem _deviceSystem;
-    private readonly AssetManager _assetManager;
+    private readonly IAssetManager _assetManager;
     private readonly ITextureSystem _textureSystem;
     private InstanceMeshPool<MeshInstanceData> instanceMeshPool;
     private readonly object mainLock = new object();
@@ -27,7 +27,7 @@ public class DebugLayer : ComponentSystemBase<DebugComponent>, IUpdate, IAjivaLa
 
     /// <inheritdoc />
     /// <inheritdoc />
-    public DebugLayer(IDeviceSystem deviceSystem, AssetManager assetManager, ITextureSystem textureSystem)
+    public DebugLayer(IDeviceSystem deviceSystem, IAssetManager assetManager, ITextureSystem textureSystem)
     {
         _deviceSystem = deviceSystem;
         _assetManager = assetManager;

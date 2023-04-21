@@ -17,10 +17,10 @@ public class GraphicsSystem : SystemBase, IUpdate, IGraphicsSystem
 
 
     private bool reInitAjivaLayerRendererNeeded = true;
-    private readonly AssetManager _assetManager;
+    private readonly IAssetManager _assetManager;
 
     /// <inheritdoc />
-    public GraphicsSystem(DeviceSystem deviceSystem, WindowSystem windowSystem, TextureSystem textureSystem, AssetManager assetManager)
+    public GraphicsSystem(DeviceSystem deviceSystem, WindowSystem windowSystem, TextureSystem textureSystem, IAssetManager assetManager)
     {
         _deviceSystem = deviceSystem;
         _windowSystem = windowSystem;

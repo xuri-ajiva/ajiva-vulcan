@@ -37,6 +37,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ajiva.Generator.Test", "Aji
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ajiva.Utils", "Ajiva.Utils\Ajiva.Utils.csproj", "{43A12E87-8D25-49EE-BA41-A094E5B94213}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ajiva.Assets", "Ajiva.Assets\Ajiva.Assets.csproj", "{04521ACF-59D7-4648-9FDC-6B75A127010A}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -107,6 +109,10 @@ Global
 		{43A12E87-8D25-49EE-BA41-A094E5B94213}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{43A12E87-8D25-49EE-BA41-A094E5B94213}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{43A12E87-8D25-49EE-BA41-A094E5B94213}.Release|Any CPU.Build.0 = Release|Any CPU
+		{04521ACF-59D7-4648-9FDC-6B75A127010A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{04521ACF-59D7-4648-9FDC-6B75A127010A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{04521ACF-59D7-4648-9FDC-6B75A127010A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{04521ACF-59D7-4648-9FDC-6B75A127010A}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{604C740A-E661-49C1-AA5A-6477A74B1248} = {113BF263-982F-4D50-AFE7-087351C3AD19}

@@ -12,9 +12,9 @@ public class TextureCreator
 {
     private readonly IDeviceSystem _deviceSystem;
     private readonly IImageSystem _imageSystem;
-    private readonly AssetManager _assetManager;
+    private readonly IAssetManager _assetManager;
 
-    public TextureCreator(IDeviceSystem deviceSystem, IImageSystem imageSystem, AssetManager assetManager)
+    public TextureCreator(IDeviceSystem deviceSystem, IImageSystem imageSystem, IAssetManager assetManager)
     {
         _deviceSystem = deviceSystem;
         _imageSystem = imageSystem;

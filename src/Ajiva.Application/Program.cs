@@ -40,7 +40,7 @@ logger.Information("OSVersion: {OSVersion}", Environment.OSVersion);
 
 if (args.Length > 0)
 {
-    PackAssets(config);
+    AssetPacker.PackDefault(config, Const.Default.AssetsPath);
 }
 
 //todo generate this
@@ -64,16 +64,6 @@ await container.DisposeAsync();
 Console.WriteLine("Press any key to exit...");
 Console.ReadKey();
 
-async void PackAssets(AjivaConfig ajivaConfig)
-{
-    await AssetPacker.Pack(ajivaConfig.AssetPath,
-        new AssetSpecification(Const.Default.AssetsPath,
-            new Dictionary<AssetType, string> {
-                [AssetType.Shader] = "Shaders",
-                [AssetType.Texture] = "Textures",
-                [AssetType.Model] = "Models"
-            }), config.ShaderConfig, true);
-}
 
 public class MySource : IRegistrationSource
 {

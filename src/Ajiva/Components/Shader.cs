@@ -32,7 +32,7 @@ public class Shader : ThreadSaveCreatable
         new PipelineShaderStageCreateInfo
             { Stage = ShaderStageFlags.Fragment, Module = FragShader, Name = Name };
 
-    private static uint[] LoadShaderData(AssetManager assetManager, string assetName, out int codeSize)
+    private static uint[] LoadShaderData(IAssetManager assetManager, string assetName, out int codeSize)
     {
         var fileBytes = assetManager.GetAsset(AssetType.Shader, assetName);
         var shaderData = new uint[(int)MathF.Ceiling(fileBytes.Length / 4f)];
@@ -44,7 +44,7 @@ public class Shader : ThreadSaveCreatable
         return shaderData;
     }
 
-    private ShaderModule? CreateShader(AssetManager assetManager, string assetName)
+    private ShaderModule? CreateShader(IAssetManager assetManager, string assetName)
     {
         var shaderData = LoadShaderData(assetManager, assetName, out var codeSize);
 
@@ -54,7 +54,7 @@ public class Shader : ThreadSaveCreatable
     }
 
     [MethodImpl(MethodImplOptions.Synchronized)]
-    public void CreateShaderModules(AssetManager assetManager, string assetDir)
+    public void CreateShaderModules(IAssetManager assetManager, string assetDir)
     {
         if (Created) return;
         VertShader = CreateShader(assetManager, AssetHelper.Combine(assetDir, Const.Default.VertexShaderName));
@@ -64,7 +64,7 @@ public class Shader : ThreadSaveCreatable
     }
 
     [MethodImpl(MethodImplOptions.Synchronized)]
-    public void CreateShaderModules(AssetManager assetManager, string vertexShaderName, string fragmentShaderName)
+    public void CreateShaderModules(IAssetManager assetManager, string vertexShaderName, string fragmentShaderName)
     {
         if (Created) return;
         VertShader = CreateShader(assetManager, vertexShaderName);
@@ -83,7 +83,7 @@ public class Shader : ThreadSaveCreatable
         Created = true;
     }
 
-    public static Shader CreateShaderFrom(AssetManager assetManager, string dir, IDeviceSystem system, string name)
+    public static Shader CreateShaderFrom(IAssetManager assetManager, string dir, IDeviceSystem system, string name)
     {
         var sh = new Shader(system, name);
         sh.CreateShaderModules(assetManager, dir);

@@ -10,11 +10,11 @@ public class CombinePipeline : DisposingLogger
 {
     private readonly AjivaLayerRenderer layerRenderer;
     private readonly ITextureSystem _textureSystem;
-    private readonly AssetManager _assetManager;
+    private readonly IAssetManager _assetManager;
 
     private FullRenderTarget? fullRenderTarget;
 
-    public CombinePipeline(AjivaLayerRenderer layerRenderer, ITextureSystem textureSystem, AssetManager assetManager)
+    public CombinePipeline(AjivaLayerRenderer layerRenderer, ITextureSystem textureSystem, IAssetManager assetManager)
     {
         this.layerRenderer = layerRenderer;
         _textureSystem = textureSystem;

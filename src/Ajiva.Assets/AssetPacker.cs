@@ -1,14 +1,17 @@
 ﻿using System.Diagnostics;
 using System.Security.Cryptography;
+using System.Text;
 using Ajiva.Application;
 using Ajiva.Systems.Assets.Contracts;
+using CliWrap;
 using ProtoBuf;
+using Serilog;
 
 namespace Ajiva.Systems.Assets;
 
 public class AssetPacker
 {
-    public static async Task Pack(string assetOutput, AssetSpecification assetSpecification, ShaderConfig config, bool overide = false)
+    public static async Task Pack(string assetOutput, AssetSpecification assetSpecification, ShaderConfig config, bool @override = false)
     {
         var assetPack = new AssetPack();
 
@@ -22,10 +25,10 @@ public class AssetPacker
 
         await AddTexturesInDir(assetPack, textureRoot, textureRoot);
 
-        WriteAsset(assetOutput, overide, assetPack);
+        WriteAsset(assetOutput, @override, assetPack);
     }
 
-    private static void WriteAsset(string assetOutput, bool overide, AssetPack assetPack)
+    private static void WriteAsset(string assetOutput, bool @override, AssetPack assetPack)
     {
         var hashFilePath = assetOutput + ".sha1.txt";
         try
@@ -37,7 +40,7 @@ public class AssetPacker
             var assetHash = SHA1.HashData(serializedAsset);
             if (File.Exists(assetOutput))
             {
-                if (overide)
+                if (@override)
                 {
                     if (File.Exists(hashFilePath))
                     {
@@ -93,43 +96,33 @@ public class AssetPacker
             Log.Error("[PACK/ERROR] Fragment Shader is Null! for: {Name}", shaderDirectory.Name);
             return;
         }
-
-        var compiler = new Process
-        {
-            StartInfo = new ProcessStartInfo(FindCompiler(), $"{frag.Name} {vert.Name} -t -C -V " + BuildMacros(config))
-            {
-                RedirectStandardError = true,
-                RedirectStandardOutput = true,
-                WorkingDirectory = shaderDirectory.FullName,
-                CreateNoWindow = true
-            }
+        var args = new List<string> {
+            frag.Name,
+            vert.Name,
+            "-t",
+            "-C",
+            "-V"
         };
-        compiler.Start();
-        compiler.PriorityClass = ProcessPriorityClass.High;
-        compiler.EnableRaisingEvents = true;
-        compiler.PriorityBoostEnabled = true;
+        BuildMacros(config, args);
 
-        const int maxWait = 10000;
-        const int waitInterval = 100;
-        for (var i = 0; !compiler.HasExited && i < maxWait / waitInterval; i += waitInterval)
-        {
-            compiler.Refresh();
-            await Task.Delay(waitInterval);
-        }
+        var output = new StringBuilder();
+        var errors = new StringBuilder();
+        var cli = Cli.Wrap(FindCompiler())
+            .WithArguments(args)
+            .WithWorkingDirectory(shaderDirectory.FullName)
+            .WithStandardOutputPipe(PipeTarget.ToStringBuilder(output))
+            .WithStandardErrorPipe(PipeTarget.ToStringBuilder(errors))
+            .WithValidation(CommandResultValidation.None);
 
-        var errors = await compiler.StandardError.ReadToEndAsync();
-        var output = await compiler.StandardOutput.ReadToEndAsync();
+        var compiler = await cli.ExecuteAsync();
 
-        lock (_lock)
-        {
-            Log.Information("[COMPILE/INFO]: Shaders for: {Name}", shaderDirectory.Name);
-            if (!string.IsNullOrEmpty(output))
-                Log.Information("[COMPILE/RESULT/INFO]\n{output}", output.TrimEnd('\n'));
-            if (!string.IsNullOrEmpty(errors))
-                Log.Error("[COMPILE/RESULT/ERROR]\n{errors}", errors.TrimEnd('\n'));
-            Log.Information("[COMPILE/RESULT/EXIT] Compiler Process has exited with code {ExitCode}", compiler.ExitCode);
-            if (compiler.ExitCode != 0) Environment.Exit((int)(compiler.ExitCode + Const.ExitCode.ShaderCompile));
-        }
+        if (output.Length != 0)
+            Log.Verbose("[INFO for {Name}] {output}", shaderDirectory.Name, output.ToString().TrimEnd('\n'));
+        if (errors.Length != 0)
+            Log.Error("[ERROR for {Name}] {errors}", shaderDirectory.Name, errors.ToString().TrimEnd('\n'));
+        Log.Information("Compiler Process for {shader} has exited with code {ExitCode}", shaderDirectory.Name, compiler.ExitCode);
+        if (compiler.ExitCode != 0)
+            Environment.Exit((int)(compiler.ExitCode + Const.ExitCode.ShaderCompile));
 
         //region pack
         files = shaderDirectory.GetFiles(); //refresh files
@@ -139,11 +132,10 @@ public class AssetPacker
         assetPack.Add(AssetType.Shader, relPathName, files.First(x => x.Name == Const.Default.FragmentShaderName));
     }
 
-    private static string BuildMacros(ShaderConfig config)
+    private static void BuildMacros(ShaderConfig config, List<string> args)
     {
-
-        const string macroPrefix = " -D";
-        return config.GetAll().Select(x => macroPrefix + x.name + "=" + x.value).Aggregate((x, y) => x + y);
+        const string macroPrefix = "-D";
+        args.AddRange(config.GetAll().Select(x => macroPrefix + x.name + "=" + x.value));
     }
 
     private static string FindCompiler()
@@ -151,7 +143,7 @@ public class AssetPacker
         const string search = "tools/spirv/glslangValidator.exe";
 
         var dir = new DirectoryInfo(Directory.GetCurrentDirectory());
-        
+
         while (dir.Parent is not null)
         {
             var path = Path.Combine(dir.FullName, search);
@@ -159,9 +151,20 @@ public class AssetPacker
                 return path;
             dir = dir.Parent;
         }
-        
+
         throw new FileNotFoundException("Could not find glslangValidator.exe");
     }
 
-    private static object _lock = new();
+    public static void PackDefault(AjivaConfig config, string assetsPath)
+    {
+        var task = Task.Run(async () => await Pack(config.AssetPath,
+            new AssetSpecification(assetsPath,
+                new Dictionary<AssetType, string> {
+                    [AssetType.Shader] = "Shaders",
+                    [AssetType.Texture] = "Textures",
+                    [AssetType.Model] = "Models"
+                }), config.ShaderConfig, true));
+        //wait for task to finish
+        task.Wait();
+    }
 }

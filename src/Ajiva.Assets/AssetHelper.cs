@@ -1,6 +1,6 @@
 ﻿namespace Ajiva.Systems.Assets;
 
-public class AssetHelper
+public static class AssetHelper
 {
     public static string Combine(string p1, string p2)
     {

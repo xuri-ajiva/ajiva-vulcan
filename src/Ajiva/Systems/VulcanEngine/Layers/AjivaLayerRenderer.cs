@@ -24,7 +24,7 @@ public class AjivaLayerRenderer : DisposingLogger
     public CommandBufferPool CommandBufferPool;
     private readonly ITextureSystem _textureSystem;
 
-    public AjivaLayerRenderer(DeviceSystem deviceSystem, Canvas canvas, CommandBufferPool commandBufferPool, ITextureSystem textureSystem, AssetManager assetManager)
+    public AjivaLayerRenderer(DeviceSystem deviceSystem, Canvas canvas, CommandBufferPool commandBufferPool, ITextureSystem textureSystem, IAssetManager assetManager)
     {
         DeviceSystem = deviceSystem;
         Canvas = canvas;

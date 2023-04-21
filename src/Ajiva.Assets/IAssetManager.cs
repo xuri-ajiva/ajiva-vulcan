@@ -1,4 +1,5 @@
-﻿using Ajiva.Systems.Assets.Contracts;
+﻿using Ajiva.Ecs.System;
+using Ajiva.Systems.Assets.Contracts;
 
 namespace Ajiva.Systems.Assets;
 

@@ -25,11 +25,11 @@ public class Mesh2dRenderLayer : ComponentSystemBase<RenderInstanceMesh2D>, IUpd
     private long _dataVersion;
     private readonly WindowSystem _windowSystem;
     private readonly DeviceSystem _deviceSystem;
-    private readonly AssetManager _assetManager;
+    private readonly IAssetManager _assetManager;
     private readonly ITextureSystem _textureSystem;
 
     /// <inheritdoc />
-    public Mesh2dRenderLayer(WindowSystem windowSystem, DeviceSystem deviceSystem, AssetManager assetManager, ITextureSystem textureSystem)
+    public Mesh2dRenderLayer(WindowSystem windowSystem, DeviceSystem deviceSystem, IAssetManager assetManager, ITextureSystem textureSystem)
     {
         _windowSystem = windowSystem;
         _deviceSystem = deviceSystem;

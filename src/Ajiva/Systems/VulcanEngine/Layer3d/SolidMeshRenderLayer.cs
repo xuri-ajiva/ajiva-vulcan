@@ -27,7 +27,7 @@ public class SolidMeshRenderLayer : ComponentSystemBase<RenderInstanceMesh>, IAj
     private long dataVersion;
 
     /// <inheritdoc />
-    public SolidMeshRenderLayer(IDeviceSystem deviceSystem, AssetManager assetManager, ITextureSystem textureSystem)
+    public SolidMeshRenderLayer(IDeviceSystem deviceSystem, IAssetManager assetManager, ITextureSystem textureSystem)
     {
         _deviceSystem = deviceSystem;
         _textureSystem = textureSystem;
