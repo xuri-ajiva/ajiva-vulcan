@@ -1,34 +1,25 @@
 ﻿using ajiva.Components.Physics;
-using ajiva.Components.Transform;
 using ajiva.Components.Transform.SpatialAcceleration;
-using ajiva.Ecs;
-using ajiva.Systems.VulcanEngine.Debug;
+using ajiva.Worker;
 using GlmSharp;
 
 namespace ajiva.Systems.Physics;
 
-[Dependent(typeof(CollisionsComponentSystem), typeof(DebugLayer))]
-public class BoundingBoxComponentsSystem : ComponentSystemBase<IBoundingBox>, IUpdate, IInit
+public class BoundingBoxComponentsSystem : ComponentSystemBase<BoundingBox>, IUpdate
 {
-    StaticOctalTreeContainer<IBoundingBox> _octalTree;
+    StaticOctalTreeContainer<BoundingBox> _octalTree;
     private readonly PhysicsSystem _physicsSystem;
+    private readonly IWorkerPool _workerPool;
     private bool phisicsUpdated;
 
     /// <inheritdoc />
-    public BoundingBoxComponentsSystem(IAjivaEcs ecs) : base(ecs)
+    public BoundingBoxComponentsSystem(PhysicsSystem physicsSystem, IWorkerPool workerPool)
     {
-        SEcs = ecs;
-        _physicsSystem = ecs.Get<PhysicsSystem>();
-    }
-
-    /// <inheritdoc />
-    public void Init()
-    {
+        _physicsSystem = physicsSystem;
+        _workerPool = workerPool;
         var pos = new vec3(float.MinValue / MathF.PI);
-        _octalTree = new StaticOctalTreeContainer<IBoundingBox>(new StaticOctalSpace(pos, pos * -MathF.E), 255);
+        _octalTree = new StaticOctalTreeContainer<BoundingBox>(new StaticOctalSpace(pos, pos * -MathF.E), 255);
     }
-
-    public static IAjivaEcs SEcs { get; set; }
 
     /// <inheritdoc />
     public void Update(UpdateInfo delta)
@@ -68,7 +59,8 @@ public class BoundingBoxComponentsSystem : ComponentSystemBase<IBoundingBox>, IU
             DoCollision(box1, box2, e1, e2);*/
     }
 
-    private void DoCollision(StaticOctalItem<IBoundingBox> dynamicItem, StaticOctalItem<IBoundingBox> otherItem)
+    /*
+    private void DoCollision(StaticOctalItem<BoundingBox> dynamicItem, StaticOctalItem<BoundingBox> otherItem)
     {
         if (dynamicItem.Item.Collider.IsStatic)
         {
@@ -97,10 +89,10 @@ public class BoundingBoxComponentsSystem : ComponentSystemBase<IBoundingBox>, IU
                 t2.Position -= resolved / 2;
             }
         }
-    }
+    }*/
 
     /// <inheritdoc />
-    public override IBoundingBox RegisterComponent(IEntity entity, IBoundingBox component)
+    public override BoundingBox RegisterComponent(IEntity entity, BoundingBox component)
     {
         component.SetTree(_octalTree);
         component.ComputeBoxBackground();
@@ -108,10 +100,15 @@ public class BoundingBoxComponentsSystem : ComponentSystemBase<IBoundingBox>, IU
     }
 
     /// <inheritdoc />
-    public override IBoundingBox UnRegisterComponent(IEntity entity, IBoundingBox component)
+    public override BoundingBox UnRegisterComponent(IEntity entity, BoundingBox component)
     {
         component.RemoveTree();
         return base.UnRegisterComponent(entity, component);
+    }
+
+    public override BoundingBox CreateComponent(IEntity entity)
+    {
+        return new BoundingBox(entity, _workerPool);
     }
 
     public void TogglePhysicUpdate()

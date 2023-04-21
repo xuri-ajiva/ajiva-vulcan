@@ -1,7 +1,7 @@
 ﻿namespace ajiva.Systems.VulcanEngine.Systems;
 
 /*[Dependent(typeof(DeviceSystem))]
-public class ShaderSystem : SystemBase, IInit
+public class ShaderSystem : SystemBase
 {
     public Dictionary<AjivaEngineLayer, ShaderUnion> ShaderUnions { get; } = new();
 

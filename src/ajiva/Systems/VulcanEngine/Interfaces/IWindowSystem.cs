@@ -1,9 +1,8 @@
-﻿using ajiva.Ecs;
-using ajiva.Systems.VulcanEngine.Systems;
+﻿using ajiva.Systems.VulcanEngine.Systems;
 
 namespace ajiva.Systems.VulcanEngine.Interfaces;
 
-public interface IWindowSystem : IAjivaEcsObject
+public interface IWindowSystem
 {
     Canvas Canvas { get; }
 

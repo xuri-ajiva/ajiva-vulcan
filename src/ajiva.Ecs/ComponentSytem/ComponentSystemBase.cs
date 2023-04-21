@@ -6,12 +6,6 @@ namespace ajiva.Ecs.ComponentSytem;
 
 public abstract class ComponentSystemBase<T> : DisposingLogger, IComponentSystem<T> where T : IComponent
 {
-    public ComponentSystemBase(IAjivaEcs ecs)
-    {
-        Ecs = ecs;
-    }
-
-    protected IAjivaEcs Ecs { get; }
     public Type ComponentType { get; } = typeof(T);
 
     /// <inheritdoc />
@@ -58,13 +52,18 @@ public abstract class ComponentSystemBase<T> : DisposingLogger, IComponentSystem
         return component;
     }
 
+    public abstract T CreateComponent(IEntity entity);
+
+    public virtual void DeleteComponent(T? component) => component?.Dispose();
+
     protected override void ReleaseUnmanagedResources(bool disposing)
     {
+        /* TODO check if ownership of component has fully moved to entity
         foreach (var (component, entity) in ComponentEntityMap)
         {
             entity?.TryRemoveComponent<T>(out var _);
             component?.Dispose();
-        }
+        }  */
         ComponentEntityMap.Clear();
         ComponentEntityMap = null!;
     }

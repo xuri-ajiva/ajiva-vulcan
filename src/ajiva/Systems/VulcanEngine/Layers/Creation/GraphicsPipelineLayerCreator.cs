@@ -1,13 +1,13 @@
 ﻿using ajiva.Components;
+using ajiva.Systems.VulcanEngine.Interfaces;
 using ajiva.Systems.VulcanEngine.Layers.Models;
-using ajiva.Systems.VulcanEngine.Systems;
 using SharpVk;
 
 namespace ajiva.Systems.VulcanEngine.Layers.Creation;
 
 public static class GraphicsPipelineLayerCreator
 {
-    public static GraphicsPipelineLayer Default(SwapChainLayer swapChainLayer, RenderPassLayer renderPassLayer, DeviceSystem deviceSystem, bool useDepthImage, VertexInputBindingDescription[] bindingDescriptions, VertexInputAttributeDescription[] attributeDescriptions, Shader mainShader, PipelineDescriptorInfos[] descriptorInfos)
+    public static GraphicsPipelineLayer Default(SwapChainLayer swapChainLayer, RenderPassLayer renderPassLayer, IDeviceSystem deviceSystem, bool useDepthImage, VertexInputBindingDescription[] bindingDescriptions, VertexInputAttributeDescription[] attributeDescriptions, Shader mainShader, PipelineDescriptorInfos[] descriptorInfos)
     {
         System.Diagnostics.Debug.Assert(deviceSystem.Device != null, "deviceSystem.Device != null");
         var descriptorSetLayout = deviceSystem.Device.CreateDescriptorSetLayout(

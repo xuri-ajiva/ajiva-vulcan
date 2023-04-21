@@ -6,7 +6,7 @@ using ProtoBuf;
 
 namespace ajiva.Systems.Assets;
 
-internal class AssetPacker
+public class AssetPacker
 {
     private static readonly string ShaderCompiler = Path.GetFullPath("./tools/spirv/glslangValidator.exe");
     private static string? macros;

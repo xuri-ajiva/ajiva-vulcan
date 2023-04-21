@@ -1,16 +1,10 @@
 ﻿using ajiva.Components.Physics;
-using ajiva.Ecs;
 
 namespace ajiva.Systems.Physics;
 
 public class PhysicsSystem : ComponentSystemBase<PhysicsComponent>, IUpdate
 {
     bool enabled = false;
-    
-    /// <inheritdoc />
-    public PhysicsSystem(IAjivaEcs ecs) : base(ecs)
-    {
-    }
 
     /// <inheritdoc />
     public void Update(UpdateInfo delta)
@@ -45,4 +39,6 @@ public class PhysicsSystem : ComponentSystemBase<PhysicsComponent>, IUpdate
     {
         enabled = physicsUpdated;
     }
+
+    public override PhysicsComponent CreateComponent(IEntity entity) => new PhysicsComponent();
 }

@@ -8,8 +8,9 @@ public class CollisionsComponent : ChangingComponentBase, ICollider
     private uint meshId;
 
     /// <inheritdoc />
-    public CollisionsComponent() : base(0)
+    public CollisionsComponent(MeshPool pool) : base(0)
     {
+        Pool = pool;
     }
 
     /// <inheritdoc />

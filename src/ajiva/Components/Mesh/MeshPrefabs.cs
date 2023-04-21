@@ -24,4 +24,6 @@ public class MeshPrefab
     });
 
     public static Mesh<byte>? Empty { get; } = null;
+    public static Mesh<Vertex3D> Error { get;  } = new Mesh<Vertex3D>(Array.Empty<Vertex3D>(), Array.Empty<ushort>());
+    public static Mesh<Vertex2D> Error2D { get;  } = new Mesh<Vertex2D>(Array.Empty<Vertex2D>(), Array.Empty<ushort>());
 }

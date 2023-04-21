@@ -12,7 +12,6 @@ public interface IGraphicsSystem : ISystem
 
     void RecreateCurrentGraphicsLayout();
     void DrawFrame();
-    void ResolveDeps();
     void UpdateGraphicsData();
     void AddUpdateLayer(IAjivaLayer layer);
 }

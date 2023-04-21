@@ -1,11 +1,9 @@
 <Project Sdk="Microsoft.NET.Sdk">
     <PropertyGroup>
         <RootNamespace>ajiva</RootNamespace>
-        <OutputType>Exe</OutputType>
         <TargetFramework>net7.0</TargetFramework>
         <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
         <Nullable>enable</Nullable>
-        <IsPackable>false</IsPackable>
     </PropertyGroup>
     <ItemGroup>
         <PackageReference Include="protobuf-net" Version="3.0.101" />
@@ -22,7 +20,13 @@
         <ProjectReference Include="..\..\libs\SharpVk\src\SharpVk\SharpVk.csproj" />
         <ProjectReference Include="..\ajiva.Ecs\ajiva.Ecs.csproj" />
     </ItemGroup>
+    
     <PropertyGroup>
         <PathMap>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)'))=./</PathMap>
     </PropertyGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\ajiva.generator\ajiva.generator.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
+    </ItemGroup>
+
 </Project>

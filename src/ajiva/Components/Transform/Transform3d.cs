@@ -16,11 +16,21 @@ public class Transform3d : DisposingLogger, IComponent, ITransform<vec3, mat4>, 
         ChangingObserver.RaiseAndSetIfChanged(ref this.rotation, rotation);
         ChangingObserver.RaiseAndSetIfChanged(ref this.scale, scale);
     }
+    public void UpdateAll()
+    {
+        ChangingObserver.Changed(ChangingObserver.Result());
+    }
+    public Transform3d(vec3 position, vec3 rotation) : this(position, rotation, vec3.Ones)
+    {
+    }
 
-    public Transform3d(vec3 position, vec3 rotation) : this(position, rotation, vec3.Ones) { }
-    public Transform3d(vec3 position) : this(position, vec3.Zero) { }
+    public Transform3d(vec3 position) : this(position, vec3.Zero)
+    {
+    }
 
-    public Transform3d() : this(vec3.Zero) { }
+    public Transform3d() : this(vec3.Zero)
+    {
+    }
 
     public mat4 ScaleMat => mat4.Scale(Scale);
     public mat4 RotationMat => mat4.RotateX(glm.Radians(Rotation.x)) * mat4.RotateY(glm.Radians(Rotation.y)) * mat4.RotateZ(glm.Radians(Rotation.z));

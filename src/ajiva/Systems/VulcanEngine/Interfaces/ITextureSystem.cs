@@ -1,5 +1,5 @@
-﻿using ajiva.Components.Media;
-using ajiva.Ecs;
+﻿using System.Drawing;
+using ajiva.Components.Media;
 using SharpVk;
 
 namespace ajiva.Systems.VulcanEngine.Interfaces;
@@ -11,6 +11,6 @@ public interface ITextureSystem : IComponentSystem<TextureComponent>
     void AddAndMapTextureToDescriptor(ATexture texture);
     void MapTextureToDescriptor(ATexture texture);
 
-    void EnsureDefaultImagesExists(IAjivaEcs ecs);
-
+    ATexture CreateTextureAndMapToDescriptor(Bitmap bitmap);
+    Sampler CreateTextureSampler();
 }

@@ -1,13 +1,15 @@
-﻿using ajiva.Components.Physics;
-using ajiva.Ecs;
+﻿using ajiva.Components.Mesh;
+using ajiva.Components.Physics;
 
 namespace ajiva.Systems.Physics;
 
-[Dependent(typeof(TransformComponentSystem))]
 public class CollisionsComponentSystem : ComponentSystemBase<CollisionsComponent>
 {
-    /// <inheritdoc />
-    public CollisionsComponentSystem(IAjivaEcs ecs) : base(ecs)
+    private readonly MeshPool _meshPool;
+
+    public CollisionsComponentSystem(MeshPool meshPool)
     {
+        _meshPool = meshPool;
     }
+    public override CollisionsComponent CreateComponent(IEntity entity) => new CollisionsComponent(_meshPool);
 }

@@ -1,6 +1,7 @@
-﻿using ajiva.Components.Transform;
+﻿using ajiva.Components.Mesh;
+using ajiva.Components.RenderAble;
+using ajiva.Components.Transform;
 using ajiva.Components.Transform.SpatialAcceleration;
-using ajiva.Ecs;
 using ajiva.Entities;
 using ajiva.Models.Buffer;
 using ajiva.Models.Vertex;
@@ -12,29 +13,27 @@ namespace ajiva.Components.Physics;
 
 public class BoundingBox : DisposingLogger, IBoundingBox
 {
-    private StaticOctalItem<IBoundingBox>? _octalItem;
+    private readonly IEntity _entity;
+    private readonly IWorkerPool _workerPool;
+    private StaticOctalItem<BoundingBox>? _octalItem;
     private readonly IModelMatTransform _transform;
 
     private uint _version;
 
     private DebugBox? _visual;
 
-    public BoundingBox(IAjivaEcs ecs, IEntity entity)
+    public BoundingBox(IEntity entity, IWorkerPool workerPool)
     {
-        Ecs = ecs;
-        Collider = entity.Get<ICollider>();
-        _transform = entity.GetAny<IModelMatTransform>();
-        Collider.ChangingObserver.OnChanged += ColliderChanged;
+        _entity = entity;
+        _workerPool = workerPool;
+        meshLazy = new Lazy<Mesh<Vertex3D>>(() => (Mesh<Vertex3D>)_entity.Get<RenderInstanceMesh>().Mesh);
+        _transform = entity.Get<Transform3d>();//entity.GetAny<IModelMatTransform>();
         _transform.ChangingObserver.OnChanged += TransformChanged;
     }
 
     /// <inheritdoc />
     public StaticOctalSpace Space => _octalItem?.Space ?? StaticOctalSpace.Empty;
 
-    /// <inheritdoc />
-    public ICollider Collider { get; }
-
-    public IAjivaEcs Ecs { get; }
 
     private void TransformChanged(mat4 value)
     {
@@ -43,18 +42,17 @@ public class BoundingBox : DisposingLogger, IBoundingBox
 
     public void ComputeBoxBackground()
     {
-        var vp = Ecs.Get<WorkerPool>();
         lock (this)
         {
             var vCpy = ++_version;
-            vp.EnqueueWork((info, _) => vCpy < _version ? WorkResult.Failed : ComputeBox(), ALog.Error, nameof(ComputeBox));
+            _workerPool.EnqueueWork((info, _) => vCpy < _version ? WorkResult.Failed : ComputeBox(), o => ALog.Error(o), nameof(ComputeBox));
         }
     }
 
-    private StaticOctalTreeContainer<IBoundingBox>? _octalTree;
+    private StaticOctalTreeContainer<BoundingBox>? _octalTree;
 
     /// <inheritdoc />
-    public void SetTree(StaticOctalTreeContainer<IBoundingBox> octalTree)
+    public void SetTree(StaticOctalTreeContainer<BoundingBox> octalTree)
     {
         this._octalTree = octalTree;
     }
@@ -70,11 +68,12 @@ public class BoundingBox : DisposingLogger, IBoundingBox
         ComputeBoxBackground();
     }
 
+    private Lazy<Mesh<Vertex3D>> meshLazy;
+
     private WorkResult ComputeBox()
     {
-        var mesh = Collider!.Pool.GetMesh(Collider.MeshId);
-        if (mesh.VertexBuffer is null) return WorkResult.Failed;
-        var buff = (BufferOfT<Vertex3D>)mesh.VertexBuffer;
+        if (meshLazy.Value.VertexBuffer is not BufferOfT<Vertex3D> buff) 
+            return WorkResult.Failed;
 
         float x1 = float.PositiveInfinity, x2 = float.NegativeInfinity, y1 = float.PositiveInfinity, y2 = float.NegativeInfinity, z1 = float.PositiveInfinity, z2 = float.NegativeInfinity; // 1 = min, 2 = max
         var mm = _transform.ModelMat;
@@ -121,7 +120,7 @@ public class BoundingBox : DisposingLogger, IBoundingBox
     private void UpdateDynamicDataVisual()
     {
         return;
-        if (_visual is null)
+       /* if (_visual is null)
         {
             _visual = new DebugBox();
             _visual.Register(Ecs);
@@ -145,7 +144,7 @@ public class BoundingBox : DisposingLogger, IBoundingBox
                 vec.y = scale.y;
                 vec.z = scale.z;
             });
-        });
+        }); */
     }
 
     /// <inheritdoc />
@@ -154,6 +153,5 @@ public class BoundingBox : DisposingLogger, IBoundingBox
         base.ReleaseUnmanagedResources(disposing);
 
         _transform.ChangingObserver.OnChanged += TransformChanged;
-        Collider.ChangingObserver.OnChanged += ColliderChanged;
     }
 }

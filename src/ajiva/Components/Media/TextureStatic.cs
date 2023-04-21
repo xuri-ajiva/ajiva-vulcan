@@ -1,49 +1,58 @@
 using System.Drawing;
 using System.Drawing.Imaging;
-using ajiva.Ecs;
 using ajiva.Models.Buffer;
 using ajiva.Systems.Assets;
 using ajiva.Systems.Assets.Contracts;
-using ajiva.Systems.VulcanEngine.Systems;
+using ajiva.Systems.VulcanEngine.Interfaces;
 using SharpVk;
 
 namespace ajiva.Components.Media;
 
-public partial class ATexture
+public class TextureCreator
 {
-    public static ATexture FromFile(IAjivaEcs ecs, string assetName)
+    private readonly IDeviceSystem _deviceSystem;
+    private readonly IImageSystem _imageSystem;
+    private readonly AssetManager _assetManager;
+
+    public TextureCreator(IDeviceSystem deviceSystem, IImageSystem imageSystem, AssetManager assetManager)
+    {
+        _deviceSystem = deviceSystem;
+        _imageSystem = imageSystem;
+        _assetManager = assetManager;
+    }
+    public ATexture FromFile(string assetName)
     {
         return new ATexture
         {
-            Image = CreateTextureImageFromAsset(ecs, assetName),
-            Sampler = CreateTextureSampler(ecs.Get<DeviceSystem>())
+            Image = CreateTextureImageFromAsset(assetName),
+            Sampler = CreateTextureSampler()
         };
     }
 
-    public static ATexture FromBitmap(IAjivaEcs ecs, Bitmap bitmap)
+    public ATexture FromBitmap(Bitmap bitmap)
     {
         return new ATexture
         {
-            Image = CreateTextureImageFromBitmap(ecs, bitmap),
-            Sampler = CreateTextureSampler(ecs.Get<DeviceSystem>())
+            Image = CreateTextureImageFromBitmap(bitmap),
+            Sampler = CreateTextureSampler()
         };
     }
 
-    private static AImage CreateTextureImageFromAsset(IAjivaEcs ecs, string assetName)
+    private AImage CreateTextureImageFromAsset(string assetName)
     {
-        var img = System.Drawing.Image.FromStream(ecs.Get<AssetManager>().GetAssetAsStream(AssetType.Texture, assetName));
+        var img = System.Drawing.Image.FromStream(_assetManager.GetAssetAsStream(AssetType.Texture, assetName));
         var bm = new Bitmap(img);
-        return CreateTextureImageFromBitmap(ecs, bm);
+        return CreateTextureImageFromBitmap(bm);
     }
 
-    private static AImage CreateTextureImageFromBitmap(IAjivaEcs ecs, Bitmap bm)
+    private AImage CreateTextureImageFromBitmap(Bitmap bm)
     {
         var texWidth = (uint)bm.Width;
         var texHeight = (uint)bm.Height;
         var imageSize = texWidth * texHeight * 4u;
 
         using ABuffer aBuffer = new ABuffer(imageSize);
-        aBuffer.Create(ecs.Get<DeviceSystem>(), BufferUsageFlags.TransferSource, MemoryPropertyFlags.HostVisible | MemoryPropertyFlags.HostCached);
+        aBuffer.Create(_deviceSystem, BufferUsageFlags.TransferSource, MemoryPropertyFlags.HostVisible | MemoryPropertyFlags.HostCached);
 
         unsafe
         {
@@ -59,22 +68,21 @@ public partial class ATexture
             }
         }
 
-        var image = ecs.Get<ImageSystem>();
 
-        var aImage = image.CreateImageAndView(texWidth, texHeight, Format.R8G8B8A8Srgb, ImageTiling.Optimal, ImageUsageFlags.TransferDestination | ImageUsageFlags.Sampled, MemoryPropertyFlags.DeviceLocal, ImageAspectFlags.Color);
+        var aImage = _imageSystem.CreateImageAndView(texWidth, texHeight, Format.R8G8B8A8Srgb, ImageTiling.Optimal, ImageUsageFlags.TransferDestination | ImageUsageFlags.Sampled, MemoryPropertyFlags.DeviceLocal, ImageAspectFlags.Color);
 
-        image.TransitionImageLayout(aImage.Image, Format.R8G8B8A8Srgb, ImageLayout.Undefined, ImageLayout.TransferDestinationOptimal);
-        image.CopyBufferToImage(aBuffer.Buffer!, aImage.Image, texWidth, texHeight);
-        image.TransitionImageLayout(aImage.Image, Format.R8G8B8A8Srgb, ImageLayout.TransferDestinationOptimal, ImageLayout.ShaderReadOnlyOptimal);
+        _imageSystem.TransitionImageLayout(aImage.Image, Format.R8G8B8A8Srgb, ImageLayout.Undefined, ImageLayout.TransferDestinationOptimal);
+        _imageSystem.CopyBufferToImage(aBuffer.Buffer!, aImage.Image, texWidth, texHeight);
+        _imageSystem.TransitionImageLayout(aImage.Image, Format.R8G8B8A8Srgb, ImageLayout.TransferDestinationOptimal, ImageLayout.ShaderReadOnlyOptimal);
 
         return aImage;
     }
 
-    public static Sampler CreateTextureSampler(DeviceSystem deviceSystem)
+    public Sampler CreateTextureSampler()
     {
-        var properties = deviceSystem.PhysicalDevice!.GetProperties();
+        var properties = _deviceSystem.PhysicalDevice!.GetProperties();
 
-        var textureSampler = deviceSystem.Device!.CreateSampler(Filter.Linear, Filter.Linear, SamplerMipmapMode.Linear, SamplerAddressMode.Repeat,
+        var textureSampler = _deviceSystem.Device!.CreateSampler(Filter.Linear, Filter.Linear, SamplerMipmapMode.Linear, SamplerAddressMode.Repeat,
             SamplerAddressMode.Repeat, SamplerAddressMode.Repeat, default, true, properties.Limits.MaxSamplerAnisotropy,
             false, CompareOp.Always, default, default, BorderColor.IntOpaqueBlack, false);
         return textureSampler;

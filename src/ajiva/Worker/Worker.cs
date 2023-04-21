@@ -32,11 +32,12 @@ public class Worker
     {
         while (!exit)
         {
-            WorkInfo? work;
-            State.Publish(WorkResult.Waiting);
-            WorkerPool.SyncSemaphore.WaitOne();
             if (WorkerPool.CancellationTokenSource.IsCancellationRequested)
                 return;
+            WorkInfo? work;
+            State.Publish(WorkResult.Waiting);
+            if (!WorkerPool.SyncSemaphore.WaitOne(500))
+                continue;
 
             lock (WorkerPool.AvailableLock)
             {

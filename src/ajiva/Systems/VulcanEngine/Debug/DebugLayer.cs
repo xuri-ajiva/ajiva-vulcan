@@ -4,7 +4,6 @@ using ajiva.Components.Mesh;
 using ajiva.Components.Mesh.Instance;
 using ajiva.Components.RenderAble;
 using ajiva.Components.Transform;
-using ajiva.Ecs;
 using ajiva.Models.Instance;
 using ajiva.Models.Layers.Layer3d;
 using ajiva.Models.Vertex;
@@ -12,28 +11,35 @@ using ajiva.Systems.Assets;
 using ajiva.Systems.VulcanEngine.Interfaces;
 using ajiva.Systems.VulcanEngine.Layer;
 using ajiva.Systems.VulcanEngine.Layers;
-using ajiva.Systems.VulcanEngine.Systems;
 using ajiva.Utils.Changing;
 using GlmSharp;
 using SharpVk;
 
 namespace ajiva.Systems.VulcanEngine.Debug;
 
-[Dependent(typeof(WindowSystem))]
-public class DebugLayer : ComponentSystemBase<DebugComponent>, IInit, IUpdate, IAjivaLayerRenderSystem<UniformViewProj3d>
+public class DebugLayer : ComponentSystemBase<DebugComponent>, IUpdate, IAjivaLayerRenderSystem<UniformViewProj3d>
 {
+    private readonly IDeviceSystem _deviceSystem;
+    private readonly AssetManager _assetManager;
+    private readonly ITextureSystem _textureSystem;
     private InstanceMeshPool<MeshInstanceData> instanceMeshPool;
     private readonly object mainLock = new object();
     private long dataVersion;
 
     /// <inheritdoc />
     /// <inheritdoc />
-    public DebugLayer(IAjivaEcs ecs) : base(ecs)
+    public DebugLayer(IDeviceSystem deviceSystem, AssetManager assetManager, ITextureSystem textureSystem)
     {
+        _deviceSystem = deviceSystem;
+        _assetManager = assetManager;
+        _textureSystem = textureSystem;
         GraphicsDataChanged = new ChangingObserver<IAjivaLayerRenderSystem>(this);
+        MainShader = Shader.CreateShaderFrom(assetManager, "3d/debug", deviceSystem, "main");
+        instanceMeshPool = new InstanceMeshPool<MeshInstanceData>(deviceSystem);
+        instanceMeshPool.Changed.OnChanged += RebuildData;
     }
 
-    public PipelineDescriptorInfos[] PipelineDescriptorInfos { get; set; }
+    public PipelineDescriptorInfos[]? PipelineDescriptorInfos { get; set; }
 
     public Shader MainShader { get; set; }
 
@@ -68,10 +74,8 @@ public class DebugLayer : ComponentSystemBase<DebugComponent>, IInit, IUpdate, I
     /// <inheritdoc />
     public void UpdateGraphicsPipelineLayer()
     {
-        var bind = new[]
-        {
-            Vertex3D.GetBindingDescription(VERTEX_BUFFER_BIND_ID),
-            new VertexInputBindingDescription(INSTANCE_BUFFER_BIND_ID, (uint)Marshal.SizeOf<MeshInstanceData>(), VertexInputRate.Instance)
+        var bind = new[] {
+            Vertex3D.GetBindingDescription(VERTEX_BUFFER_BIND_ID), new VertexInputBindingDescription(INSTANCE_BUFFER_BIND_ID, (uint)Marshal.SizeOf<MeshInstanceData>(), VertexInputRate.Instance)
         };
 
         var attrib = new ViAdBuilder<MeshInstanceData>(Vertex3D.GetAttributeDescriptions(VERTEX_BUFFER_BIND_ID), INSTANCE_BUFFER_BIND_ID)
@@ -81,41 +85,37 @@ public class DebugLayer : ComponentSystemBase<DebugComponent>, IInit, IUpdate, I
             .Add(nameof(MeshInstanceData.TextureIndex), Format.R32SInt)
             .Add(nameof(MeshInstanceData.Padding), Format.R32G32SFloat)
             .ToArray();
+        if (PipelineDescriptorInfos is null)
+            CreatePipelineDescriptorInfos();
 
         RenderTarget.GraphicsPipelineLayer = CreateDebugPipe.Default(RenderTarget.PassLayer.Parent, RenderTarget.PassLayer,
-            Ecs.Get<DeviceSystem>(), true,
+            _deviceSystem, true,
             bind, attrib, MainShader, PipelineDescriptorInfos);
+    }
+
+    private void CreatePipelineDescriptorInfos()
+    {
+        var textureSamplerImageViews = _textureSystem.TextureSamplerImageViews;
+        PipelineDescriptorInfos = new[] {
+            new PipelineDescriptorInfos(DescriptorType.UniformBuffer, ShaderStageFlags.Vertex, 0, 1, BufferInfo: new[] {
+                new DescriptorBufferInfo {
+                    Buffer = AjivaLayer.LayerUniform.Uniform.Buffer!,
+                    Offset = 0,
+                    Range = (uint)AjivaLayer.LayerUniform.SizeOfT
+                }
+            }),
+            new(DescriptorType.CombinedImageSampler, ShaderStageFlags.Fragment, 2, (uint)textureSamplerImageViews.Length, ImageInfo: textureSamplerImageViews)
+        };
     }
 
     /// <inheritdoc />
     public RenderTarget RenderTarget { get; set; }
-    
 
     private const uint VERTEX_BUFFER_BIND_ID = 0;
     private const uint INSTANCE_BUFFER_BIND_ID = 1;
 
     /// <inheritdoc />
     public IAjivaLayer<UniformViewProj3d> AjivaLayer { get; set; }
-
-    /// <inheritdoc />
-    public void Init()
-    {
-        var deviceSystem = Ecs.Get<DeviceSystem>();
-
-        MainShader = Shader.CreateShaderFrom(Ecs.Get<AssetManager>(), "3d/debug", deviceSystem, "main");
-        instanceMeshPool = new InstanceMeshPool<MeshInstanceData>(deviceSystem);
-        instanceMeshPool.Changed.OnChanged += RebuildData;
-
-        var textureSamplerImageViews = Ecs.Get<ITextureSystem>().TextureSamplerImageViews;
-        PipelineDescriptorInfos = new[]
-        {
-            new PipelineDescriptorInfos(DescriptorType.UniformBuffer, ShaderStageFlags.Vertex, 0, 1, BufferInfo: new[]
-            {
-                new DescriptorBufferInfo { Buffer = AjivaLayer.LayerUniform.Uniform.Buffer!, Offset = 0, Range = (uint)AjivaLayer.LayerUniform.SizeOfT }
-            }),
-            new(DescriptorType.CombinedImageSampler, ShaderStageFlags.Fragment, 2, (uint)textureSamplerImageViews.Length, ImageInfo: textureSamplerImageViews)
-        };
-    }
 
     private void RebuildData(IInstanceMeshPool<MeshInstanceData> sender)
     {
@@ -161,6 +161,17 @@ public class DebugLayer : ComponentSystemBase<DebugComponent>, IInit, IUpdate, I
         DeleteInstance(res);
         Interlocked.Increment(ref dataVersion);
         return res;
+    }
+
+    public override DebugComponent CreateComponent(IEntity entity)
+    {
+        if (!entity.TryGetComponent<Transform3d>(out var transform))
+            transform = new Transform3d();
+
+        return new DebugComponent(entity.TryGetComponent<RenderInstanceMesh>(out var meshInstance)
+                ? meshInstance.Mesh
+                : MeshPrefab.Cube,
+            transform);
     }
 
     private void CreateInstance(DebugComponent res)

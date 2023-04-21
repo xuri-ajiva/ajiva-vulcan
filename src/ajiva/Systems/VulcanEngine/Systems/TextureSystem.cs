@@ -1,35 +1,34 @@
-﻿using System.Runtime.InteropServices.ComTypes;
+﻿using System.Drawing;
+using System.Runtime.InteropServices.ComTypes;
 using ajiva.Application;
 using ajiva.Components.Media;
-using ajiva.Ecs;
-using ajiva.Systems.Assets;
 using ajiva.Systems.VulcanEngine.Interfaces;
 using SharpVk;
 
 namespace ajiva.Systems.VulcanEngine.Systems;
 
-[Dependent(typeof(ImageSystem), typeof(AssetManager))]
-public class TextureSystem : ComponentSystemBase<TextureComponent>, IInit, ITextureSystem
+public class TextureSystem : ComponentSystemBase<TextureComponent>, ITextureSystem
 {
-    private readonly ShaderConfig config;
+    private readonly TextureCreator _creator;
+    private readonly ShaderConfig _config;
 
-    public TextureSystem(IAjivaEcs ecs) : base(ecs)
+    public TextureSystem(TextureCreator creator, Config globalConfig)
     {
-        config = ecs.Get<Config>().ShaderConfig;
-        INextId<ATexture>.MaxId = (uint)config.TEXTURE_SAMPLER_COUNT;
-        TextureSamplerImageViews = new DescriptorImageInfo[config.TEXTURE_SAMPLER_COUNT];
+        _creator = creator;
+        _config = globalConfig.ShaderConfig;
+        INextId<ATexture>.MaxId = (uint)_config.TEXTURE_SAMPLER_COUNT;
+        TextureSamplerImageViews = new DescriptorImageInfo[_config.TEXTURE_SAMPLER_COUNT];
         Textures = new List<ATexture>();
+
+        Default = _creator.FromFile("Logos:logo.png");
+        Textures.Add(Default);
+        for (var i = 0; i < _config.TEXTURE_SAMPLER_COUNT; i++) 
+            TextureSamplerImageViews[i] = Default.DescriptorImageInfo;
     }
 
     public ATexture? Default { get; private set; }
     private List<ATexture> Textures { get; }
     public DescriptorImageInfo[] TextureSamplerImageViews { get; }
-
-    /// <inheritdoc />
-    public void Init()
-    {
-        EnsureDefaultImagesExists(Ecs);
-    }
 
     public void AddAndMapTextureToDescriptor(ATexture texture)
     {
@@ -39,32 +38,30 @@ public class TextureSystem : ComponentSystemBase<TextureComponent>, IInit, IText
 
     public void MapTextureToDescriptor(ATexture texture)
     {
-        if (config.TEXTURE_SAMPLER_COUNT <= texture.TextureId) throw new ArgumentException($"{nameof(texture.TextureId)} is more then {nameof(config.TEXTURE_SAMPLER_COUNT)}", nameof(IBindCtx));
+        if (_config.TEXTURE_SAMPLER_COUNT <= texture.TextureId)
+            throw new ArgumentException($"{nameof(texture.TextureId)} is more then {nameof(_config.TEXTURE_SAMPLER_COUNT)}", nameof(IBindCtx));
 
         TextureSamplerImageViews[texture.TextureId] = texture.DescriptorImageInfo;
+    }
+
+    public override TextureComponent CreateComponent(IEntity entity)
+    {
+        return new TextureComponent();
     }
 
     /// <inheritdoc />
     protected override void ReleaseUnmanagedResources(bool disposing)
     {
-        for (var i = 0; i < config.TEXTURE_SAMPLER_COUNT; i++) TextureSamplerImageViews[i] = default;
+        for (var i = 0; i < _config.TEXTURE_SAMPLER_COUNT; i++) TextureSamplerImageViews[i] = default;
         foreach (var texture in Textures) texture.Dispose();
     }
 
-    public void EnsureDefaultImagesExists(IAjivaEcs ecs)
+    public ATexture CreateTextureAndMapToDescriptor(Bitmap bitmap)
     {
-        if (Default != null) return;
-
-        Default = ATexture.FromFile(ecs, "Logos:logo.png");
-        Textures.Add(Default);
-
-        for (var i = 0; i < config.TEXTURE_SAMPLER_COUNT; i++) TextureSamplerImageViews[i] = Default.DescriptorImageInfo;
-
-        /* todo move int hot load
-         AddAndMapTextureToDescriptor(new(1)
-        {
-            Image = CreateTextureImageFromFile("logo2.png"),
-            Sampler = CreateTextureSampler()
-        });*/
+        var texture = _creator.FromBitmap(bitmap);
+        AddAndMapTextureToDescriptor(texture);
+        return texture;
     }
+
+    public Sampler CreateTextureSampler() => _creator.CreateTextureSampler();
 }

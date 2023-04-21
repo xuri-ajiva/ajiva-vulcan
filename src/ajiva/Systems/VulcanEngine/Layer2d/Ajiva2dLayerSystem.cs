@@ -1,5 +1,4 @@
-﻿using ajiva.Ecs;
-using ajiva.Models.Buffer.ChangeAware;
+﻿using ajiva.Models.Buffer.ChangeAware;
 using ajiva.Models.Layers.Layer2d;
 using ajiva.Systems.VulcanEngine.Interfaces;
 using ajiva.Systems.VulcanEngine.Layer;
@@ -11,15 +10,48 @@ using SharpVk;
 
 namespace ajiva.Systems.VulcanEngine.Layer2d;
 
-[Dependent(typeof(WindowSystem), typeof(GraphicsSystem))]
-public class Ajiva2dLayerSystem : SystemBase, IInit, IAjivaLayer<UniformLayer2d>
+public class Ajiva2dLayerSystem : SystemBase, IAjivaLayer<UniformLayer2d>
 {
-    private WindowSystem window;
+    private readonly WindowSystem _windowSystem;
+    private readonly IImageSystem _imageSystem;
+    private readonly IDeviceSystem _deviceSystem;
 
     /// <inheritdoc />
-    public Ajiva2dLayerSystem(IAjivaEcs ecs) : base(ecs)
+    public Ajiva2dLayerSystem(IDeviceSystem deviceSystem, WindowSystem windowSystem, IImageSystem imageSystem)
     {
+        _windowSystem = windowSystem;
+        _imageSystem = imageSystem;
+        _deviceSystem = deviceSystem;
         LayerChanged = new ChangingObserver<IAjivaLayer>(this);
+
+        var canvas = _windowSystem.Canvas;
+
+        /*MainShader = Shader.CreateShaderFrom("./Shaders/2d", deviceSystem, "main");
+        PipelineDescriptorInfos = ajiva.Systems.VulcanEngine.Unions.PipelineDescriptorInfos.CreateFrom(
+            LayerUniform.Uniform.Buffer!, (uint)LayerUniform.SizeOfT,
+            Models.Uniform.Buffer!, (uint)Models.SizeOfT,
+            Ecs.GetComponentSystem<TextureSystem, ATexture>().TextureSamplerImageViews
+        );*/
+
+        LayerUniform = new AChangeAwareBackupBufferOfT<UniformLayer2d>(1, deviceSystem);
+        const int fac = 50;
+        /*LayerUniform.SetAndCommit(0, new UniformLayer2d
+            { View = mat4.Translate(-1, -1, 0) * mat4.Scale(2) });*/
+        LayerUniform[0] = new UniformLayer2d
+            //{ MousePos = new vec2(.5f, .5f), View = mat4.Ortho(-1.0f, 1.0f, -1.0f, 1.0f, -1.0f, 1.0f)});           
+            {
+                Vec2 = new vec2(1337, 421337), MousePos = new vec2(.5f, .5f)
+            };
+        BuildLayerUniform(canvas);
+
+        _windowSystem.OnResize += delegate
+        {
+            BuildLayerUniform(_windowSystem.Canvas);
+        };
+        _windowSystem.OnMouseMove += delegate(object? sender, AjivaMouseMotionCallbackEventArgs args)
+        {
+            if (args.ActiveLayer == AjivaEngineLayer.Layer2d) MouseMoved(args.Pos);
+        };
     }
 
     private object MainLock { get; } = new object();
@@ -42,18 +74,15 @@ public class Ajiva2dLayerSystem : SystemBase, IInit, IAjivaLayer<UniformLayer2d>
     /// <inheritdoc />
     public RenderTarget CreateRenderPassLayer(SwapChainLayer swapChainLayer, PositionAndMax layerIndex, PositionAndMax layerRenderComponentSystemsIndex)
     {
-        var deviceSystem = Ecs.Get<DeviceSystem>();
-        var imageSystem = Ecs.Get<IImageSystem>();
-
-        var frameBufferFormat = deviceSystem.PhysicalDevice.FindSupportedFormat(
+        var frameBufferFormat = _deviceSystem.PhysicalDevice.FindSupportedFormat(
             new[] { Format.R16G16B16A16UNorm, Format.R16G16B16UNorm, Format.R8G8B8UNorm, },
             ImageTiling.Optimal,
-            FormatFeatureFlags.ColorAttachment | FormatFeatureFlags.SampledImage);
-        var frameBufferImage = imageSystem.CreateImageAndView(Extent.Width, Extent.Height,
+            FormatFeatureFlags.ColorAttachment | FormatFeatureFlags.SampledImage | FormatFeatureFlags.SampledImageFilterLinear);
+        var frameBufferImage = _imageSystem.CreateImageAndView(Extent.Width, Extent.Height,
             frameBufferFormat, ImageTiling.Optimal, ImageUsageFlags.ColorAttachment | ImageUsageFlags.Sampled,
             MemoryPropertyFlags.DeviceLocal, ImageAspectFlags.Color);
 
-        var renderPass = deviceSystem.Device!.CreateRenderPass(new[]
+        var renderPass = _deviceSystem.Device!.CreateRenderPass(new[]
             {
                 new AttachmentDescription(AttachmentDescriptionFlags.None,
                     frameBufferFormat,
@@ -92,7 +121,7 @@ public class Ajiva2dLayerSystem : SystemBase, IInit, IAjivaLayer<UniformLayer2d>
                 }
             });
         
-        var frameBuffer = deviceSystem.Device.CreateFramebuffer(renderPass, new[] { frameBufferImage.View }, Extent.Width, Extent.Height, 1);
+        var frameBuffer = _deviceSystem.Device.CreateFramebuffer(renderPass, new[] { frameBufferImage.View }, Extent.Width, Extent.Height, 1);
         
         var renderPassLayer = new RenderPassLayer(swapChainLayer, renderPass);
         swapChainLayer.AddChild(renderPassLayer);
@@ -101,43 +130,6 @@ public class Ajiva2dLayerSystem : SystemBase, IInit, IAjivaLayer<UniformLayer2d>
             ViewPortInfo = new FrameViewPortInfo(frameBuffer, frameBufferImage, Extent, 0..1),
             PassLayer = renderPassLayer,
             ClearValues = new ClearValue[] { new ClearColorValue(.1f, .1f, .1f, .1f) }
-        };
-    }
-
-    /// <inheritdoc />
-    public void Init()
-    {
-        window = Ecs.Get<WindowSystem>();
-
-        var canvas = window.Canvas;
-
-        var deviceSystem = Ecs.Get<DeviceSystem>();
-
-        /*MainShader = Shader.CreateShaderFrom("./Shaders/2d", deviceSystem, "main");
-        PipelineDescriptorInfos = ajiva.Systems.VulcanEngine.Unions.PipelineDescriptorInfos.CreateFrom(
-            LayerUniform.Uniform.Buffer!, (uint)LayerUniform.SizeOfT,
-            Models.Uniform.Buffer!, (uint)Models.SizeOfT,
-            Ecs.GetComponentSystem<TextureSystem, ATexture>().TextureSamplerImageViews
-        );*/
-
-        LayerUniform = new AChangeAwareBackupBufferOfT<UniformLayer2d>(1, deviceSystem);
-        const int fac = 50;
-        /*LayerUniform.SetAndCommit(0, new UniformLayer2d
-            { View = mat4.Translate(-1, -1, 0) * mat4.Scale(2) });*/
-        LayerUniform[0] = new UniformLayer2d
-            //{ MousePos = new vec2(.5f, .5f), View = mat4.Ortho(-1.0f, 1.0f, -1.0f, 1.0f, -1.0f, 1.0f)});           
-            {
-                Vec2 = new vec2(1337, 421337), MousePos = new vec2(.5f, .5f)
-            };
-        BuildLayerUniform(window.Canvas);
-
-        window.OnResize += delegate
-        {
-            BuildLayerUniform(window.Canvas);
-        };
-        window.OnMouseMove += delegate(object? sender, AjivaMouseMotionCallbackEventArgs args)
-        {
-            if (args.ActiveLayer == AjivaEngineLayer.Layer2d) MouseMoved(args.Pos);
         };
     }
 
@@ -157,7 +149,7 @@ public class Ajiva2dLayerSystem : SystemBase, IInit, IAjivaLayer<UniformLayer2d>
 
     private void MouseMoved(vec2 pos)
     {
-        var posNew = new vec2(pos.x / window.Canvas.WidthF, pos.y / window.Canvas.HeightF);
+        var posNew = new vec2(pos.x / _windowSystem.Canvas.WidthF, pos.y / _windowSystem.Canvas.HeightF);
 
         lock (MainLock)
         {

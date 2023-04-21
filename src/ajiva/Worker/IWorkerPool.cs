@@ -1,8 +1,6 @@
-﻿using ajiva.Ecs;
+﻿namespace ajiva.Worker;
 
-namespace ajiva.Worker;
-
-public interface IWorkerPool : IAjivaEcsObject
+public interface IWorkerPool
 {
     Semaphore SyncSemaphore { get; }
     string Name { get; set; }

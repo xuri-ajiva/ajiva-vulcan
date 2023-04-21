@@ -10,21 +10,35 @@ namespace ajiva.Systems.VulcanEngine;
 
 public static class Statics
 {
-    private static HashSet<string> Ignore = new HashSet<string>()
-    {
+    private static HashSet<string> Ignore = new HashSet<string>() {
         "UNASSIGNED-CoreValidation-DrawState-InvalidImageLayout",
-        "VUID-VkPresentInfoKHR-pImageIndices-01296"
+        "VUID-VkPresentInfoKHR-pImageIndices-01296",
+        "VUID-VkGraphicsPipelineCreateInfo-layout-00756",
+        "UNASSIGNED-Threading-MultipleThreads"
     };
     private static readonly DebugReportCallbackDelegate DebugReportDelegate = (flags, objectType, o, location, messageCode, layerPrefix, message, userData) =>
     {
-        var p0 = message.IndexOf('[') + 2;
-        var p1 = message.IndexOf(']') - 1;
-        var ident = message.Substring(p0, p1 - p0);
-        if (Ignore.Contains(ident)) return false;
+        if (message.Contains('['))
+        {
+            var p0 = message.IndexOf('[') + 2;
+            var p1 = message.IndexOf(']') - 1;
+            var ident = message.Substring(p0, p1 - p0);
+            if (Ignore.Contains(ident)) return false;
+        }
         var stackframe = new StackFrame(2, true);
-        ALog.Error($"[{flags}] ({objectType}) {layerPrefix} #{ident}");
-        ALog.Error(message);
-        ALog.Error($"File: {stackframe.GetFileName()}:{stackframe.GetFileLineNumber()} " + BuildStackTraceError(3, 6));
+        var lvl = (flags & DebugReportFlags.Error) != 0
+            ? ALogLevel.Error
+            : (flags & DebugReportFlags.Warning) != 0
+                ? ALogLevel.Warning
+                : (flags & DebugReportFlags.PerformanceWarning) != 0
+                    ? ALogLevel.Warning
+                    : (flags & DebugReportFlags.Debug) != 0
+                        ? ALogLevel.Debug
+                        : ALogLevel.Info;
+        
+        ALog.Log(lvl, $"[{flags}] ({objectType}) {layerPrefix} #{message}");
+        ALog.Log(lvl, message);
+        ALog.Log(lvl, $"File: {stackframe.GetFileName()}:{stackframe.GetFileLineNumber()} " + BuildStackTraceError(3, 6));
 
         string BuildStackTraceError(int begin, int count)
         {
@@ -42,8 +56,7 @@ public static class Statics
 
     public static ImageView CreateImageView(this Image image, Device device, Format format, ImageAspectFlags aspectFlags)
     {
-        return device.CreateImageView(image, ImageViewType.ImageView2d, format, ComponentMapping.Identity, new ImageSubresourceRange
-        {
+        return device.CreateImageView(image, ImageViewType.ImageView2d, format, ComponentMapping.Identity, new ImageSubresourceRange {
             AspectMask = aspectFlags,
             BaseMipLevel = 0,
             LevelCount = 1,
@@ -54,8 +67,7 @@ public static class Statics
 
     public static ImageView CreateImageViewArray(this Image image, Device device, Format format, ImageAspectFlags aspectFlags, uint length)
     {
-        return device.CreateImageView(image, ImageViewType.ImageView2dArray, format, ComponentMapping.Identity, new ImageSubresourceRange
-        {
+        return device.CreateImageView(image, ImageViewType.ImageView2dArray, format, ComponentMapping.Identity, new ImageSubresourceRange {
             AspectMask = aspectFlags,
             BaseMipLevel = 0,
             LevelCount = 1,
@@ -66,8 +78,7 @@ public static class Statics
 
     public static Format FindDepthFormat(this PhysicalDevice physicalDevice)
     {
-        return physicalDevice.FindSupportedFormat(new[]
-            {
+        return physicalDevice.FindSupportedFormat(new[] {
                 Format.D32SFloat, Format.D32SFloatS8UInt, Format.D24UNormS8UInt
             },
             ImageTiling.Optimal,
@@ -136,8 +147,7 @@ public static class Statics
         var instance = Instance.Create(
             enabledLayers.ToArray(),
             enabledExtensionNames.Append(ExtExtensions.DebugReport).ToArray(),
-            applicationInfo: new ApplicationInfo
-            {
+            applicationInfo: new ApplicationInfo {
                 ApplicationName = "ajiva",
                 ApplicationVersion = new Version(0, 0, 1),
                 EngineName = "ajiva-engine",
@@ -162,8 +172,7 @@ public static class Statics
 
     public static IndexType GetIndexType(uint indexBufferSizeOfT)
     {
-        return indexBufferSizeOfT switch
-        {
+        return indexBufferSizeOfT switch {
             sizeof(uint) => IndexType.Uint32,
             sizeof(ushort) => IndexType.Uint16,
             sizeof(byte) => IndexType.Uint8,

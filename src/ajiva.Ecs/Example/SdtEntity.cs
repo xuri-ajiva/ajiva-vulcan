@@ -1,12 +1,14 @@
 ﻿using System;
+using ajiva.Ecs.Entity.Helper;
 
 namespace ajiva.Ecs.Example;
 
-public class SdtEntity : AEntity, IUpdate
+[EntityComponent(typeof(StdComponent))]
+public partial class SdtEntity : DisposingLogger, IUpdate
 {
-    public SdtEntity() 
+    protected void InitializeDefault()
     {
-        this.AddComponent(new StdComponent());
+        StdComponent ??= new StdComponent();
     }
 
     /// <inheritdoc />
