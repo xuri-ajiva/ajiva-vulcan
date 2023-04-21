@@ -1,4 +1,5 @@
 ﻿// See https://aka.ms/new-console-template for more information
+using System.Diagnostics;
 using Ajiva;
 using Ajiva.Application;
 using Ajiva.Extensions;
@@ -6,9 +7,10 @@ using Ajiva.Systems.Assets;
 using Ajiva.Systems.Assets.Contracts;
 using Autofac;
 using Autofac.Builder;
-using Autofac.Configuration;
 using Autofac.Core;
 using Microsoft.Extensions.Configuration;
+using Serilog.Core;
+using Serilog.Events;
 using Serilog.Extensions.Autofac.DependencyInjection;
 
 Console.WriteLine("Starting Ajiva Engine at " + DateTime.Now);
@@ -27,6 +29,7 @@ builder.RegisterInstance(configuration);
 builder.RegisterInstance(config);
 
 var loggerConfiguration = new LoggerConfiguration()
+    .Enrich.With<CallerEnricher>()
     .ReadFrom.Configuration(configuration);
 builder.RegisterSerilog(loggerConfiguration);
 builder.RegisterInstance(Log.Logger);
@@ -95,4 +98,33 @@ public class MySource : IRegistrationSource
 
     /// <inheritdoc />
     public bool IsAdapterForIndividualComponents { get; set; }
+}
+
+class CallerEnricher : ILogEventEnricher
+{
+    public void Enrich(LogEvent logEvent, ILogEventPropertyFactory propertyFactory)
+    {
+        var skip = 3;
+        while (true)
+        {
+            var stack = new StackFrame(skip, true);
+            if (!stack.HasMethod())
+            {
+                logEvent.AddPropertyIfAbsent(new LogEventProperty("Caller", new ScalarValue("<unknown method>")));
+                return;
+            }
+
+            var method = stack.GetMethod();
+            if (method.DeclaringType.Assembly != typeof(Log).Assembly)
+            {
+                var methodName = $"{method.DeclaringType.Name}.{method.Name}";
+                var fileName = Path.GetFileName(stack.GetFileName());
+                var caller = $"{methodName} ({fileName}:{stack.GetFileLineNumber()})";
+                logEvent.AddPropertyIfAbsent(new LogEventProperty("Caller", new ScalarValue(caller)));
+                return;
+            }
+
+            skip++;
+        }
+    }
 }
