@@ -6,12 +6,12 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\Ajiva.Generator\Ajiva.Generator.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false"/>
-        <ProjectReference Include="..\Ajiva.Utils\Ajiva.Utils.csproj"/>
+        <ProjectReference Include="..\Ajiva.Generator\Ajiva.Generator.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
+        <ProjectReference Include="..\Ajiva.Utils\Ajiva.Utils.csproj" />
     </ItemGroup>
 
     <ItemGroup>
-        <PackageReference Include="Autofac" Version="6.5.0"/>
+        <PackageReference Include="Autofac" Version="7.0.1" />
     </ItemGroup>
 
     <PropertyGroup>
