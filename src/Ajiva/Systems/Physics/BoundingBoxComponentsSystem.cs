@@ -7,18 +7,20 @@ namespace Ajiva.Systems.Physics;
 
 public class BoundingBoxComponentsSystem : ComponentSystemBase<BoundingBox>, IUpdate
 {
-    private readonly StaticOctalTreeContainer<BoundingBox> _octalTree;
+    private readonly Lazy<StaticOctalTreeContainer<BoundingBox>> _octalTree;
     private readonly PhysicsSystem _physicsSystem;
     private readonly IWorkerPool _workerPool;
     private bool phisicsUpdated;
+    private readonly Lazy<IDebugVisualPool> _debug;
 
     /// <inheritdoc />
-    public BoundingBoxComponentsSystem(PhysicsSystem physicsSystem, IWorkerPool workerPool)
+    public BoundingBoxComponentsSystem(PhysicsSystem physicsSystem, IWorkerPool workerPool, IContainerAccessor accessor)
     {
         _physicsSystem = physicsSystem;
         _workerPool = workerPool;
         var pos = new Vector3(float.MinValue / MathF.PI);
-        _octalTree = new StaticOctalTreeContainer<BoundingBox>(new StaticOctalSpace(pos, pos * -MathF.E), 255);
+        _debug = new Lazy<IDebugVisualPool>(() => new DebugVisualPool(accessor.Container.Resolve<EntityFactory>()));
+        _octalTree = new Lazy<StaticOctalTreeContainer<BoundingBox>>(() => new StaticOctalTreeContainer<BoundingBox>(new StaticOctalSpace(pos, pos * -MathF.E), 255, _debug.Value /*new DebugVisualPoolNone()*/));
     }
 
     /// <inheritdoc />
@@ -34,8 +36,8 @@ public class BoundingBoxComponentsSystem : ComponentSystemBase<BoundingBox>, IUp
     public void DoPhysicFrame()
     {
         //ALog.Debug("Begin DoPhysicFrame");
-        foreach (var dynamicItem in _octalTree.Items)
-        foreach (var octalItem in _octalTree.Search(dynamicItem.Space))
+        foreach (var dynamicItem in _octalTree.Value.Items)
+        foreach (var octalItem in _octalTree.Value.Search(dynamicItem.Space))
             if (ComponentEntityMap.TryGetValue(dynamicItem.Item, out var b1))
                 if (ComponentEntityMap.TryGetValue(octalItem.Item, out var b2))
                     if (b1 != b2)
@@ -84,7 +86,7 @@ public class BoundingBoxComponentsSystem : ComponentSystemBase<BoundingBox>, IUp
     /// <inheritdoc />
     public override BoundingBox RegisterComponent(IEntity entity, BoundingBox component)
     {
-        component.SetTree(_octalTree);
+        component.SetTree(_octalTree.Value);
         component.ComputeBoxBackground();
         return base.RegisterComponent(entity, component);
     }
