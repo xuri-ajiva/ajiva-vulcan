@@ -16,10 +16,14 @@ Thread.CurrentThread.Name = "Main";
 var builder = new ContainerBuilder();
 var configuration = new ConfigurationBuilder()
     .SetBasePath(Directory.GetCurrentDirectory())
-    .AddJsonFile("Appsettings.json", false, true)
+    .AddJsonFile("Appsettings.json", true, true)
     .AddJsonFile($"Appsettings.{Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? "Production"}.json", true, true)
     .Build();
-var config = configuration.GetSection("Ajiva").Get<AjivaConfig>();
+
+var config = new ConfigurationBuilder()
+    .SetBasePath(Directory.GetCurrentDirectory())
+    .AddJsonFile(AjivaConfig.FileName, false)
+    .Build().Get<AjivaConfig>();
 
 //builder.RegisterModule(new ConfigurationModule(configuration));
 builder.RegisterInstance(configuration);
@@ -27,7 +31,9 @@ builder.RegisterInstance(config);
 
 var loggerConfiguration = new LoggerConfiguration()
     .Enrich.With<CallerEnricher>()
-    .ReadFrom.Configuration(configuration);
+    .ReadFrom.Configuration(new ConfigurationBuilder()
+        .SetBasePath(Directory.GetCurrentDirectory())
+        .AddJsonFile("Serilog.json").Build());
 builder.RegisterSerilog(loggerConfiguration);
 builder.RegisterInstance(Log.Logger);
 

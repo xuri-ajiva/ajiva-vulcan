@@ -4,6 +4,7 @@ namespace Ajiva.Utils;
 
 public class AjivaConfig
 {
+    public const string FileName = "Ajiva.json";
     public WindowConfig WindowConfig { get; set; } = new WindowConfig();
     public ShaderConfig ShaderConfig { get; set; } = new ShaderConfig();
     public CameraConfig CameraConfig { get; set; } = new CameraConfig();

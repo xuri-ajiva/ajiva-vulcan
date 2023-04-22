@@ -1,34 +1,4 @@
 ﻿{
-  "Ajiva": {
-    "AssetPath": "Assets/default.asset",
-    "CameraConfig": {
-      "Position": {
-        "X": 0,
-        "Y": 0,
-        "Z": -100
-      },
-      "Rotation": {
-        "X": 0,
-        "Y": 0,
-        "Z": 0
-      },
-      "Zoom": 1,
-      "Near": 0.1,
-      "Far": 1000,
-      "Fov": 100,
-      "Speed": 0.1,
-      "Aspect": 1.333333333
-    },
-    "ShaderConfig": {
-      "TEXTURE_SAMPLER_COUNT": 128
-    },
-    "WindowConfig": {
-      "Width": 1600,
-      "Height": 1200,
-      "PosX": 200,
-      "PosY": 100
-    }
-  },
   "Serilog": {
     "Using": [
       "Serilog.Sinks.Console",

@@ -1,0 +1,31 @@
+{
+  "WindowConfig": {
+    "Width": 1600,
+    "Height": 1200,
+    "PosX": 200,
+    "PosY": 100
+  },
+  "ShaderConfig": {
+    "TEXTURE_SAMPLER_COUNT": 128
+  },
+  "CameraConfig": {
+    "Position": {
+      "X": -25.601406,
+      "Y": 19.519276,
+      "Z": -222.3893
+    },
+    "Rotation": {
+      "X": -9.900001,
+      "Y": -10.799999,
+      "Z": 0
+    },
+    "Zoom": 1,
+    "Near": 0.1,
+    "Far": 1000,
+    "Fov": 100,
+    "Speed": 0.1,
+    "Sensitivity": 0.1,
+    "AspectRatio": 1.3333334
+  },
+  "AssetPath": "Assets/default.asset"
+}
