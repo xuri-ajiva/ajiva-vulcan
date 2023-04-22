@@ -65,7 +65,7 @@ public partial class Camera
     }
 }*/
 [EntityComponent(typeof(Transform3d))]
-public sealed partial class FpsCamera : IUpdate
+public sealed partial class FpsCamera : IUpdate, IDisposable
 {
     private const float MouseSensitivity = 0.3F;
     private Vector3 lockAt;
@@ -225,4 +225,10 @@ public sealed partial class FpsCamera : IUpdate
     }
 
 #endregion
+
+    public void Dispose()
+    {
+        Config.Position = Transform3d.Position;
+        Config.Rotation = Transform3d.Rotation;
+    }
 }

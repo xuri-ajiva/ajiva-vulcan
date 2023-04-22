@@ -34,4 +34,12 @@ public class ContainerProxy : DisposingLogger, IEntityRegistry, IContainerAccess
 
     /// <inheritdoc />
     public long EntitiesCount => Entities.Count;
+
+    protected override void ReleaseUnmanagedResources(bool disposing)
+    {
+        foreach (var entity in Entities.Values.OfType<IDisposable>())
+        {
+            entity.Dispose();
+        }
+    }
 }

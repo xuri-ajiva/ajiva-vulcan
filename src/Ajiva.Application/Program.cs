@@ -1,4 +1,5 @@
 ﻿using System.Diagnostics;
+using System.Text.Json;
 using Ajiva.Application;
 using Ajiva.Assets;
 using Ajiva.Extensions;
@@ -50,20 +51,52 @@ if (args.Length > 0) AssetPacker.PackDefault(config, Const.Default.AssetsPath);
 builder.AddFactoryData();
 
 builder.AddEngine();
+try
+{
+    var container = builder.Build();
+    var proxy = container.CreateBaseLayer();
 
-var container = builder.Build();
-var proxy = container.CreateBaseLayer();
+    var app = new Application(container, proxy);
+    app.InitData();
 
-var app = new Application(container, proxy);
-app.InitData();
+    app.SetupUpdate();
+    var src = new CancellationTokenSource();
+    src.CancelAfter(TimeSpan.FromMinutes(10));
 
-app.SetupUpdate();
-var src = new CancellationTokenSource();
-src.CancelAfter(TimeSpan.FromMinutes(10));
-await app.Run(src.Token);
+    try
+    {
+        await app.Run(src.Token);
+        src.Cancel();
+    }
+    catch (Exception e)
+    {
+        logger.Error(e, "Error running application");
+    }
+    finally
+    {
+        app.Dispose();
+    }
 
-app.Dispose();
-await container.DisposeAsync();
+    try
+    {
+        await container.DisposeAsync();
+    }
+    catch (Exception e)
+    {
+        logger.Error(e, "Error disposing container");
+    }
+}
+catch (Exception e)
+{
+    logger.Error(e, "Error building container");
+}
+
+File.WriteAllText(AjivaConfig.FileName, JsonSerializer.Serialize(config, new JsonSerializerOptions {
+    WriteIndented = true
+}));
+logger.Information("Writing Config to {FileName}", AjivaConfig.FileName);
+Log.CloseAndFlush();
+
 Console.WriteLine("Press any key to exit...");
 Console.ReadKey();
 
