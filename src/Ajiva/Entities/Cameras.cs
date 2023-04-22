@@ -187,7 +187,7 @@ public sealed partial class FpsCamera : IUpdate
         Width = width;
         Height = height;
         //Projection = M(mat4.Perspective(fov / 2.0F, width / height, .1F, 1000.0F));
-        Projection = Matrix4x4.CreatePerspectiveFieldOfView((fov / 2.0F).Radians(), width / height, .1F, 1000.0F);
+        Projection = Matrix4x4.CreatePerspectiveFieldOfView((fov / 2.0F).Radians(), width / height, .1F, 10000.0F);
         View = Matrix4x4.Identity;
     }
 
