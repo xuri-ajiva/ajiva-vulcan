@@ -32,7 +32,12 @@ public class Transform3d : DisposingLogger, ITransform<Vector3, Matrix4x4>, IMod
     public Matrix4x4 RotationMat => Matrix4x4.CreateRotationX(Rotation.X.Radians()) * Matrix4x4.CreateRotationY(Rotation.Y.Radians()) * Matrix4x4.CreateRotationZ(Rotation.Z.Radians());
     public Matrix4x4 PositionMat => Matrix4x4.CreateTranslation(Position);
 
-    public Matrix4x4 ModelMat => PositionMat * RotationMat * ScaleMat;
+    // The ModelMat property returns a 4x4 transformation matrix that represents the complete
+    // transformation of an object in 3D space, combining the effects of scaling, rotation, and
+    // translation. It is calculated by multiplying the scaling, rotation, and translation matrices
+    // together in the order (ScaleMat * RotationMat) * PositionMat.
+    public Matrix4x4 ModelMat => (ScaleMat * RotationMat) * PositionMat;
+
 
     public override string ToString()
     {
