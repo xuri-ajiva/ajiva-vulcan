@@ -4,7 +4,7 @@ using Autofac;
 
 namespace Ajiva.Application;
 
-public class ContainerProxy : DisposingLogger, IEntityRegistry
+public class ContainerProxy : DisposingLogger, IEntityRegistry, IContainerAccessor
 {
     public ConcurrentDictionary<Guid, IEntity> Entities { get; } = new ConcurrentDictionary<Guid, IEntity>();
 

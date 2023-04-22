@@ -111,6 +111,7 @@ internal static class Ext
             .RegisterType<ContainerProxy>()
             .AsSelf()
             .As<IEntityRegistry>()
+            .As<IContainerAccessor>()
             .SingleInstance();
 
         containerBuilder.RegisterType<UpdateManager>()
