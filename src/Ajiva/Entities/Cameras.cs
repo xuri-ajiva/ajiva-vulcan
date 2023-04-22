@@ -123,7 +123,7 @@ public sealed partial class FpsCamera : IUpdate
     {
         if (!Moving()) return;
 
-        var moveSpeed = delta * MovementSpeed;
+        var moveSpeed = delta * Config.Speed;
 
         var camFront = CamFront;
 
@@ -162,13 +162,22 @@ public sealed partial class FpsCamera : IUpdate
 #region camera
 
     public readonly __Keys Keys = new __Keys();
-    public float Fov;
-    public float Height;
-    public float Width;
+    private CameraConfig _config = new CameraConfig();
     public Matrix4x4 Projection { get; protected set; }
-    public Matrix4x4 View { get; private protected set; }
+    public Matrix4x4 View { get; private protected set; } = Matrix4x4.Identity;
     public Matrix4x4 ProjView => Projection * View;
-    public float MovementSpeed { get; set; } = 1;
+    public CameraConfig Config
+    {
+        get => _config;
+        set
+        {
+            _config = value;
+            UpdatePerspective(_config.AspectRatio);
+            Transform3d.Position = _config.Position;
+            Transform3d.Rotation = _config.Rotation;
+            UpdateMatrices();
+        }
+    }
 
     public bool Moving()
     {
@@ -181,14 +190,20 @@ public sealed partial class FpsCamera : IUpdate
         View += Matrix4x4.CreateTranslation(v * -1.0F);
     }
 
-    public void UpdatePerspective(float fov, float width, float height)
+    public void UpdatePerspective(float aspectRatio)
     {
-        Fov = fov;
-        Width = width;
-        Height = height;
+        Config.AspectRatio = aspectRatio;
         //Projection = M(mat4.Perspective(fov / 2.0F, width / height, .1F, 1000.0F));
-        Projection = Matrix4x4.CreatePerspectiveFieldOfView((fov / 2.0F).Radians(), width / height, .1F, 10000.0F);
-        View = Matrix4x4.Identity;
+        Projection = Matrix4x4.CreatePerspectiveFieldOfView((Config.Fov / 2.0F).Radians(), Config.AspectRatio, Config.Near, Config.Far);
+        Log.Information("Aspect ratio: {0}", aspectRatio);
+    }
+
+    public void UpdateFov(float fov)
+    {
+        if (fov is > 0 and < 180)
+            Config.Fov = fov;
+        else
+            Log.Error("Invalid fov value: {0}", fov);
     }
 
     /*private Matrix4x4 M(mat4 x)

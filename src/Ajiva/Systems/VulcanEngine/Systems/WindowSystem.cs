@@ -46,7 +46,7 @@ public class WindowSystem : SystemBase, IUpdate, IWindowSystem
         windowThread.SetApartmentState(ApartmentState.STA);
         Canvas = new Canvas(new SurfaceHandle());
 
-        windowConfig = config.Window;
+        windowConfig = config.WindowConfig;
 
         OnResize += (_, size, newSize) => Log.Information("Resized from [w: {Width}, h: {Height}] to [w: {Width}, h: {Height}]", size.Width, size.Height, newSize.Width, newSize.Height);
 

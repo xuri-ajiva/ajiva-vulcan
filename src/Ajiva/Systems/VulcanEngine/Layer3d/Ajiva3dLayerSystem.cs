@@ -28,14 +28,20 @@ public class Ajiva3dLayerSystem : SystemBase, IUpdate, IAjivaLayer<UniformViewPr
     private AImage? depthImage;
 
     /// <inheritdoc />
-    public Ajiva3dLayerSystem(WindowSystem window, IImageSystem imageSystem, DeviceSystem deviceSystem, EntityFactory factory)
+    public Ajiva3dLayerSystem(WindowSystem window, IImageSystem imageSystem, DeviceSystem deviceSystem, EntityFactory factory, AjivaConfig config)
     {
         this.window = window;
         this.imageSystem = imageSystem;
         this.deviceSystem = deviceSystem;
         _factory = factory;
         LayerChanged = new ChangingObserver<IAjivaLayer>(this);
-        Init();
+        MainCamara = _factory.CreateFpsCamera().Finalize();
+        MainCamara.Config = config.CameraConfig;
+        MainCamara.UpdatePerspective((float)window.Canvas.Width / window.Canvas.Height);
+        this.window.OnResize += OnWindowResize;
+        this.window.OnKeyEvent += OnWindowKeyEvent;
+        this.window.OnMouseMove += OnWindowMouseMove;
+        LayerUniform = new AChangeAwareBackupBufferOfT<UniformViewProj3d>(1, this.deviceSystem);
     }
 
     public FpsCamera MainCamara { get; private set; }
@@ -159,33 +165,12 @@ public class Ajiva3dLayerSystem : SystemBase, IUpdate, IAjivaLayer<UniformViewPr
     {
         lock (MainLock)
         {
-            if (MainCamara is null) CreateMainCamara();
-
             UpdateCamaraProjView();
         }
     }
 
     /// <inheritdoc />
     public PeriodicUpdateInfo Info { get; } = new PeriodicUpdateInfo(TimeSpan.FromMilliseconds(10));
-
-    /// <inheritdoc />
-    public void Init()
-    {
-        window.OnResize += OnWindowResize;
-
-        window.OnKeyEvent += OnWindowKeyEvent;
-
-        window.OnMouseMove += OnWindowMouseMove;
-
-        LayerUniform = new AChangeAwareBackupBufferOfT<UniformViewProj3d>(1, deviceSystem);
-    }
-
-    private void CreateMainCamara()
-    {
-        MainCamara = _factory.CreateFpsCamera().Finalize();
-        MainCamara.UpdatePerspective(90, window.Canvas.Width, window.Canvas.Height);
-        MainCamara.MovementSpeed = .5f;
-    }
 
     private void UpdateCamaraProjView()
     {
@@ -248,7 +233,7 @@ public class Ajiva3dLayerSystem : SystemBase, IUpdate, IAjivaLayer<UniformViewPr
     {
         lock (MainLock)
         {
-            MainCamara?.UpdatePerspective(MainCamara.Fov, newSize.Width, newSize.Height);
+            MainCamara?.UpdatePerspective((float)newSize.Width / newSize.Height);
         }
     }
 
