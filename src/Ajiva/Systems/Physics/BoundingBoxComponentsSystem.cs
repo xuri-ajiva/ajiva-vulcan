@@ -1,7 +1,11 @@
 ﻿using System.Numerics;
 using Ajiva.Components.Physics;
 using Ajiva.Components.Transform.SpatialAcceleration;
+using Ajiva.Ecs;
+using Ajiva.Extensions;
+using Ajiva.Systems.VulcanEngine.Debug;
 using Ajiva.Worker;
+using Autofac;
 
 namespace Ajiva.Systems.Physics;
 
@@ -86,7 +90,7 @@ public class BoundingBoxComponentsSystem : ComponentSystemBase<BoundingBox>, IUp
     /// <inheritdoc />
     public override BoundingBox RegisterComponent(IEntity entity, BoundingBox component)
     {
-        component.SetTree(_octalTree.Value);
+        component.SetData(_octalTree.Value, _debug.Value);
         component.ComputeBoxBackground();
         return base.RegisterComponent(entity, component);
     }
@@ -94,7 +98,7 @@ public class BoundingBoxComponentsSystem : ComponentSystemBase<BoundingBox>, IUp
     /// <inheritdoc />
     public override BoundingBox UnRegisterComponent(IEntity entity, BoundingBox component)
     {
-        component.RemoveTree();
+        component.RemoveData();
         return base.UnRegisterComponent(entity, component);
     }
 

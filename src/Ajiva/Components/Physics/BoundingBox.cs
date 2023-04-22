@@ -6,6 +6,7 @@ using Ajiva.Components.Transform.SpatialAcceleration;
 using Ajiva.Entities;
 using Ajiva.Models.Buffer;
 using Ajiva.Models.Vertex;
+using Ajiva.Systems.VulcanEngine.Debug;
 using Ajiva.Worker;
 
 namespace Ajiva.Components.Physics;
@@ -13,17 +14,16 @@ namespace Ajiva.Components.Physics;
 public class BoundingBox : DisposingLogger, IBoundingBox
 {
     private readonly IEntity _entity;
-    private readonly IModelMatTransform _transform;
+    private readonly Transform3d _transform;
     private readonly IWorkerPool _workerPool;
 
     private readonly Lazy<Mesh<Vertex3D>> meshLazy;
     private StaticOctalItem<BoundingBox>? _octalItem;
 
     private StaticOctalTreeContainer<BoundingBox>? _octalTree;
+    private IDebugVisualPool? _debugVisualCreator;
 
     private uint _version;
-
-    private DebugBox? _visual;
 
     public BoundingBox(IEntity entity, IWorkerPool workerPool)
     {
@@ -47,15 +47,18 @@ public class BoundingBox : DisposingLogger, IBoundingBox
     }
 
     /// <inheritdoc />
-    public void SetTree(StaticOctalTreeContainer<BoundingBox> octalTree)
+    public void SetData(StaticOctalTreeContainer<BoundingBox> octalTree, IDebugVisualPool debugVisualPool)
     {
         _octalTree = octalTree;
+        _debugVisualCreator = debugVisualPool;
     }
 
     /// <inheritdoc />
-    public void RemoveTree()
+    public void RemoveData()
     {
         _octalTree = null;
+        _debugVisualCreator?.DestroyVisual(this);
+        _debugVisualCreator = null;
     }
 
     private void TransformChanged(Matrix4x4 value)
@@ -96,48 +99,17 @@ public class BoundingBox : DisposingLogger, IBoundingBox
 
         lock (this)
         {
+            var space = new StaticOctalSpace(new Vector3(x1, y1, z1), new Vector3(x2 - x1, y2 - y1, z2 - z1));
             if (_octalTree is not null)
             {
-                var space = new StaticOctalSpace(new Vector3(x1, y1, z1), new Vector3(x2 - x1, y2 - y1, z2 - z1));
-                if (_octalItem is not null)
-                    _octalItem = _octalTree.Relocate(_octalItem, space);
-                else
-                    _octalItem = _octalTree.Insert(this, space);
+                _octalItem = _octalItem is not null 
+                    ? _octalTree.Relocate(_octalItem, space) 
+                    : _octalTree.Insert(this, space);
             }
 
-            UpdateDynamicDataVisual();
-
+            _debugVisualCreator?.UpdateVisual(this, space);
             return WorkResult.Succeeded;
         }
-    }
-
-    private void UpdateDynamicDataVisual()
-    {
-        /* if (_visual is null)
-         {
-             _visual = new DebugBox();
-             _visual.Register(Ecs);
-         }
- 
-         var scale = Space.Size / 2.0f;
-         var position = Space.Position + scale;
- 
-         _visual.Configure<Transform3d>(trans =>
-         {
-             trans.RefPosition((ref vec3 vec) =>
-             {
-                 vec.x = position[0];
-                 vec.y = position[1];
-                 vec.z = position[2];
-             });
- 
-             trans.RefScale((ref vec3 vec) =>
-             {
-                 vec.x = scale.x;
-                 vec.y = scale.y;
-                 vec.z = scale.z;
-             });
-         }); */
     }
 
     /// <inheritdoc />

@@ -1,4 +1,5 @@
 ﻿using Ajiva.Components.Transform.SpatialAcceleration;
+using Ajiva.Systems.VulcanEngine.Debug;
 
 namespace Ajiva.Components.Physics;
 
@@ -6,6 +7,6 @@ public interface IBoundingBox : IComponent
 {
     StaticOctalSpace Space { get; }
     void ComputeBoxBackground();
-    void SetTree(StaticOctalTreeContainer<BoundingBox> octalTree);
-    void RemoveTree();
+    void SetData(StaticOctalTreeContainer<BoundingBox> octalTree, IDebugVisualPool debugVisualPool);
+    void RemoveData();
 }
