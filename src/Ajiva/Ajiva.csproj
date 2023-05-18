@@ -5,6 +5,7 @@
         <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
         <Nullable>enable</Nullable>
         <NoWarn>CA1416</NoWarn>
+        <PublishAot>true</PublishAot>
     </PropertyGroup>
     <ItemGroup>
         <PackageReference Include="System.Drawing.Common" Version="7.0.0" />

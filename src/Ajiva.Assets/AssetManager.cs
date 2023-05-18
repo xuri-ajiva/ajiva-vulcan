@@ -1,4 +1,5 @@
-﻿using Ajiva.Assets.Contracts;
+﻿using System.Text.Json;
+using Ajiva.Assets.Contracts;
 using Ajiva.Utils;
 using ProtoBuf;
 
@@ -12,10 +13,10 @@ public class AssetManager : SystemBase, IAssetManager
     public AssetManager(AjivaConfig config)
     {
         assetPath = config.AssetPath;
-        AssetPack = Serializer.Deserialize<AssetPack>(new ReadOnlyMemory<byte>(File.ReadAllBytes(assetPath)));
+        AssetPack = JsonSerializer.Deserialize<AssetPack>(File.ReadAllBytes(assetPath),AssetPackJsonSerializerContext.Default.AssetPack)!;
     }
 
-    public AssetPack AssetPack { get; set; }
+    public AssetPack? AssetPack { get; set; }
 
     public byte[] GetAsset(AssetType assetType, string name)
     {

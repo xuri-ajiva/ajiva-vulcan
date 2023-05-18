@@ -1,5 +1,6 @@
 ﻿using System.Security.Cryptography;
 using System.Text;
+using System.Text.Json;
 using Ajiva.Assets.Contracts;
 using Ajiva.Utils;
 using CliWrap;
@@ -32,7 +33,7 @@ public class AssetPacker
         try
         {
             using var ms = new MemoryStream();
-            Serializer.Serialize(ms, assetPack);
+            JsonSerializer.Serialize(ms, assetPack,AssetPackJsonSerializerContext.Default.AssetPack);
             var serializedAsset = ms.ToArray();
 
             var assetHash = SHA1.HashData(serializedAsset);

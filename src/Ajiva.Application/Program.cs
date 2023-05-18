@@ -21,10 +21,11 @@ var configuration = new ConfigurationBuilder()
     .AddJsonFile($"Appsettings.{Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? "Production"}.json", true, true)
     .Build();
 
-var config = new ConfigurationBuilder()
+var config = JsonSerializer.Deserialize<AjivaConfig>(File.ReadAllText(AjivaConfig.FileName), AjivaConfigJsonSerializerContext.Default.AjivaConfig);
+/*new ConfigurationBuilder()
     .SetBasePath(Directory.GetCurrentDirectory())
     .AddJsonFile(AjivaConfig.FileName, false)
-    .Build().Get<AjivaConfig>();
+    .Build().Get<AjivaConfig>();*/
 
 //builder.RegisterModule(new ConfigurationModule(configuration));
 builder.RegisterInstance(configuration);
@@ -32,9 +33,15 @@ builder.RegisterInstance(config);
 
 var loggerConfiguration = new LoggerConfiguration()
     .Enrich.With<CallerEnricher>()
-    .ReadFrom.Configuration(new ConfigurationBuilder()
-        .SetBasePath(Directory.GetCurrentDirectory())
-        .AddJsonFile("Serilog.json").Build());
+    .Enrich.WithMachineName()
+    .Enrich.WithThreadId()
+    .Enrich.WithThreadName()
+    .MinimumLevel.Debug()
+    .Destructure.ToMaximumDepth(4)
+    .Destructure.ToMaximumStringLength(100)
+    .Destructure.ToMaximumCollectionCount(10)
+    .WriteTo.Console(outputTemplate: "[{Timestamp:HH:mm:ss} [{Level:u3}]#{ThreadId,2} {Caller}] {Message:lj}{NewLine}{Exception}")
+    .WriteTo.File(rollingInterval: RollingInterval.Day, retainedFileCountLimit: 7, path: "Logs/Ajiva-engine.txt", outputTemplate: "{Timestamp:o}|{Level:u3}|({ThreadId}/{ThreadName})|{SourceContext}|{Message}|{Exception}{NewLine}");
 builder.RegisterSerilog(loggerConfiguration);
 builder.RegisterInstance(Log.Logger);
 
@@ -91,9 +98,7 @@ catch (Exception e)
     logger.Error(e, "Error building container");
 }
 
-File.WriteAllText(AjivaConfig.FileName, JsonSerializer.Serialize(config, new JsonSerializerOptions {
-    WriteIndented = true
-}));
+File.WriteAllText(AjivaConfig.FileName, JsonSerializer.Serialize(config, AjivaConfigJsonSerializerContext.Default.AjivaConfig));
 logger.Information("Writing Config to {FileName}", AjivaConfig.FileName);
 Log.CloseAndFlush();
 
