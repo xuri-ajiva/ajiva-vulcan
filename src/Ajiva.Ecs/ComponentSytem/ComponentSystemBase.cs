@@ -1,4 +1,6 @@
-﻿namespace Ajiva.Ecs.ComponentSytem;
+﻿using System.Collections.Concurrent;
+
+namespace Ajiva.Ecs.ComponentSytem;
 
 public abstract class ComponentSystemBase<T> : DisposingLogger, IComponentSystem<T> where T : IComponent
 {
@@ -18,27 +20,21 @@ public abstract class ComponentSystemBase<T> : DisposingLogger, IComponentSystem
         throw new InvalidCastException();
     }
 
-    public Dictionary<T, IEntity> ComponentEntityMap { get; private set; } = new Dictionary<T, IEntity>();
+    public ConcurrentDictionary<T, IEntity> ComponentEntityMap { get; private set; } = new();
 
     /// <inheritdoc />
     public virtual T RegisterComponent(IEntity entity, T component)
     {
-        lock (ComponentEntityMap)
-        {
-            ComponentEntityMap.Add(component, entity);
-        }
+        ComponentEntityMap.TryAdd(component, entity);
         return component;
     }
 
     /// <inheritdoc />
     public virtual T UnRegisterComponent(IEntity entity, T component)
     {
-        lock (ComponentEntityMap)
-        {
-            if (ComponentEntityMap.Remove(component, out var entity1))
-                if (entity != entity1)
-                    Log.Error("Removing component not assigned to entity");
-        }
+        if (ComponentEntityMap.Remove(component, out var entity1))
+            if (entity != entity1)
+                Log.Error("Removing component not assigned to entity");
         return component;
     }
 

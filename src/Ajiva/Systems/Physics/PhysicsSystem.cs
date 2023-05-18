@@ -10,7 +10,10 @@ public class PhysicsSystem : ComponentSystemBase<PhysicsComponent>, IUpdate
     public void Update(UpdateInfo delta)
     {
         if (!enabled) return;
-        foreach (var component in ComponentEntityMap.ToList()) component.Key.Update(delta.Delta);
+        foreach (var component in ComponentEntityMap)
+        {
+            component.Key.Update(delta.Delta);
+        }
     }
 
     /// <inheritdoc />

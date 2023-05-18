@@ -1,4 +1,6 @@
-﻿namespace Ajiva.Ecs.ComponentSytem;
+﻿using System.Collections.Concurrent;
+
+namespace Ajiva.Ecs.ComponentSytem;
 
 public interface IComponentSystem : ISystem
 {
@@ -8,7 +10,7 @@ public interface IComponentSystem : ISystem
 }
 public interface IComponentSystem<T> : IComponentSystem where T : IComponent
 {
-    Dictionary<T, IEntity> ComponentEntityMap { get; }
+    ConcurrentDictionary<T, IEntity> ComponentEntityMap { get; }
 
     T RegisterComponent(IEntity entity, T component);
     T UnRegisterComponent(IEntity entity, T component);
