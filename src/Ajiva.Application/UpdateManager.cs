@@ -64,8 +64,10 @@ public class UpdateManager : IUpdateManager, ILifetimeManager
 
     private void LogStatus(Dictionary<IUpdate, PeriodicUpdateRunner.UpdateData> updateDatas)
     {
+        //Console.Clear();
         _logger.Information("PendingWorkItemCount: {PendingWorkItemCount}, EntitiesCount: {EntitiesCount}", ThreadPool.PendingWorkItemCount, _entityRegistry.EntitiesCount);
-        _logger.Information(new string('-', 100));
-        foreach (var (key, value) in updateDatas) _logger.Information($"[ITERATION:{value.Iteration:X8}] | {value.Iteration.ToString(),-8}| {key.GetType().Name,-40}: Delta: {new TimeSpan(value.Delta):G}");
+        _logger.Information("--------------------");
+        foreach (var (key, value) in updateDatas)
+            _logger.Information("[ITERATION:{Iteration}] | {S}| {Name}: Delta: {Delta}", value.Iteration.ToString("X8"), value.Iteration.ToString().PadLeft(5), key.GetType().Name.PadLeft(30), new TimeSpan(value.Delta));
     }
 }

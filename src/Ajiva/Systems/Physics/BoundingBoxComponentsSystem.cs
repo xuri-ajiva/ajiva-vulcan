@@ -24,7 +24,7 @@ public class BoundingBoxComponentsSystem : ComponentSystemBase<BoundingBox>, IUp
         _workerPool = workerPool;
         var pos = new Vector3(float.MinValue / MathF.PI);
         _debug = new Lazy<IDebugVisualPool>(() => new DebugVisualPool(accessor.Container.Resolve<EntityFactory>()));
-        _octalTree = new Lazy<StaticOctalTreeContainer<BoundingBox>>(() => new StaticOctalTreeContainer<BoundingBox>(new StaticOctalSpace(pos, pos * -MathF.E), 255, _debug.Value /*new DebugVisualPoolNone()*/));
+        _octalTree = new Lazy<StaticOctalTreeContainer<BoundingBox>>(() => new StaticOctalTreeContainer<BoundingBox>(new StaticOctalSpace(pos, pos * -MathF.E), 255, /*_debug.Value*/ new DebugVisualPoolNone()));
     }
 
     /// <inheritdoc />

@@ -205,7 +205,7 @@ internal static class Ext
         //windowSystem = container.Resolve<IWindowSystem>();
 
         Ajiva3dLayerSystem.Update(new UpdateInfo());
-        Ajiva3dLayerSystem.MainCamara.Transform3d
+        /*Ajiva3dLayerSystem.MainCamara.Transform3d
             //TODO //BUG this calls into Camera.Get instead of FpsCamera.Get if we dont cast
             //BUG it alsow only updates the FPS Camera Transform if we cast, but the Camera Transform is used in the shaders
             .RefPosition((ref Vector3 vec) =>
@@ -213,7 +213,7 @@ internal static class Ext
                 vec.X = 0;
                 vec.Y = 0;
                 vec.Z = -100;
-            });
+            });*/
 
         var meshPool = container.Resolve<IMeshPool>();
         meshPool.AddMesh(MeshPrefab.Cube);

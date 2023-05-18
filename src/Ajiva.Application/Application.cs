@@ -34,13 +34,13 @@ public class Application : DisposingLogger
 
     public void InitData()
     {
-        var meshPref = MeshPrefab.Cube;
+        /*var meshPref = MeshPrefab.Cube;
 
         var leftScreen = new UiTransform(null,
             new UiAnchor(UiAlignment.CenterVertical, 0, 1.0f),
             new UiAnchor(UiAlignment.Left, .1f, 0.4f)
         );
-        //TODO proxy.RegisterComponent(AEntity.None, typeof(UiTransform), leftScreen);
+        //TODO proxy.RegisterComponent(AEntity.None, typeof(UiTransform), leftScreen);*/
 
 /*var rect = new Rect().Configure<Rect, RenderMesh3D>(x =>
 {
@@ -52,12 +52,12 @@ public class Application : DisposingLogger
     x.HorizontalAnchor = new UiAnchor(UiAlignment.Right, UiValueUnit.Pixel(20), UiValueUnit.Pixel(100));
 }).Register(entityComponentSystem);*/
 
-        spinner = container.CreateRect()
+        /*spinner = container.CreateRect()
             .With(new UiTransform(null,
                 UiAnchor.Pixel(10, 10, UiAlignment.Top),
                 UiAnchor.Pixel(10, 10, UiAlignment.Left)
             ))
-            .Finalize();
+            .Finalize();*/
 
         /*spinner = new Rect().Configure<RenderInstanceMesh2D>(x =>
             {
@@ -73,7 +73,7 @@ public class Application : DisposingLogger
             .Register(container);*/
 
 //leftScreen.AddChild(rect.Get<UiTransform>());
-        const int posRange = 20;
+        /*const int posRange = 20;
 
         for (var i = 0; i < 10; i++)
         {
@@ -84,7 +84,29 @@ public class Application : DisposingLogger
                 })
                 .Finalize()
                 .Configure<CollisionsComponent>(x => { x.MeshId = meshPref.MeshId; });
-        }
+        }*/
+        var cube = _factory.CreateCube()
+            .With(new Transform3d {
+                Position = Vector3.Zero,
+                Rotation = Vector3.Zero,
+                Scale = Vector3.One
+            })
+            .Finalize()
+            .Configure<CollisionsComponent>(c => c.MeshId = MeshPrefab.Cube.MeshId)
+            .Configure<PhysicsComponent>(p => p.IsStatic = true);
+        var floor = _factory.CreateCube()
+            .With(new Transform3d {
+                Position = new Vector3(0, -150, 0),
+                Rotation = Vector3.Zero,
+                Scale = new Vector3(100, 100, 100)
+            })
+            .Finalize()
+            .Configure<CollisionsComponent>(c =>
+            {
+                c.MeshId = MeshPrefab.Cube.MeshId;
+                c.IsStatic = true;
+            })
+            .Configure<PhysicsComponent>(p => p.IsStatic = true);
     }
 
     public void SetupUpdate()
@@ -191,9 +213,15 @@ public class Application : DisposingLogger
                         Scale = new Vector3(3)
                     })
                     .Finalize()
-                    .Configure<ICollider>(x => { x.IsStatic = true; })
-                    .Configure<PhysicsComponent>(x => { x.IsStatic = true; });
-
+                    .Configure<ICollider>(x => { x.IsStatic = false; })
+                    .Configure<PhysicsComponent>(x => { x.IsStatic = false; });
+                _factory.CreateDebugBox()
+                    .With(new Transform3d {
+                        Position = sys.MainCamara.Transform3d.Position + sys.MainCamara.FrontNormalized * 25,
+                        Rotation = sys.MainCamara.Transform3d.Rotation,
+                        Scale = new Vector3(3.4f)
+                    })
+                    .Finalize();
                 break;
             case Key.G:
                 var sys2 = container.Resolve<Ajiva3dLayerSystem>();
