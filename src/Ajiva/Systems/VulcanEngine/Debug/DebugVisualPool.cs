@@ -20,7 +20,7 @@ public record DebugVisualPool(EntityFactory Factory) : IDebugVisualPool
 
         visual.Transform3d.Position = position;
         visual.Transform3d.Scale = scale;
-        
+
         visual.Transform3d.RefPosition((ref Vector3 vec) =>
         {
             vec.X = position.X;
@@ -43,22 +43,13 @@ public record DebugVisualPool(EntityFactory Factory) : IDebugVisualPool
             return visual;
         }
 
-        DebugBox? newVisual;
-        if (_unusedVisuals.IsEmpty)
-        {
-            newVisual = Factory
-                .CreateDebugBox()
-                .Finalize();
-        }
-        else
-        {
-            _unusedVisuals.TryTake(out newVisual);
-        }
-        System.Diagnostics.Debug.Assert(newVisual != null, nameof(newVisual) + " != null");
+        _unusedVisuals.TryTake(out var newVisual);
+        newVisual ??= Factory
+            .CreateDebugBox()
+            .Finalize();
         _visuals.TryAdd(owner, newVisual);
         return newVisual;
     }
-    
 
     public void DestroyVisual(object owner)
     {

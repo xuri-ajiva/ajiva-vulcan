@@ -20,7 +20,7 @@ public class BoundingBox : DisposingLogger, IBoundingBox
     private readonly Lazy<Mesh<Vertex3D>> meshLazy;
     private StaticOctalItem<BoundingBox>? _octalItem;
 
-    private StaticOctalTreeContainer<BoundingBox>? _octalTree;
+    private IStaticOctalTreeContainer<BoundingBox>? _octalTree;
     private IDebugVisualPool? _debugVisualCreator;
 
     private uint _version;
@@ -47,7 +47,7 @@ public class BoundingBox : DisposingLogger, IBoundingBox
     }
 
     /// <inheritdoc />
-    public void SetData(StaticOctalTreeContainer<BoundingBox> octalTree, IDebugVisualPool debugVisualPool)
+    public void SetData(IStaticOctalTreeContainer<BoundingBox> octalTree, IDebugVisualPool debugVisualPool)
     {
         _octalTree = octalTree;
         _debugVisualCreator = debugVisualPool;

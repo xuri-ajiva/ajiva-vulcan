@@ -11,7 +11,7 @@ namespace Ajiva.Systems.Physics;
 
 public class BoundingBoxComponentsSystem : ComponentSystemBase<BoundingBox>, IUpdate
 {
-    private readonly Lazy<StaticOctalTreeContainer<BoundingBox>> _octalTree;
+    private readonly Lazy<IStaticOctalTreeContainer<BoundingBox>> _octalTree;
     private readonly PhysicsSystem _physicsSystem;
     private readonly IWorkerPool _workerPool;
     private bool phisicsUpdated;
@@ -22,9 +22,9 @@ public class BoundingBoxComponentsSystem : ComponentSystemBase<BoundingBox>, IUp
     {
         _physicsSystem = physicsSystem;
         _workerPool = workerPool;
-        var pos = new Vector3(float.MinValue / MathF.PI);
+        var pos = -Vector3.One*10;
         _debug = new Lazy<IDebugVisualPool>(() => new DebugVisualPool(accessor.Container.Resolve<EntityFactory>()));
-        _octalTree = new Lazy<StaticOctalTreeContainer<BoundingBox>>(() => new StaticOctalTreeContainer<BoundingBox>(new StaticOctalSpace(pos, pos * -MathF.E), 255, /*_debug.Value*/ new DebugVisualPoolNone()));
+        _octalTree = new Lazy<IStaticOctalTreeContainer<BoundingBox>>(() => new DynamicOctalTreeContainer<BoundingBox>(new StaticOctalSpace(pos, Vector3.One*20), 255, /*_debug.Value*/ _debug.Value));
     }
 
     /// <inheritdoc />
