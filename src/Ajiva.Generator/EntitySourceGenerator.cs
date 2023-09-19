@@ -110,7 +110,7 @@ public class EntitySourceGenerator : ISourceGenerator
                 }).ToArray();
             if (types is null) continue;
 
-            context.ReportDiagnostic(Diagnostic.Create(new DiagnosticDescriptor("Ajiva.ecs.info", "Generateing Entity: " + symbol.Name, "Generateing Entity: " + symbol.Name, "Generateing Entity: " + symbol.Name, DiagnosticSeverity.Info, true, "Generateing Entity: " + symbol.Name), Location.None));
+            context.ReportDiagnostic(Diagnostic.Create(new DiagnosticDescriptor("AJ10001", "Generateing Entity: " + symbol.Name, "Generateing Entity: " + symbol.Name, "Generateing Entity: " + symbol.Name, DiagnosticSeverity.Info, true, "Generateing Entity: " + symbol.Name), Location.None));
 
             using var writer = new IndentedTextWriter(new StringWriter(), "    ");
 

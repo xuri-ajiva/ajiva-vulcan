@@ -6,6 +6,7 @@
         <Nullable>enable</Nullable>
         <LangVersion>latest</LangVersion>
         <PublishAot>true</PublishAot>
+        <EnforceExtendedAnalyzerRules>true</EnforceExtendedAnalyzerRules>
     </PropertyGroup>
 
 
@@ -16,14 +17,4 @@
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
     </ItemGroup>
-
-    <ItemGroup>
-        <PackageReference Include="CommonSourceGeneratorsHelpers" Version="2.0.54" PrivateAssets="all" />
-        <PackageReference Include="SourceGeneratorsAttributesLibrary" Version="1.0.1" PrivateAssets="all" />
-    </ItemGroup>
-<!--
-    <ItemGroup>
-        <ProjectReference Include="..\..\libs\AttributesSourceGeneratorHelper\AttributesSourceGeneratorHelper.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
-    </ItemGroup>-->
-
 </Project>
