@@ -4,6 +4,11 @@ using Ajiva.Systems.VulcanEngine.Debug;
 
 namespace Ajiva.Components.Transform.SpatialAcceleration;
 
+/*
+ * This code is inspired by the work of OneLoneCoder / Javidx9
+ * https://github.com/OneLoneCoder/Javidx9/blob/master/PixelGameEngine/SmallerProjects/OneLoneCoder_PGE_QuadTree1.cpp
+ * The original code is licensed under the OLC-3 Licence.
+ */
 public class StaticOctalTree<T, TItem> : IRespectable where TItem : StaticOctalItem<T>
 {
     private const int AREAS_PER_LEAF = 8;
