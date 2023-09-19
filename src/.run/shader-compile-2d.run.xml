@@ -2,7 +2,7 @@
   <configuration default="false" name="shader-compile-2d" type="RunNativeExe" factoryName="Native Executable">
     <option name="EXE_PATH" value="$PROJECT_DIR$/tools/spirv/glslangValidator.exe" />
     <option name="PROGRAM_PARAMETERS" value=".\shader.frag .\shader.vert -V" />
-    <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/ajiva/Shaders/2d" />
+    <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/Ajiva/Shaders/2d" />
     <option name="PASS_PARENT_ENVS" value="1" />
     <option name="USE_EXTERNAL_CONSOLE" value="0" />
     <method v="2" />
