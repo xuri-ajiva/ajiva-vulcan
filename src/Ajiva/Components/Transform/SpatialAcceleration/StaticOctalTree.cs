@@ -421,11 +421,10 @@ public class DynamicOctalTreeContainer<T> : IStaticOctalTreeContainer<T>
         _debug = debug;
         _tree = new StaticOctalTree<T, StaticOctalItem<T>>(debug);
         _tree.Setup(area, 0, maxDepth);
-        _debug.CreateVisual(this,_area);
+        _debug.CreateVisual(this, _area);
         Log.Information("Created tree {area} depth 0 Center {2}", area, area.Position + area.Size / 2);
     }
 
-    [MethodImpl(MethodImplOptions.Synchronized)]
     private void CheckAndRelocate(StaticOctalSpace space)
     {
         if (_area.Contains(space)) return;
@@ -434,17 +433,25 @@ public class DynamicOctalTreeContainer<T> : IStaticOctalTreeContainer<T>
         //we can only double the size of the area
         //but we must chose octal space of the original tree as one of the options
 
+        Resize(space);
+    }
+
+    [MethodImpl(MethodImplOptions.Synchronized)]
+    private void Resize(StaticOctalSpace space)
+    {
+        if (_area.Contains(space)) return;
+
         var newSize = _area.Size * 2;
         var newPos = _area.Position;
         var oldIndex = 0;
 //Top Left Front = 0,
-//Top Right Front    = 1
-//Bottom Left Front     = 2
-//Bottom Right Front       = 3
-//Top Left Back               = 4
-//Top Right Back                 = 5
-//Bottom Left Back                  = 6
-//Bottom Right Back                    = 7
+//Top Right Front = 1
+//Bottom Left Front = 2
+//Bottom Right Front = 3
+//Top Left Back = 4
+//Top Right Back = 5
+//Bottom Left Back = 6
+//Bottom Right Back= 7
 
         if (space.Position.X < _area.Position.X)
         {
@@ -468,7 +475,7 @@ public class DynamicOctalTreeContainer<T> : IStaticOctalTreeContainer<T>
         newTree.Adopt(_tree, oldIndex);
         _tree = newTree;
         _area = newArea;
-        _debug.UpdateVisual(this,_area);
+        _debug.UpdateVisual(this, _area);
         Log.Information("Relocated tree {area} depth 0 Center {2}, old index {3}", newArea, newArea.Position + newArea.Size / 2, oldIndex);
         CheckAndRelocate(space);
     }

@@ -1,4 +1,6 @@
-﻿using Ajiva.Models.Buffer.Dynamic;
+﻿using System.Collections.Concurrent;
+using System.Runtime.CompilerServices;
+using Ajiva.Models.Buffer.Dynamic;
 using Ajiva.Systems.VulcanEngine.Interfaces;
 using SharpVk;
 
@@ -6,43 +8,53 @@ namespace Ajiva.Components.Mesh.Instance;
 
 public class InstanceMeshPool<T> : DisposingLogger, IInstanceMeshPool<T>, IUpdate where T : unmanaged
 {
-    private readonly object _lock = new object();
     private readonly IDeviceSystem deviceSystem;
-    private readonly Dictionary<uint, uint> meshIdToInstancedMeshId = new Dictionary<uint, uint>();
+    private readonly ConcurrentDictionary<uint, uint> meshIdToInstancedMeshId = new ConcurrentDictionary<uint, uint>();
 
     public InstanceMeshPool(IDeviceSystem deviceSystem)
     {
         this.deviceSystem = deviceSystem;
         Changed = new ChangingObserver<IInstanceMeshPool<T>>(this);
+        _valueFactory = Factory;
     }
 
-    public Dictionary<uint, IInstancedMesh<T>> InstancedMeshes { get; } = new Dictionary<uint, IInstancedMesh<T>>();
-    public Dictionary<uint, DynamicUniversalDedicatedBufferArray<T>> InstanceMeshData { get; } = new Dictionary<uint, DynamicUniversalDedicatedBufferArray<T>>();
+    public ConcurrentDictionary<uint, IInstancedMesh<T>> InstancedMeshes { get; } = new();
+    public ConcurrentDictionary<uint, DynamicUniversalDedicatedBufferArray<T>> InstanceMeshData { get; } = new();
     public IChangingObserver<IInstanceMeshPool<T>> Changed { get; }
 
     /// <inheritdoc />
     public IInstancedMesh<T> AsInstanced(IMesh mesh)
     {
-        lock (_lock)
-        {
-            if (!meshIdToInstancedMeshId.ContainsKey(mesh.MeshId)) AddInstanced(mesh);
-            return InstancedMeshes[meshIdToInstancedMeshId[mesh.MeshId]];
-        }
+        /*if (!meshIdToInstancedMeshId.ContainsKey(mesh.MeshId))
+            AddInstanced(mesh);
+        ;*/
+        return InstancedMeshes[meshIdToInstancedMeshId.GetOrAdd(mesh.MeshId, _valueFactory, mesh)];
+    }
+
+    private readonly Func<uint, IMesh, uint> _valueFactory;
+
+    private uint Factory(uint arg1, IMesh mesh)
+    {
+        var instanceDataBuffer = new DynamicUniversalDedicatedBufferArray<T>(deviceSystem, 100, BufferUsageFlags.VertexBuffer);
+        instanceDataBuffer.BufferResized.OnChanged += BufferResizedOnOnChanged;
+        var iInstanceMesh = new InstancedMesh<T>(mesh);
+        InstanceMeshData.TryAdd(iInstanceMesh.InstancedId, instanceDataBuffer);
+        InstancedMeshes.TryAdd(iInstanceMesh.InstancedId, iInstanceMesh);
+        iInstanceMesh.SetInstanceDataBuffer(instanceDataBuffer);
+        return iInstanceMesh.InstancedId;
     }
 
     /// <inheritdoc />
+    [MethodImpl(MethodImplOptions.Synchronized)]
     public void AddInstanced(IMesh mesh)
     {
-        lock (_lock)
-        {
-            var instanceDataBuffer = new DynamicUniversalDedicatedBufferArray<T>(deviceSystem, 100, BufferUsageFlags.VertexBuffer);
-            instanceDataBuffer.BufferResized.OnChanged += BufferResizedOnOnChanged;
-            var iInstanceMesh = new InstancedMesh<T>(mesh);
-            InstanceMeshData.Add(iInstanceMesh.InstancedId, instanceDataBuffer);
-            InstancedMeshes.Add(iInstanceMesh.InstancedId, iInstanceMesh);
-            meshIdToInstancedMeshId.Add(mesh.MeshId, iInstanceMesh.InstancedId);
-            iInstanceMesh.SetInstanceDataBuffer(instanceDataBuffer);
-        }
+        var instanceDataBuffer = new DynamicUniversalDedicatedBufferArray<T>(deviceSystem, 100, BufferUsageFlags.VertexBuffer);
+        instanceDataBuffer.BufferResized.OnChanged += BufferResizedOnOnChanged;
+        var iInstanceMesh = new InstancedMesh<T>(mesh);
+        InstanceMeshData.TryAdd(iInstanceMesh.InstancedId, instanceDataBuffer);
+        InstancedMeshes.TryAdd(iInstanceMesh.InstancedId, iInstanceMesh);
+        meshIdToInstancedMeshId.TryAdd(mesh.MeshId, iInstanceMesh.InstancedId);
+        iInstanceMesh.SetInstanceDataBuffer(instanceDataBuffer);
     }
 
     /// <inheritdoc />
@@ -60,11 +72,8 @@ public class InstanceMeshPool<T> : DisposingLogger, IInstanceMeshPool<T>, IUpdat
     /// <inheritdoc />
     public void DeleteInstance(IInstancedMeshInstance<T> instance)
     {
-        lock (_lock)
-        {
-            InstanceMeshData[instance.InstancedMesh.InstancedId].RemoveAt(instance.InstanceId);
-            instance?.Dispose();
-        }
+        InstanceMeshData[instance.InstancedMesh.InstancedId].RemoveAt(instance.InstanceId);
+        instance?.Dispose();
     }
 
     /// <inheritdoc />
@@ -85,10 +94,7 @@ public class InstanceMeshPool<T> : DisposingLogger, IInstanceMeshPool<T>, IUpdat
     /// <inheritdoc />
     public void Update(UpdateInfo delta)
     {
-        lock (_lock)
-        {
-            CommitInstanceDataChanges();
-        }
+        CommitInstanceDataChanges();
     }
 
     /// <inheritdoc />
